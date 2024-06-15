@@ -1,0 +1,10 @@
+{
+    "svg.preview.background": "dark-transparent",
+    "gitblame.pluralWebPathSubstrings": [
+        
+        "bitbucket",
+        "atlassian"
+    ],
+    "dart.analyzerPath": null,
+    "git-graph.repositoryDropdownOrder": "Full Path"
+}
