@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../providers/auth_provider.dart';
 import '../../widgets/avotek_logo.dart';
 
 /// Representation of an administrative user record with BVN, NIN, and wallet state
@@ -957,7 +959,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: selectedType,
+                      initialValue: selectedType,
                       decoration: const InputDecoration(labelText: 'Service Category *'),
                       items: const [
                         DropdownMenuItem(value: 'data', child: Text('Data Bundle')),
@@ -2170,7 +2172,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                     onPressed: () {
                       setState(() => _paystackPingActive = true);
                       Future.delayed(const Duration(milliseconds: 600), () {
-                        if (mounted) setState(() => _paystackPingActive = false);
+                        if (!mounted) return;
+                        setState(() => _paystackPingActive = false);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             backgroundColor: AppColors.success,
@@ -2254,7 +2257,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                     onPressed: () {
                       setState(() => _vtpassPingActive = true);
                       Future.delayed(const Duration(milliseconds: 600), () {
-                        if (mounted) setState(() => _vtpassPingActive = false);
+                        if (!mounted) return;
+                        setState(() => _vtpassPingActive = false);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             backgroundColor: AppColors.success,
@@ -2312,7 +2316,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                     onPressed: () {
                       setState(() => _clubkonnectPingActive = true);
                       Future.delayed(const Duration(milliseconds: 500), () {
-                        if (mounted) setState(() => _clubkonnectPingActive = false);
+                        if (!mounted) return;
+                        setState(() => _clubkonnectPingActive = false);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             backgroundColor: AppColors.success,

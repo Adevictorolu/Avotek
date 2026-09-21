@@ -392,7 +392,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             )
                           : ListView.separated(
                               itemCount: post.comments.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 10),
+                              separatorBuilder: (_, _) => const SizedBox(height: 10),
                               itemBuilder: (ctx, idx) {
                                 final c = post.comments[idx];
                                 return Container(
@@ -527,7 +527,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: _categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
                   itemBuilder: (ctx, idx) {
                     final cat = _categories[idx];
                     final isSelected = cat == _selectedCategory;
@@ -570,7 +570,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   itemCount: filteredPosts.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (ctx, idx) {
                     final post = filteredPosts[idx];
                     return _buildPostCard(post, isDark);

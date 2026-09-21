@@ -153,6 +153,7 @@ class _CacScreenState extends State<CacScreen> {
     // Simulate instant atomic debit
     if (auth.user?.id != null) {
       wallet.applyLocalDebit(
+        userId: auth.user!.id!,
         amount: _selectedPlan.fee,
         service: 'CAC Registration (${_selectedPlan.title})',
         reference: 'CAC-${DateTime.now().millisecondsSinceEpoch}',
@@ -749,7 +750,7 @@ class _CacScreenState extends State<CacScreen> {
           ),
           Switch(
             value: isChecked,
-            activeColor: AppColors.primaryCyan,
+            activeThumbColor: AppColors.primaryCyan,
             onChanged: onChanged,
           ),
         ],

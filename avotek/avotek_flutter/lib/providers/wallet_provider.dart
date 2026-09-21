@@ -156,6 +156,21 @@ class WalletProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Convenience helper for direct service checkout (e.g. CAC, custom utilities)
+  void applyLocalDebit({
+    required double amount,
+    required String service,
+    required String reference,
+    int? userId,
+  }) {
+    recordDebit(
+      userId: userId ?? 1,
+      amount: amount,
+      serviceName: service,
+      reference: reference,
+    );
+  }
+
   Future<bool> simulateFunding(int userId, double amount) async {
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
