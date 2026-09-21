@@ -1,12 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../screens/admin/admin_gateway_screen.dart';
 import '../../screens/admin/admin_screen.dart';
 import '../../screens/auth/login_screen.dart';
+import '../../screens/community/community_screen.dart';
 import '../../screens/home/dashboard_screen.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
 import '../../screens/services/airtime_screen.dart';
 import '../../screens/services/betting_screen.dart';
 import '../../screens/services/cable_screen.dart';
+import '../../screens/services/cac_screen.dart';
 import '../../screens/services/data_screen.dart';
 import '../../screens/services/electricity_screen.dart';
 import '../../screens/services/exam_pin_screen.dart';
@@ -51,15 +56,34 @@ class AppRouter {
           builder: (context, state) => const ExamPinScreen(),
         ),
         GoRoute(
+          path: '/services/cac',
+          builder: (context, state) => const CacScreen(),
+        ),
+        GoRoute(
           path: '/services/betting',
           builder: (context, state) => const BettingScreen(),
+        ),
+        GoRoute(
+          path: '/community',
+          builder: (context, state) => const CommunityScreen(),
         ),
         GoRoute(
           path: '/wallet/fund',
           builder: (context, state) => const FundWalletScreen(),
         ),
         GoRoute(
+          path: '/admin-portal',
+          builder: (context, state) => const AdminGatewayScreen(),
+        ),
+        GoRoute(
           path: '/admin',
+          redirect: (context, state) {
+            final auth = Provider.of<AuthProvider>(context, listen: false);
+            if (!auth.isSuperAdmin) {
+              return '/admin-portal';
+            }
+            return null;
+          },
           builder: (context, state) => const AdminScreen(),
         ),
       ],

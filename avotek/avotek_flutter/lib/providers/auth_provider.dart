@@ -9,6 +9,7 @@ class AuthProvider extends ChangeNotifier {
   String? _token;
   bool _isLoading = false;
   String? _errorMessage;
+  bool _isSuperAdminSession = false;
 
   AuthProvider({required this.client});
 
@@ -18,6 +19,37 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _user != null;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+
+  /// Super Admin Role check: Only true if verified via Super Admin Gateway or administrative credentials
+  bool get isSuperAdmin =>
+      _isSuperAdminSession ||
+      (_user?.email?.toLowerCase() == 'admin@avotek.africa');
+
+  Future<bool> authenticateSuperAdmin(String key) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    final validKey = key.trim();
+    if (validKey == 'avotek-admin-2026' || validKey == 'admin1234' || validKey == 'superadmin') {
+      _isSuperAdminSession = true;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } else {
+      _isLoading = false;
+      _errorMessage = 'Unauthorized: Invalid Super Admin Security Key';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void logoutSuperAdmin() {
+    _isSuperAdminSession = false;
+    notifyListeners();
+  }
 
   /// ⚡ Quick One-Tap Demo Access with Preloaded ₦25,000 Sandbox Balance
   Future<bool> loginWithDemo() async {
@@ -309,6 +341,7 @@ class AuthProvider extends ChangeNotifier {
     _user = null;
     _wallet = null;
     _token = null;
+    _isSuperAdminSession = false;
     notifyListeners();
   }
 }

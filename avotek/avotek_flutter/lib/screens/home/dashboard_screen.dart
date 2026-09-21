@@ -33,7 +33,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _onServiceSelected(String serviceId) {
-    context.push('/services/$serviceId');
+    if (serviceId == 'cac') {
+      context.push('/services/cac');
+    } else {
+      context.push('/services/$serviceId');
+    }
   }
 
   void _openFundWalletModal() {
@@ -51,7 +55,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 16,
-        title: AvotekLogo(size: 32, isDark: isDark),
+        title: AvotekBrandAsset(height: 32, isDark: isDark),
         actions: [
           IconButton(
             tooltip: 'Toggle Theme',
@@ -61,11 +65,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             onPressed: widget.onToggleTheme,
           ),
-          IconButton(
-            tooltip: 'Admin Portal',
-            icon: const Icon(Icons.admin_panel_settings_outlined, size: 20),
-            onPressed: () => context.push('/admin'),
-          ),
+          if (auth.isSuperAdmin)
+            IconButton(
+              tooltip: 'Admin Console',
+              icon: const Icon(Icons.admin_panel_settings_rounded, size: 20, color: AppColors.primaryCyan),
+              onPressed: () => context.push('/admin'),
+            ),
           IconButton(
             tooltip: 'Sign Out',
             icon: const Icon(Icons.logout_rounded, size: 20),
@@ -230,7 +235,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           setState(() => _currentTabIndex = idx);
           if (idx == 1) context.push('/services/airtime');
           if (idx == 2) context.push('/wallet/fund');
-          if (idx == 3) context.push('/admin');
+          if (idx == 3) context.push('/community');
         },
         destinations: const [
           NavigationDestination(
@@ -249,9 +254,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label: 'Fund Wallet',
           ),
           NavigationDestination(
-            icon: Icon(Icons.admin_panel_settings_outlined),
-            selectedIcon: Icon(Icons.admin_panel_settings_rounded),
-            label: 'Admin',
+            icon: Icon(Icons.groups_outlined),
+            selectedIcon: Icon(Icons.groups_rounded),
+            label: 'Community',
           ),
         ],
       ),

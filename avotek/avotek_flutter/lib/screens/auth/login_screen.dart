@@ -227,15 +227,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   Center(
                     child: Column(
                       children: [
-                        AvotekLogo(size: 42, isDark: isDark),
-                        const SizedBox(height: 6),
+                        AvotekBrandAsset(height: 48, isDark: isDark),
+                        const SizedBox(height: 8),
                         Text(
                           'LEVERAGING TECHNOLOGY IN EDUCATION',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.5,
-                            color: AppColors.primaryCyan,
+                            color: isDark ? AppColors.primaryCyan : AppColors.primaryBlue,
                           ),
                         ),
                       ],
@@ -607,22 +607,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
 
-                  // Admin Portal direct access button
-                  const SizedBox(height: 14),
-                  Center(
-                    child: TextButton.icon(
-                      onPressed: () => context.push('/admin'),
-                      icon: const Icon(Icons.admin_panel_settings_rounded, size: 18, color: AppColors.primaryCyan),
-                      label: const Text(
-                        'Web Admin Operations Portal',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryCyan,
-                        ),
-                      ),
-                    ),
-                  ),
+
 
                   // Mobile splash screen re-opener link
                   if (!kIsWeb) ...[

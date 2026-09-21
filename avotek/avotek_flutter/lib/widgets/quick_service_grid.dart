@@ -59,6 +59,13 @@ class QuickServiceGrid extends StatelessWidget {
       color: Color(0xFFEC4899),
     ),
     ServiceItem(
+      id: 'cac',
+      title: 'CAC Register',
+      subtitle: 'Biz Name & LTD',
+      icon: Icons.corporate_fare_rounded,
+      color: Color(0xFF6366F1),
+    ),
+    ServiceItem(
       id: 'betting',
       title: 'Betting',
       subtitle: 'SportyBet, etc',

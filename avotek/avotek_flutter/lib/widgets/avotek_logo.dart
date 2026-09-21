@@ -6,16 +6,26 @@ class AvotekLogo extends StatelessWidget {
   final double size;
   final bool showText;
   final bool isDark;
+  final bool useAssetImage;
 
   const AvotekLogo({
     super.key,
     this.size = 48,
     this.showText = true,
     this.isDark = true,
+    this.useAssetImage = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (useAssetImage) {
+      return Image.asset(
+        isDark ? 'assets/images/logo.png' : 'assets/images/logo_light.png',
+        height: size,
+        fit: BoxFit.contain,
+      );
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -52,6 +62,36 @@ class AvotekLogo extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Dedicated widget to render the authentic AVOTEK brand logo asset with light/dark adaptation
+class AvotekBrandAsset extends StatelessWidget {
+  final double height;
+  final double? width;
+  final bool isDark;
+  final bool isLarge;
+
+  const AvotekBrandAsset({
+    super.key,
+    this.height = 36,
+    this.width,
+    required this.isDark,
+    this.isLarge = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final assetPath = isLarge
+        ? (isDark ? 'assets/images/logo_large.png' : 'assets/images/logo_large_light.png')
+        : (isDark ? 'assets/images/logo.png' : 'assets/images/logo_light.png');
+
+    return Image.asset(
+      assetPath,
+      height: height,
+      width: width,
+      fit: BoxFit.contain,
     );
   }
 }
