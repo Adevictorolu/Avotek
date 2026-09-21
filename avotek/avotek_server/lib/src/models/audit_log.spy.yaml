@@ -1,0 +1,9 @@
+class: AuditLog
+table: audit_logs
+fields:
+  adminId: int?
+  action: String
+  entityType: String
+  entityId: String
+  details: String
+  createdAt: DateTime

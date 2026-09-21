@@ -1,0 +1,13 @@
+class: Transaction
+table: transactions
+fields:
+  userId: int
+  type: String
+  amount: double
+  balanceBefore: double
+  balanceAfter: double
+  reference: String
+  status: String
+  idempotencyKey: String
+  narration: String?
+  createdAt: DateTime

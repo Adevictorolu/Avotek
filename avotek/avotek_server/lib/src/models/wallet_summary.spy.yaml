@@ -1,0 +1,9 @@
+class: WalletSummary
+fields:
+  balance: double
+  currency: String
+  virtualAccountNumber: String?
+  virtualAccountBank: String?
+  virtualAccountName: String?
+  totalFunded: double
+  totalSpent: double

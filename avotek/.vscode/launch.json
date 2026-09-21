@@ -1,0 +1,91 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Avotek Web (Chrome)",
+            "cwd": "${workspaceFolder}/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "chrome",
+                "--web-hostname",
+                "127.0.0.1",
+                "--web-port",
+                "8000",
+                "--web-browser-flag=--remote-allow-origins=*",
+                "--web-browser-flag=--disable-web-security"
+            ]
+        },
+        {
+            "name": "Avotek Web (Edge)",
+            "cwd": "${workspaceFolder}/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "edge",
+                "--web-hostname",
+                "127.0.0.1",
+                "--web-port",
+                "8000"
+            ]
+        },
+        {
+            "name": "Avotek Mobile (Android / iOS)",
+            "cwd": "${workspaceFolder}/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart"
+        },
+        {
+            "name": "Avotek Web Server (Browser-Independent)",
+            "cwd": "${workspaceFolder}/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "web-server",
+                "--web-hostname",
+                "127.0.0.1",
+                "--web-port",
+                "8000"
+            ]
+        },
+        {
+            "name": "Avotek Server (Serverpod Backend)",
+            "cwd": "${workspaceFolder}/avotek_server",
+            "request": "launch",
+            "type": "dart",
+            "program": "bin/main.dart",
+            "args": [
+                "--apply-migrations"
+            ]
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Avotek (Server + Web App)",
+            "configurations": [
+                "Avotek Server (Serverpod Backend)",
+                "Avotek Web (Chrome)"
+            ],
+            "presentation": {
+                "order": 1
+            }
+        },
+        {
+            "name": "Avotek (Server + Mobile App)",
+            "configurations": [
+                "Avotek Server (Serverpod Backend)",
+                "Avotek Mobile (Android / iOS)"
+            ],
+            "presentation": {
+                "order": 2
+            }
+        }
+    ]
+}

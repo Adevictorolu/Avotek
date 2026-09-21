@@ -1,0 +1,10 @@
+class: ServiceCatalog
+table: service_catalog
+fields:
+  serviceType: String
+  provider: String
+  variationCode: String
+  name: String
+  costPrice: double
+  defaultMarkup: double
+  active: bool

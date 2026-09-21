@@ -1,0 +1,9 @@
+class: Beneficiary
+table: beneficiaries
+fields:
+  userId: int
+  serviceType: String
+  networkProvider: String
+  recipientIdentifier: String
+  name: String
+  createdAt: DateTime

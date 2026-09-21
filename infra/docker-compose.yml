@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for Serverpod ORM
+  postgres:
+    image: postgres:15-alpine
+    container_name: avotek_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${SERVERPOD_DATABASE_NAME:-avotek}
+      POSTGRES_USER: ${SERVERPOD_DATABASE_USER:-avotek_user}
+      POSTGRES_PASSWORD: ${SERVERPOD_DATABASE_PASSWORD:-avotek_secret_password}
+    ports:
+      - "${SERVERPOD_DATABASE_PORT:-5432}:5432"
+    volumes:
+      - avotek_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SERVERPOD_DATABASE_USER:-avotek_user} -d ${SERVERPOD_DATABASE_NAME:-avotek}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - avotek_network
+
+  # Redis Cache for Idempotency Locking & Rate Limiting
+  redis:
+    image: redis:7-alpine
+    container_name: avotek_redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_secret_password}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - avotek_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - avotek_network
+
+  # AVOTEK Serverpod Backend Service
+  serverpod:
+    build:
+      context: ../avotek/avotek_server
+      dockerfile: Dockerfile
+    container_name: avotek_serverpod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - SERVERPOD_DATABASE_HOST=postgres
+      - SERVERPOD_DATABASE_PORT=5432
+      - SERVERPOD_DATABASE_NAME=${SERVERPOD_DATABASE_NAME:-avotek}
+      - SERVERPOD_DATABASE_USER=${SERVERPOD_DATABASE_USER:-avotek_user}
+      - SERVERPOD_DATABASE_PASSWORD=${SERVERPOD_DATABASE_PASSWORD:-avotek_secret_password}
+      - SERVERPOD_REDIS_HOST=redis
+      - SERVERPOD_REDIS_PORT=6379
+      - SERVERPOD_REDIS_PASSWORD=${REDIS_PASSWORD:-redis_secret_password}
+      - VTPASS_API_KEY=${VTPASS_API_KEY}
+      - VTPASS_PUBLIC_KEY=${VTPASS_PUBLIC_KEY}
+      - VTPASS_SECRET_KEY=${VTPASS_SECRET_KEY}
+      - VTPASS_BASE_URL=${VTPASS_BASE_URL:-https://sandbox.vtpass.com/api}
+      - CK_USER_ID=${CK_USER_ID}
+      - CK_API_KEY=${CK_API_KEY}
+      - CK_BASE_URL=${CK_BASE_URL:-https://www.clubkonnect.com/api}
+      - PAYSTACK_SECRET_KEY=${PAYSTACK_SECRET_KEY}
+      - PAYSTACK_PUBLIC_KEY=${PAYSTACK_PUBLIC_KEY}
+      - PAYSTACK_WEBHOOK_SECRET=${PAYSTACK_WEBHOOK_SECRET}
+      - WHATSAPP_TOKEN=${WHATSAPP_TOKEN}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
+      - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN}
+      - TERMII_API_KEY=${TERMII_API_KEY}
+      - TERMII_SENDER_ID=${TERMII_SENDER_ID:-AVOTEK}
+    ports:
+      - "8080:8080"   # API endpoint & WebSocket
+      - "8081:8081"   # Insights / Serverpod Admin Web
+      - "8082:8082"   # Healthcheck / Web hooks
+    networks:
+      - avotek_network
+
+volumes:
+  avotek_pgdata:
+  avotek_redisdata:
+
+networks:
+  avotek_network:
+    driver: bridge

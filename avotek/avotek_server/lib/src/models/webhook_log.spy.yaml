@@ -1,0 +1,7 @@
+class: WebhookLog
+table: webhooks_log
+fields:
+  source: String
+  payload: String
+  processed: bool
+  createdAt: DateTime

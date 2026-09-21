@@ -1,0 +1,10 @@
+class: Wallet
+table: wallets
+fields:
+  userId: int
+  balance: double
+  currency: String
+  virtualAccountNumber: String?
+  virtualAccountBank: String?
+  virtualAccountName: String?
+  updatedAt: DateTime

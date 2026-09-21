@@ -1,0 +1,7 @@
+class: Agent
+table: agents
+fields:
+  userId: int
+  tier: String
+  commissionRate: double
+  updatedAt: DateTime

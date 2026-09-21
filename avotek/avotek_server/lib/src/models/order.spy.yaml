@@ -1,0 +1,16 @@
+class: Order
+table: orders
+fields:
+  userId: int
+  serviceType: String
+  networkProvider: String
+  recipientIdentifier: String
+  amount: double
+  costPrice: double
+  sellPrice: double
+  providerReference: String?
+  status: String
+  channel: String
+  idempotencyKey: String
+  metadata: String?
+  createdAt: DateTime

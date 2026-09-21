@@ -1,0 +1,49 @@
+emailIdp:
+  - login:
+  - startRegistration:
+  - verifyRegistrationCode:
+  - finishRegistration:
+  - startPasswordReset:
+  - verifyPasswordResetCode:
+  - finishPasswordReset:
+  - hasAccount:
+jwtRefresh:
+  - refreshAccessToken:
+admin:
+  - getAllOrders:
+  - getAllTransactions:
+  - getAllUsers:
+  - updateCatalogItem:
+  - manualRefundOrder:
+  - updateKycStatus:
+  - getAuditLogs:
+auth:
+  - sendOtp:
+  - verifyOtp:
+  - setTransactionPin:
+  - verifyTransactionPin:
+  - getUserProfile:
+catalog:
+  - getCatalog:
+  - getBeneficiaries:
+  - saveBeneficiary:
+  - deleteBeneficiary:
+order:
+  - buyAirtime:
+  - buyData:
+  - payElectricity:
+  - payCableTV:
+  - buyExamPin:
+  - fundBetting:
+  - verifyMeter:
+  - verifySmartcard:
+  - getOrders:
+wallet:
+  - getWallet:
+  - getTransactions:
+  - fundWalletSimulate:
+webhook:
+  - handlePaystackWebhook:
+  - handleWhatsAppWebhook:
+greeting:
+  - hello:

@@ -1,0 +1,8 @@
+class: AdminUser
+table: admin_users
+fields:
+  email: String
+  passwordHash: String
+  role: String
+  permissions: String
+  createdAt: DateTime

@@ -1,0 +1,6 @@
+class: VerificationResponse
+fields:
+  isValid: bool
+  customerName: String?
+  identifier: String
+  details: String?
