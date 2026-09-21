@@ -2,7 +2,30 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Avotek Web (Chrome)",
+            "name": "Avotek Web (Instant Run - Recommended)",
+            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "noDebug": true,
+            "args": [
+                "-d",
+                "chrome"
+            ]
+        },
+        {
+            "name": "Avotek Windows (Native Desktop App)",
+            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "windows"
+            ]
+        },
+        {
+            "name": "Avotek Web (Chrome with Debugger)",
             "cwd": "${workspaceFolder}/avotek/avotek_flutter",
             "request": "launch",
             "type": "dart",
@@ -10,38 +33,22 @@
             "args": [
                 "-d",
                 "chrome",
-                "--web-hostname",
-                "127.0.0.1",
-                "--web-port",
-                "8000",
-                "--web-browser-flag=--remote-allow-origins=*",
-                "--web-browser-flag=--disable-web-security"
+                "--web-browser-flag=--no-default-browser-check"
             ]
         },
         {
-            "name": "Avotek Web (Edge)",
+            "name": "Avotek Web (Edge Browser)",
             "cwd": "${workspaceFolder}/avotek/avotek_flutter",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
             "args": [
                 "-d",
-                "edge",
-                "--web-hostname",
-                "127.0.0.1",
-                "--web-port",
-                "8000"
+                "edge"
             ]
         },
         {
-            "name": "Avotek Mobile (Android / iOS)",
-            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart"
-        },
-        {
-            "name": "Avotek Web Server (Browser-Independent)",
+            "name": "Avotek Web Server",
             "cwd": "${workspaceFolder}/avotek/avotek_flutter",
             "request": "launch",
             "type": "dart",
@@ -49,10 +56,19 @@
             "args": [
                 "-d",
                 "web-server",
-                "--web-hostname",
-                "127.0.0.1",
                 "--web-port",
                 "8000"
+            ]
+        },
+        {
+            "name": "Avotek Mobile (Android)",
+            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "android"
             ]
         },
         {
@@ -60,32 +76,7 @@
             "cwd": "${workspaceFolder}/avotek/avotek_server",
             "request": "launch",
             "type": "dart",
-            "program": "bin/main.dart",
-            "args": [
-                "--apply-migrations"
-            ]
-        }
-    ],
-    "compounds": [
-        {
-            "name": "Avotek (Server + Web App)",
-            "configurations": [
-                "Avotek Server (Serverpod Backend)",
-                "Avotek Web (Chrome)"
-            ],
-            "presentation": {
-                "order": 1
-            }
-        },
-        {
-            "name": "Avotek (Server + Mobile App)",
-            "configurations": [
-                "Avotek Server (Serverpod Backend)",
-                "Avotek Mobile (Android / iOS)"
-            ],
-            "presentation": {
-                "order": 2
-            }
+            "program": "bin/main.dart"
         }
     ]
 }

@@ -22,11 +22,14 @@ class AvotekApp extends StatefulWidget {
 }
 
 class _AvotekAppState extends State<AvotekApp> {
-  ThemeMode _themeMode = ThemeMode.dark; // Default to sleek dark mode matching the logo
+  ThemeMode _themeMode =
+      ThemeMode.dark; // Default to sleek dark mode matching the logo
 
   void _toggleTheme() {
     setState(() {
-      _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+      _themeMode = _themeMode == ThemeMode.dark
+          ? ThemeMode.light
+          : ThemeMode.dark;
     });
   }
 

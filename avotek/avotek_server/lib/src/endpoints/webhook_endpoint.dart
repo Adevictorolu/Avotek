@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:serverpod/serverpod.dart';
 import '../aggregators/aggregator_router.dart';
 import '../engine/order_engine.dart';
@@ -7,19 +8,11 @@ import '../whatsapp/whatsapp_service.dart';
 
 class WebhookEndpoint extends Endpoint {
   late final PaystackService _paystackService;
-  late final WhatsAppService _whatsAppService;
 
   WebhookEndpoint() {
     _paystackService = PaystackService(
       secretKey: '', // Pulled from env in production
       publicKey: '',
-    );
-    final router = AggregatorRouter.createDefault();
-    final engine = OrderEngine(aggregator: router);
-    _whatsAppService = WhatsAppService(
-      accessToken: '',
-      phoneNumberId: '',
-      orderEngine: engine,
     );
   }
 
@@ -40,8 +33,21 @@ class WebhookEndpoint extends Endpoint {
     String payload,
   ) async {
     try {
+      final token = session.passwords['whatsappAccessToken'] ??
+          Platform.environment['WHATSAPP_ACCESS_TOKEN'] ??
+          '';
+      final phoneId = session.passwords['whatsappPhoneNumberId'] ??
+          Platform.environment['WHATSAPP_PHONE_NUMBER_ID'] ??
+          '';
+
+      final service = WhatsAppService(
+        accessToken: token,
+        phoneNumberId: phoneId,
+        orderEngine: OrderEngine(aggregator: AggregatorRouter.createDefault()),
+      );
+
       final data = jsonDecode(payload);
-      await _whatsAppService.handleIncomingMessage(session, data);
+      await service.handleIncomingMessage(session, data);
       return true;
     } catch (e) {
       session.log('WhatsApp webhook error: $e');
