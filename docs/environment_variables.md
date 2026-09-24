@@ -24,6 +24,8 @@ All platform secrets and configuration values reside on the backend. No secret k
 | `VTPASS_PUBLIC_KEY` | Prod | `your_public_key` | VTpass public key. |
 | `VTPASS_SECRET_KEY` | Prod | `your_secret_key` | VTpass secret key for signature calculation. |
 | `VTPASS_BASE_URL` | No | `https://sandbox.vtpass.com/api` | VTpass gateway endpoint (`https://api-service.vtpass.com/api` in production). |
+| `VTUPRESS_URL` | Prod | `https://yourvtuwebsite.com` | VTUPress base URL if routing via your VTUPress platform. |
+| `VTUPRESS_API_KEY` | Prod | `your_vtupress_api_key` | VTUPress API token/key. |
 | `CK_USER_ID` | Prod | `your_userid` | ClubKonnect user ID for secondary fallback routing. |
 | `CK_API_KEY` | Prod | `your_apikey` | ClubKonnect API secret key. |
 | `CK_BASE_URL` | No | `https://www.clubkonnect.com/api` | ClubKonnect endpoint URL. |

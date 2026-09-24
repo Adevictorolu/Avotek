@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'aggregator_interface.dart';
 import 'mock_aggregator.dart';
 import 'models/aggregator_result.dart';
 import 'vtpass_aggregator.dart';
 import 'clubkonnect_aggregator.dart';
+import 'vtupress_aggregator.dart';
 
 class AggregatorRouter implements VtuAggregatorInterface {
   final VtuAggregatorInterface primary;
@@ -21,27 +23,61 @@ class AggregatorRouter implements VtuAggregatorInterface {
     String? vtpassPublicKey,
     String? clubkonnectUserId,
     String? clubkonnectApiKey,
+    String? vtupressUrl,
+    String? vtupressApiKey,
     bool isLive = false,
     void Function(String message)? onLog,
   }) {
     VtuAggregatorInterface primaryAggregator;
     VtuAggregatorInterface fallbackAggregator;
 
-    if (vtpassApiKey != null && vtpassSecretKey != null) {
+    // Resolve credentials from arguments or environment variables
+    final envVtpassKey = vtpassApiKey ?? Platform.environment['VTPASS_API_KEY'];
+    final envVtpassSecret = vtpassSecretKey ?? Platform.environment['VTPASS_SECRET_KEY'];
+    final envVtpassPublic = vtpassPublicKey ?? Platform.environment['VTPASS_PUBLIC_KEY'] ?? '';
+
+    final envVtupressUrl = vtupressUrl ?? Platform.environment['VTUPRESS_URL'] ?? Platform.environment['VTUPRESS_BASE_URL'];
+    final envVtupressKey = vtupressApiKey ?? Platform.environment['VTUPRESS_API_KEY'];
+
+    final envCkUser = clubkonnectUserId ?? Platform.environment['CK_USER_ID'];
+    final envCkKey = clubkonnectApiKey ?? Platform.environment['CK_API_KEY'];
+
+    final runMode = Platform.environment['SERVERPOD_RUNMODE'] ?? 'development';
+    final effectiveIsLive = isLive || runMode == 'production';
+
+    // 1. Determine Primary Provider
+    if (envVtupressUrl != null && envVtupressUrl.isNotEmpty && envVtupressKey != null && envVtupressKey.isNotEmpty) {
+      primaryAggregator = VtupressAggregator(
+        apiUrl: envVtupressUrl,
+        apiKey: envVtupressKey,
+      );
+    } else if (envVtpassKey != null && envVtpassKey.isNotEmpty && envVtpassSecret != null && envVtpassSecret.isNotEmpty) {
       primaryAggregator = VtpassAggregator(
-        apiKey: vtpassApiKey,
-        secretKey: vtpassSecretKey,
-        publicKey: vtpassPublicKey ?? '',
-        isLive: isLive,
+        apiKey: envVtpassKey,
+        secretKey: envVtpassSecret,
+        publicKey: envVtpassPublic,
+        isLive: effectiveIsLive,
       );
     } else {
       primaryAggregator = MockAggregator();
     }
 
-    if (clubkonnectUserId != null && clubkonnectApiKey != null) {
+    // 2. Determine Fallback Provider
+    if (envCkUser != null && envCkUser.isNotEmpty && envCkKey != null && envCkKey.isNotEmpty) {
       fallbackAggregator = ClubKonnectAggregator(
-        userId: clubkonnectUserId,
-        apiKey: clubkonnectApiKey,
+        userId: envCkUser,
+        apiKey: envCkKey,
+      );
+    } else if (primaryAggregator is! VtpassAggregator &&
+        envVtpassKey != null &&
+        envVtpassKey.isNotEmpty &&
+        envVtpassSecret != null &&
+        envVtpassSecret.isNotEmpty) {
+      fallbackAggregator = VtpassAggregator(
+        apiKey: envVtpassKey,
+        secretKey: envVtpassSecret,
+        publicKey: envVtpassPublic,
+        isLive: effectiveIsLive,
       );
     } else {
       fallbackAggregator = MockAggregator();

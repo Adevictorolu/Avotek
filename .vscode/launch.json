@@ -2,19 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Avotek Web (Instant Run - Recommended)",
-            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "noDebug": true,
-            "args": [
-                "-d",
-                "chrome"
-            ]
-        },
-        {
-            "name": "Avotek Windows (Native Desktop App)",
+            "name": "Avotek Windows (Native Desktop - Fastest & Recommended)",
             "cwd": "${workspaceFolder}/avotek/avotek_flutter",
             "request": "launch",
             "type": "dart",
@@ -25,30 +13,7 @@
             ]
         },
         {
-            "name": "Avotek Web (Chrome with Debugger)",
-            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "-d",
-                "chrome",
-                "--web-browser-flag=--no-default-browser-check"
-            ]
-        },
-        {
-            "name": "Avotek Web (Edge Browser)",
-            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "-d",
-                "edge"
-            ]
-        },
-        {
-            "name": "Avotek Web Server",
+            "name": "Avotek Web Server (No Timeout - http://localhost:8080)",
             "cwd": "${workspaceFolder}/avotek/avotek_flutter",
             "request": "launch",
             "type": "dart",
@@ -57,7 +22,32 @@
                 "-d",
                 "web-server",
                 "--web-port",
-                "8000"
+                "8080"
+            ]
+        },
+        {
+            "name": "Avotek Web Chrome (Run Without Debugging)",
+            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "noDebug": true,
+            "args": [
+                "-d",
+                "chrome",
+                "--web-port",
+                "8080"
+            ]
+        },
+        {
+            "name": "Avotek Web Edge (Alternative Browser)",
+            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "edge"
             ]
         },
         {

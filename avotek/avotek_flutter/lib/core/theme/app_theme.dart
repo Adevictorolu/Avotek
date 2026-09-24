@@ -36,65 +36,92 @@ class AppTheme {
     final primaryTextColor = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
     final secondaryTextColor = isDark ? AppColors.metallicLight : AppColors.slateGrey;
 
-    final baseTextTheme = brightness == Brightness.dark
-        ? ThemeData.dark().textTheme
-        : ThemeData.light().textTheme;
-
-    return GoogleFonts.montserratTextTheme(baseTextTheme).copyWith(
-      displaySmall: TextStyle(
+    return TextTheme(
+      displayLarge: GoogleFonts.montserrat(
+        fontSize: 32,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.8,
+        color: primaryTextColor,
+      ),
+      displayMedium: GoogleFonts.montserrat(
+        fontSize: 24,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.6,
+        color: primaryTextColor,
+      ),
+      displaySmall: GoogleFonts.montserrat(
         fontSize: 20,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.5,
         color: primaryTextColor,
       ),
-      headlineMedium: TextStyle(
+      headlineLarge: GoogleFonts.montserrat(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.4,
+        color: primaryTextColor,
+      ),
+      headlineMedium: GoogleFonts.montserrat(
         fontSize: 18,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.3,
         color: primaryTextColor,
       ),
-      titleLarge: TextStyle(
+      headlineSmall: GoogleFonts.montserrat(
         fontSize: 16,
         fontWeight: FontWeight.w700,
+        letterSpacing: -0.2,
         color: primaryTextColor,
       ),
-      titleMedium: TextStyle(
+      titleLarge: GoogleFonts.montserrat(
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.1,
+        color: primaryTextColor,
+      ),
+      titleMedium: GoogleFonts.montserrat(
         fontSize: 14,
         fontWeight: FontWeight.w600,
+        letterSpacing: -0.1,
         color: primaryTextColor,
       ),
-      titleSmall: TextStyle(
+      titleSmall: GoogleFonts.montserrat(
         fontSize: 12,
         fontWeight: FontWeight.w600,
+        letterSpacing: 0.0,
         color: secondaryTextColor,
       ),
-      bodyLarge: TextStyle(
+      bodyLarge: GoogleFonts.montserrat(
         fontSize: 13,
         fontWeight: FontWeight.w500,
+        letterSpacing: 0.1,
         color: primaryTextColor,
       ),
-      bodyMedium: TextStyle(
+      bodyMedium: GoogleFonts.montserrat(
         fontSize: 12,
         fontWeight: FontWeight.w400,
+        letterSpacing: 0.1,
         color: secondaryTextColor,
       ),
-      bodySmall: TextStyle(
+      bodySmall: GoogleFonts.montserrat(
         fontSize: 11,
         fontWeight: FontWeight.w400,
+        letterSpacing: 0.1,
         color: secondaryTextColor,
       ),
-      labelLarge: const TextStyle(
+      labelLarge: GoogleFonts.montserrat(
         fontSize: 13,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.2,
+        color: primaryTextColor,
       ),
-      labelMedium: TextStyle(
+      labelMedium: GoogleFonts.montserrat(
         fontSize: 11,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
         color: secondaryTextColor,
       ),
-      labelSmall: TextStyle(
+      labelSmall: GoogleFonts.montserrat(
         fontSize: 10,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.2,
@@ -110,7 +137,18 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       fontFamily: GoogleFonts.montserrat().fontFamily,
+      fontFamilyFallback: const ['Montserrat', 'Roboto', 'sans-serif'],
       textTheme: textTheme,
+      primaryTextTheme: textTheme,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+        },
+      ),
       scaffoldBackgroundColor: AppColors.lightBg,
       colorScheme: const ColorScheme(
         brightness: Brightness.light,
@@ -219,7 +257,18 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       fontFamily: GoogleFonts.montserrat().fontFamily,
+      fontFamilyFallback: const ['Montserrat', 'Roboto', 'sans-serif'],
       textTheme: textTheme,
+      primaryTextTheme: textTheme,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+        },
+      ),
       scaffoldBackgroundColor: AppColors.darkBg,
       colorScheme: const ColorScheme(
         brightness: Brightness.dark,

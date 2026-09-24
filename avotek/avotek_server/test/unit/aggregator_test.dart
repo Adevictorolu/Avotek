@@ -97,5 +97,12 @@ void main() {
       expect(account['bankName'], contains('Wema Bank'));
       expect(account['accountName'], contains('Chukwuemeka Obi'));
     });
+
+    test('AggregatorRouter.createDefault initializes without throwing and falls back to MockAggregator in dev', () {
+      final router = AggregatorRouter.createDefault();
+      expect(router.primary.name, equals('MockSandboxAggregator'));
+      expect(router.fallback.name, equals('MockSandboxAggregator'));
+    });
   });
 }
+

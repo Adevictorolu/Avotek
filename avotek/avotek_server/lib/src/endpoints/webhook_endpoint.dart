@@ -7,12 +7,16 @@ import '../payments/paystack_service.dart';
 import '../whatsapp/whatsapp_service.dart';
 
 class WebhookEndpoint extends Endpoint {
-  late final PaystackService _paystackService;
-
-  WebhookEndpoint() {
-    _paystackService = PaystackService(
-      secretKey: '', // Pulled from env in production
-      publicKey: '',
+  PaystackService _getPaystackService(Session session) {
+    final secretKey = session.passwords['paystackSecretKey'] ??
+        Platform.environment['PAYSTACK_SECRET_KEY'] ??
+        '';
+    final publicKey = session.passwords['paystackPublicKey'] ??
+        Platform.environment['PAYSTACK_PUBLIC_KEY'] ??
+        '';
+    return PaystackService(
+      secretKey: secretKey,
+      publicKey: publicKey,
     );
   }
 
@@ -21,7 +25,8 @@ class WebhookEndpoint extends Endpoint {
     String payload,
     String signature,
   ) async {
-    return await _paystackService.processWebhookEvent(
+    final service = _getPaystackService(session);
+    return await service.processWebhookEvent(
       session: session,
       payload: payload,
       signature: signature,

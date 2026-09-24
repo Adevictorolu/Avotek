@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd avotek/avotek_flutter && flutter build web --release",
+  "outputDirectory": "avotek/avotek_flutter/build/web",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
