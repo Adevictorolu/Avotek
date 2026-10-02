@@ -96,6 +96,37 @@ class AdminOrderRecord {
   });
 }
 
+/// Representation of a real-time user session / activity event (Register, Login, Logout)
+class AdminLiveSessionRecord {
+  final int id;
+  final int userId;
+  final String userName;
+  final String email;
+  final String phone;
+  final String eventType; // 'REGISTER', 'LOGIN', 'LOGOUT'
+  final String ipAddress;
+  final String device;
+  final String status; // 'ONLINE', 'IDLE', 'LOGGED_OUT'
+  final DateTime timestamp;
+  final String sessionDuration;
+  final String details;
+
+  AdminLiveSessionRecord({
+    required this.id,
+    required this.userId,
+    required this.userName,
+    required this.email,
+    required this.phone,
+    required this.eventType,
+    required this.ipAddress,
+    required this.device,
+    required this.status,
+    required this.timestamp,
+    required this.sessionDuration,
+    required this.details,
+  });
+}
+
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
 
@@ -105,6 +136,11 @@ class AdminScreen extends StatefulWidget {
 
 class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  // Real-Time & Live Mode State
+  bool _isProductionLiveMode = false;
+  String _sessionFilter = 'all'; // 'all', 'REGISTER', 'LOGIN', 'LOGOUT'
+  List<AdminLiveSessionRecord> _liveSessions = [];
 
   // Search & Filter State
   String _userSearchQuery = '';
@@ -151,7 +187,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _initAdminData();
   }
 
@@ -176,6 +212,93 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
 
   void _initAdminData() {
     final now = DateTime.now();
+
+    _liveSessions = [
+      AdminLiveSessionRecord(
+        id: 501,
+        userId: 1,
+        userName: 'Chukwuemeka Obi',
+        email: 'demo@avotek.africa',
+        phone: '08031234567',
+        eventType: 'LOGIN',
+        ipAddress: '102.89.41.18 (Lagos, MTN)',
+        device: 'Chrome 126 / macOS',
+        status: 'ONLINE',
+        timestamp: now.subtract(const Duration(minutes: 3)),
+        sessionDuration: '3m active',
+        details: 'Auth verified via biometric session token. Session active.',
+      ),
+      AdminLiveSessionRecord(
+        id: 502,
+        userId: 6,
+        userName: 'Blessing Okoro',
+        email: 'blessing.okoro@futo.edu.ng',
+        phone: '08149102834',
+        eventType: 'REGISTER',
+        ipAddress: '197.210.55.90 (Owerri, Airtel)',
+        device: 'Avotek App v2.4 (Tecno Camon 20)',
+        status: 'ONLINE',
+        timestamp: now.subtract(const Duration(minutes: 11)),
+        sessionDuration: '11m active',
+        details: 'New user registered via referral AVOTEK01. Assigned dedicated Wema NUBAN.',
+      ),
+      AdminLiveSessionRecord(
+        id: 503,
+        userId: 2,
+        userName: 'Amina Bello',
+        email: 'amina.bello@unilag.edu.ng',
+        phone: '08129841029',
+        eventType: 'LOGOUT',
+        ipAddress: '105.112.98.14 (Akoka, Glo)',
+        device: 'Safari / iPhone 15 Pro',
+        status: 'LOGGED_OUT',
+        timestamp: now.subtract(const Duration(minutes: 24)),
+        sessionDuration: '1h 14m session',
+        details: 'Manual user sign-out from mobile web. Auth session destroyed.',
+      ),
+      AdminLiveSessionRecord(
+        id: 504,
+        userId: 3,
+        userName: 'Tunde Bakare',
+        email: 'tunde.bakare@abu.edu.ng',
+        phone: '07051928410',
+        eventType: 'LOGIN',
+        ipAddress: '102.90.12.78 (Zaria, MTN)',
+        device: 'Chrome 126 / Windows 11',
+        status: 'ONLINE',
+        timestamp: now.subtract(const Duration(minutes: 45)),
+        sessionDuration: '45m active',
+        details: 'User logged in. Executed ₦5,100 IKEDC Prepaid Token purchase.',
+      ),
+      AdminLiveSessionRecord(
+        id: 505,
+        userId: 7,
+        userName: 'Ibrahim Danladi',
+        email: 'ibrahim.danladi@buk.edu.ng',
+        phone: '08091823746',
+        eventType: 'REGISTER',
+        ipAddress: '197.211.80.12 (Kano, 9mobile)',
+        device: 'Avotek Android App v2.4 (Infinix Hot 30)',
+        status: 'ONLINE',
+        timestamp: now.subtract(const Duration(hours: 1, minutes: 15)),
+        sessionDuration: '1h 15m active',
+        details: 'Registered via direct web link. Dedicated Providus NUBAN generated.',
+      ),
+      AdminLiveSessionRecord(
+        id: 506,
+        userId: 4,
+        userName: 'Ngozi Eze',
+        email: 'ngozi.eze@unn.edu.ng',
+        phone: '09038192019',
+        eventType: 'LOGOUT',
+        ipAddress: '102.88.201.55 (Nsukka, MTN)',
+        device: 'Chrome Mobile / Android 13',
+        status: 'LOGGED_OUT',
+        timestamp: now.subtract(const Duration(hours: 2, minutes: 30)),
+        sessionDuration: '38m session',
+        details: 'Automatic idle session expiration (30m inactive policy).',
+      ),
+    ];
 
     _users = [
       AdminUserRecord(
@@ -1306,10 +1429,11 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           unselectedLabelColor: isDark ? AppColors.metallicLight : AppColors.slateGrey,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: [
+            Tab(icon: const Icon(Icons.sensors_rounded, size: 18), text: 'Live Activity (${_liveSessions.length})'),
             Tab(icon: const Icon(Icons.people_alt_rounded, size: 18), text: 'Users & BVN (${_users.length})'),
             Tab(icon: const Icon(Icons.price_change_rounded, size: 18), text: 'Pricing & Tariffs (${_catalog.length})'),
             Tab(icon: const Icon(Icons.receipt_long_rounded, size: 18), text: 'Live Orders (${_orders.length})'),
-            const Tab(icon: Icon(Icons.hub_rounded, size: 18), text: 'Gateways & API Keys'),
+            const Tab(icon: Icon(Icons.hub_rounded, size: 18), text: 'Gateways & Live Switch'),
             const Tab(icon: Icon(Icons.terminal_rounded, size: 18), text: 'PostgreSQL Console'),
           ],
         ),
@@ -1324,6 +1448,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             child: TabBarView(
               controller: _tabController,
               children: [
+                _buildLiveActivityTab(isDark),
                 _buildUsersManagementTab(isDark),
                 _buildPricingTariffsTab(isDark),
                 _buildOrdersRefundTab(isDark),
@@ -1420,6 +1545,532 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           const SizedBox(height: 2),
           Text(subtext, style: const TextStyle(fontSize: 10, color: Colors.grey), overflow: TextOverflow.ellipsis),
         ],
+      ),
+    );
+  }
+
+  void _showActivateLiveConfirmation() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 28),
+            SizedBox(width: 10),
+            Text('Go Live With Real Money?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You are about to switch Avotek into PRODUCTION LIVE TRADING MODE.',
+              style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.error),
+            ),
+            SizedBox(height: 10),
+            Text(
+              '1. All customer orders for airtime, data, electricity tokens, cable TV, and exam pins will trigger real API calls to VTpass & ClubKonnect.\n'
+              '2. Real funds will be debited from your aggregator balance.\n'
+              '3. Make sure your VTpass and ClubKonnect balances have sufficient prepaid liquidity before proceeding.\n'
+              '4. Paystack webhooks will automatically credit real NUBAN account transfers.',
+              style: TextStyle(fontSize: 13, height: 1.5),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel (Keep Sandbox)'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              setState(() => _isProductionLiveMode = true);
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: AppColors.error,
+                  content: Text('⚠️ PRODUCTION LIVE TRADING IS NOW ACTIVE! Real transactions are live.'),
+                ),
+              );
+            },
+            child: const Text('Activate Live Mode', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deactivateLiveMode() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.pause_circle_outline_rounded, color: AppColors.warning, size: 28),
+            SizedBox(width: 10),
+            Text('Revert to Sandbox Simulation?'),
+          ],
+        ),
+        content: const Text(
+          'Transactions will revert to simulated sandbox execution. Aggregator balances (VTpass & ClubKonnect) will no longer be debited for test orders. Do you wish to switch back to Sandbox?',
+          style: TextStyle(fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Keep Live Trading'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.warning,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              setState(() => _isProductionLiveMode = false);
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Switched back to Sandbox Mode. Live aggregator billing disabled.'),
+                ),
+              );
+            },
+            child: const Text('Revert to Sandbox'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveFloatChip({
+    required String provider,
+    required String balance,
+    required String status,
+    required Color statusColor,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: statusColor),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(provider, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
+              Row(
+                children: [
+                  Text(balance, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 6),
+                  Text('• $status', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor)),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- TAB 0: REAL-TIME USER SESSIONS & ACTIVITY MONITOR ---
+
+  Widget _buildLiveActivityTab(bool isDark) {
+    var filteredSessions = _liveSessions.where((s) {
+      if (_sessionFilter == 'all') return true;
+      return s.eventType == _sessionFilter;
+    }).toList();
+
+    final onlineCount = _liveSessions.where((s) => s.status == 'ONLINE').length;
+    final regCount = _liveSessions.where((s) => s.eventType == 'REGISTER').length;
+    final loginCount = _liveSessions.where((s) => s.eventType == 'LOGIN').length;
+    final logoutCount = _liveSessions.where((s) => s.eventType == 'LOGOUT').length;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Live WebSocket Status & Statistics Strip
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [const Color(0xFF042F2E), const Color(0xFF0A192F)]
+                    : [const Color(0xFFECFDF5), const Color(0xFFF0FDF4)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.success,
+                    boxShadow: [
+                      BoxShadow(color: AppColors.success, blurRadius: 8, spreadRadius: 2),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'REAL-TIME WEBSOCKET STREAM ACTIVE',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.success,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Serverpod PostgreSQL Listen/Notify engine streaming user registrations, logins, and session terminations in real time.',
+                        style: TextStyle(fontSize: 11, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    final now = DateTime.now();
+                    setState(() {
+                      _liveSessions.insert(
+                        0,
+                        AdminLiveSessionRecord(
+                          id: DateTime.now().millisecondsSinceEpoch % 10000,
+                          userId: 8,
+                          userName: 'Kelechi Nwosu',
+                          email: 'kelechi.nwosu@ui.edu.ng',
+                          phone: '08169102845',
+                          eventType: 'LOGIN',
+                          ipAddress: '105.112.42.19 (Ibadan, MTN)',
+                          device: 'Chrome 126 / Windows',
+                          status: 'ONLINE',
+                          timestamp: now,
+                          sessionDuration: 'Just now',
+                          details: 'Real-time WebSocket event received. Session authenticated.',
+                        ),
+                      );
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Simulated live WebSocket event received!')),
+                    );
+                  },
+                  icon: const Icon(Icons.refresh_rounded, size: 16),
+                  label: const Text('Simulate Event', style: TextStyle(fontSize: 11)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 4 Live Event Metrics
+          Row(
+            children: [
+              Expanded(
+                child: _buildSessionMetricCard(
+                  'Currently Online',
+                  '$onlineCount users',
+                  Icons.wifi_tethering_rounded,
+                  AppColors.success,
+                  isDark,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildSessionMetricCard(
+                  'Registrations Today',
+                  '$regCount new',
+                  Icons.person_add_rounded,
+                  AppColors.primaryCyan,
+                  isDark,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildSessionMetricCard(
+                  'Logins (Last 24h)',
+                  '$loginCount sessions',
+                  Icons.login_rounded,
+                  Colors.indigo,
+                  isDark,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildSessionMetricCard(
+                  'Logouts / Inactive',
+                  '$logoutCount ended',
+                  Icons.logout_rounded,
+                  AppColors.warning,
+                  isDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Event Filter Chips
+          Row(
+            children: [
+              const Text('Filter Activity:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              const SizedBox(width: 12),
+              _sessionFilterChip('all', 'All Events (${_liveSessions.length})', isDark),
+              _sessionFilterChip('REGISTER', 'Registrations ($regCount)', isDark),
+              _sessionFilterChip('LOGIN', 'Logins ($loginCount)', isDark),
+              _sessionFilterChip('LOGOUT', 'Logouts ($logoutCount)', isDark),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Live Stream List
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkCard : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Live Activity Feed (Who Registered, Logged In, Logged Out)',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      Text(
+                        'Updated < 1 sec ago',
+                        style: TextStyle(fontSize: 11, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                if (filteredSessions.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: Text('No events matching the selected filter.')),
+                  )
+                else
+                  ...filteredSessions.map((session) {
+                    Color badgeColor;
+                    IconData badgeIcon;
+                    String badgeText;
+
+                    switch (session.eventType) {
+                      case 'REGISTER':
+                        badgeColor = AppColors.success;
+                        badgeIcon = Icons.person_add_rounded;
+                        badgeText = 'NEW REGISTRATION';
+                        break;
+                      case 'LOGIN':
+                        badgeColor = AppColors.primaryCyan;
+                        badgeIcon = Icons.login_rounded;
+                        badgeText = 'USER LOGGED IN';
+                        break;
+                      default:
+                        badgeColor = AppColors.warning;
+                        badgeIcon = Icons.logout_rounded;
+                        badgeText = 'USER LOGGED OUT';
+                    }
+
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: badgeColor.withValues(alpha: 0.15),
+                            child: Icon(badgeIcon, size: 18, color: badgeColor),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: badgeColor.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        badgeText,
+                                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: badgeColor),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      session.userName,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '• ${session.email}',
+                                      style: TextStyle(fontSize: 11, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      DateFormat('HH:mm:ss').format(session.timestamp),
+                                      style: const TextStyle(fontSize: 11, color: Colors.grey, fontFamily: 'monospace'),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  session.details,
+                                  style: TextStyle(fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF334155)),
+                                ),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 12,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.devices_rounded, size: 12, color: Colors.grey),
+                                        const SizedBox(width: 4),
+                                        Text(session.device, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.location_on_outlined, size: 12, color: Colors.grey),
+                                        const SizedBox(width: 4),
+                                        Text(session.ipAddress, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.timer_outlined, size: 12, color: Colors.grey),
+                                        const SizedBox(width: 4),
+                                        Text(session.sessionDuration, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          if (session.status == 'ONLINE')
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                minimumSize: Size.zero,
+                                side: const BorderSide(color: AppColors.error),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _liveSessions.remove(session);
+                                  _liveSessions.insert(
+                                    0,
+                                    AdminLiveSessionRecord(
+                                      id: session.id,
+                                      userId: session.userId,
+                                      userName: session.userName,
+                                      email: session.email,
+                                      phone: session.phone,
+                                      eventType: 'LOGOUT',
+                                      ipAddress: session.ipAddress,
+                                      device: session.device,
+                                      status: 'LOGGED_OUT',
+                                      timestamp: DateTime.now(),
+                                      sessionDuration: 'Terminated by Super Admin',
+                                      details: 'Session force-terminated by Super Admin from console.',
+                                    ),
+                                  );
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Session for ${session.userName} terminated.')),
+                                );
+                              },
+                              child: const Text('Kill Session', style: TextStyle(fontSize: 10, color: AppColors.error)),
+                            ),
+                        ],
+                      ),
+                    );
+                  }),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSessionMetricCard(String title, String val, IconData icon, Color color, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title, style: TextStyle(fontSize: 11, color: isDark ? AppColors.metallicLight : AppColors.slateGrey)),
+              Icon(icon, size: 16, color: color),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(val, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color)),
+        ],
+      ),
+    );
+  }
+
+  Widget _sessionFilterChip(String filter, String label, bool isDark) {
+    final isSel = _sessionFilter == filter;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isSel ? Colors.black : (isDark ? Colors.white : Colors.black))),
+        selected: isSel,
+        selectedColor: AppColors.primaryCyan,
+        backgroundColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
+        onSelected: (_) => setState(() => _sessionFilter = filter),
       ),
     );
   }
@@ -2005,6 +2656,177 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // MASTER PRODUCTION LIVE SWITCH BANNER
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: _isProductionLiveMode
+                  ? (isDark ? const Color(0xFF3F0B0B) : const Color(0xFFFEF2F2))
+                  : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _isProductionLiveMode
+                    ? AppColors.error
+                    : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                width: _isProductionLiveMode ? 2.0 : 1.0,
+              ),
+              boxShadow: _isProductionLiveMode
+                  ? [
+                      BoxShadow(
+                        color: AppColors.error.withValues(alpha: 0.25),
+                        blurRadius: 16,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _isProductionLiveMode
+                            ? AppColors.error.withValues(alpha: 0.15)
+                            : Colors.amber.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _isProductionLiveMode
+                            ? Icons.verified_user_rounded
+                            : Icons.science_rounded,
+                        size: 26,
+                        color: _isProductionLiveMode ? AppColors.error : Colors.amber[700],
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                _isProductionLiveMode
+                                    ? 'PRODUCTION LIVE MODE: REAL MONEY & REAL TRANSACTIONS'
+                                    : 'SANDBOX / TEST MODE (SIMULATED TRANSACTIONS)',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.5,
+                                  color: _isProductionLiveMode
+                                      ? AppColors.error
+                                      : (isDark ? Colors.white : Colors.black87),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: _isProductionLiveMode
+                                      ? AppColors.error
+                                      : Colors.amber[800],
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  _isProductionLiveMode ? 'LIVE TRADING' : 'SANDBOX',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _isProductionLiveMode
+                                ? 'Real telecom aggregator APIs are connected. Every airtime, data, cable TV, electricity token, and exam pin order triggers live billing with VTpass & ClubKonnect. Paystack virtual accounts credit actual customer wallets.'
+                                : 'Aggregator API calls are routed through the sandbox simulator. No real money or merchant float balances will be deducted. Enable Live Trading when you are ready to process real customers.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    if (!_isProductionLiveMode)
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.error,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: _showActivateLiveConfirmation,
+                        icon: const Icon(Icons.bolt_rounded, size: 18),
+                        label: const Text(
+                          'GO LIVE (REAL MONEY)',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                      )
+                    else
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDark ? Colors.white : Colors.black87,
+                          side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: _deactivateLiveMode,
+                        icon: const Icon(Icons.pause_circle_outline_rounded, size: 18),
+                        label: const Text(
+                          'Revert to Sandbox',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                      ),
+                  ],
+                ),
+                if (_isProductionLiveMode) ...[
+                  const SizedBox(height: 14),
+                  const Divider(height: 1),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      _buildLiveFloatChip(
+                        provider: 'VTpass Merchant Float',
+                        balance: '₦184,500.00',
+                        status: 'ONLINE (API OK)',
+                        statusColor: AppColors.success,
+                        isDark: isDark,
+                      ),
+                      _buildLiveFloatChip(
+                        provider: 'ClubKonnect Wallet Float',
+                        balance: '₦92,300.00',
+                        status: 'ONLINE (API OK)',
+                        statusColor: AppColors.success,
+                        isDark: isDark,
+                      ),
+                      _buildLiveFloatChip(
+                        provider: 'Paystack NUBAN System',
+                        balance: 'Live Webhooks Active',
+                        status: 'CONNECTED',
+                        statusColor: AppColors.primaryCyan,
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Production Readiness Overview Banner
           Container(
             padding: const EdgeInsets.all(16),

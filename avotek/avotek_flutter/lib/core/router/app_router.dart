@@ -7,7 +7,9 @@ import '../../screens/admin/admin_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/community/community_screen.dart';
 import '../../screens/home/dashboard_screen.dart';
+import '../../screens/landing/landing_screen.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
+import '../../screens/rates/pricing_screen.dart';
 import '../../screens/services/airtime_screen.dart';
 import '../../screens/services/betting_screen.dart';
 import '../../screens/services/cable_screen.dart';
@@ -15,14 +17,35 @@ import '../../screens/services/cac_screen.dart';
 import '../../screens/services/data_screen.dart';
 import '../../screens/services/electricity_screen.dart';
 import '../../screens/services/exam_pin_screen.dart';
+import '../../screens/transactions/transactions_screen.dart';
 import '../../screens/wallet/fund_wallet_screen.dart';
 
 class AppRouter {
   static GoRouter createRouter({required VoidCallback onToggleTheme}) {
     return GoRouter(
-      // Web users get direct access with no splash screens; mobile users get onboarding
-      initialLocation: kIsWeb ? '/login' : '/onboarding',
+      // Web users land directly on the modern landing page; mobile users get onboarding
+      initialLocation: kIsWeb ? '/' : '/onboarding',
       routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => LandingScreen(onToggleTheme: onToggleTheme),
+        ),
+        GoRoute(
+          path: '/rates',
+          builder: (context, state) => const PricingScreen(),
+        ),
+        GoRoute(
+          path: '/pricing',
+          builder: (context, state) => const PricingScreen(),
+        ),
+        GoRoute(
+          path: '/transactions',
+          builder: (context, state) => const TransactionsScreen(),
+        ),
+        GoRoute(
+          path: '/history',
+          builder: (context, state) => const TransactionsScreen(),
+        ),
         GoRoute(
           path: '/onboarding',
           builder: (context, state) => const OnboardingScreen(),
