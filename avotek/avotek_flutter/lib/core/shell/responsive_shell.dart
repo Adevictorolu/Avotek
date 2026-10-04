@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../responsive/responsive_layout.dart';
 import '../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/education_provider.dart';
+import '../../providers/wallet_provider.dart';
 import '../../widgets/avotek_logo.dart';
 import '../../widgets/global_search_dialog.dart';
 
@@ -26,13 +27,14 @@ class ResponsiveShell extends StatefulWidget {
 
 class _ResponsiveShellState extends State<ResponsiveShell> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isRefreshing = false;
 
   int _getSelectedIndex() {
     final route = widget.currentRoute;
-    if (route.startsWith('/learn')) return 1;
-    if (route.startsWith('/exams')) return 2;
-    if (route.startsWith('/wallet')) return 3;
-    if (route.startsWith('/profile') || route.startsWith('/more') || route.startsWith('/settings')) return 4;
+    if (route.startsWith('/services')) return 1;
+    if (route.startsWith('/wallet')) return 2;
+    if (route.startsWith('/transactions') || route.startsWith('/history')) return 3;
+    if (route.startsWith('/profile') || route.startsWith('/settings')) return 4;
     return 0; // default Home
   }
 
@@ -42,17 +44,38 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
         context.go('/dashboard');
         break;
       case 1:
-        context.go('/learn');
+        context.go('/services/data');
         break;
       case 2:
-        context.go('/exams');
+        context.go('/wallet');
         break;
       case 3:
-        context.go('/wallet');
+        context.go('/transactions');
         break;
       case 4:
         _scaffoldKey.currentState?.openDrawer();
         break;
+    }
+  }
+
+  Future<void> _handleInAppRefresh() async {
+    final auth = context.read<AuthProvider>();
+    if (auth.user?.id != null) {
+      setState(() => _isRefreshing = true);
+      await context.read<WalletProvider>().fetchWallet(auth.user!.id!);
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Wallet & transactions refreshed!',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: AppColors.primaryBlue,
+          ),
+        );
+      }
     }
   }
 
@@ -61,33 +84,54 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final auth = context.watch<AuthProvider>();
-    final edu = context.watch<EducationProvider>();
+    final wallet = context.watch<WalletProvider>();
 
-    final userName = auth.user?.name ?? edu.profile.fullName;
+    final userName = auth.user?.name ?? 'Customer';
     final userInitials = userName.isNotEmpty
         ? userName.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join()
-        : 'CO';
-    final studentBadge = edu.studentStatusBadge;
+        : 'AV';
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
-      drawer: !isDesktop ? _buildDrawer(context, isDark, auth, edu) : null,
+      backgroundColor: isDark ? AppColors.darkBg : const Color(0xFFF4F6F9),
+      drawer: !isDesktop ? _buildDrawer(context, isDark, auth, wallet) : null,
       appBar: !isDesktop
           ? AppBar(
               elevation: 0,
-              backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
+              backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+              surfaceTintColor: Colors.transparent,
               leading: IconButton(
                 icon: const Icon(Icons.menu_rounded),
                 onPressed: () => _scaffoldKey.currentState?.openDrawer(),
               ),
-              title: const AvotekLogo(size: 26, showText: true),
+              title: const AvotekLogo(size: 32, isLarge: true),
               actions: [
+                // In-App Refresh Button
                 IconButton(
-                  tooltip: 'Search',
-                  icon: const Icon(Icons.search_rounded, size: 22),
-                  onPressed: () => GlobalSearchDialog.show(context),
+                  tooltip: 'In-App Refresh',
+                  icon: _isRefreshing
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryCyan),
+                        )
+                      : const Icon(Icons.refresh_rounded, size: 22, color: AppColors.primaryCyan),
+                  onPressed: _isRefreshing ? null : _handleInAppRefresh,
                 ),
+                // WhatsApp Chat
+                IconButton(
+                  tooltip: 'WhatsApp Support',
+                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20, color: Color(0xFF25D366)),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Connecting to WhatsApp Support (+234 803 411 9920)...', style: GoogleFonts.plusJakartaSans()),
+                        backgroundColor: const Color(0xFF25D366),
+                      ),
+                    );
+                  },
+                ),
+                // Theme Toggle
                 IconButton(
                   tooltip: 'Toggle Theme',
                   icon: Icon(
@@ -96,17 +140,23 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   ),
                   onPressed: widget.onToggleTheme,
                 ),
+                // Admin Console Access Button
+                IconButton(
+                  tooltip: 'Admin Console',
+                  icon: const Icon(Icons.admin_panel_settings_outlined, size: 21, color: AppColors.primaryCyan),
+                  onPressed: () => context.go(auth.isSuperAdmin ? '/admin' : '/admin-portal'),
+                ),
                 Padding(
                   padding: const EdgeInsets.only(right: 14),
                   child: InkWell(
                     onTap: () => context.push('/profile'),
                     borderRadius: BorderRadius.circular(20),
                     child: CircleAvatar(
-                      radius: 15,
+                      radius: 14,
                       backgroundColor: AppColors.primaryBlue,
                       child: Text(
                         userInitials,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
                       ),
                     ),
                   ),
@@ -117,13 +167,13 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
       body: Row(
         children: [
           // Desktop Fixed Sidebar
-          if (isDesktop) _buildDesktopSidebar(context, isDark, auth, edu),
+          if (isDesktop) _buildDesktopSidebar(context, isDark, auth, wallet),
 
           // Main View Canvas
           Expanded(
             child: Column(
               children: [
-                if (isDesktop) _buildDesktopTopBar(context, isDark, auth, edu, userName, userInitials, studentBadge),
+                if (isDesktop) _buildDesktopTopBar(context, isDark, auth, userName, userInitials),
                 Expanded(child: widget.child),
               ],
             ),
@@ -134,6 +184,8 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
           ? NavigationBar(
               selectedIndex: _getSelectedIndex(),
               onDestinationSelected: _onBottomNavTapped,
+              backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+              elevation: 4,
               destinations: const [
                 NavigationDestination(
                   icon: Icon(Icons.grid_view_outlined),
@@ -141,14 +193,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   label: 'Home',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.menu_book_outlined),
-                  selectedIcon: Icon(Icons.menu_book_rounded),
-                  label: 'Learn',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.school_outlined),
-                  selectedIcon: Icon(Icons.school_rounded),
-                  label: 'Exams',
+                  icon: Icon(Icons.bolt_outlined),
+                  selectedIcon: Icon(Icons.bolt_rounded),
+                  label: 'Services',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.account_balance_wallet_outlined),
@@ -156,8 +203,13 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   label: 'Wallet',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.more_horiz_rounded),
-                  selectedIcon: Icon(Icons.more_horiz_rounded),
+                  icon: Icon(Icons.receipt_long_outlined),
+                  selectedIcon: Icon(Icons.receipt_long_rounded),
+                  label: 'History',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.menu_rounded),
+                  selectedIcon: Icon(Icons.menu_rounded),
                   label: 'More',
                 ),
               ],
@@ -170,44 +222,42 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     BuildContext context,
     bool isDark,
     AuthProvider auth,
-    EducationProvider edu,
     String userName,
     String userInitials,
-    String studentBadge,
   ) {
     return Container(
-      height: 68,
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 28),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBg : AppColors.lightBg,
+        color: isDark ? AppColors.darkCard : Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
             width: 1.0,
           ),
         ),
       ),
       child: Row(
         children: [
-          // Search Input Button
+          // Quick Search Button
           InkWell(
             onTap: () => GlobalSearchDialog.show(context),
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              width: 320,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              width: 300,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                border: Border.all(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.search, size: 18, color: Colors.grey),
-                  SizedBox(width: 10),
+                  const Icon(Icons.search, size: 16, color: Colors.grey),
+                  const SizedBox(width: 8),
                   Text(
-                    'Search subjects, exams, questions...',
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                    'Search data, airtime, cable, tokens...',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ),
@@ -215,30 +265,46 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
           ),
           const Spacer(),
 
-          // Student Mode Pill
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE9F5F1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFD2EBE3)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.school, size: 14, color: Color(0xFF0E7C66)),
-                const SizedBox(width: 6),
-                Text(
-                  edu.profile.isStudentMode ? 'Education First' : 'General User',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0E7C66),
-                  ),
+          // WhatsApp Support Button
+          OutlinedButton.icon(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Connecting to WhatsApp Support (+234 803 411 9920)...', style: GoogleFonts.plusJakartaSans()),
+                  backgroundColor: const Color(0xFF25D366),
                 ),
-              ],
+              );
+            },
+            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16, color: Color(0xFF25D366)),
+            label: Text(
+              'WhatsApp Support',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF25D366),
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFF25D366), width: 1.2),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
+
+          // In-App Refresh Button
+          IconButton(
+            tooltip: 'In-App Refresh',
+            icon: _isRefreshing
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryCyan),
+                  )
+                : const Icon(Icons.refresh_rounded, size: 20, color: AppColors.primaryCyan),
+            onPressed: _isRefreshing ? null : _handleInAppRefresh,
+          ),
+          const SizedBox(width: 4),
 
           // Theme Toggle
           IconButton(
@@ -250,10 +316,11 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
             ),
             onPressed: widget.onToggleTheme,
           ),
+          const SizedBox(width: 4),
 
           // Notifications
           IconButton(
-            tooltip: 'Academic Reminders',
+            tooltip: 'Notifications',
             icon: Stack(
               children: [
                 Icon(Icons.notifications_none_rounded, size: 22, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
@@ -261,56 +328,77 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   right: 0,
                   top: 0,
                   child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.error),
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.primaryCyan),
                   ),
                 ),
               ],
             ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Academic Reminder: WAEC registration deadline is approaching!')),
+                SnackBar(
+                  content: Text('All services operating normally. 99.9% uptime.', style: GoogleFonts.plusJakartaSans()),
+                ),
               );
             },
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
+
+          // Admin Console Access Button
+          InkWell(
+            onTap: () => context.go(auth.isSuperAdmin ? '/admin' : '/admin-portal'),
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.primaryBlue.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.35)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.admin_panel_settings_rounded, size: 14, color: AppColors.primaryCyan),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Admin Console',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryCyan,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
 
           // User Profile Pill
           InkWell(
             onTap: () => context.push('/profile'),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
               ),
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 14,
+                    radius: 12,
                     backgroundColor: AppColors.primaryBlue,
                     child: Text(
                       userInitials,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        userName,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        studentBadge,
-                        style: const TextStyle(fontSize: 10, color: Colors.grey),
-                      ),
-                    ],
+                  const SizedBox(width: 8),
+                  Text(
+                    userName,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700),
                   ),
                 ],
               ),
@@ -325,70 +413,63 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     BuildContext context,
     bool isDark,
     AuthProvider auth,
-    EducationProvider edu,
+    WalletProvider wallet,
   ) {
     final currentRoute = widget.currentRoute;
 
     return Container(
-      width: 256,
+      width: 250,
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : Colors.white,
         border: Border(
           right: BorderSide(
-            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
             width: 1.0,
           ),
         ),
       ),
       child: Column(
         children: [
-          // Sidebar Brand
+          // Sidebar Brand (Undistorted Logo)
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
             alignment: Alignment.centerLeft,
-            child: const AvotekLogo(size: 32, showText: true),
+            child: const AvotekLogo(size: 36, isLarge: true),
           ),
           const Divider(height: 1),
 
           // Nav Items Scroll
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               children: [
-                _buildSidebarGroup('LEARNING JOURNEY'),
+                _buildSidebarGroup('MAIN'),
                 _buildSidebarItem(
                   icon: Icons.grid_view_rounded,
-                  label: 'Home',
+                  label: 'Dashboard',
                   route: '/dashboard',
                   isActive: currentRoute == '/dashboard' || currentRoute == '/',
                 ),
                 _buildSidebarItem(
-                  icon: Icons.menu_book_rounded,
-                  label: 'Learn & Practice',
-                  route: '/learn',
-                  isActive: currentRoute.startsWith('/learn') && !currentRoute.contains('progress'),
+                  icon: Icons.add_circle_outline_rounded,
+                  label: 'Fund Wallet',
+                  route: '/wallet/fund',
+                  isActive: currentRoute == '/wallet/fund',
                 ),
-                _buildSidebarItem(
-                  icon: Icons.school_rounded,
-                  label: 'Exam Centre',
-                  route: '/exams',
-                  isActive: currentRoute.startsWith('/exams'),
-                  badgeText: 'Tokens',
-                ),
-                _buildSidebarItem(
-                  icon: Icons.trending_up_rounded,
-                  label: 'My Progress',
-                  route: '/learn/progress',
-                  isActive: currentRoute == '/learn/progress',
-                ),
-
-                const SizedBox(height: 16),
-                _buildSidebarGroup('WALLET & CONNECT'),
                 _buildSidebarItem(
                   icon: Icons.account_balance_wallet_rounded,
-                  label: 'Student Wallet',
+                  label: 'My Wallet',
                   route: '/wallet',
-                  isActive: currentRoute == '/wallet' || currentRoute == '/wallet/fund',
+                  isActive: currentRoute == '/wallet',
+                ),
+
+                const SizedBox(height: 14),
+                _buildSidebarGroup('PAY & RECHARGE'),
+                _buildSidebarItem(
+                  icon: Icons.wifi_rounded,
+                  label: 'Buy Data',
+                  route: '/services/data',
+                  isActive: currentRoute == '/services/data',
                 ),
                 _buildSidebarItem(
                   icon: Icons.phone_android_rounded,
@@ -397,45 +478,54 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   isActive: currentRoute == '/services/airtime',
                 ),
                 _buildSidebarItem(
-                  icon: Icons.wifi_rounded,
-                  label: 'Buy Study Data',
-                  route: '/services/data',
-                  isActive: currentRoute == '/services/data',
+                  icon: Icons.flash_on_rounded,
+                  label: 'Electricity Bills',
+                  route: '/services/electricity',
+                  isActive: currentRoute == '/services/electricity',
                 ),
+                _buildSidebarItem(
+                  icon: Icons.tv_rounded,
+                  label: 'Cable TV',
+                  route: '/services/tv',
+                  isActive: currentRoute == '/services/tv',
+                ),
+                _buildSidebarItem(
+                  icon: Icons.sports_soccer_rounded,
+                  label: 'Betting Topup',
+                  route: '/services/betting',
+                  isActive: currentRoute == '/services/betting',
+                ),
+
+                const SizedBox(height: 14),
+                _buildSidebarGroup('RECORDS & RATES'),
                 _buildSidebarItem(
                   icon: Icons.receipt_long_rounded,
                   label: 'Transactions',
                   route: '/transactions',
                   isActive: currentRoute == '/transactions' || currentRoute == '/history',
                 ),
+                _buildSidebarItem(
+                  icon: Icons.price_change_outlined,
+                  label: 'Wholesale Pricing',
+                  route: '/rates',
+                  isActive: currentRoute == '/rates',
+                ),
 
-                const SizedBox(height: 16),
-                _buildSidebarGroup('ACCOUNT & PREP'),
+                const SizedBox(height: 14),
+                _buildSidebarGroup('ACCOUNT'),
                 _buildSidebarItem(
                   icon: Icons.person_outline_rounded,
-                  label: 'Student Profile',
+                  label: 'My Profile',
                   route: '/profile',
                   isActive: currentRoute == '/profile',
                 ),
                 _buildSidebarItem(
-                  icon: Icons.price_change_outlined,
-                  label: 'Pricing & Rates',
-                  route: '/rates',
-                  isActive: currentRoute == '/rates',
+                  icon: Icons.admin_panel_settings_rounded,
+                  label: 'Admin Console',
+                  route: auth.isSuperAdmin ? '/admin' : '/admin-portal',
+                  isActive: currentRoute == '/admin' || currentRoute == '/admin-portal',
+                  badgeText: auth.isSuperAdmin ? 'ADMIN' : 'PORTAL',
                 ),
-                _buildSidebarItem(
-                  icon: Icons.groups_outlined,
-                  label: 'Study Groups',
-                  route: '/community',
-                  isActive: currentRoute == '/community',
-                ),
-                if (auth.isSuperAdmin)
-                  _buildSidebarItem(
-                    icon: Icons.admin_panel_settings_rounded,
-                    label: 'Admin Console',
-                    route: '/admin',
-                    isActive: currentRoute == '/admin',
-                  ),
               ],
             ),
           ),
@@ -443,7 +533,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
           // Sidebar Footer
           const Divider(height: 1),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: [
                 Expanded(
@@ -453,13 +543,16 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                       context.go('/login');
                     },
                     borderRadius: BorderRadius.circular(8),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                       child: Row(
                         children: [
-                          Icon(Icons.logout_rounded, size: 18, color: Colors.grey),
-                          SizedBox(width: 10),
-                          Text('Sign out', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                          const Icon(Icons.logout_rounded, size: 18, color: Colors.grey),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Sign out',
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600),
+                          ),
                         ],
                       ),
                     ),
@@ -475,10 +568,10 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
 
   Widget _buildSidebarGroup(String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
       child: Text(
         title,
-        style: const TextStyle(
+        style: GoogleFonts.plusJakartaSans(
           fontSize: 10,
           fontWeight: FontWeight.w800,
           color: Colors.grey,
@@ -497,9 +590,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeBg = isDark
-        ? AppColors.primaryBlue.withValues(alpha: 0.15)
+        ? AppColors.primaryCyan.withValues(alpha: 0.15)
         : const Color(0xFFEFF6FF);
-    final activeColor = AppColors.primaryBlue;
+    final activeColor = AppColors.primaryCyan;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
@@ -510,21 +603,21 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
           onTap: () => context.go(route),
           borderRadius: BorderRadius.circular(10),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
             child: Row(
               children: [
                 Icon(
                   icon,
-                  size: 19,
+                  size: 18,
                   color: isActive ? activeColor : (isDark ? Colors.white70 : Colors.black87),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5,
+                      fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
                       color: isActive ? activeColor : (isDark ? Colors.white70 : Colors.black87),
                     ),
                   ),
@@ -533,12 +626,12 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE7F6EC),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.success.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       badgeText,
-                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.success),
                     ),
                   ),
               ],
@@ -553,12 +646,12 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     BuildContext context,
     bool isDark,
     AuthProvider auth,
-    EducationProvider edu,
+    WalletProvider wallet,
   ) {
-    final userName = auth.user?.name ?? edu.profile.fullName;
+    final userName = auth.user?.name ?? 'Customer';
     final userInitials = userName.isNotEmpty
         ? userName.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join()
-        : 'CO';
+        : 'AV';
 
     return Drawer(
       backgroundColor: isDark ? AppColors.darkCard : Colors.white,
@@ -573,7 +666,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const AvotekLogo(size: 28, showText: true),
+                const AvotekLogo(size: 32, isLarge: true),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -582,15 +675,21 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                       backgroundColor: AppColors.primaryBlue,
                       child: Text(
                         userInitials,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(userName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                        Text(edu.studentStatusBadge, style: const TextStyle(fontSize: 11, color: AppColors.primaryBlue)),
+                        Text(
+                          userName,
+                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
+                        ),
+                        Text(
+                          'Active Reseller',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.primaryCyan, fontWeight: FontWeight.w600),
+                        ),
                       ],
                     ),
                   ],
@@ -598,24 +697,25 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
               ],
             ),
           ),
-          _drawerSection('LEARNING'),
-          _drawerItem(Icons.grid_view_rounded, 'Home', '/dashboard'),
-          _drawerItem(Icons.menu_book_rounded, 'Learn & Practice', '/learn'),
-          _drawerItem(Icons.school_rounded, 'Exam Centre (WAEC/JAMB/NECO)', '/exams'),
-          _drawerItem(Icons.trending_up_rounded, 'My Progress', '/learn/progress'),
-
-          _drawerSection('WALLET & CONNECTIVITY'),
-          _drawerItem(Icons.account_balance_wallet_rounded, 'Student Wallet', '/wallet'),
+          _drawerSection('MAIN SERVICES'),
+          _drawerItem(Icons.grid_view_rounded, 'Dashboard', '/dashboard'),
+          _drawerItem(Icons.wifi_rounded, 'Buy Data', '/services/data'),
           _drawerItem(Icons.phone_android_rounded, 'Buy Airtime', '/services/airtime'),
-          _drawerItem(Icons.wifi_rounded, 'Buy Study Data', '/services/data'),
-          _drawerItem(Icons.receipt_long_rounded, 'Transactions', '/transactions'),
+          _drawerItem(Icons.flash_on_rounded, 'Electricity Bills', '/services/electricity'),
+          _drawerItem(Icons.tv_rounded, 'Cable TV', '/services/tv'),
+          _drawerItem(Icons.sports_soccer_rounded, 'Betting Topup', '/services/betting'),
 
-          _drawerSection('ACCOUNT & PREP'),
-          _drawerItem(Icons.person_outline_rounded, 'Student Profile', '/profile'),
-          _drawerItem(Icons.price_change_outlined, 'Rates & Tariffs', '/rates'),
-          _drawerItem(Icons.groups_outlined, 'Study Groups & Community', '/community'),
-          if (auth.isSuperAdmin)
-            _drawerItem(Icons.admin_panel_settings_rounded, 'Admin Console', '/admin'),
+          _drawerSection('FINANCE & ACCOUNT'),
+          _drawerItem(Icons.add_card_rounded, 'Fund Wallet', '/wallet/fund'),
+          _drawerItem(Icons.account_balance_wallet_rounded, 'My Wallet', '/wallet'),
+          _drawerItem(Icons.receipt_long_rounded, 'Transactions', '/transactions'),
+          _drawerItem(Icons.price_change_outlined, 'Wholesale Pricing', '/rates'),
+          _drawerItem(Icons.person_outline_rounded, 'Profile & Settings', '/profile'),
+          _drawerItem(
+            Icons.admin_panel_settings_rounded,
+            'Admin Console',
+            auth.isSuperAdmin ? '/admin' : '/admin-portal',
+          ),
 
           const Divider(),
           _drawerItem(Icons.logout_rounded, 'Sign out', '/login', isDestructive: true),
@@ -626,10 +726,10 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
 
   Widget _drawerSection(String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Text(
         title,
-        style: const TextStyle(
+        style: GoogleFonts.plusJakartaSans(
           fontSize: 10,
           fontWeight: FontWeight.w800,
           color: Colors.grey,
@@ -645,14 +745,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
       leading: Icon(icon, size: 20, color: isDestructive ? AppColors.error : Colors.grey),
       title: Text(
         title,
-        style: TextStyle(
+        style: GoogleFonts.plusJakartaSans(
           fontSize: 13,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           color: isDestructive ? AppColors.error : null,
         ),
       ),
       onTap: () {
-        Navigator.pop(context); // close drawer
+        Navigator.pop(context);
         if (isDestructive) {
           context.read<AuthProvider>().signOut();
           context.go('/login');

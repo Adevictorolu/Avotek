@@ -53,7 +53,7 @@ class _AvotekAppState extends State<AvotekApp> {
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
-        title: 'Avotek — Learn. Prepare. Connect.',
+        title: 'Avotek — Data, Airtime & Bill Payments',
         theme: AppTheme.light(),
         darkTheme: AppTheme.dark(),
         themeMode: _themeMode,

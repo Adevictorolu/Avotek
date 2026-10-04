@@ -80,15 +80,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     },
     {
       'id': 'AV-8840987',
-      'service': 'WAEC Result Checker PIN (x2)',
-      'type': 'exam_pin',
-      'recipient': 'Quantity: 2 PINs',
-      'amount': 7000.0,
+      'service': 'IKEDC Prepaid Electricity Token',
+      'type': 'electricity',
+      'recipient': 'Meter: 01429810394',
+      'amount': 5000.0,
       'isCredit': false,
-      'status': 'refunded',
+      'status': 'delivered',
       'time': '10:12',
       'date': 'Today',
-      'network': 'WAEC',
+      'network': 'IKEDC',
     },
     {
       'id': 'AV-8840810',
@@ -176,14 +176,28 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    'Transaction history',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Transaction history',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      IconButton.filledTonal(
+                        tooltip: 'Refresh Transactions',
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Transactions refreshed.')),
+                          );
+                        },
+                        icon: const Icon(Icons.refresh_rounded, size: 20),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -339,9 +353,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           const SizedBox(height: 12),
           Text(
             value,
-            style: GoogleFonts.montserrat(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 22,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
               letterSpacing: -0.5,
             ),
@@ -543,7 +557,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               const SizedBox(height: 12),
               Text(
                 '₦${NumberFormat('#,##0.00').format(tx['amount'])}',
-                style: GoogleFonts.montserrat(fontSize: 26, fontWeight: FontWeight.w900),
+                style: GoogleFonts.plusJakartaSans(fontSize: 26, fontWeight: FontWeight.w800),
               ),
               Text(tx['service'] as String, style: const TextStyle(fontSize: 13, color: Colors.grey)),
               const SizedBox(height: 20),

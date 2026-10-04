@@ -269,9 +269,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                   const SizedBox(height: 10),
                   Text(
                     'Buy airtime',
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 26,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
                       letterSpacing: -0.5,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
@@ -506,7 +506,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
               const Text('You pay', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
               Text(
                 '₦${NumberFormat('#,##0.00').format(_finalAmount)}',
-                style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.primaryCyan),
+                style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.primaryCyan),
               ),
             ],
           ),

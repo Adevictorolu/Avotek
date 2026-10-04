@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_theme.dart';
-import '../providers/education_provider.dart';
 
 class GlobalSearchDialog extends StatefulWidget {
   const GlobalSearchDialog({super.key});
@@ -23,6 +22,73 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
 
+  static const List<Map<String, dynamic>> _vtuServices = [
+    {
+      'title': 'Buy Data Bundle',
+      'category': 'Telecom',
+      'desc': 'MTN, Airtel, Glo, 9mobile SME, Corporate & Gifting data',
+      'route': '/services/data',
+      'icon': Icons.wifi_rounded,
+      'color': Color(0xFF10B981),
+    },
+    {
+      'title': 'Buy Airtime',
+      'category': 'Telecom',
+      'desc': 'Instant VTU airtime recharge with up to 5% discount',
+      'route': '/services/airtime',
+      'icon': Icons.phone_android_rounded,
+      'color': Color(0xFF00A3FF),
+    },
+    {
+      'title': 'Electricity Bill Payment',
+      'category': 'Utility',
+      'desc': 'Prepaid meter token & postpaid bill across all DISCOs (IKEDC, EKEDC, etc.)',
+      'route': '/services/electricity',
+      'icon': Icons.bolt_rounded,
+      'color': Color(0xFFF59E0B),
+    },
+    {
+      'title': 'Cable TV Subscription',
+      'category': 'Entertainment',
+      'desc': 'Instant renewal for DStv, GOtv, and StarTimes packages',
+      'route': '/services/tv',
+      'icon': Icons.tv_rounded,
+      'color': Color(0xFF8B5CF6),
+    },
+    {
+      'title': 'Betting Wallet Top-up',
+      'category': 'Gaming',
+      'desc': 'Fund SportyBet, Bet9ja, 1xBet, BangBet instantly',
+      'route': '/services/betting',
+      'icon': Icons.sports_soccer_rounded,
+      'color': Color(0xFF06B6D4),
+    },
+    {
+      'title': 'Fund Wallet',
+      'category': 'Finance',
+      'desc': 'Automated dedicated virtual bank account & instant card funding',
+      'route': '/wallet/fund',
+      'icon': Icons.account_balance_wallet_rounded,
+      'color': Color(0xFF0070F3),
+    },
+    {
+      'title': 'Transaction History & Receipts',
+      'category': 'History',
+      'desc': 'View payment logs, download invoices, track real-time delivery',
+      'route': '/transactions',
+      'icon': Icons.receipt_long_rounded,
+      'color': Color(0xFF64748B),
+    },
+    {
+      'title': 'Check Live Rates & Pricing',
+      'category': 'Pricing',
+      'desc': 'Compare telecom SME data rates, discounts, and network availability',
+      'route': '/rates',
+      'icon': Icons.price_check_rounded,
+      'color': Color(0xFF14B8A6),
+    },
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -41,47 +107,22 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final edu = context.watch<EducationProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Filter subjects and topics
-    final matchedSubjects = edu.subjects.where((s) {
+    final filteredServices = _vtuServices.where((s) {
       if (_query.isEmpty) return true;
-      return s.name.toLowerCase().contains(_query) ||
-          s.description.toLowerCase().contains(_query);
-    }).toList();
-
-    // Examination services
-    final examServices = [
-      {'name': 'WAEC Result Checker PIN', 'route': '/exams', 'category': 'Exams', 'desc': 'Instant 10-digit PIN for WAEC 2026/past years'},
-      {'name': 'NECO Result Token', 'route': '/exams', 'category': 'Exams', 'desc': 'NECO verification token with instant SMS delivery'},
-      {'name': 'JAMB UTME / Direct Entry PIN', 'route': '/exams', 'category': 'Exams', 'desc': 'Official profile code PIN for registration'},
-      {'name': 'NABTEB Result PIN', 'route': '/exams', 'category': 'Exams', 'desc': 'Technical and business exam result checker'},
-    ].where((e) {
-      if (_query.isEmpty) return true;
-      return e['name']!.toLowerCase().contains(_query) ||
-          e['desc']!.toLowerCase().contains(_query);
-    }).toList();
-
-    // Connectivity services
-    final connectivityServices = [
-      {'name': 'Buy Student Airtime', 'route': '/services/airtime', 'category': 'Stay Connected', 'desc': 'MTN, Glo, Airtel, 9mobile instant recharge'},
-      {'name': 'Buy Study Data Bundle', 'route': '/services/data', 'category': 'Stay Connected', 'desc': 'SME, Gifting and Night-Study data'},
-      {'name': 'Fund Student Wallet', 'route': '/wallet/fund', 'category': 'Wallet', 'desc': 'Dedicated Providus/Wema virtual account'},
-      {'name': 'My Study Progress', 'route': '/learn/progress', 'category': 'Learning', 'desc': 'Accuracy, strong subjects, weak subjects'},
-      {'name': 'Practice Past Questions', 'route': '/learn/practice', 'category': 'Practice', 'desc': 'WAEC and JAMB past question bank'},
-    ].where((c) {
-      if (_query.isEmpty) return true;
-      return c['name']!.toLowerCase().contains(_query) ||
-          c['desc']!.toLowerCase().contains(_query);
+      final title = (s['title'] as String).toLowerCase();
+      final desc = (s['desc'] as String).toLowerCase();
+      final cat = (s['category'] as String).toLowerCase();
+      return title.contains(_query) || desc.contains(_query) || cat.contains(_query);
     }).toList();
 
     return Dialog(
-      backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+      backgroundColor: isDark ? const Color(0xFF0B132B) : Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 620, maxHeight: 580),
+        constraints: const BoxConstraints(maxWidth: 580, maxHeight: 540),
         child: Column(
           children: [
             // Search Input Header
@@ -90,157 +131,118 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
               child: TextField(
                 controller: _searchCtrl,
                 autofocus: true,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
                 decoration: InputDecoration(
-                  hintText: 'Search subjects, topics, exam PINs, practice...',
-                  prefixIcon: const Icon(Icons.search, color: AppColors.primaryBlue),
+                  hintText: 'Search data, airtime, electricity, cable, betting...',
+                  hintStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                  ),
+                  prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primaryBlue),
                   suffixIcon: _query.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
+                          icon: const Icon(Icons.close_rounded, size: 18),
                           onPressed: () => _searchCtrl.clear(),
                         )
                       : null,
                   filled: true,
-                  fillColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
+                  fillColor: isDark ? const Color(0xFF1C2541) : const Color(0xFFF8FAFC),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
                   ),
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
             ),
-            const Divider(height: 1),
+            Divider(height: 1, color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
 
             // Search Results List
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
-                  if (_query.isNotEmpty) ...[
-                    _buildSectionHeader('LEARNING & SUBJECTS', Icons.menu_book),
-                    if (matchedSubjects.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        child: Text('No subjects matching query.', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      )
-                    else
-                      ...matchedSubjects.map((s) => ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: s.color.withValues(alpha: 0.15),
-                              child: Icon(s.icon, color: s.color, size: 18),
-                            ),
-                            title: Text(s.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                            subtitle: Text('${s.topicCount} topics • ${s.questionCount} past questions', style: const TextStyle(fontSize: 12)),
-                            onTap: () {
-                              Navigator.pop(context);
-                              context.push('/learn');
-                            },
-                          )),
-                    const SizedBox(height: 8),
-                    _buildSectionHeader('EXAMINATION SERVICES', Icons.school),
-                    ...examServices.map((e) => ListTile(
-                          leading: const CircleAvatar(
-                            backgroundColor: Color(0xFFE9F5F1),
-                            child: Icon(Icons.school, color: Color(0xFF0E7C66), size: 18),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                    child: Text(
+                      _query.isEmpty ? 'QUICK SERVICES' : 'MATCHING SERVICES',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                  if (filteredServices.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Center(
+                        child: Text(
+                          'No services found matching "$_query"',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            color: Colors.grey,
                           ),
-                          title: Text(e['name']!, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                          subtitle: Text(e['desc']!, style: const TextStyle(fontSize: 12)),
-                          onTap: () {
-                            Navigator.pop(context);
-                            context.push(e['route']!);
-                          },
-                        )),
-                    const SizedBox(height: 8),
-                    _buildSectionHeader('CONNECTIVITY & SERVICES', Icons.wifi),
-                    ...connectivityServices.map((c) => ListTile(
-                          leading: const CircleAvatar(
-                            backgroundColor: Color(0xFFEFF6FF),
-                            child: Icon(Icons.bolt, color: AppColors.primaryBlue, size: 18),
+                        ),
+                      ),
+                    )
+                  else
+                    ...filteredServices.map((s) {
+                      final col = s['color'] as Color;
+                      return ListTile(
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: col.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          title: Text(c['name']!, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                          subtitle: Text(c['desc']!, style: const TextStyle(fontSize: 12)),
-                          onTap: () {
-                            Navigator.pop(context);
-                            context.push(c['route']!);
-                          },
-                        )),
-                  ] else ...[
-                    _buildSectionHeader('QUICK SHORTCUTS', Icons.flash_on),
-                    ListTile(
-                      leading: const CircleAvatar(
-                        backgroundColor: Color(0xFFEFF6FF),
-                        child: Icon(Icons.quiz_outlined, color: AppColors.primaryBlue, size: 18),
-                      ),
-                      title: const Text('Practice Past Questions', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                      subtitle: const Text('WAEC & JAMB multi-choice questions with answers', style: TextStyle(fontSize: 12)),
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push('/learn/practice');
-                      },
-                    ),
-                    ListTile(
-                      leading: const CircleAvatar(
-                        backgroundColor: Color(0xFFE7F6EC),
-                        child: Icon(Icons.school_outlined, color: Color(0xFF059669), size: 18),
-                      ),
-                      title: const Text('Buy Examination PIN (WAEC/NECO/JAMB)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                      subtitle: const Text('Instant result checker tokens and registration PINs', style: TextStyle(fontSize: 12)),
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push('/exams');
-                      },
-                    ),
-                    ListTile(
-                      leading: const CircleAvatar(
-                        backgroundColor: Color(0xFFFDF4E3),
-                        child: Icon(Icons.wifi, color: Color(0xFFB7791F), size: 18),
-                      ),
-                      title: const Text('Buy Study Data Bundle', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                      subtitle: const Text('Instant data for online lectures, research, and CBT practice', style: TextStyle(fontSize: 12)),
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push('/services/data');
-                      },
-                    ),
-                    ListTile(
-                      leading: const CircleAvatar(
-                        backgroundColor: Color(0xFFF3E8FF),
-                        child: Icon(Icons.account_balance_wallet_outlined, color: Color(0xFF8B5CF6), size: 18),
-                      ),
-                      title: const Text('Fund Student Wallet', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                      subtitle: const Text('Instant bank transfer with Providus/Wema dedicated account', style: TextStyle(fontSize: 12)),
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push('/wallet/fund');
-                      },
-                    ),
-                  ],
+                          child: Icon(s['icon'] as IconData, color: col, size: 20),
+                        ),
+                        title: Text(
+                          s['title'] as String,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                        subtitle: Text(
+                          s['desc'] as String,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.push(s['route'] as String);
+                        },
+                      );
+                    }),
                 ],
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: Colors.grey),
-          const SizedBox(width: 6),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: Colors.grey,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ],
       ),
     );
   }

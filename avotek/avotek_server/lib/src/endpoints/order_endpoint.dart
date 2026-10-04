@@ -4,12 +4,25 @@ import '../engine/order_engine.dart';
 import '../generated/protocol.dart';
 
 class OrderEndpoint extends Endpoint {
-  late final OrderEngine _orderEngine;
-  late final AggregatorRouter _aggregatorRouter;
+  OrderEngine _getEngine(Session session) {
+    final apiKey = session.passwords['vtuLiveApiKey'];
+    final baseUrl = session.passwords['vtuBaseUrl'];
+    final router = AggregatorRouter.createDefault(
+      vtuApiKey: apiKey,
+      vtuBaseUrl: baseUrl,
+      onLog: (msg) => session.log('[VTU] $msg'),
+    );
+    return OrderEngine(aggregator: router);
+  }
 
-  OrderEndpoint() {
-    _aggregatorRouter = AggregatorRouter.createDefault();
-    _orderEngine = OrderEngine(aggregator: _aggregatorRouter);
+  AggregatorRouter _getRouter(Session session) {
+    final apiKey = session.passwords['vtuLiveApiKey'];
+    final baseUrl = session.passwords['vtuBaseUrl'];
+    return AggregatorRouter.createDefault(
+      vtuApiKey: apiKey,
+      vtuBaseUrl: baseUrl,
+      onLog: (msg) => session.log('[VTU] $msg'),
+    );
   }
 
   Future<OrderResult> buyAirtime(
@@ -21,7 +34,7 @@ class OrderEndpoint extends Endpoint {
     String idempotencyKey,
     String channel,
   ) async {
-    return await _orderEngine.processOrder(
+    return await _getEngine(session).processOrder(
       session: session,
       userId: userId,
       serviceType: 'airtime',
@@ -45,7 +58,7 @@ class OrderEndpoint extends Endpoint {
     String idempotencyKey,
     String channel,
   ) async {
-    return await _orderEngine.processOrder(
+    return await _getEngine(session).processOrder(
       session: session,
       userId: userId,
       serviceType: 'data',
@@ -69,7 +82,7 @@ class OrderEndpoint extends Endpoint {
     String idempotencyKey,
     String channel,
   ) async {
-    return await _orderEngine.processOrder(
+    return await _getEngine(session).processOrder(
       session: session,
       userId: userId,
       serviceType: 'electricity',
@@ -95,7 +108,7 @@ class OrderEndpoint extends Endpoint {
     String idempotencyKey,
     String channel,
   ) async {
-    return await _orderEngine.processOrder(
+    return await _getEngine(session).processOrder(
       session: session,
       userId: userId,
       serviceType: 'tv',
@@ -118,7 +131,7 @@ class OrderEndpoint extends Endpoint {
     String idempotencyKey,
     String channel,
   ) async {
-    return await _orderEngine.processOrder(
+    return await _getEngine(session).processOrder(
       session: session,
       userId: userId,
       serviceType: 'exam_pin',
@@ -143,7 +156,7 @@ class OrderEndpoint extends Endpoint {
     String idempotencyKey,
     String channel,
   ) async {
-    return await _orderEngine.processOrder(
+    return await _getEngine(session).processOrder(
       session: session,
       userId: userId,
       serviceType: 'betting',
@@ -162,7 +175,7 @@ class OrderEndpoint extends Endpoint {
     String meterNumber,
     String meterType,
   ) async {
-    final result = await _aggregatorRouter.verifyMeterNumber(
+    final result = await _getRouter(session).verifyMeterNumber(
       disco: disco,
       meterNumber: meterNumber,
       meterType: meterType,
@@ -180,7 +193,7 @@ class OrderEndpoint extends Endpoint {
     String provider,
     String smartcardNumber,
   ) async {
-    final result = await _aggregatorRouter.verifySmartcard(
+    final result = await _getRouter(session).verifySmartcard(
       provider: provider,
       smartcardNumber: smartcardNumber,
     );

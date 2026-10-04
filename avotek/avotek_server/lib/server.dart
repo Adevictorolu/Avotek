@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
+import 'package:serverpod_auth_idp_server/providers/google.dart';
 
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart' hide Transaction;
@@ -28,6 +29,8 @@ void run(List<String> args) async {
         sendRegistrationVerificationCode: _sendRegistrationCode,
         sendPasswordResetVerificationCode: _sendPasswordResetCode,
       ),
+      // Configure Google identity provider with credentials from passwords.yaml
+      GoogleIdpConfigFromPasswords(),
     ],
   );
 

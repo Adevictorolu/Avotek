@@ -44,34 +44,61 @@ class StudentWalletScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Page Header
-                const Text(
-                  'My Student Wallet',
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                // Header with in-app refresh button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'My Wallet',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Automated bank funding, VTU debit settlements, and live balance statement.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton.filledTonal(
+                      tooltip: 'Refresh Balance',
+                      onPressed: () async {
+                        if (auth.user?.id != null) {
+                          await wallet.fetchWallet(auth.user!.id!);
+                        }
+                      },
+                      icon: const Icon(Icons.refresh_rounded, size: 20),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Central balance for examination tokens, study data bundles, airtime recharge, and automated refunds.',
-                  style: TextStyle(fontSize: 13, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-                // 1. Dedicated Wallet Card (Adapted from Meridian)
+                // 1. Sleek Wallet Balance Card with Plus Jakarta Sans bold weight
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: isDark
                           ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
-                          : [const Color(0xFF0A66C2), const Color(0xFF0052A3)],
+                          : [const Color(0xFF0070F3), const Color(0xFF0052A3)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0A66C2).withValues(alpha: 0.25),
-                        blurRadius: 18,
+                        color: const Color(0xFF0070F3).withValues(alpha: 0.25),
+                        blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
                     ],
@@ -84,15 +111,24 @@ class StudentWalletScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.account_balance_wallet_outlined, color: Colors.white70, size: 16),
+                              const Icon(Icons.account_balance_wallet_rounded, color: Colors.white70, size: 18),
                               const SizedBox(width: 8),
-                              const Text('Available Balance', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                              const SizedBox(width: 8),
+                              Text(
+                                'Available Balance',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
                               IconButton(
+                                constraints: const BoxConstraints(),
+                                padding: EdgeInsets.zero,
                                 icon: Icon(
                                   wallet.isBalanceVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                                   color: Colors.white70,
-                                  size: 16,
+                                  size: 18,
                                 ),
                                 onPressed: wallet.toggleBalanceVisibility,
                               ),
@@ -104,28 +140,43 @@ class StudentWalletScreen extends StatelessWidget {
                               color: Colors.white.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text('Verified NUBAN', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.verified_rounded, size: 12, color: Color(0xFF6EE7B7)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Dedicated NUBAN',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Text(
                         wallet.isBalanceVisible ? '₦$formattedBalance' : '₦ • • • • • •',
-                        style: GoogleFonts.montserrat(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 34,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w800,
                           color: Colors.white,
                           letterSpacing: -0.5,
                         ),
                       ),
                       const SizedBox(height: 20),
 
-                      // Dedicated Bank Transfer Box
+                      // Dedicated Bank Account Strip
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.black.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -133,13 +184,25 @@ class StudentWalletScreen extends StatelessWidget {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Dedicated Account Number', style: TextStyle(color: Colors.white60, fontSize: 10)),
-                                const SizedBox(height: 2),
+                                Text(
+                                  'Automated Virtual Account (Providus / Moniepoint)',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: Colors.white60,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
                                 Row(
                                   children: [
                                     Text(
                                       accountNumber,
-                                      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.2,
+                                      ),
                                     ),
                                     const SizedBox(width: 8),
                                     InkWell(
@@ -149,7 +212,14 @@ class StudentWalletScreen extends StatelessWidget {
                                           const SnackBar(content: Text('Account number copied to clipboard!')),
                                         );
                                       },
-                                      child: const Icon(Icons.copy, color: Colors.white70, size: 14),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: const Icon(Icons.copy_rounded, color: Colors.white, size: 14),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -158,9 +228,23 @@ class StudentWalletScreen extends StatelessWidget {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text(bankName, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                                Text(
+                                  bankName,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                                 const SizedBox(height: 2),
-                                const Text('Instant Topup Reflection', style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 10)),
+                                Text(
+                                  'Instant Auto-Credit',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: const Color(0xFF6EE7B7),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -171,31 +255,40 @@ class StudentWalletScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // 2. Direct Actions (Prompt specifies: Fund Wallet, Buy Exam PIN, Buy Airtime, Buy Data, View Transactions)
-                const Text(
+                // 2. Pure VTU Quick Actions
+                Text(
                   'Quick Actions',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
                 ),
                 const SizedBox(height: 12),
+                _buildActionsGrid(context, isDesktop, isDark),
+                const SizedBox(height: 28),
 
-                _buildActionsGrid(context, isDesktop),
-                const SizedBox(height: 32),
-
-                // 3. Transactions List & Filter
+                // 3. Transactions Statement Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Wallet Ledger & Statement',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
                     ),
-                    TextButton(
+                    TextButton.icon(
                       onPressed: () => context.push('/transactions'),
-                      child: const Row(
-                        children: [
-                          Text('Full History', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                          Icon(Icons.arrow_forward, size: 14),
-                        ],
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 14),
+                      label: Text(
+                        'Full History',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -212,35 +305,35 @@ class StudentWalletScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionsGrid(BuildContext context, bool isDesktop) {
+  Widget _buildActionsGrid(BuildContext context, bool isDesktop, bool isDark) {
     final actions = [
       {
         'title': 'Fund Wallet',
-        'sub': 'Bank Transfer or Card',
-        'icon': Icons.add_circle_outline,
+        'sub': 'Bank Transfer / Gateway',
+        'icon': Icons.add_circle_outline_rounded,
         'color': const Color(0xFF0070F3),
         'onTap': () => context.push('/wallet/fund'),
       },
       {
-        'title': 'Buy Exam PIN',
-        'sub': 'WAEC, JAMB, NECO tokens',
-        'icon': Icons.school_outlined,
-        'color': const Color(0xFF059669),
-        'onTap': () => context.push('/exams'),
-      },
-      {
-        'title': 'Buy Study Data',
-        'sub': 'SME & Gifting Bundles',
-        'icon': Icons.wifi,
-        'color': const Color(0xFF8B5CF6),
+        'title': 'Buy Data',
+        'sub': 'Instant SME & Gifting',
+        'icon': Icons.wifi_rounded,
+        'color': const Color(0xFF10B981),
         'onTap': () => context.push('/services/data'),
       },
       {
         'title': 'Buy Airtime',
-        'sub': 'Discount on all networks',
-        'icon': Icons.phone_android,
-        'color': const Color(0xFFF59E0B),
+        'sub': 'Up to 5% Discount',
+        'icon': Icons.phone_android_rounded,
+        'color': const Color(0xFF00A3FF),
         'onTap': () => context.push('/services/airtime'),
+      },
+      {
+        'title': 'Electricity Bill',
+        'sub': 'Instant Meter Tokens',
+        'icon': Icons.bolt_rounded,
+        'color': const Color(0xFFF59E0B),
+        'onTap': () => context.push('/services/electricity'),
       },
     ];
 
@@ -251,9 +344,9 @@ class StudentWalletScreen extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-        childAspectRatio: isDesktop ? 1.9 : 1.4,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: isDesktop ? 2.0 : 1.5,
       ),
       itemCount: actions.length,
       itemBuilder: (ctx, i) {
@@ -271,16 +364,29 @@ class StudentWalletScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: col.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(a['icon'] as IconData, color: col, size: 20),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(a['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(
+                    a['title'] as String,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(a['sub'] as String, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  Text(
+                    a['sub'] as String,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -296,9 +402,14 @@ class StudentWalletScreen extends StatelessWidget {
     return AvotekCard(
       padding: EdgeInsets.zero,
       child: txs.isEmpty
-          ? const Padding(
-              padding: EdgeInsets.all(32),
-              child: Center(child: Text('No transactions recorded yet.')),
+          ? Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(
+                child: Text(
+                  'No transactions recorded yet.',
+                  style: GoogleFonts.plusJakartaSans(color: Colors.grey),
+                ),
+              ),
             )
           : ListView.separated(
               shrinkWrap: true,
@@ -309,24 +420,36 @@ class StudentWalletScreen extends StatelessWidget {
                 final tx = txs[i];
                 final isCredit = tx.type == 'topup' || tx.type == 'credit';
                 final amountPrefix = isCredit ? '+₦' : '-₦';
-                final amountColor = isCredit ? const Color(0xFF059669) : (isDark ? Colors.white : Colors.black87);
+                final amountColor = isCredit ? const Color(0xFF10B981) : (isDark ? Colors.white : const Color(0xFF0F172A));
                 final dateFormat = DateFormat('MMM d, h:mm a');
 
                 return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: isCredit
-                        ? const Color(0xFFE7F6EC)
-                        : const Color(0xFFEFF6FF),
+                  leading: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isCredit
+                          ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                          : const Color(0xFF0070F3).withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
                     child: Icon(
-                      isCredit ? Icons.arrow_downward : Icons.arrow_upward,
+                      isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
                       size: 16,
-                      color: isCredit ? const Color(0xFF059669) : AppColors.primaryBlue,
+                      color: isCredit ? const Color(0xFF10B981) : AppColors.primaryBlue,
                     ),
                   ),
-                  title: Text(tx.narration ?? 'Transaction', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  title: Text(
+                    tx.narration ?? 'VTU Transaction',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
                   subtitle: Text(
                     'Ref: ${tx.reference} • ${dateFormat.format(tx.createdAt)}',
-                    style: const TextStyle(fontSize: 11),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 11),
                   ),
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -334,7 +457,11 @@ class StudentWalletScreen extends StatelessWidget {
                     children: [
                       Text(
                         '$amountPrefix${NumberFormat("#,##0.00").format(tx.amount)}',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: amountColor),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: amountColor,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       StatusBadge.success(tx.status),

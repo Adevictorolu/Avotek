@@ -18,20 +18,17 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   late bool _isSignUp;
-  bool _isOtpStep = false;
   bool _obscurePassword = true;
   bool _keepMeSignedIn = true;
   bool _agreedToTerms = true;
 
   // Controllers
   final _identifierController = TextEditingController(text: 'demo@avotek.africa');
-  final _firstNameController = TextEditingController(text: 'Ada');
-  final _lastNameController = TextEditingController(text: 'Okafor');
+  final _fullNameController = TextEditingController(text: 'Ada Okafor');
   final _phoneController = TextEditingController(text: '0803 411 9920');
   final _emailController = TextEditingController(text: 'ada@example.com');
   final _passwordController = TextEditingController(text: 'demopassword');
   final _referralController = TextEditingController();
-  final _otpController = TextEditingController(text: '123456');
 
   @override
   void initState() {
@@ -42,13 +39,11 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _identifierController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
+    _fullNameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _referralController.dispose();
-    _otpController.dispose();
     super.dispose();
   }
 
@@ -62,6 +57,142 @@ class _LoginScreenState extends State<LoginScreen> {
       context.go('/dashboard');
     }
   }
+
+  void _showGoogleAuthDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final emailController = TextEditingController(text: 'user@gmail.com');
+    final nameController = TextEditingController(text: 'Google User');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            _buildGoogleIcon(size: 24),
+            const SizedBox(width: 12),
+            Text(
+              _isSignUp ? 'Google Sign-Up' : 'Google Sign-In',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                fontSize: 17,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Google Cloud Client ID Connected',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF10B981),
+                          ),
+                        ),
+                        Text(
+                          '499643353122-su0u941trtlk3e4c5f7o8abiih7q52r8',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Sign in using your Google account:',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Google Profile Name',
+                prefixIcon: Icon(Icons.person_outline, size: 18),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(
+                labelText: 'Google Account Email',
+                prefixIcon: Icon(Icons.email_outlined, size: 18),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+            ),
+          ),
+          ElevatedButton.icon(
+            icon: _buildGoogleIcon(size: 16),
+            label: Text(
+              'Authorize with Google',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final auth = context.read<AuthProvider>();
+              final success = await auth.socialLogin(
+                provider: 'google',
+                email: emailController.text.trim().isNotEmpty
+                    ? emailController.text.trim()
+                    : 'user@gmail.com',
+                name: nameController.text.trim().isNotEmpty
+                    ? nameController.text.trim()
+                    : 'Google User',
+              );
+              if (success && mounted) {
+                if (auth.user?.id != null) {
+                  context.read<WalletProvider>().fetchWallet(auth.user!.id!);
+                }
+                context.go('/dashboard');
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Future<void> _handleSignIn() async {
     final auth = context.read<AuthProvider>();
@@ -92,15 +223,15 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _handleStartSignUp() async {
-    final firstName = _firstNameController.text.trim();
-    final lastName = _lastNameController.text.trim();
+  Future<void> _handleSignUp() async {
+    final fullName = _fullNameController.text.trim();
     final phone = _phoneController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
+    final referral = _referralController.text.trim();
 
-    if (firstName.isEmpty || lastName.isEmpty) {
-      _showError('Please enter your first and last name');
+    if (fullName.isEmpty) {
+      _showError('Please enter your full name');
       return;
     }
     if (phone.length < 10) {
@@ -116,44 +247,13 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     if (!_agreedToTerms) {
-      _showError('Please agree to the terms of service to continue');
+      _showError('Please accept the Terms of Service to continue');
       return;
     }
 
-    // Advance to OTP verification step (Step 2)
     final auth = context.read<AuthProvider>();
-    await auth.sendOtp(phone);
-    if (mounted) {
-      setState(() {
-        _isOtpStep = true;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('OTP sent to your phone! Test code is 123456'),
-          backgroundColor: AppColors.primaryBlue,
-        ),
-      );
-    }
-  }
-
-  Future<void> _handleVerifyAndRegister() async {
-    final auth = context.read<AuthProvider>();
-    final firstName = _firstNameController.text.trim();
-    final lastName = _lastNameController.text.trim();
-    final phone = _phoneController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-    final referral = _referralController.text.trim();
-    final otp = _otpController.text.trim();
-
-    if (otp.isEmpty || otp.length < 4) {
-      _showError('Please enter the 6-digit OTP code');
-      return;
-    }
-
-    // Complete registration
     final success = await auth.register(
-      name: '$firstName $lastName',
+      name: fullName,
       phone: phone,
       email: email,
       password: password,
@@ -173,7 +273,10 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(
+          message,
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+        ),
         backgroundColor: AppColors.error,
       ),
     );
@@ -185,114 +288,240 @@ class _LoginScreenState extends State<LoginScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
+      backgroundColor: isDark ? AppColors.darkBg : const Color(0xFFF4F6F9),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
+              constraints: const BoxConstraints(maxWidth: 440),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // 1. AUTH HEADER (Matching Kobopay .auth__head)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      InkWell(
-                        onTap: () => context.go('/'),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.arrow_back_rounded, size: 16, color: AppColors.primaryCyan),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Back to site',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : const Color(0xFF334155),
-                                ),
-                              ),
-                            ],
-                          ),
+                  // 1. BRAND LOGO - Clean, Undistorted, Perfectly Positioned
+                  Center(
+                    child: InkWell(
+                      onTap: () => context.go('/'),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: AvotekLogo(
+                          size: 46,
+                          isLarge: true,
+                          isDark: isDark,
                         ),
                       ),
-                      const AvotekLogo(size: 28, showText: true),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 18),
 
-                  // 2. AUTH CARD (Matching Kobopay .auth__card)
+                  // 2. MAIN AUTH CARD
                   Container(
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.darkCard : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                        color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
-                          blurRadius: 24,
-                          offset: const Offset(0, 10),
+                          color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.06),
+                          blurRadius: 30,
+                          offset: const Offset(0, 12),
                         ),
                       ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (_isSignUp) ...[
-                          // Stepper (Matching Kobopay .stepper)
-                          _buildStepper(isDark),
-                          const SizedBox(height: 24),
-                        ],
-
-                        // Headline & Deck
+                        // Card Header
                         Text(
-                          _isOtpStep
-                              ? 'Verify phone'
-                              : (_isSignUp ? 'Create your account' : 'Welcome back'),
-                          style: GoogleFonts.montserrat(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
+                          _isSignUp ? 'Create your account' : 'Welcome back',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.4,
                             color: isDark ? Colors.white : const Color(0xFF0F172A),
                           ),
+                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          _isOtpStep
-                              ? 'Enter the 6-digit verification code sent to your phone.'
-                              : (_isSignUp
-                                  ? 'Two minutes, no paperwork and no minimum funding.'
-                                  : 'Sign in to pick up where you stopped.'),
-                          style: TextStyle(
-                            fontSize: 14,
+                          _isSignUp
+                              ? 'Fast & automated VTU services at wholesale prices.'
+                              : 'Sign in to access your wallet and services.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
                             color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                           ),
+                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
 
-                        // Form body
-                        if (_isOtpStep)
-                          _buildOtpForm(auth, isDark)
-                        else if (_isSignUp)
-                          _buildSignUpForm(auth, isDark)
+                        // Switcher Tabs (Sign In / Register)
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () => setState(() => _isSignUp = false),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: !_isSignUp
+                                          ? (isDark ? AppColors.darkCard : Colors.white)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: !_isSignUp
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(alpha: 0.08),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      'Sign In',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        fontWeight: !_isSignUp ? FontWeight.w800 : FontWeight.w600,
+                                        color: !_isSignUp
+                                            ? AppColors.primaryCyan
+                                            : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () => setState(() => _isSignUp = true),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: _isSignUp
+                                          ? (isDark ? AppColors.darkCard : Colors.white)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: _isSignUp
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(alpha: 0.08),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      'Register',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        fontWeight: _isSignUp ? FontWeight.w800 : FontWeight.w600,
+                                        color: _isSignUp
+                                            ? AppColors.primaryCyan
+                                            : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // GOOGLE SIGN-IN / SIGN-UP BUTTON
+                        OutlinedButton(
+                          onPressed: _showGoogleAuthDialog,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+                            side: BorderSide(
+                              color: isDark ? AppColors.darkBorder : const Color(0xFFCBD5E1),
+                              width: 1.2,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            backgroundColor: isDark ? AppColors.darkCardVariant.withValues(alpha: 0.5) : Colors.white,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildGoogleIcon(size: 20),
+                              const SizedBox(width: 10),
+                              Text(
+                                _isSignUp ? 'Sign up with Google' : 'Sign in with Google',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+
+                        // Divider
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0))),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(
+                                'OR',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0))),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+
+                        // Form Body
+                        if (_isSignUp)
+                          _buildSignUpFields(auth, isDark)
                         else
-                          _buildSignInForm(auth, isDark),
+                          _buildSignInFields(auth, isDark),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // 3. ASSURANCE BULLETS (Matching Kobopay .auth__pts)
-                  _buildAssurancePoints(isDark),
+                  // 3. BACK TO SITE / FOOTER
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () => context.go('/'),
+                      icon: const Icon(Icons.arrow_back_rounded, size: 16),
+                      label: Text(
+                        'Return to homepage',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        foregroundColor: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -302,108 +531,24 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // STEPPER COMPONENT (Replicating Kobopay .stepper)
-  Widget _buildStepper(bool isDark) {
-    final currentStep = _isOtpStep ? 2 : 1;
-
-    return Row(
-      children: [
-        _stepperNode(1, 'Your details', currentStep == 1, currentStep > 1, isDark),
-        _stepperDivider(currentStep > 1, isDark),
-        _stepperNode(2, 'Verify phone', currentStep == 2, currentStep > 2, isDark),
-        _stepperDivider(false, isDark),
-        _stepperNode(3, 'Start buying', false, false, isDark),
-      ],
-    );
-  }
-
-  Widget _stepperNode(int step, String label, bool isNow, bool isDone, bool isDark) {
-    final activeColor = AppColors.primaryCyan;
-    final inactiveColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
-
-    return Expanded(
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isNow
-                      ? activeColor
-                      : (isDone ? AppColors.success : inactiveColor),
-                ),
-                child: Center(
-                  child: isDone
-                      ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
-                      : Text(
-                          '$step',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: isNow ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
-                          ),
-                        ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: isNow ? FontWeight.w700 : FontWeight.w500,
-              color: isNow
-                  ? (isDark ? Colors.white : const Color(0xFF0F172A))
-                  : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _stepperDivider(bool isDone, bool isDark) {
-    return Container(
-      width: 20,
-      height: 2,
-      margin: const EdgeInsets.only(bottom: 18),
-      color: isDone
-          ? AppColors.success
-          : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-    );
-  }
-
-  // SIGN IN FORM (Matching Kobopay login.html)
-  Widget _buildSignInForm(AuthProvider auth, bool isDark) {
+  Widget _buildSignInFields(AuthProvider auth, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Identifier
-        _inputField(
-          label: 'Email or phone number',
+        _buildTextField(
+          label: 'Email or Phone Number',
           controller: _identifierController,
-          hintText: 'demo@avotek.africa or 0803 411 9920',
+          hint: '0803 000 0000 or email',
           keyboardType: TextInputType.emailAddress,
           isDark: isDark,
         ),
-        const SizedBox(height: 18),
-
-        // Password
-        _passwordField(
+        const SizedBox(height: 14),
+        _buildPasswordField(
           label: 'Password',
           controller: _passwordController,
-          hintText: '••••••••',
           isDark: isDark,
         ),
-        const SizedBox(height: 14),
-
-        // Form Aside (Keep me signed in + Forgot password?)
+        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -412,21 +557,22 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Row(
                 children: [
                   SizedBox(
-                    width: 20,
-                    height: 20,
+                    width: 18,
+                    height: 18,
                     child: Checkbox(
                       value: _keepMeSignedIn,
                       activeColor: AppColors.primaryCyan,
                       checkColor: Colors.black,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                      onChanged: (val) => setState(() => _keepMeSignedIn = val ?? true),
+                      onChanged: (v) => setState(() => _keepMeSignedIn = v ?? true),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Keep me signed in',
-                    style: TextStyle(
-                      fontSize: 13,
+                    'Remember me',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                       color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                     ),
                   ),
@@ -439,303 +585,168 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SnackBar(content: Text('Password reset link sent to demo email.')),
                 );
               },
-              child: const Text(
+              child: Text(
                 'Forgot password?',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.primaryCyan,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 24),
-
-        // Primary Sign in Button
+        const SizedBox(height: 20),
         ElevatedButton(
           onPressed: auth.isLoading ? null : _handleSignIn,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryCyan,
-            foregroundColor: Colors.black,
-            minimumSize: const Size(double.infinity, 48),
+            foregroundColor: const Color(0xFF002B47),
+            padding: const EdgeInsets.symmetric(vertical: 14),
             elevation: 0,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: auth.isLoading
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-              : const Text('Sign in', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              : Text(
+                  'Sign In',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
         ),
-        const SizedBox(height: 12),
-
-        // 1-Tap Demo Sign In Button
+        const SizedBox(height: 10),
         OutlinedButton.icon(
           onPressed: _handleOneTapDemo,
-          icon: const Icon(Icons.bolt_rounded, size: 18, color: AppColors.warning),
-          label: const Text('Sign in with 1-Tap Demo Account', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
-            side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-            minimumSize: const Size(double.infinity, 44),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          icon: const Icon(Icons.bolt_rounded, size: 16, color: AppColors.warning),
+          label: Text(
+            '1-Tap Demo Access',
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
           ),
-        ),
-        const SizedBox(height: 24),
-
-        // Auth Switch
-        Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'New here? ',
-                style: TextStyle(fontSize: 13, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
-              ),
-              InkWell(
-                onTap: () => setState(() {
-                  _isSignUp = true;
-                  _isOtpStep = false;
-                }),
-                child: const Text(
-                  'Create an account',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primaryCyan),
-                ),
-              ),
-            ],
+          style: OutlinedButton.styleFrom(
+            foregroundColor: isDark ? Colors.white70 : const Color(0xFF334155),
+            side: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
       ],
     );
   }
 
-  // SIGN UP FORM (Matching Kobopay register.html)
-  Widget _buildSignUpForm(AuthProvider auth, bool isDark) {
+  Widget _buildSignUpFields(AuthProvider auth, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Two-col: First name & Last name
-        Row(
-          children: [
-            Expanded(
-              child: _inputField(
-                label: 'First name',
-                controller: _firstNameController,
-                hintText: 'Ada',
-                isDark: isDark,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _inputField(
-                label: 'Last name',
-                controller: _lastNameController,
-                hintText: 'Okafor',
-                isDark: isDark,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Phone number
-        _inputField(
-          label: 'Phone number',
-          controller: _phoneController,
-          hintText: '0803 411 9920',
-          keyboardType: TextInputType.phone,
-          hintNote: 'Your OTP goes to this number.',
+        _buildTextField(
+          label: 'Full Name',
+          controller: _fullNameController,
+          hint: 'e.g. Ada Okafor',
           isDark: isDark,
         ),
-        const SizedBox(height: 16),
-
-        // Email address
-        _inputField(
-          label: 'Email address',
+        const SizedBox(height: 12),
+        _buildTextField(
+          label: 'Phone Number',
+          controller: _phoneController,
+          hint: '0803 411 9920',
+          keyboardType: TextInputType.phone,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          label: 'Email Address',
           controller: _emailController,
-          hintText: 'ada@example.com',
+          hint: 'name@example.com',
           keyboardType: TextInputType.emailAddress,
           isDark: isDark,
         ),
-        const SizedBox(height: 16),
-
-        // Password
-        _passwordField(
-          label: 'Password',
+        const SizedBox(height: 12),
+        _buildPasswordField(
+          label: 'Create Password',
           controller: _passwordController,
-          hintText: '••••••••',
-          hintNote: 'At least eight characters, with one number.',
           isDark: isDark,
         ),
-        const SizedBox(height: 16),
-
-        // Referral code
-        _inputField(
-          label: 'Referral code, if you have one',
+        const SizedBox(height: 12),
+        _buildTextField(
+          label: 'Referral Code (Optional)',
           controller: _referralController,
-          hintText: 'Optional',
+          hint: 'Enter referral code',
           isDark: isDark,
         ),
-        const SizedBox(height: 18),
-
-        // Terms Checkbox
+        const SizedBox(height: 14),
         InkWell(
           onTap: () => setState(() => _agreedToTerms = !_agreedToTerms),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                width: 20,
-                height: 20,
+                width: 18,
+                height: 18,
                 child: Checkbox(
                   value: _agreedToTerms,
                   activeColor: AppColors.primaryCyan,
                   checkColor: Colors.black,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                  onChanged: (val) => setState(() => _agreedToTerms = val ?? true),
+                  onChanged: (v) => setState(() => _agreedToTerms = v ?? true),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'I agree to the terms of service and the privacy policy',
-                  style: TextStyle(
-                    fontSize: 12,
+                  'I agree to the Terms of Service and Privacy Policy.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
                     color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                    height: 1.4,
                   ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 24),
-
-        // Submit Button
+        const SizedBox(height: 18),
         ElevatedButton(
-          onPressed: auth.isLoading ? null : _handleStartSignUp,
+          onPressed: auth.isLoading ? null : _handleSignUp,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryCyan,
-            foregroundColor: Colors.black,
-            minimumSize: const Size(double.infinity, 48),
+            foregroundColor: const Color(0xFF002B47),
+            padding: const EdgeInsets.symmetric(vertical: 14),
             elevation: 0,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: auth.isLoading
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-              : const Text('Create account', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-        ),
-        const SizedBox(height: 20),
-
-        // Auth Switch
-        Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Already registered? ',
-                style: TextStyle(fontSize: 13, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
-              ),
-              InkWell(
-                onTap: () => setState(() {
-                  _isSignUp = false;
-                  _isOtpStep = false;
-                }),
-                child: const Text(
-                  'Sign in',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primaryCyan),
+              : Text(
+                  'Create Free Account',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-            ],
-          ),
         ),
       ],
     );
   }
 
-  // OTP VERIFICATION STEP
-  Widget _buildOtpForm(AuthProvider auth, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.sms_outlined, size: 20, color: AppColors.primaryCyan),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Code sent to ${_phoneController.text.trim()}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                ),
-              ),
-              InkWell(
-                onTap: () => setState(() => _isOtpStep = false),
-                child: const Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryCyan)),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        _inputField(
-          label: 'Enter 6-digit code',
-          controller: _otpController,
-          hintText: '123456',
-          keyboardType: TextInputType.number,
-          hintNote: 'Sandbox demo code 123456 is pre-filled.',
-          isDark: isDark,
-        ),
-        const SizedBox(height: 24),
-
-        ElevatedButton(
-          onPressed: auth.isLoading ? null : _handleVerifyAndRegister,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryCyan,
-            foregroundColor: Colors.black,
-            minimumSize: const Size(double.infinity, 48),
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          child: auth.isLoading
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-              : const Text('Verify & Start Buying', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-        ),
-        const SizedBox(height: 16),
-
-        TextButton(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Verification code resent!')),
-            );
-          },
-          child: const Text('Didn\'t receive code? Resend SMS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primaryCyan)),
-        ),
-      ],
-    );
-  }
-
-  // HELPER FORM FIELDS
-  Widget _inputField({
+  Widget _buildTextField({
     required String label,
     required TextEditingController controller,
-    required String hintText,
+    required String hint,
     required bool isDark,
     TextInputType keyboardType = TextInputType.text,
-    String? hintNote,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
             color: isDark ? Colors.white : const Color(0xFF0F172A),
           ),
         ),
@@ -743,18 +754,18 @@ class _LoginScreenState extends State<LoginScreen> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
-          style: const TextStyle(fontSize: 14),
+          style: GoogleFonts.plusJakartaSans(fontSize: 13),
           decoration: InputDecoration(
-            hintText: hintText,
+            hintText: hint,
             filled: true,
             fillColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+              borderSide: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+              borderSide: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -763,35 +774,23 @@ class _LoginScreenState extends State<LoginScreen> {
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
         ),
-        if (hintNote != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            hintNote,
-            style: TextStyle(
-              fontSize: 11,
-              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-            ),
-          ),
-        ],
       ],
     );
   }
 
-  Widget _passwordField({
+  Widget _buildPasswordField({
     required String label,
     required TextEditingController controller,
-    required String hintText,
     required bool isDark,
-    String? hintNote,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
             color: isDark ? Colors.white : const Color(0xFF0F172A),
           ),
         ),
@@ -799,18 +798,18 @@ class _LoginScreenState extends State<LoginScreen> {
         TextField(
           controller: controller,
           obscureText: _obscurePassword,
-          style: const TextStyle(fontSize: 14),
+          style: GoogleFonts.plusJakartaSans(fontSize: 13),
           decoration: InputDecoration(
-            hintText: hintText,
+            hintText: '••••••••',
             filled: true,
             fillColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+              borderSide: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+              borderSide: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -827,55 +826,73 @@ class _LoginScreenState extends State<LoginScreen> {
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
         ),
-        if (hintNote != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            hintNote,
-            style: TextStyle(
-              fontSize: 11,
-              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-            ),
-          ),
-        ],
       ],
     );
   }
 
-  // 3 ASSURANCE BULLETS (Replicating Kobopay .auth__pts)
-  Widget _buildAssurancePoints(bool isDark) {
-    final List<Map<String, dynamic>> items = _isSignUp
-        ? [
-            {'icon': Icons.check_circle_outline_rounded, 'text': 'No monthly fee and no minimum funding'},
-            {'icon': Icons.check_circle_outline_rounded, 'text': 'A dedicated account number the moment you join'},
-            {'icon': Icons.check_circle_outline_rounded, 'text': 'Reseller pricing from your very first order'},
-          ]
-        : [
-            {'icon': Icons.bolt_rounded, 'text': 'Orders land in seconds, or refund themselves'},
-            {'icon': Icons.shield_outlined, 'text': 'A transaction PIN before any money leaves'},
-            {'icon': Icons.receipt_long_outlined, 'text': 'A receipt for every order, kept permanently'},
-          ];
-
-    return Column(
-      children: items.map((it) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              Icon(it['icon'] as IconData, size: 16, color: AppColors.primaryCyan),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  it['text'] as String,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
+  Widget _buildGoogleIcon({double size = 20}) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _GoogleIconPainter(),
     );
   }
+}
+
+class _GoogleIconPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+    final double stroke = w * 0.22;
+
+    final red = Paint()
+      ..color = const Color(0xFFEA4335)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.round;
+
+    final yellow = Paint()
+      ..color = const Color(0xFFFBBC05)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.round;
+
+    final green = Paint()
+      ..color = const Color(0xFF34A853)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.round;
+
+    final blue = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.round;
+
+    final rect = Rect.fromLTWH(stroke / 2, stroke / 2, w - stroke, h - stroke);
+
+    // Red arc (top)
+    canvas.drawArc(rect, 3.8, 1.4, false, red);
+    // Yellow arc (left)
+    canvas.drawArc(rect, 2.3, 1.5, false, yellow);
+    // Green arc (bottom)
+    canvas.drawArc(rect, 0.8, 1.5, false, green);
+    // Blue arc (right)
+    canvas.drawArc(rect, 0.0, 0.8, false, blue);
+
+    // Blue horizontal bar
+    final barPaint = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..style = PaintingStyle.fill;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * 0.45, h * 0.42, w * 0.45, stroke),
+        Radius.circular(stroke / 2),
+      ),
+      barPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

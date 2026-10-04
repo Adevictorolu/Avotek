@@ -31,97 +31,97 @@ class AppColors {
 }
 
 class AppTheme {
-  static TextTheme _buildMontserratTextTheme(Brightness brightness) {
+  static TextTheme _buildPlusJakartaSansTextTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
     final primaryTextColor = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
     final secondaryTextColor = isDark ? AppColors.metallicLight : AppColors.slateGrey;
 
     return TextTheme(
-      displayLarge: GoogleFonts.montserrat(
+      displayLarge: GoogleFonts.plusJakartaSans(
         fontSize: 32,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.8,
         color: primaryTextColor,
       ),
-      displayMedium: GoogleFonts.montserrat(
+      displayMedium: GoogleFonts.plusJakartaSans(
         fontSize: 24,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.6,
         color: primaryTextColor,
       ),
-      displaySmall: GoogleFonts.montserrat(
+      displaySmall: GoogleFonts.plusJakartaSans(
         fontSize: 20,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.5,
         color: primaryTextColor,
       ),
-      headlineLarge: GoogleFonts.montserrat(
+      headlineLarge: GoogleFonts.plusJakartaSans(
         fontSize: 22,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         letterSpacing: -0.4,
         color: primaryTextColor,
       ),
-      headlineMedium: GoogleFonts.montserrat(
+      headlineMedium: GoogleFonts.plusJakartaSans(
         fontSize: 18,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.3,
         color: primaryTextColor,
       ),
-      headlineSmall: GoogleFonts.montserrat(
+      headlineSmall: GoogleFonts.plusJakartaSans(
         fontSize: 16,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.2,
         color: primaryTextColor,
       ),
-      titleLarge: GoogleFonts.montserrat(
+      titleLarge: GoogleFonts.plusJakartaSans(
         fontSize: 16,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.1,
         color: primaryTextColor,
       ),
-      titleMedium: GoogleFonts.montserrat(
+      titleMedium: GoogleFonts.plusJakartaSans(
         fontSize: 14,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         letterSpacing: -0.1,
         color: primaryTextColor,
       ),
-      titleSmall: GoogleFonts.montserrat(
+      titleSmall: GoogleFonts.plusJakartaSans(
         fontSize: 12,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.0,
         color: secondaryTextColor,
       ),
-      bodyLarge: GoogleFonts.montserrat(
-        fontSize: 13,
+      bodyLarge: GoogleFonts.plusJakartaSans(
+        fontSize: 14,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.1,
         color: primaryTextColor,
       ),
-      bodyMedium: GoogleFonts.montserrat(
-        fontSize: 12,
+      bodyMedium: GoogleFonts.plusJakartaSans(
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         letterSpacing: 0.1,
         color: secondaryTextColor,
       ),
-      bodySmall: GoogleFonts.montserrat(
+      bodySmall: GoogleFonts.plusJakartaSans(
         fontSize: 11,
         fontWeight: FontWeight.w400,
         letterSpacing: 0.1,
         color: secondaryTextColor,
       ),
-      labelLarge: GoogleFonts.montserrat(
+      labelLarge: GoogleFonts.plusJakartaSans(
         fontSize: 13,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         letterSpacing: 0.2,
         color: primaryTextColor,
       ),
-      labelMedium: GoogleFonts.montserrat(
+      labelMedium: GoogleFonts.plusJakartaSans(
         fontSize: 11,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
         color: secondaryTextColor,
       ),
-      labelSmall: GoogleFonts.montserrat(
+      labelSmall: GoogleFonts.plusJakartaSans(
         fontSize: 10,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.2,
@@ -131,13 +131,13 @@ class AppTheme {
   }
 
   static ThemeData light() {
-    final textTheme = _buildMontserratTextTheme(Brightness.light);
+    final textTheme = _buildPlusJakartaSansTextTheme(Brightness.light);
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      fontFamily: GoogleFonts.montserrat().fontFamily,
-      fontFamilyFallback: const ['Montserrat', 'Roboto', 'sans-serif'],
+      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+      fontFamilyFallback: const ['Plus Jakarta Sans', 'Public Sans', 'sans-serif'],
       textTheme: textTheme,
       primaryTextTheme: textTheme,
       pageTransitionsTheme: const PageTransitionsTheme(
@@ -165,15 +165,14 @@ class AppTheme {
         error: AppColors.error,
         onError: Colors.white,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.lightBg,
-        foregroundColor: Color(0xFF0F172A),
+        foregroundColor: const Color(0xFF0F172A),
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontFamily: 'Montserrat',
-          color: Color(0xFF0F172A),
+        titleTextStyle: GoogleFonts.plusJakartaSans(
+          color: const Color(0xFF0F172A),
           fontSize: 16,
           fontWeight: FontWeight.w700,
         ),
@@ -194,8 +193,7 @@ class AppTheme {
         indicatorColor: AppColors.primaryBlue.withValues(alpha: 0.12),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
-          return TextStyle(
-            fontFamily: 'Montserrat',
+          return GoogleFonts.plusJakartaSans(
             fontSize: 11,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             color: isSelected ? AppColors.primaryBlue : AppColors.slateGrey,
@@ -225,7 +223,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
         ),
-        hintStyle: const TextStyle(fontFamily: 'Montserrat', color: Color(0xFF94A3B8), fontSize: 13),
+        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -236,7 +234,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: const TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.w700),
+          textStyle: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
         ),
       ),
       dialogTheme: DialogThemeData(
@@ -251,13 +249,13 @@ class AppTheme {
   }
 
   static ThemeData dark() {
-    final textTheme = _buildMontserratTextTheme(Brightness.dark);
+    final textTheme = _buildPlusJakartaSansTextTheme(Brightness.dark);
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      fontFamily: GoogleFonts.montserrat().fontFamily,
-      fontFamilyFallback: const ['Montserrat', 'Roboto', 'sans-serif'],
+      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+      fontFamilyFallback: const ['Plus Jakarta Sans', 'Public Sans', 'sans-serif'],
       textTheme: textTheme,
       primaryTextTheme: textTheme,
       pageTransitionsTheme: const PageTransitionsTheme(
@@ -285,15 +283,14 @@ class AppTheme {
         error: AppColors.error,
         onError: Colors.white,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.darkBg,
-        foregroundColor: Color(0xFFF8FAFC),
+        foregroundColor: const Color(0xFFF8FAFC),
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontFamily: 'Montserrat',
-          color: Color(0xFFF8FAFC),
+        titleTextStyle: GoogleFonts.plusJakartaSans(
+          color: const Color(0xFFF8FAFC),
           fontSize: 16,
           fontWeight: FontWeight.w700,
         ),
@@ -314,8 +311,7 @@ class AppTheme {
         indicatorColor: AppColors.primaryCyan.withValues(alpha: 0.15),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
-          return TextStyle(
-            fontFamily: 'Montserrat',
+          return GoogleFonts.plusJakartaSans(
             fontSize: 11,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             color: isSelected ? AppColors.primaryCyan : AppColors.metallicLight,
@@ -345,7 +341,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.primaryCyan, width: 1.5),
         ),
-        hintStyle: const TextStyle(fontFamily: 'Montserrat', color: Color(0xFF64748B), fontSize: 13),
+        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -356,7 +352,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: const TextStyle(fontFamily: 'Montserrat', fontSize: 13, fontWeight: FontWeight.w700),
+          textStyle: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
         ),
       ),
       dialogTheme: DialogThemeData(

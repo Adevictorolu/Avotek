@@ -451,10 +451,10 @@ class _LandingScreenState extends State<LandingScreen> {
         // Headline: Airtime, data and bills. Sorted in seconds.
         RichText(
           text: TextSpan(
-            style: GoogleFonts.montserrat(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 38,
               height: 1.15,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
               letterSpacing: -0.8,
             ),
@@ -797,9 +797,9 @@ class _LandingScreenState extends State<LandingScreen> {
       children: [
         Text(
           val,
-          style: GoogleFonts.montserrat(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 26,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w800,
             color: AppColors.primaryCyan,
           ),
         ),
@@ -1381,9 +1381,9 @@ class _LandingScreenState extends State<LandingScreen> {
         const SizedBox(height: 14),
         Text(
           'Your shop counter fits in your pocket',
-          style: GoogleFonts.montserrat(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 26,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w800,
             color: Colors.white,
             letterSpacing: -0.5,
           ),
@@ -1527,9 +1527,9 @@ class _LandingScreenState extends State<LandingScreen> {
           Text(
             'Ready to start? It takes two minutes',
             textAlign: TextAlign.center,
-            style: GoogleFonts.montserrat(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 28,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
               letterSpacing: -0.5,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
@@ -1758,7 +1758,7 @@ class _LandingScreenState extends State<LandingScreen> {
         Text(
           title,
           textAlign: TextAlign.center,
-          style: GoogleFonts.montserrat(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 26,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,

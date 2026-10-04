@@ -5,24 +5,33 @@ import '../core/theme/app_theme.dart';
 class AvotekLogo extends StatelessWidget {
   final double size;
   final bool showText;
-  final bool isDark;
+  final bool? isDark;
   final bool useAssetImage;
+  final bool isLarge;
 
   const AvotekLogo({
     super.key,
-    this.size = 48,
+    this.size = 40,
     this.showText = true,
-    this.isDark = true,
-    this.useAssetImage = false,
+    this.isDark,
+    this.useAssetImage = true,
+    this.isLarge = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveDark = isDark ?? (Theme.of(context).brightness == Brightness.dark);
+
     if (useAssetImage) {
+      final assetPath = isLarge
+          ? (effectiveDark ? 'assets/images/logo_large.png' : 'assets/images/logo_large_light.png')
+          : (effectiveDark ? 'assets/images/logo.png' : 'assets/images/logo_light.png');
+
       return Image.asset(
-        isDark ? 'assets/images/logo.png' : 'assets/images/logo_light.png',
+        assetPath,
         height: size,
         fit: BoxFit.contain,
+        alignment: Alignment.centerLeft,
       );
     }
 
@@ -32,7 +41,7 @@ class AvotekLogo extends StatelessWidget {
       children: [
         CustomPaint(
           size: Size(size, size),
-          painter: _AvotekCircuitPainter(isDark: isDark),
+          painter: _AvotekCircuitPainter(isDark: effectiveDark),
         ),
         if (showText) ...[
           const SizedBox(width: 12),
@@ -45,7 +54,7 @@ class AvotekLogo extends StatelessWidget {
                     fontSize: size * 0.48,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.5,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: effectiveDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                 ),
                 TextSpan(

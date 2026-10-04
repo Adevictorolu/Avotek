@@ -58,16 +58,16 @@ class _PricingScreenState extends State<PricingScreen> {
     {'network': '9mobile airtime', 'type': 'Instant top-up', 'discount': '5.5% off'},
   ];
 
-  final List<Map<String, dynamic>> _cableAndEducation = [
+  final List<Map<String, dynamic>> _cableAndUtility = [
     {'item': 'DStv Padi', 'cat': 'Cable TV', 'price': '₦4,400'},
     {'item': 'DStv Yanga', 'cat': 'Cable TV', 'price': '₦6,000'},
     {'item': 'DStv Compact', 'cat': 'Cable TV', 'price': '₦19,000'},
     {'item': 'GOtv Smallie', 'cat': 'Cable TV', 'price': '₦1,900'},
     {'item': 'GOtv Jinja', 'cat': 'Cable TV', 'price': '₦3,900'},
     {'item': 'Startimes Nova', 'cat': 'Cable TV', 'price': '₦1,900'},
-    {'item': 'WAEC result pin', 'cat': 'Education', 'price': '₦3,500'},
-    {'item': 'NECO result pin', 'cat': 'Education', 'price': '₦1,300'},
-    {'item': 'NABTEB result pin', 'cat': 'Education', 'price': '₦1,300'},
+    {'item': 'IKEDC / EKEDC Prepaid', 'cat': 'Electricity', 'price': 'Face Value'},
+    {'item': 'AEDC / IBEDC Prepaid', 'cat': 'Electricity', 'price': 'Face Value'},
+    {'item': 'SportyBet / Bet9ja Funding', 'cat': 'Betting', 'price': 'Zero Fee'},
   ];
 
   @override
@@ -169,9 +169,9 @@ class _PricingScreenState extends State<PricingScreen> {
           const SizedBox(height: 12),
           Text(
             'Every price, in the open',
-            style: GoogleFonts.montserrat(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 28,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
               letterSpacing: -0.5,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
@@ -409,7 +409,7 @@ class _PricingScreenState extends State<PricingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Cable TV and education', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('Cable TV & utility bills', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 Text(
                   'Electricity is charged at face value plus a ₦100 convenience fee.',
@@ -430,7 +430,7 @@ class _PricingScreenState extends State<PricingScreen> {
               ],
             ),
           ),
-          ..._cableAndEducation.map((item) {
+          ..._cableAndUtility.map((item) {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
@@ -491,9 +491,9 @@ class _PricingScreenState extends State<PricingScreen> {
               const SizedBox(height: 12),
               Text(
                 'Pay less as you sell more',
-                style: GoogleFonts.montserrat(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 26,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
                 ),
@@ -637,9 +637,9 @@ class _PricingScreenState extends State<PricingScreen> {
             children: [
               Text(
                 price,
-                style: GoogleFonts.montserrat(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 26,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                   color: isFeatured ? AppColors.primaryCyan : (isDark ? Colors.white : const Color(0xFF0F172A)),
                 ),
               ),

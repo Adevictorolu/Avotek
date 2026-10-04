@@ -8,11 +8,7 @@ import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/education_provider.dart';
 import '../../providers/wallet_provider.dart';
-import '../../widgets/avotek_card.dart';
-import '../../widgets/daily_challenge_card.dart';
-import '../../widgets/status_badge.dart';
 
 class DashboardScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -24,15 +20,23 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  bool _isRefreshing = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final auth = context.read<AuthProvider>();
-      if (auth.user?.id != null) {
-        context.read<WalletProvider>().fetchWallet(auth.user!.id!);
-      }
+      _loadData();
     });
+  }
+
+  Future<void> _loadData() async {
+    final auth = context.read<AuthProvider>();
+    if (auth.user?.id != null) {
+      setState(() => _isRefreshing = true);
+      await context.read<WalletProvider>().fetchWallet(auth.user!.id!);
+      if (mounted) setState(() => _isRefreshing = false);
+    }
   }
 
   void _showTransferDialog() {
@@ -41,48 +45,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.swap_horiz_rounded, color: AppColors.primaryBlue),
-            SizedBox(width: 8),
-            Text('Transfer Wallet Funds', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: phoneCtrl,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'Recipient Phone or Avotek ID', hintText: '0803 123 4567'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: amountCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Amount (₦)', hintText: 'e.g. 2000'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Wallet transfer successful! Funds credited instantly.')),
-              );
-            },
-            child: const Text('Transfer Now'),
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              const Icon(Icons.swap_horiz_rounded, color: AppColors.primaryCyan),
+              const SizedBox(width: 10),
+              Text(
+                'Send Money (User to User)',
+                style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+            ],
           ),
-        ],
-      ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                style: GoogleFonts.plusJakartaSans(fontSize: 13),
+                decoration: const InputDecoration(
+                  labelText: 'Recipient Phone or Avotek ID',
+                  hintText: '0803 123 4567',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: amountCtrl,
+                keyboardType: TextInputType.number,
+                style: GoogleFonts.plusJakartaSans(fontSize: 13),
+                decoration: const InputDecoration(
+                  labelText: 'Amount (₦)',
+                  hintText: 'e.g. 2000',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryCyan,
+                foregroundColor: const Color(0xFF002B47),
+              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Transfer successful! ₦${amountCtrl.text} sent instantly.',
+                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                    ),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              },
+              child: Text('Transfer Now', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -93,53 +121,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.file_download_outlined, color: AppColors.warning),
-            SizedBox(width: 8),
-            Text('Withdraw to Bank Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: bankCtrl,
-              decoration: const InputDecoration(labelText: 'Destination Bank', hintText: 'Select Bank'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: acctCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'NUBAN Account Number', hintText: '10 digits'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: amountCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Amount to Withdraw (₦)', hintText: 'Minimum ₦1,000'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.warning,
-              foregroundColor: Colors.black,
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Withdrawal request initiated. Expected settlement: < 2 minutes.')),
-              );
-            },
-            child: const Text('Withdraw Funds'),
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              const Icon(Icons.arrow_downward_rounded, color: AppColors.warning),
+              const SizedBox(width: 10),
+              Text(
+                'Withdraw to Bank',
+                style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+            ],
           ),
-        ],
-      ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: bankCtrl,
+                style: GoogleFonts.plusJakartaSans(fontSize: 13),
+                decoration: const InputDecoration(labelText: 'Destination Bank', hintText: 'Select Bank'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: acctCtrl,
+                keyboardType: TextInputType.number,
+                style: GoogleFonts.plusJakartaSans(fontSize: 13),
+                decoration: const InputDecoration(labelText: 'NUBAN Account Number', hintText: '10 digits'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: amountCtrl,
+                keyboardType: TextInputType.number,
+                style: GoogleFonts.plusJakartaSans(fontSize: 13),
+                decoration: const InputDecoration(labelText: 'Amount to Withdraw (₦)', hintText: 'Minimum ₦1,000'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+                foregroundColor: Colors.black,
+              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Withdrawal request queued! Settlement in under 2 minutes.',
+                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                    ),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              },
+              child: Text('Withdraw', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -147,14 +194,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final wallet = context.watch<WalletProvider>();
-    final edu = context.watch<EducationProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDesktop = ResponsiveLayout.isDesktop(context);
 
-    final rawName = auth.user?.name ?? edu.profile.fullName;
+    final rawName = auth.user?.name ?? 'Customer';
     final firstName = rawName.split(' ').first;
-    final studentStatus = edu.studentStatusBadge;
-
     final accountNumber = wallet.walletSummary?.virtualAccountNumber ?? '2205178431';
     final bankName = wallet.walletSummary?.virtualAccountBank ?? 'Providus Bank';
 
@@ -162,58 +206,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
       currentRoute: '/dashboard',
       onToggleTheme: widget.onToggleTheme,
       child: RefreshIndicator(
-        onRefresh: () async {
-          if (auth.user?.id != null) {
-            await wallet.fetchWallet(auth.user!.id!);
-          }
-        },
+        onRefresh: _loadData,
+        color: AppColors.primaryCyan,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: AdaptiveContainer(
+          padding: EdgeInsets.symmetric(
+            horizontal: isDesktop ? 24 : 16,
+            vertical: 20,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1080),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. GREETING & STUDENT STATUS
-                _buildGreetingSection(firstName, studentStatus, isDark, edu.profile.isStudentMode),
-                const SizedBox(height: 20),
+                // 1. TOP GREETING & QUICK REFRESH / ACTION ROW
+                _buildHeaderRow(firstName, isDark),
+                const SizedBox(height: 18),
 
-                // 2. ACADEMIC REMINDER BANNER
-                _buildAcademicReminderBanner(isDark),
-                const SizedBox(height: 24),
-
-                // 3. STUDENT WALLET CARD
-                _buildStudentWalletCard(wallet, accountNumber, bankName, isDark),
+                // 2. HERO WALLET CARD (Clean Dark Obsidian with Glowing Cyan Accent)
+                _buildWalletHeroCard(wallet, accountNumber, bankName, isDark),
                 const SizedBox(height: 28),
 
-                // 4. STUDENT SERVICES (Primary Education Hub)
-                _buildSectionTitle(
-                  title: 'Student Services',
-                  subtitle: 'Examination preparation, question practice, and progress analytics',
-                  trailingText: 'Education First',
-                  isDark: isDark,
+                // 3. CORE VTU SERVICES GRID (Uncluttered, Unambiguous)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Quick Services',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      'Instant Delivery',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryCyan,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 14),
-                _buildStudentServicesGrid(isDesktop, isDark),
+                _buildServicesGrid(isDesktop, isDark),
                 const SizedBox(height: 32),
 
-                // 5. TODAY'S CHALLENGE (Interactive Academic Engagement)
-                const DailyChallengeCard(),
-                const SizedBox(height: 32),
-
-                // 6. STAY CONNECTED (Secondary VTU & Utilities)
-                _buildSectionTitle(
-                  title: 'Stay Connected',
-                  subtitle: 'Student airtime, research data bundles, and essential utilities',
-                  trailingText: 'Instant Delivery',
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 14),
-                _buildStayConnectedGrid(isDesktop, isDark),
-                const SizedBox(height: 36),
-
-                // 7. RECENT ACTIVITY (Blended Learning & Utilities Activity)
-                _buildRecentActivitySection(wallet, edu, isDark, isDesktop),
-                const SizedBox(height: 48),
+                // 4. RECENT TRANSACTIONS (Clean, Minimalist)
+                _buildRecentTransactionsSection(wallet, isDark),
+                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -222,7 +264,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildGreetingSection(String firstName, String studentStatus, bool isDark, bool isStudentMode) {
+  Widget _buildHeaderRow(String firstName, bool isDark) {
     final hour = DateTime.now().hour;
     final timeGreeting = hour < 12
         ? 'Good morning'
@@ -230,29 +272,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '$timeGreeting, $firstName',
-              style: GoogleFonts.montserrat(
-                fontSize: 26,
+              '$timeGreeting, $firstName 👋',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
+                letterSpacing: -0.4,
                 color: isDark ? Colors.white : const Color(0xFF0F172A),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Row(
               children: [
-                StatusBadge.academic(studentStatus),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppColors.success.withValues(alpha: 0.25)),
+                  ),
+                  child: Text(
+                    'Active Reseller',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 8),
                 Text(
-                  '• Academic Session 2026/2027',
-                  style: TextStyle(
-                    fontSize: 12,
+                  'Automated 24/7',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                     color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                   ),
                 ),
@@ -260,66 +318,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
+
+        // Quick Admin & In-App Refresh Action Row
+        Row(
+          children: [
+            InkWell(
+              onTap: () => context.go(context.read<AuthProvider>().isSuperAdmin ? '/admin' : '/admin-portal'),
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBlue.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.admin_panel_settings_rounded, size: 16, color: AppColors.primaryCyan),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Admin Console',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryCyan,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            IconButton(
+              tooltip: 'In-App Refresh',
+              icon: _isRefreshing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryCyan),
+                    )
+                  : const Icon(Icons.refresh_rounded, size: 22, color: AppColors.primaryCyan),
+              onPressed: _isRefreshing ? null : _loadData,
+            ),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _buildAcademicReminderBanner(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFDE68A)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFFF59E0B),
-            ),
-            child: const Icon(Icons.campaign, color: Colors.white, size: 16),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Academic Notice: WAEC & JAMB 2026 Registration is Ongoing',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF92400E),
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Obtain your official examination registration PINs and result tokens directly from the Exam Centre.',
-                  style: TextStyle(fontSize: 11, color: Color(0xFFB45309)),
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF92400E)),
-            onPressed: () => context.push('/exams'),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('Get PIN', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                Icon(Icons.arrow_forward, size: 14),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStudentWalletCard(
+  Widget _buildWalletHeroCard(
     WalletProvider wallet,
     String accountNumber,
     String bankName,
@@ -329,186 +377,212 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final formattedBalance = currencyFormat.format(wallet.balance);
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(
           colors: isDark
-              ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
-              : [const Color(0xFF0A66C2), const Color(0xFF0052A3)],
+              ? [const Color(0xFF131B2A), const Color(0xFF0A0F1A)]
+              : [const Color(0xFF002B47), const Color(0xFF0A192F)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.primaryCyan.withValues(alpha: 0.28),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0A66C2).withValues(alpha: 0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 26,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top balance row
+          // Balance Top Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.account_balance_wallet_outlined, color: Colors.white70, size: 16),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Student Wallet Balance',
-                    style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                  Text(
+                    'Available Balance',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white70,
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  IconButton(
-                    icon: Icon(
-                      wallet.isBalanceVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                      color: Colors.white70,
-                      size: 16,
+                  InkWell(
+                    onTap: wallet.toggleBalanceVisibility,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        wallet.isBalanceVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        size: 16,
+                        color: Colors.white70,
+                      ),
                     ),
-                    onPressed: wallet.toggleBalanceVisibility,
                   ),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: Colors.white.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.shield_outlined, color: Colors.white, size: 12),
-                    SizedBox(width: 4),
-                    Text(
-                      'Zero-Fee Topup',
-                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+                child: Text(
+                  'NGN (₦)',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
 
-          // Balance Display
+          // Big Bold Balance Number
           Text(
-            wallet.isBalanceVisible ? '₦$formattedBalance' : '₦ • • • • • •',
-            style: GoogleFonts.montserrat(
+            wallet.isBalanceVisible ? '₦$formattedBalance' : '₦••••••••',
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 32,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.6,
               color: Colors.white,
-              letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
-          // Primary Actions
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+          // Action Buttons: Fund, Transfer, Withdraw
+          Row(
             children: [
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF0A66C2),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 0,
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => context.push('/wallet/fund'),
+                  icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
+                  label: Text(
+                    'Fund Wallet',
+                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryCyan,
+                    foregroundColor: const Color(0xFF002B47),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-                onPressed: () => context.push('/wallet/fund'),
-                icon: const Icon(Icons.add_circle_outline, size: 18),
-                label: const Text('Fund Wallet', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white38),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _showTransferDialog,
+                  icon: const Icon(Icons.send_rounded, size: 16, color: Colors.white),
+                  label: Text(
+                    'Send',
+                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.white),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-                onPressed: _showTransferDialog,
-                icon: const Icon(Icons.swap_horiz, size: 18),
-                label: const Text('Transfer', style: TextStyle(fontWeight: FontWeight.w600)),
               ),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white38),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _showWithdrawDialog,
+                  icon: const Icon(Icons.account_balance_outlined, size: 16, color: Colors.white),
+                  label: Text(
+                    'Withdraw',
+                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.white),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-                onPressed: _showWithdrawDialog,
-                icon: const Icon(Icons.file_download_outlined, size: 18),
-                label: const Text('Withdraw', style: TextStyle(fontWeight: FontWeight.w600)),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
-          // Bottom Dedicated Account Foot (Matching Meridian high-trust pattern)
+          // Automated Bank Transfer Virtual Account Strip
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(10),
+              color: Colors.black.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
+                    const Icon(Icons.account_balance_wallet_outlined, size: 18, color: AppColors.primaryCyan),
+                    const SizedBox(width: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Your Dedicated NUBAN Account',
-                          style: TextStyle(color: Colors.white60, fontSize: 10),
+                        Text(
+                          'Automated Bank Transfer',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 10, color: Colors.white60, fontWeight: FontWeight.w600),
                         ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Text(
-                              accountNumber,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: () {
-                                Clipboard.setData(ClipboardData(text: accountNumber));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Account number copied to clipboard!')),
-                                );
-                              },
-                              child: const Icon(Icons.copy, color: Colors.white70, size: 14),
-                            ),
-                          ],
+                        Text(
+                          '$bankName • $accountNumber',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white),
                         ),
                       ],
                     ),
                   ],
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      bankName,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                InkWell(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: accountNumber));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Account number $accountNumber copied!',
+                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                        ),
+                        backgroundColor: AppColors.primaryCyan,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryCyan.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
                     ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Instant Automatic Credit',
-                      style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 10, fontWeight: FontWeight.w600),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.copy_rounded, size: 14, color: AppColors.primaryCyan),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Copy',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryCyan),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -518,358 +592,319 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildSectionTitle({
-    required String title,
-    required String subtitle,
-    required String trailingText,
-    required bool isDark,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.3),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-              ),
-            ),
-          ],
-        ),
-        Text(
-          trailingText,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primaryBlue,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStudentServicesGrid(bool isDesktop, bool isDark) {
+  Widget _buildServicesGrid(bool isDesktop, bool isDark) {
     final services = [
-      {
-        'title': 'Exam Centre',
-        'subtitle': 'WAEC, JAMB, NECO & NABTEB tokens',
-        'icon': Icons.school_rounded,
-        'color': const Color(0xFF0070F3),
-        'route': '/exams',
-        'badge': 'Tokens',
-      },
-      {
-        'title': 'Practice Questions',
-        'subtitle': 'Over 2,500+ CBT past questions',
-        'icon': Icons.quiz_rounded,
-        'color': const Color(0xFF10B981),
-        'route': '/learn/practice',
-        'badge': 'CBT Test',
-      },
-      {
-        'title': 'Study Materials',
-        'subtitle': 'Syllabus, topics & revision notes',
-        'icon': Icons.menu_book_rounded,
-        'color': const Color(0xFF8B5CF6),
-        'route': '/learn',
-        'badge': 'Notes',
-      },
-      {
-        'title': 'My Progress',
-        'subtitle': 'Subject mastery, streaks & scores',
-        'icon': Icons.trending_up_rounded,
-        'color': const Color(0xFFF59E0B),
-        'route': '/learn/progress',
-        'badge': 'Analytics',
-      },
+      _ServiceItem(
+        title: 'Buy Data',
+        subtitle: 'SME & Direct',
+        icon: Icons.wifi_rounded,
+        color: const Color(0xFF2563EB),
+        route: '/services/data',
+      ),
+      _ServiceItem(
+        title: 'Buy Airtime',
+        subtitle: 'All Networks',
+        icon: Icons.phone_android_rounded,
+        color: const Color(0xFFEF4444),
+        route: '/services/airtime',
+      ),
+      _ServiceItem(
+        title: 'Electricity',
+        subtitle: 'Prepaid Tokens',
+        icon: Icons.flash_on_rounded,
+        color: const Color(0xFFF59E0B),
+        route: '/services/electricity',
+      ),
+      _ServiceItem(
+        title: 'Cable TV',
+        subtitle: 'DSTV, GOtv, Startimes',
+        icon: Icons.tv_rounded,
+        color: const Color(0xFF8B5CF6),
+        route: '/services/tv',
+      ),
+      _ServiceItem(
+        title: 'Betting Topup',
+        subtitle: 'Bet9ja, SportyBet',
+        icon: Icons.sports_soccer_rounded,
+        color: const Color(0xFF10B981),
+        route: '/services/betting',
+      ),
+      _ServiceItem(
+        title: 'Airtime to Cash',
+        subtitle: 'Instant Payout',
+        icon: Icons.currency_exchange_rounded,
+        color: const Color(0xFF06B6D4),
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Airtime to Cash is ready. Minimum exchange: ₦1,000.', style: GoogleFonts.plusJakartaSans()),
+            ),
+          );
+        },
+      ),
+      _ServiceItem(
+        title: 'Bulk SMS',
+        subtitle: 'Custom Sender ID',
+        icon: Icons.mark_chat_read_rounded,
+        color: const Color(0xFF6366F1),
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Bulk SMS gateway active. Deliveries via DND routed lines.', style: GoogleFonts.plusJakartaSans()),
+            ),
+          );
+        },
+      ),
+      _ServiceItem(
+        title: 'Fund Wallet',
+        subtitle: 'Instant Credit',
+        icon: Icons.add_card_rounded,
+        color: AppColors.primaryCyan,
+        route: '/wallet/fund',
+      ),
     ];
 
-    final columns = isDesktop ? 4 : 2;
+    final int crossAxisCount = isDesktop ? 4 : 2;
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        mainAxisSpacing: 14,
+        crossAxisCount: crossAxisCount,
         crossAxisSpacing: 14,
-        childAspectRatio: isDesktop ? 1.5 : 1.25,
+        mainAxisSpacing: 14,
+        childAspectRatio: isDesktop ? 1.8 : 1.5,
       ),
       itemCount: services.length,
-      itemBuilder: (context, index) {
-        final s = services[index];
-        final serviceColor = s['color'] as Color;
-
-        return AvotekCard(
-          padding: const EdgeInsets.all(16),
-          onTap: () => context.push(s['route'] as String),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: serviceColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(s['icon'] as IconData, color: serviceColor, size: 22),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: serviceColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      s['badge'] as String,
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: serviceColor),
-                    ),
-                  ),
-                ],
+      itemBuilder: (ctx, index) {
+        final item = services[index];
+        return InkWell(
+          onTap: () {
+            if (item.route != null) {
+              context.push(item.route!);
+            } else if (item.onTap != null) {
+              item.onTap!();
+            }
+          },
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkCard : Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+                width: 1,
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    s['title'] as String,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    s['subtitle'] as String,
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildStayConnectedGrid(bool isDesktop, bool isDark) {
-    final connectivity = [
-      {
-        'title': 'Student Airtime',
-        'subtitle': 'Instant discount recharge on all networks',
-        'icon': Icons.phone_android_rounded,
-        'color': const Color(0xFF0070F3),
-        'route': '/services/airtime',
-      },
-      {
-        'title': 'Study Data Bundles',
-        'subtitle': 'SME & Gifting plans for online research',
-        'icon': Icons.wifi_rounded,
-        'color': const Color(0xFF059669),
-        'route': '/services/data',
-      },
-      {
-        'title': 'Electricity Bills',
-        'subtitle': 'Prepaid tokens & meter settlement',
-        'icon': Icons.bolt_rounded,
-        'color': const Color(0xFFF59E0B),
-        'route': '/services/electricity',
-      },
-      {
-        'title': 'Cable Subscriptions',
-        'subtitle': 'DStv, GOtv, Startimes renewals',
-        'icon': Icons.tv_rounded,
-        'color': const Color(0xFFEC4899),
-        'route': '/services/tv',
-      },
-    ];
-
-    final columns = isDesktop ? 4 : 2;
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-        childAspectRatio: isDesktop ? 1.6 : 1.3,
-      ),
-      itemCount: connectivity.length,
-      itemBuilder: (context, index) {
-        final c = connectivity[index];
-        final color = c['color'] as Color;
-
-        return AvotekCard(
-          padding: const EdgeInsets.all(16),
-          onTap: () => context.push(c['route'] as String),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-                child: Icon(c['icon'] as IconData, color: color, size: 20),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    c['title'] as String,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    c['subtitle'] as String,
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildRecentActivitySection(
-    WalletProvider wallet,
-    EducationProvider edu,
-    bool isDark,
-    bool isDesktop,
-  ) {
-    // Blended activity: recent practice test + recent financial orders
-    final activities = [
-      {
-        'type': 'practice',
-        'title': 'Mathematics Practice Quiz',
-        'meta': 'Score: 8/10 (80%) • JAMB Past Questions',
-        'badge': '80% Score',
-        'badgeType': 'success',
-        'icon': Icons.quiz_rounded,
-        'iconColor': const Color(0xFF10B981),
-        'time': 'Today, 10:45 AM',
-      },
-      {
-        'type': 'exam',
-        'title': 'WAEC Result Checker PIN (2026)',
-        'meta': 'WR260194821 • Delivered to PIN Vault',
-        'badge': 'Delivered',
-        'badgeType': 'success',
-        'icon': Icons.school_rounded,
-        'iconColor': const Color(0xFF0070F3),
-        'time': 'Yesterday, 3:20 PM',
-      },
-      {
-        'type': 'data',
-        'title': 'MTN SME 5.0GB Study Bundle',
-        'meta': '0803 411 9920 • 30 Days Validity',
-        'badge': 'Delivered',
-        'badgeType': 'success',
-        'icon': Icons.wifi_rounded,
-        'iconColor': const Color(0xFF059669),
-        'time': 'Oct 2, 11:15 AM',
-      },
-      {
-        'type': 'wallet',
-        'title': 'Wallet Funding (Providus Bank)',
-        'meta': 'Reference: SW-8841150 • Bank Transfer',
-        'badge': '+₦25,000.00',
-        'badgeType': 'success',
-        'icon': Icons.account_balance_wallet_rounded,
-        'iconColor': const Color(0xFF0A66C2),
-        'time': 'Oct 1, 9:00 AM',
-      },
-    ];
-
-    return AvotekCard(
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
+              ],
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
-                  children: [
-                    Icon(Icons.history_rounded, size: 20, color: AppColors.primaryBlue),
-                    SizedBox(width: 8),
-                    Text(
-                      'Recent Activity',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: item.color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(item.icon, color: item.color, size: 22),
                 ),
-                TextButton(
-                  onPressed: () => context.push('/transactions'),
-                  child: const Row(
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('View All', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      Icon(Icons.arrow_forward, size: 14),
+                      Text(
+                        item.title,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.subtitle,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
-
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: activities.length,
-            separatorBuilder: (ctx, i) => const Divider(height: 1, indent: 64),
-            itemBuilder: (ctx, i) {
-              final act = activities[i];
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: (act['iconColor'] as Color).withValues(alpha: 0.12),
-                  child: Icon(act['icon'] as IconData, color: act['iconColor'] as Color, size: 20),
-                ),
-                title: Text(
-                  act['title'] as String,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                ),
-                subtitle: Text(
-                  act['meta'] as String,
-                  style: const TextStyle(fontSize: 12),
-                ),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    StatusBadge.success(act['badge'] as String),
-                    const SizedBox(height: 4),
-                    Text(
-                      act['time'] as String,
-                      style: const TextStyle(fontSize: 10, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
+
+  Widget _buildRecentTransactionsSection(WalletProvider wallet, bool isDark) {
+    final currencyFormat = NumberFormat('#,##0.00', 'en_US');
+    final transactions = wallet.transactions.take(5).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recent Transactions',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.push('/transactions'),
+              child: Text(
+                'View All',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primaryCyan,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        if (transactions.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkCard : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.receipt_long_outlined, size: 36, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                const SizedBox(height: 10),
+                Text(
+                  'No transactions yet',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white70 : const Color(0xFF334155),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Your recent data, airtime and funding history will show here.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkCard : Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: transactions.length,
+              separatorBuilder: (context, index) => Divider(
+                height: 1,
+                color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+              ),
+              itemBuilder: (ctx, i) {
+                final tx = transactions[i];
+                final isCredit = tx.type == 'topup' || tx.type == 'credit';
+                final amountStr = currencyFormat.format(tx.amount);
+                final dateStr = DateFormat('dd MMM, hh:mm a').format(tx.createdAt);
+
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  leading: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: isCredit
+                          ? AppColors.success.withValues(alpha: 0.12)
+                          : AppColors.primaryBlue.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                      color: isCredit ? AppColors.success : AppColors.primaryBlue,
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(
+                    tx.narration ?? (isCredit ? 'Wallet Top-up' : 'VTU Purchase'),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(
+                    dateStr,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    ),
+                  ),
+                  trailing: Text(
+                    '${isCredit ? "+" : "-"}₦$amountStr',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: isCredit
+                          ? AppColors.success
+                          : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ServiceItem {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final String? route;
+  final VoidCallback? onTap;
+
+  _ServiceItem({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    this.route,
+    this.onTap,
+  });
 }

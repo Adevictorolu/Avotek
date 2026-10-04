@@ -537,7 +537,7 @@ class BrandIcon extends StatelessWidget {
               color: Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: size * 0.72,
-              fontFamily: 'Montserrat',
+              fontFamily: 'Plus Jakarta Sans',
             ),
           ),
         );

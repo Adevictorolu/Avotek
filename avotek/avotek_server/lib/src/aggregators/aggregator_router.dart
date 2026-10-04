@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'aggregator_interface.dart';
+import 'bigisub_aggregator.dart';
+import 'bilalsadasub_aggregator.dart';
 import 'mock_aggregator.dart';
 import 'models/aggregator_result.dart';
 import 'vtpass_aggregator.dart';
@@ -18,6 +20,8 @@ class AggregatorRouter implements VtuAggregatorInterface {
   });
 
   factory AggregatorRouter.createDefault({
+    String? vtuApiKey,
+    String? vtuBaseUrl,
     String? vtpassApiKey,
     String? vtpassSecretKey,
     String? vtpassPublicKey,
@@ -25,13 +29,23 @@ class AggregatorRouter implements VtuAggregatorInterface {
     String? clubkonnectApiKey,
     String? vtupressUrl,
     String? vtupressApiKey,
-    bool isLive = false,
+    bool isLive = true,
     void Function(String message)? onLog,
   }) {
     VtuAggregatorInterface primaryAggregator;
     VtuAggregatorInterface fallbackAggregator;
 
-    // Resolve credentials from arguments or environment variables
+    // Resolve BilalSadaSub / VTU credentials
+    final envVtuKey = vtuApiKey ??
+        Platform.environment['VTU_LIVE_API_KEY'] ??
+        Platform.environment['BILALSADASUB_API_KEY'] ??
+        '79b8d730c62c3545892766a7d8d703377b035c82135c97b8b161015e585d';
+    final envVtuUrl = vtuBaseUrl ??
+        Platform.environment['VTU_BASE_URL'] ??
+        Platform.environment['BILALSADASUB_BASE_URL'] ??
+        'https://bilalsadasub.com';
+
+    // Resolve auxiliary credentials
     final envVtpassKey = vtpassApiKey ?? Platform.environment['VTPASS_API_KEY'];
     final envVtpassSecret = vtpassSecretKey ?? Platform.environment['VTPASS_SECRET_KEY'];
     final envVtpassPublic = vtpassPublicKey ?? Platform.environment['VTPASS_PUBLIC_KEY'] ?? '';
@@ -45,8 +59,20 @@ class AggregatorRouter implements VtuAggregatorInterface {
     final runMode = Platform.environment['SERVERPOD_RUNMODE'] ?? 'development';
     final effectiveIsLive = isLive || runMode == 'production';
 
-    // 1. Determine Primary Provider
-    if (envVtupressUrl != null && envVtupressUrl.isNotEmpty && envVtupressKey != null && envVtupressKey.isNotEmpty) {
+    // 1. Determine Primary Provider (Live BilalSadaSub Gateway by default)
+    if (envVtuKey.isNotEmpty) {
+      if (envVtuUrl.contains('bigisub')) {
+        primaryAggregator = BigisubAggregator(
+          apiUrl: envVtuUrl,
+          apiKey: envVtuKey,
+        );
+      } else {
+        primaryAggregator = BilalsadasubAggregator(
+          apiUrl: envVtuUrl,
+          apiKey: envVtuKey,
+        );
+      }
+    } else if (envVtupressUrl != null && envVtupressUrl.isNotEmpty && envVtupressKey != null && envVtupressKey.isNotEmpty) {
       primaryAggregator = VtupressAggregator(
         apiUrl: envVtupressUrl,
         apiKey: envVtupressKey,
@@ -63,21 +89,25 @@ class AggregatorRouter implements VtuAggregatorInterface {
     }
 
     // 2. Determine Fallback Provider
-    if (envCkUser != null && envCkUser.isNotEmpty && envCkKey != null && envCkKey.isNotEmpty) {
+    if (primaryAggregator is! BilalsadasubAggregator && envVtuKey.isNotEmpty) {
+      fallbackAggregator = BilalsadasubAggregator(
+        apiUrl: 'https://bilalsadasub.com',
+        apiKey: envVtuKey,
+      );
+    } else if (primaryAggregator is! BigisubAggregator && envVtuKey.isNotEmpty) {
+      fallbackAggregator = BigisubAggregator(
+        apiUrl: 'https://bigisub.ng',
+        apiKey: envVtuKey,
+      );
+    } else if (envVtupressUrl != null && envVtupressUrl.isNotEmpty && envVtupressKey != null && envVtupressKey.isNotEmpty) {
+      fallbackAggregator = VtupressAggregator(
+        apiUrl: envVtupressUrl,
+        apiKey: envVtupressKey,
+      );
+    } else if (envCkUser != null && envCkUser.isNotEmpty && envCkKey != null && envCkKey.isNotEmpty) {
       fallbackAggregator = ClubKonnectAggregator(
         userId: envCkUser,
         apiKey: envCkKey,
-      );
-    } else if (primaryAggregator is! VtpassAggregator &&
-        envVtpassKey != null &&
-        envVtpassKey.isNotEmpty &&
-        envVtpassSecret != null &&
-        envVtpassSecret.isNotEmpty) {
-      fallbackAggregator = VtpassAggregator(
-        apiKey: envVtpassKey,
-        secretKey: envVtpassSecret,
-        publicKey: envVtpassPublic,
-        isLive: effectiveIsLive,
       );
     } else {
       fallbackAggregator = MockAggregator();

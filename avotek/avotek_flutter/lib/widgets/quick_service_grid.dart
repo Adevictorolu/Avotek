@@ -52,11 +52,11 @@ class QuickServiceGrid extends StatelessWidget {
       color: Color(0xFF8B5CF6),
     ),
     ServiceItem(
-      id: 'exam_pin',
-      title: 'Exam PINs',
-      subtitle: 'WAEC, JAMB',
-      icon: Icons.school_rounded,
-      color: Color(0xFFEC4899),
+      id: 'airtime_cash',
+      title: 'Airtime to Cash',
+      subtitle: 'Instant Cash Out',
+      icon: Icons.currency_exchange_rounded,
+      color: Color(0xFF0284C7),
     ),
     ServiceItem(
       id: 'cac',
