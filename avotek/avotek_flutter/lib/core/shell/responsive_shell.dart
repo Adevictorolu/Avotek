@@ -104,7 +104,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                 icon: const Icon(Icons.menu_rounded),
                 onPressed: () => _scaffoldKey.currentState?.openDrawer(),
               ),
-              title: const AvotekLogo(size: 32, isLarge: true),
+              title: const AvotekLogo(size: 38, isLarge: true),
               actions: [
                 // In-App Refresh Button
                 IconButton(
@@ -139,12 +139,6 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     size: 20,
                   ),
                   onPressed: widget.onToggleTheme,
-                ),
-                // Admin Console Access Button
-                IconButton(
-                  tooltip: 'Admin Console',
-                  icon: const Icon(Icons.admin_panel_settings_outlined, size: 21, color: AppColors.primaryCyan),
-                  onPressed: () => context.go(auth.isSuperAdmin ? '/admin' : '/admin-portal'),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(right: 14),
@@ -343,36 +337,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
               );
             },
           ),
-          const SizedBox(width: 10),
-
-          // Admin Console Access Button
-          InkWell(
-            onTap: () => context.go(auth.isSuperAdmin ? '/admin' : '/admin-portal'),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: AppColors.primaryBlue.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.35)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.admin_panel_settings_rounded, size: 14, color: AppColors.primaryCyan),
-                  const SizedBox(width: 5),
-                  Text(
-                    'Admin Console',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primaryCyan,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
 
           // User Profile Pill
           InkWell(
@@ -434,7 +399,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
           Container(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
             alignment: Alignment.centerLeft,
-            child: const AvotekLogo(size: 36, isLarge: true),
+            child: const AvotekLogo(size: 42, isLarge: true),
           ),
           const Divider(height: 1),
 
@@ -519,13 +484,13 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   route: '/profile',
                   isActive: currentRoute == '/profile',
                 ),
-                _buildSidebarItem(
-                  icon: Icons.admin_panel_settings_rounded,
-                  label: 'Admin Console',
-                  route: auth.isSuperAdmin ? '/admin' : '/admin-portal',
-                  isActive: currentRoute == '/admin' || currentRoute == '/admin-portal',
-                  badgeText: auth.isSuperAdmin ? 'ADMIN' : 'PORTAL',
-                ),
+                if (auth.isSuperAdmin)
+                  _buildSidebarItem(
+                    icon: Icons.admin_panel_settings_rounded,
+                    label: 'Admin Console',
+                    route: '/admin',
+                    isActive: currentRoute == '/admin',
+                  ),
               ],
             ),
           ),
@@ -666,7 +631,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const AvotekLogo(size: 32, isLarge: true),
+                const AvotekLogo(size: 38, isLarge: true),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -711,11 +676,12 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
           _drawerItem(Icons.receipt_long_rounded, 'Transactions', '/transactions'),
           _drawerItem(Icons.price_change_outlined, 'Wholesale Pricing', '/rates'),
           _drawerItem(Icons.person_outline_rounded, 'Profile & Settings', '/profile'),
-          _drawerItem(
-            Icons.admin_panel_settings_rounded,
-            'Admin Console',
-            auth.isSuperAdmin ? '/admin' : '/admin-portal',
-          ),
+          if (auth.isSuperAdmin)
+            _drawerItem(
+              Icons.admin_panel_settings_rounded,
+              'Admin Console',
+              '/admin',
+            ),
 
           const Divider(),
           _drawerItem(Icons.logout_rounded, 'Sign out', '/login', isDestructive: true),

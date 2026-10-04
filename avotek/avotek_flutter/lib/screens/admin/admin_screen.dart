@@ -217,177 +217,49 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
 
   void _initAdminData() {
     final now = DateTime.now();
+    _liveSessions = [];
+    _users = [];
+
+    // Include the active logged-in user if available
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      if (auth.user != null) {
+        final u = auth.user!;
+        _users.add(AdminUserRecord(
+          id: u.id ?? 1,
+          name: u.name,
+          phone: u.phone,
+          email: u.email ?? '${u.phone}@avotek.africa',
+          kycStatus: u.kycStatus.isNotEmpty ? u.kycStatus : 'tier1',
+          bvn: 'Unverified',
+          nin: 'Unverified',
+          walletBalance: auth.wallet?.balance ?? 0.0,
+          isBanned: false,
+          referralCode: u.referralCode,
+          virtualAccountNumber: auth.wallet?.virtualAccountNumber ?? 'Not Assigned',
+          virtualAccountBank: auth.wallet?.virtualAccountBank ?? 'Wema / Providus',
+          createdAt: u.createdAt,
+          lastLogin: DateTime.now(),
+        ));
+
+        _liveSessions.add(AdminLiveSessionRecord(
+          id: 101,
+          userId: u.id ?? 1,
+          userName: u.name,
+          email: u.email ?? '${u.phone}@avotek.africa',
+          phone: u.phone,
+          eventType: 'LOGIN',
+          ipAddress: '102.89.41.18 (Active Session)',
+          device: 'Web Browser / Flutter Client',
+          status: 'ONLINE',
+          timestamp: DateTime.now(),
+          sessionDuration: 'Active now',
+          details: 'Live authenticated session on Avotek.',
+        ));
+      }
+    } catch (_) {}
+
     _fetchLiveServerpodData();
-
-    _liveSessions = [
-      AdminLiveSessionRecord(
-        id: 501,
-        userId: 1,
-        userName: 'Chukwuemeka Obi',
-        email: 'demo@avotek.africa',
-        phone: '08031234567',
-        eventType: 'LOGIN',
-        ipAddress: '102.89.41.18 (Lagos, MTN)',
-        device: 'Chrome 126 / macOS',
-        status: 'ONLINE',
-        timestamp: now.subtract(const Duration(minutes: 3)),
-        sessionDuration: '3m active',
-        details: 'Auth verified via biometric session token. Session active.',
-      ),
-      AdminLiveSessionRecord(
-        id: 502,
-        userId: 6,
-        userName: 'Blessing Okoro',
-        email: 'blessing.okoro@futo.edu.ng',
-        phone: '08149102834',
-        eventType: 'REGISTER',
-        ipAddress: '197.210.55.90 (Owerri, Airtel)',
-        device: 'Avotek App v2.4 (Tecno Camon 20)',
-        status: 'ONLINE',
-        timestamp: now.subtract(const Duration(minutes: 11)),
-        sessionDuration: '11m active',
-        details: 'New user registered via referral AVOTEK01. Assigned dedicated Wema NUBAN.',
-      ),
-      AdminLiveSessionRecord(
-        id: 503,
-        userId: 2,
-        userName: 'Amina Bello',
-        email: 'amina.bello@unilag.edu.ng',
-        phone: '08129841029',
-        eventType: 'LOGOUT',
-        ipAddress: '105.112.98.14 (Akoka, Glo)',
-        device: 'Safari / iPhone 15 Pro',
-        status: 'LOGGED_OUT',
-        timestamp: now.subtract(const Duration(minutes: 24)),
-        sessionDuration: '1h 14m session',
-        details: 'Manual user sign-out from mobile web. Auth session destroyed.',
-      ),
-      AdminLiveSessionRecord(
-        id: 504,
-        userId: 3,
-        userName: 'Tunde Bakare',
-        email: 'tunde.bakare@abu.edu.ng',
-        phone: '07051928410',
-        eventType: 'LOGIN',
-        ipAddress: '102.90.12.78 (Zaria, MTN)',
-        device: 'Chrome 126 / Windows 11',
-        status: 'ONLINE',
-        timestamp: now.subtract(const Duration(minutes: 45)),
-        sessionDuration: '45m active',
-        details: 'User logged in. Executed ₦5,100 IKEDC Prepaid Token purchase.',
-      ),
-      AdminLiveSessionRecord(
-        id: 505,
-        userId: 7,
-        userName: 'Ibrahim Danladi',
-        email: 'ibrahim.danladi@buk.edu.ng',
-        phone: '08091823746',
-        eventType: 'REGISTER',
-        ipAddress: '197.211.80.12 (Kano, 9mobile)',
-        device: 'Avotek Android App v2.4 (Infinix Hot 30)',
-        status: 'ONLINE',
-        timestamp: now.subtract(const Duration(hours: 1, minutes: 15)),
-        sessionDuration: '1h 15m active',
-        details: 'Registered via direct web link. Dedicated Providus NUBAN generated.',
-      ),
-      AdminLiveSessionRecord(
-        id: 506,
-        userId: 4,
-        userName: 'Ngozi Eze',
-        email: 'ngozi.eze@unn.edu.ng',
-        phone: '09038192019',
-        eventType: 'LOGOUT',
-        ipAddress: '102.88.201.55 (Nsukka, MTN)',
-        device: 'Chrome Mobile / Android 13',
-        status: 'LOGGED_OUT',
-        timestamp: now.subtract(const Duration(hours: 2, minutes: 30)),
-        sessionDuration: '38m session',
-        details: 'Automatic idle session expiration (30m inactive policy).',
-      ),
-    ];
-
-    _users = [
-      AdminUserRecord(
-        id: 1,
-        name: 'Chukwuemeka Obi',
-        phone: '08031234567',
-        email: 'demo@avotek.africa',
-        kycStatus: 'tier2',
-        bvn: '22184910283',
-        nin: '61029481923',
-        walletBalance: 25000.0,
-        isBanned: false,
-        referralCode: 'AVOTEK01',
-        virtualAccountNumber: '9031234567',
-        virtualAccountBank: 'Wema Bank (NIBSS)',
-        createdAt: now.subtract(const Duration(days: 30)),
-        lastLogin: now.subtract(const Duration(minutes: 12)),
-      ),
-      AdminUserRecord(
-        id: 2,
-        name: 'Amina Bello',
-        phone: '08129841029',
-        email: 'amina.bello@unilag.edu.ng',
-        kycStatus: 'tier2',
-        bvn: '22491029481',
-        nin: '72910481920',
-        walletBalance: 8450.0,
-        isBanned: false,
-        referralCode: 'AVOTEK02',
-        virtualAccountNumber: '9049182310',
-        virtualAccountBank: 'Moniepoint MFB',
-        createdAt: now.subtract(const Duration(days: 14)),
-        lastLogin: now.subtract(const Duration(hours: 2)),
-      ),
-      AdminUserRecord(
-        id: 3,
-        name: 'Tunde Bakare',
-        phone: '07051928410',
-        email: 'tunde.bakare@abu.edu.ng',
-        kycStatus: 'tier3',
-        bvn: '22918204918',
-        nin: '81029481924',
-        walletBalance: 42300.0,
-        isBanned: false,
-        referralCode: 'AVOTEK03',
-        virtualAccountNumber: '9051829410',
-        virtualAccountBank: 'Wema Bank (NIBSS)',
-        createdAt: now.subtract(const Duration(days: 7)),
-        lastLogin: now.subtract(const Duration(hours: 5)),
-      ),
-      AdminUserRecord(
-        id: 4,
-        name: 'Ngozi Eze',
-        phone: '09038192019',
-        email: 'ngozi.eze@unn.edu.ng',
-        kycStatus: 'tier1',
-        bvn: '22301928491',
-        nin: '50192841920',
-        walletBalance: 1200.0,
-        isBanned: false,
-        referralCode: 'AVOTEK04',
-        virtualAccountNumber: '9069182410',
-        virtualAccountBank: 'Sterling Bank',
-        createdAt: now.subtract(const Duration(days: 3)),
-        lastLogin: now.subtract(const Duration(days: 1)),
-      ),
-      AdminUserRecord(
-        id: 5,
-        name: 'Kayode Alabi',
-        phone: '08139481920',
-        email: 'kayode.alabi@oauife.edu.ng',
-        kycStatus: 'tier2',
-        bvn: '22819204918',
-        nin: '91029481920',
-        walletBalance: 150.0,
-        isBanned: true, // Flagged account for suspicious chargeback
-        referralCode: 'AVOTEK05',
-        virtualAccountNumber: '9071829410',
-        virtualAccountBank: 'Wema Bank (NIBSS)',
-        createdAt: now.subtract(const Duration(days: 45)),
-        lastLogin: now.subtract(const Duration(days: 4)),
-      ),
-    ];
 
     _catalog = [
       // Data Bundles
@@ -1662,7 +1534,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   backgroundColor: AppColors.error,
-                  content: Text('⚠️ PRODUCTION LIVE TRADING IS NOW ACTIVE! Real transactions are live.'),
+                  content: Text('PRODUCTION LIVE TRADING IS NOW ACTIVE! Real transactions are live.'),
                 ),
               );
             },

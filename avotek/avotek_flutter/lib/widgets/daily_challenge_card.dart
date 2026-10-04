@@ -75,10 +75,12 @@ class DailyChallengeCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Text('🔥 ', style: TextStyle(fontSize: 13)),
+                    const Icon(Icons.local_fire_department_rounded, size: 14, color: Color(0xFFD97706)),
+                    const SizedBox(width: 4),
                     Text(
                       '${edu.challengeStreak} Days',
                       style: const TextStyle(
+                        fontFamily: 'Plus Jakarta Sans',
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF92400E),

@@ -13,7 +13,7 @@ class WalletProvider extends ChangeNotifier {
   WalletProvider({required this.client});
 
   WalletSummary? get walletSummary => _walletSummary;
-  double get balance => _walletSummary?.balance ?? 25000.0;
+  double get balance => _walletSummary?.balance ?? 0.0;
   String get currency => _walletSummary?.currency ?? 'NGN';
   List<Transaction> get transactions => _transactions;
   bool get isLoading => _isLoading;
@@ -40,17 +40,14 @@ class WalletProvider extends ChangeNotifier {
     } catch (_) {
       // Local fallback for offline/sandbox evaluation
       _walletSummary ??= WalletSummary(
-        balance: 25000.0,
+        balance: 0.0,
         currency: 'NGN',
-        virtualAccountNumber: '9031234567',
-        virtualAccountBank: 'Wema Bank / Moniepoint',
-        virtualAccountName: 'AVOTEK - Chukwuemeka Obi',
-        totalFunded: 25000.0,
-        totalSpent: 4040.0,
+        virtualAccountNumber: null,
+        virtualAccountBank: null,
+        virtualAccountName: null,
+        totalFunded: 0.0,
+        totalSpent: 0.0,
       );
-      if (_transactions.isEmpty) {
-        _initSampleTransactions(userId);
-      }
     }
 
     _isLoading = false;
@@ -67,55 +64,8 @@ class WalletProvider extends ChangeNotifier {
       );
       notifyListeners();
     } catch (_) {
-      if (_transactions.isEmpty) {
-        _initSampleTransactions(userId);
-      }
+      // Transactions remain as currently loaded
     }
-  }
-
-  void _initSampleTransactions(int userId) {
-    final now = DateTime.now();
-    _transactions = [
-      Transaction(
-        id: 1,
-        userId: userId,
-        type: 'topup',
-        amount: 25000.0,
-        balanceBefore: 0.0,
-        balanceAfter: 25000.0,
-        reference: 'TX-AVO-INIT-001',
-        status: 'completed',
-        idempotencyKey: 'IDEM-TX-AVO-INIT-001',
-        narration: 'Dedicated Virtual Account Credit (Wema Bank)',
-        createdAt: now.subtract(const Duration(hours: 2)),
-      ),
-      Transaction(
-        id: 2,
-        userId: userId,
-        type: 'debit',
-        amount: 540.0,
-        balanceBefore: 25000.0,
-        balanceAfter: 24460.0,
-        reference: 'TX-AVO-DATA-002',
-        status: 'completed',
-        idempotencyKey: 'IDEM-TX-AVO-DATA-002',
-        narration: 'Data Top-Up: MTN SME 2.0GB to 08031234567',
-        createdAt: now.subtract(const Duration(hours: 1)),
-      ),
-      Transaction(
-        id: 3,
-        userId: userId,
-        type: 'debit',
-        amount: 3500.0,
-        balanceBefore: 24460.0,
-        balanceAfter: 20960.0,
-        reference: 'TX-AVO-EXAM-003',
-        status: 'completed',
-        idempotencyKey: 'IDEM-TX-AVO-EXAM-003',
-        narration: 'WAEC Result Checker e-PIN (Token: 981245019284)',
-        createdAt: now.subtract(const Duration(minutes: 30)),
-      ),
-    ];
   }
 
   /// Deduct balance locally and record in immutable ledger
@@ -131,10 +81,10 @@ class WalletProvider extends ChangeNotifier {
     _walletSummary = WalletSummary(
       balance: newBal > 0 ? newBal : 0,
       currency: currency,
-      virtualAccountNumber: _walletSummary?.virtualAccountNumber ?? '9031234567',
-      virtualAccountBank: _walletSummary?.virtualAccountBank ?? 'Wema Bank / Moniepoint',
-      virtualAccountName: _walletSummary?.virtualAccountName ?? 'AVOTEK - User',
-      totalFunded: _walletSummary?.totalFunded ?? 25000.0,
+      virtualAccountNumber: _walletSummary?.virtualAccountNumber,
+      virtualAccountBank: _walletSummary?.virtualAccountBank,
+      virtualAccountName: _walletSummary?.virtualAccountName,
+      totalFunded: _walletSummary?.totalFunded ?? 0.0,
       totalSpent: (_walletSummary?.totalSpent ?? 0.0) + amount,
     );
 
@@ -192,10 +142,10 @@ class WalletProvider extends ChangeNotifier {
       _walletSummary = WalletSummary(
         balance: newBal,
         currency: currency,
-        virtualAccountNumber: _walletSummary?.virtualAccountNumber ?? '9031234567',
-        virtualAccountBank: _walletSummary?.virtualAccountBank ?? 'Wema Bank / Moniepoint',
-        virtualAccountName: _walletSummary?.virtualAccountName ?? 'AVOTEK - User',
-        totalFunded: (_walletSummary?.totalFunded ?? 25000.0) + amount,
+        virtualAccountNumber: _walletSummary?.virtualAccountNumber,
+        virtualAccountBank: _walletSummary?.virtualAccountBank,
+        virtualAccountName: _walletSummary?.virtualAccountName,
+        totalFunded: (_walletSummary?.totalFunded ?? 0.0) + amount,
         totalSpent: _walletSummary?.totalSpent ?? 0.0,
       );
 

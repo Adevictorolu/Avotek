@@ -58,11 +58,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
   String _selectedCategory = 'All';
   final List<String> _categories = [
     'All',
-    '📢 Announcements',
-    '💡 Data Deals',
-    '🏢 CAC & Business',
-    '🎓 Campus Utilities',
-    '🛠️ Tech Help',
+    'Announcements',
+    'Data Deals',
+    'CAC & Business',
+    'Campus Utilities',
+    'Tech Help',
   ];
 
   late List<CommunityPost> _posts;
@@ -74,26 +74,26 @@ class _CommunityScreenState extends State<CommunityScreen> {
     _posts = [
       CommunityPost(
         id: 'post-1',
-        authorName: 'AVOTEK Admin',
+        authorName: 'AVOTEK Support',
         authorTag: '@avotek_official',
         kycTier: 'Verified Admin',
-        title: '⚡ MTN SME 2.5GB Flash Tariff Active for Academic Resellers',
+        title: 'MTN SME 2.5GB Flash Tariff Active for Academic Resellers',
         content:
-            'Dear Avotek Scholars and Agents, the MTN SME route has been upgraded with zero latency. Cost price set at ₦240/GB for bulk campus agents. Enjoy seamless top-ups with instant auto-reversal protection!',
-        category: '📢 Announcements',
+            'Dear Avotek Resellers and Agents, the MTN SME route has been upgraded with zero latency. Cost price set at ₦240/GB for bulk campus agents. Enjoy seamless top-ups with instant auto-reversal protection!',
+        category: 'Announcements',
         createdAt: now.subtract(const Duration(minutes: 45)),
         upvotes: 42,
         isUpvoted: true,
         comments: [
           CommunityComment(
             id: 'c-1',
-            authorName: 'Chukwuemeka Obi',
+            authorName: 'Campus Agent',
             content: 'Speed is super fast on UNILAG campus! Thank you AVOTEK.',
             createdAt: now.subtract(const Duration(minutes: 30)),
           ),
           CommunityComment(
             id: 'c-2',
-            authorName: 'Amina Bello',
+            authorName: 'Enterprise Reseller',
             content: 'Can confirm, token delivery was under 3 seconds.',
             createdAt: now.subtract(const Duration(minutes: 10)),
           ),
@@ -101,26 +101,26 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ),
       CommunityPost(
         id: 'post-2',
-        authorName: 'Tunde Bakare',
-        authorTag: '@tundebakare',
+        authorName: 'Business Desk',
+        authorTag: '@businessdesk',
         kycTier: 'Tier 3 Agent',
-        title: '💡 Quick tip on CAC Business Name Registration for Students',
+        title: 'Quick tip on CAC Business Name Registration for Students',
         content:
             'If you run a campus graphic design or laundry brand, register your business name via the new AVOTEK CAC portal. Took 4 working days to get my certificate & Status Report directly in PDF. Great for opening corporate bank accounts!',
-        category: '🏢 CAC & Business',
+        category: 'CAC & Business',
         createdAt: now.subtract(const Duration(hours: 3)),
         upvotes: 28,
         isUpvoted: false,
         comments: [
           CommunityComment(
             id: 'c-3',
-            authorName: 'Emeka Smart',
+            authorName: 'Smart Agent',
             content: 'Did you submit NIN slip or National ID card?',
             createdAt: now.subtract(const Duration(hours: 2)),
           ),
           CommunityComment(
             id: 'c-4',
-            authorName: 'Tunde Bakare',
+            authorName: 'Business Desk',
             content: 'NIN slip with clear QR code works 100% fine!',
             createdAt: now.subtract(const Duration(hours: 1)),
           ),
@@ -128,13 +128,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ),
       CommunityPost(
         id: 'post-3',
-        authorName: 'Ngozi Eze',
-        authorTag: '@ngozieze',
+        authorName: 'Utility Desk',
+        authorTag: '@utilitydesk',
         kycTier: 'Tier 2 Scholar',
-        title: '🎓 Best electricity token purchase time before month end',
+        title: 'Best electricity token purchase time before month end',
         content:
             'Heads up for IBEDC and EKEDC users in off-campus hostels: try recharging during off-peak morning hours (7am-9am) to avoid disco aggregator congestion. The receipt PDF from AVOTEK has the 20-digit token clearly bolded.',
-        category: '🎓 Campus Utilities',
+        category: 'Campus Utilities',
         createdAt: now.subtract(const Duration(hours: 6)),
         upvotes: 19,
         isUpvoted: false,
@@ -142,20 +142,20 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ),
       CommunityPost(
         id: 'post-4',
-        authorName: 'Kelechi Nwosu',
-        authorTag: '@kelechinvtu',
+        authorName: 'Data Hub',
+        authorTag: '@datahub',
         kycTier: 'Tier 3 Reseller',
-        title: '💡 GLO Corporate Gifting vs SME Data breakdown',
+        title: 'GLO Corporate Gifting vs SME Data breakdown',
         content:
             'For night downloaders, Glo 5.75GB Corporate bundle has 30 days validity and does not throttle. Tested on ABU Zaria network masts.',
-        category: '💡 Data Deals',
+        category: 'Data Deals',
         createdAt: now.subtract(const Duration(days: 1)),
         upvotes: 35,
         isUpvoted: true,
         comments: [
           CommunityComment(
             id: 'c-5',
-            authorName: 'Fatima Umar',
+            authorName: 'Sub Reseller',
             content: 'Does it work for router SIMs too?',
             createdAt: now.subtract(const Duration(hours: 18)),
           ),

@@ -199,8 +199,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final rawName = auth.user?.name ?? 'Customer';
     final firstName = rawName.split(' ').first;
-    final accountNumber = wallet.walletSummary?.virtualAccountNumber ?? '2205178431';
-    final bankName = wallet.walletSummary?.virtualAccountBank ?? 'Providus Bank';
+    final accountNumber = wallet.walletSummary?.virtualAccountNumber ?? '';
+    final bankName = wallet.walletSummary?.virtualAccountBank ?? '';
 
     return ResponsiveShell(
       currentRoute: '/dashboard',
@@ -219,22 +219,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. TOP GREETING & QUICK REFRESH / ACTION ROW
+                // 1. TOP GREETING & QUICK REFRESH ROW
                 _buildHeaderRow(firstName, isDark),
                 const SizedBox(height: 18),
 
-                // 2. HERO WALLET CARD (Clean Dark Obsidian with Glowing Cyan Accent)
+                // 2. HERO WALLET CARD
                 _buildWalletHeroCard(wallet, accountNumber, bankName, isDark),
                 const SizedBox(height: 28),
 
-                // 3. CORE VTU SERVICES GRID (Uncluttered, Unambiguous)
+                // 3. CORE VTU SERVICES GRID
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Quick Services',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 18,
+                        fontSize: 19,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                       ),
@@ -253,7 +253,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _buildServicesGrid(isDesktop, isDark),
                 const SizedBox(height: 32),
 
-                // 4. RECENT TRANSACTIONS (Clean, Minimalist)
+                // 4. RECENT TRANSACTIONS
                 _buildRecentTransactionsSection(wallet, isDark),
                 const SizedBox(height: 40),
               ],
@@ -278,9 +278,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '$timeGreeting, $firstName 👋',
+              '$timeGreeting, $firstName',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 22,
+                fontSize: 23,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.4,
                 color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -319,49 +319,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
 
-        // Quick Admin & In-App Refresh Action Row
-        Row(
-          children: [
-            InkWell(
-              onTap: () => context.go(context.read<AuthProvider>().isSuperAdmin ? '/admin' : '/admin-portal'),
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.admin_panel_settings_rounded, size: 16, color: AppColors.primaryCyan),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Admin Console',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryCyan,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            IconButton(
-              tooltip: 'In-App Refresh',
-              icon: _isRefreshing
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryCyan),
-                    )
-                  : const Icon(Icons.refresh_rounded, size: 22, color: AppColors.primaryCyan),
-              onPressed: _isRefreshing ? null : _loadData,
-            ),
-          ],
+        // In-App Refresh Icon Button
+        IconButton(
+          tooltip: 'In-App Refresh',
+          icon: _isRefreshing
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryCyan),
+                )
+              : const Icon(Icons.refresh_rounded, size: 22, color: AppColors.primaryCyan),
+          onPressed: _isRefreshing ? null : _loadData,
         ),
       ],
     );
@@ -538,52 +506,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Automated Bank Transfer',
+                          'Dedicated Virtual Account',
                           style: GoogleFonts.plusJakartaSans(fontSize: 10, color: Colors.white60, fontWeight: FontWeight.w600),
                         ),
                         Text(
-                          '$bankName • $accountNumber',
+                          accountNumber.isNotEmpty
+                              ? '$bankName • $accountNumber'
+                              : 'Auto-Assigned on First Deposit',
                           style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white),
                         ),
                       ],
                     ),
                   ],
                 ),
-                InkWell(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: accountNumber));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Account number $accountNumber copied!',
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                if (accountNumber.isNotEmpty)
+                  InkWell(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: accountNumber));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Account number $accountNumber copied!',
+                            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                          ),
+                          backgroundColor: AppColors.primaryCyan,
+                          duration: const Duration(seconds: 2),
                         ),
-                        backgroundColor: AppColors.primaryCyan,
-                        duration: const Duration(seconds: 2),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryCyan.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
                       ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryCyan.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.copy_rounded, size: 14, color: AppColors.primaryCyan),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Copy',
+                            style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryCyan),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.copy_rounded, size: 14, color: AppColors.primaryCyan),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Copy',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryCyan),
-                        ),
-                      ],
+                  )
+                else
+                  InkWell(
+                    onTap: () => context.push('/wallet/fund'),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryCyan,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Fund',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: const Color(0xFF002B47)),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -596,17 +583,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final services = [
       _ServiceItem(
         title: 'Buy Data',
-        subtitle: 'SME & Direct',
+        subtitle: 'SME & Gifting',
         icon: Icons.wifi_rounded,
-        color: const Color(0xFF2563EB),
+        color: const Color(0xFF00A3FF),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderColor: isDark ? const Color(0xFF00A3FF).withValues(alpha: 0.6) : const Color(0xFF00A3FF),
         route: '/services/data',
       ),
       _ServiceItem(
         title: 'Buy Airtime',
-        subtitle: 'All Networks',
+        subtitle: 'Instant Discount',
         icon: Icons.phone_android_rounded,
-        color: const Color(0xFFEF4444),
+        color: const Color(0xFF0284C7),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderColor: isDark ? const Color(0xFF0284C7).withValues(alpha: 0.6) : const Color(0xFF0284C7),
         route: '/services/airtime',
+      ),
+      _ServiceItem(
+        title: 'Exam PINs',
+        subtitle: 'WAEC, JAMB, NECO',
+        icon: Icons.school_rounded,
+        color: const Color(0xFF10B981),
+        backgroundColor: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFF0FDF4),
+        borderColor: const Color(0xFF10B981),
+        route: '/services/exam_pin',
       ),
       _ServiceItem(
         title: 'Electricity',
@@ -626,31 +626,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: 'Betting Topup',
         subtitle: 'Bet9ja, SportyBet',
         icon: Icons.sports_soccer_rounded,
-        color: const Color(0xFF10B981),
+        color: const Color(0xFF06B6D4),
         route: '/services/betting',
       ),
       _ServiceItem(
         title: 'Airtime to Cash',
         subtitle: 'Instant Payout',
         icon: Icons.currency_exchange_rounded,
-        color: const Color(0xFF06B6D4),
+        color: const Color(0xFF059669),
         onTap: () {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Airtime to Cash is ready. Minimum exchange: ₦1,000.', style: GoogleFonts.plusJakartaSans()),
-            ),
-          );
-        },
-      ),
-      _ServiceItem(
-        title: 'Bulk SMS',
-        subtitle: 'Custom Sender ID',
-        icon: Icons.mark_chat_read_rounded,
-        color: const Color(0xFF6366F1),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Bulk SMS gateway active. Deliveries via DND routed lines.', style: GoogleFonts.plusJakartaSans()),
+              content: Text('Airtime to Cash is ready. Minimum exchange: ₦1,000.', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
             ),
           );
         },
@@ -690,15 +677,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkCard : Colors.white,
+              color: item.backgroundColor ?? (isDark ? AppColors.darkCard : Colors.white),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
-                width: 1,
+                color: item.borderColor ?? (isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
+                width: item.borderColor != null ? 1.5 : 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                  color: (item.borderColor ?? Colors.black).withValues(alpha: isDark ? 0.2 : 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -724,7 +711,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Text(
                         item.title,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: FontWeight.w800,
                           color: isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
@@ -735,8 +722,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Text(
                         item.subtitle,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                           color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                         ),
                         maxLines: 1,
@@ -896,6 +883,8 @@ class _ServiceItem {
   final String subtitle;
   final IconData icon;
   final Color color;
+  final Color? backgroundColor;
+  final Color? borderColor;
   final String? route;
   final VoidCallback? onTap;
 
@@ -904,6 +893,8 @@ class _ServiceItem {
     required this.subtitle,
     required this.icon,
     required this.color,
+    this.backgroundColor,
+    this.borderColor,
     this.route,
     this.onTap,
   });

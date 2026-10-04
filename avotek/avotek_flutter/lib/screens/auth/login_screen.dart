@@ -23,11 +23,11 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _agreedToTerms = true;
 
   // Controllers
-  final _identifierController = TextEditingController(text: 'demo@avotek.africa');
-  final _fullNameController = TextEditingController(text: 'Ada Okafor');
-  final _phoneController = TextEditingController(text: '0803 411 9920');
-  final _emailController = TextEditingController(text: 'ada@example.com');
-  final _passwordController = TextEditingController(text: 'demopassword');
+  final _identifierController = TextEditingController();
+  final _fullNameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _referralController = TextEditingController();
 
   @override
@@ -47,21 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleOneTapDemo() async {
-    final auth = context.read<AuthProvider>();
-    final success = await auth.loginWithDemo();
-    if (success && mounted) {
-      if (auth.user?.id != null) {
-        context.read<WalletProvider>().fetchWallet(auth.user!.id!);
-      }
-      context.go('/dashboard');
-    }
-  }
-
   void _showGoogleAuthDialog() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final emailController = TextEditingController(text: 'user@gmail.com');
-    final nameController = TextEditingController(text: 'Google User');
+    final emailController = TextEditingController();
+    final nameController = TextEditingController();
 
     showDialog(
       context: context,
@@ -85,66 +74,32 @@ class _LoginScreenState extends State<LoginScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Google Cloud Client ID Connected',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF10B981),
-                          ),
-                        ),
-                        Text(
-                          '499643353122-su0u941trtlk3e4c5f7o8abiih7q52r8',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 10,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
             Text(
-              'Sign in using your Google account:',
+              'Sign in securely with your Google account:',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             TextField(
               controller: nameController,
+              style: GoogleFonts.plusJakartaSans(fontSize: 14),
               decoration: const InputDecoration(
-                labelText: 'Google Profile Name',
+                labelText: 'Full Name',
+                hintText: 'Your name on Google',
                 prefixIcon: Icon(Icons.person_outline, size: 18),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             TextField(
               controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              style: GoogleFonts.plusJakartaSans(fontSize: 14),
               decoration: const InputDecoration(
-                labelText: 'Google Account Email',
+                labelText: 'Google Email',
+                hintText: 'example@gmail.com',
                 prefixIcon: Icon(Icons.email_outlined, size: 18),
               ),
             ),
@@ -161,24 +116,29 @@ class _LoginScreenState extends State<LoginScreen> {
           ElevatedButton.icon(
             icon: _buildGoogleIcon(size: 16),
             label: Text(
-              'Authorize with Google',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13),
+              'Continue with Google',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             onPressed: () async {
+              final enteredEmail = emailController.text.trim();
+              final enteredName = nameController.text.trim();
+              if (enteredEmail.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter your Google email.')),
+                );
+                return;
+              }
               Navigator.pop(ctx);
               final auth = context.read<AuthProvider>();
               final success = await auth.socialLogin(
                 provider: 'google',
-                email: emailController.text.trim().isNotEmpty
-                    ? emailController.text.trim()
-                    : 'user@gmail.com',
-                name: nameController.text.trim().isNotEmpty
-                    ? nameController.text.trim()
-                    : 'Google User',
+                email: enteredEmail,
+                name: enteredName.isNotEmpty ? enteredName : enteredEmail.split('@').first,
               );
               if (success && mounted) {
                 if (auth.user?.id != null) {
@@ -615,24 +575,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontSize: 14,
                   ),
                 ),
-        ),
-        const SizedBox(height: 10),
-        OutlinedButton.icon(
-          onPressed: _handleOneTapDemo,
-          icon: const Icon(Icons.bolt_rounded, size: 16, color: AppColors.warning),
-          label: Text(
-            '1-Tap Demo Access',
-            style: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-            ),
-          ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: isDark ? Colors.white70 : const Color(0xFF334155),
-            side: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
         ),
       ],
     );

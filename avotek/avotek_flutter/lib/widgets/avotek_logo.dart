@@ -32,37 +32,53 @@ class AvotekLogo extends StatelessWidget {
         height: size,
         fit: BoxFit.contain,
         alignment: Alignment.centerLeft,
+        errorBuilder: (context, error, stackTrace) => _buildVectorLogo(effectiveDark),
       );
     }
 
+    return _buildVectorLogo(effectiveDark);
+  }
+
+  Widget _buildVectorLogo(bool effectiveDark) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        CustomPaint(
-          size: Size(size, size),
-          painter: _AvotekCircuitPainter(isDark: effectiveDark),
+        Container(
+          width: size,
+          height: size,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.primaryBlue.withValues(alpha: 0.15),
+            border: Border.all(color: AppColors.primaryCyan, width: 1.5),
+          ),
+          child: CustomPaint(
+            painter: _AvotekCircuitPainter(isDark: effectiveDark),
+          ),
         ),
         if (showText) ...[
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           RichText(
             text: TextSpan(
               children: [
                 TextSpan(
                   text: 'AVO',
                   style: TextStyle(
-                    fontSize: size * 0.48,
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: size * 0.52,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
+                    letterSpacing: 1.2,
                     color: effectiveDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                 ),
                 TextSpan(
                   text: 'TEK',
                   style: TextStyle(
-                    fontSize: size * 0.48,
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: size * 0.52,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
+                    letterSpacing: 1.2,
                     color: AppColors.primaryCyan,
                   ),
                 ),
@@ -101,6 +117,14 @@ class AvotekBrandAsset extends StatelessWidget {
       height: height,
       width: width,
       fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        return AvotekLogo(
+          size: height,
+          isDark: isDark,
+          useAssetImage: false,
+          showText: true,
+        );
+      },
     );
   }
 }

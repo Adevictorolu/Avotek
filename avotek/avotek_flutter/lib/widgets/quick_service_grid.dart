@@ -7,6 +7,8 @@ class ServiceItem {
   final String subtitle;
   final IconData icon;
   final Color color;
+  final Color? backgroundColor;
+  final Color? borderColor;
 
   const ServiceItem({
     required this.id,
@@ -14,6 +16,8 @@ class ServiceItem {
     required this.subtitle,
     required this.icon,
     required this.color,
+    this.backgroundColor,
+    this.borderColor,
   });
 }
 
@@ -24,18 +28,31 @@ class QuickServiceGrid extends StatelessWidget {
 
   static const List<ServiceItem> services = [
     ServiceItem(
-      id: 'airtime',
-      title: 'Airtime',
-      subtitle: 'Instant Top-Up',
-      icon: Icons.phone_android_rounded,
-      color: Color(0xFF00A3FF),
-    ),
-    ServiceItem(
       id: 'data',
       title: 'Data Bundle',
       subtitle: 'SME & Gifting',
       icon: Icons.wifi_rounded,
+      color: Color(0xFF00A3FF),
+      backgroundColor: Colors.white,
+      borderColor: Color(0xFF00A3FF),
+    ),
+    ServiceItem(
+      id: 'airtime',
+      title: 'Airtime',
+      subtitle: 'Instant Top-Up',
+      icon: Icons.phone_android_rounded,
+      color: Color(0xFF0284C7),
+      backgroundColor: Colors.white,
+      borderColor: Color(0xFF0284C7),
+    ),
+    ServiceItem(
+      id: 'exam_pin',
+      title: 'Exam PINs',
+      subtitle: 'WAEC, JAMB',
+      icon: Icons.school_rounded,
       color: Color(0xFF10B981),
+      backgroundColor: Color(0xFFF0FDF4),
+      borderColor: Color(0xFF10B981),
     ),
     ServiceItem(
       id: 'electricity',
@@ -56,7 +73,7 @@ class QuickServiceGrid extends StatelessWidget {
       title: 'Airtime to Cash',
       subtitle: 'Instant Cash Out',
       icon: Icons.currency_exchange_rounded,
-      color: Color(0xFF0284C7),
+      color: Color(0xFF059669),
     ),
     ServiceItem(
       id: 'cac',
@@ -90,18 +107,35 @@ class QuickServiceGrid extends StatelessWidget {
       itemCount: services.length,
       itemBuilder: (context, index) {
         final service = services[index];
+        final cardBg = isDark
+            ? (service.backgroundColor != null
+                ? (service.id == 'exam_pin'
+                    ? const Color(0xFF064E3B).withValues(alpha: 0.4)
+                    : const Color(0xFF1E293B))
+                : AppColors.darkCard)
+            : (service.backgroundColor ?? AppColors.lightCard);
+
+        final cardBorder = service.borderColor ?? (isDark ? AppColors.darkBorder : AppColors.lightBorder);
+
         return InkWell(
           onTap: () => onServiceSelected(service.id),
           borderRadius: BorderRadius.circular(16),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkCard : AppColors.lightCard,
+              color: cardBg,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                width: 1.2,
+                color: cardBorder,
+                width: service.borderColor != null ? 1.5 : 1.2,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: cardBorder.withValues(alpha: isDark ? 0.2 : 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -126,8 +160,9 @@ class QuickServiceGrid extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                 ),
@@ -138,7 +173,9 @@ class QuickServiceGrid extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                     color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                   ),
                 ),

@@ -51,47 +51,33 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// ⚡ Quick One-Tap Demo Access with Preloaded ₦25,000 Sandbox Balance
+  /// Guest / Quick Login
   Future<bool> loginWithDemo() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    try {
-      // Attempt live Serverpod endpoint first
-      final res = await client.auth.verifyOtp(
-        '08031234567',
-        '123456',
-        name: 'Chukwuemeka Obi',
-        referralCode: 'AVO01',
-      );
-      _user = res.user;
-      _wallet = res.wallet;
-      _token = res.token;
-    } catch (_) {
-      // Instant graceful local fallback for offline/instant evaluation
-      final now = DateTime.now();
-      _user = User(
-        id: 1,
-        phone: '08031234567',
-        email: 'demo@avotek.africa',
-        name: 'Chukwuemeka Obi',
-        kycStatus: 'tier2',
-        referralCode: 'AVO01',
-        createdAt: now,
-      );
-      _wallet = Wallet(
-        id: 1,
-        userId: 1,
-        balance: 25000.0,
-        currency: 'NGN',
-        virtualAccountNumber: '9031234567',
-        virtualAccountBank: 'Wema Bank / Moniepoint',
-        virtualAccountName: 'AVOTEK - Chukwuemeka Obi',
-        updatedAt: now,
-      );
-      _token = 'demo-jwt-token-avotek-2026';
-    }
+    final now = DateTime.now();
+    _user = User(
+      id: DateTime.now().millisecondsSinceEpoch % 100000,
+      phone: '080${DateTime.now().millisecondsSinceEpoch.toString().substring(5, 13)}',
+      email: 'guest@avotek.africa',
+      name: 'Guest User',
+      kycStatus: 'tier1',
+      referralCode: 'AVOTEK01',
+      createdAt: now,
+    );
+    _wallet = Wallet(
+      id: DateTime.now().millisecondsSinceEpoch % 100000,
+      userId: _user!.id!,
+      balance: 0.0,
+      currency: 'NGN',
+      virtualAccountNumber: null,
+      virtualAccountBank: null,
+      virtualAccountName: null,
+      updatedAt: now,
+    );
+    _token = 'guest-auth-token';
 
     _isLoading = false;
     notifyListeners();
@@ -108,13 +94,13 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 600)); // Simulate auth handshake
+    await Future.delayed(const Duration(milliseconds: 300));
 
     final now = DateTime.now();
     final cleanPhone = '080${DateTime.now().millisecondsSinceEpoch.toString().substring(5, 13)}';
 
     _user = User(
-      id: 2,
+      id: DateTime.now().millisecondsSinceEpoch % 100000,
       phone: cleanPhone,
       email: email,
       name: name,
@@ -124,13 +110,13 @@ class AuthProvider extends ChangeNotifier {
     );
 
     _wallet = Wallet(
-      id: 2,
-      userId: 2,
-      balance: 15000.0,
+      id: DateTime.now().millisecondsSinceEpoch % 100000,
+      userId: _user!.id!,
+      balance: 0.0, // Fresh account starts at 0.00
       currency: 'NGN',
-      virtualAccountNumber: '90${cleanPhone.substring(cleanPhone.length - 8)}',
-      virtualAccountBank: 'Wema Bank / Moniepoint',
-      virtualAccountName: 'AVOTEK - $name',
+      virtualAccountNumber: null, // Assigned on first deposit
+      virtualAccountBank: null,
+      virtualAccountName: null,
       updatedAt: now,
     );
     _token = 'social-$provider-token';
@@ -151,34 +137,39 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final cleanPhone = identifier.replaceAll(RegExp(r'\D'), '');
-      final phone = cleanPhone.length >= 10 ? cleanPhone : '08031234567';
+      final phone = cleanPhone.length >= 10 ? cleanPhone : identifier;
       final res = await client.auth.verifyOtp(
         phone,
-        '123456',
+        password,
       );
       _user = res.user;
       _wallet = res.wallet;
       _token = res.token;
     } catch (_) {
-      // Local fallback
+      // Local graceful fallback with real user input
       final now = DateTime.now();
+      final isEmail = identifier.contains('@');
+      final cleanPhone = identifier.replaceAll(RegExp(r'\D'), '');
+      final rawName = isEmail ? identifier.split('@').first : 'User ${cleanPhone.length >= 4 ? cleanPhone.substring(cleanPhone.length - 4) : cleanPhone}';
+      final displayName = rawName.split('.').map((s) => s.isNotEmpty ? '${s[0].toUpperCase()}${s.substring(1)}' : '').join(' ').trim();
+
       _user = User(
-        id: 1,
-        phone: identifier.contains('@') ? '08031234567' : identifier,
-        email: identifier.contains('@') ? identifier : 'user@avotek.africa',
-        name: 'Chukwuemeka Obi',
-        kycStatus: 'tier2',
-        referralCode: 'AVOTEK01',
+        id: DateTime.now().millisecondsSinceEpoch % 100000,
+        phone: isEmail ? '080${DateTime.now().millisecondsSinceEpoch.toString().substring(5, 13)}' : identifier,
+        email: isEmail ? identifier : '$cleanPhone@avotek.africa',
+        name: displayName.isNotEmpty ? displayName : 'Customer',
+        kycStatus: 'tier1',
+        referralCode: 'AVO${cleanPhone.length >= 4 ? cleanPhone.substring(cleanPhone.length - 4) : "01"}',
         createdAt: now,
       );
       _wallet = Wallet(
-        id: 1,
-        userId: 1,
-        balance: 25000.0,
+        id: DateTime.now().millisecondsSinceEpoch % 100000,
+        userId: _user!.id!,
+        balance: 0.0,
         currency: 'NGN',
-        virtualAccountNumber: '9031234567',
-        virtualAccountBank: 'Wema Bank / Moniepoint',
-        virtualAccountName: 'AVOTEK - Chukwuemeka Obi',
+        virtualAccountNumber: null,
+        virtualAccountBank: null,
+        virtualAccountName: null,
         updatedAt: now,
       );
       _token = 'local-auth-token';
@@ -205,7 +196,7 @@ class AuthProvider extends ChangeNotifier {
       final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
       final res = await client.auth.verifyOtp(
         cleanPhone,
-        '123456',
+        password,
         name: name,
         referralCode: referralCode,
       );
@@ -228,11 +219,11 @@ class AuthProvider extends ChangeNotifier {
       _wallet = Wallet(
         id: DateTime.now().millisecondsSinceEpoch % 100000,
         userId: _user!.id!,
-        balance: 5000.0, // Registration welcome credit
+        balance: 0.0, // Fresh account starts at 0.00
         currency: 'NGN',
-        virtualAccountNumber: '90${cleanPhone.length >= 8 ? cleanPhone.substring(cleanPhone.length - 8) : "12345678"}',
-        virtualAccountBank: 'Wema Bank / Moniepoint',
-        virtualAccountName: 'AVOTEK - $name',
+        virtualAccountNumber: null,
+        virtualAccountBank: null,
+        virtualAccountName: null,
         updatedAt: now,
       );
       _token = 'new-user-reg-token';

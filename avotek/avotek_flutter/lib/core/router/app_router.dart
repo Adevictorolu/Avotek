@@ -17,6 +17,7 @@ import '../../screens/services/cable_screen.dart';
 import '../../screens/services/cac_screen.dart';
 import '../../screens/services/data_screen.dart';
 import '../../screens/services/electricity_screen.dart';
+import '../../screens/services/exam_pin_screen.dart';
 import '../../screens/transactions/transactions_screen.dart';
 import '../../screens/wallet/fund_wallet_screen.dart';
 import '../../screens/wallet/student_wallet_screen.dart';
@@ -82,7 +83,11 @@ class AppRouter {
         ),
         GoRoute(
           path: '/services/exam_pin',
-          redirect: (context, state) => '/services/data',
+          builder: (context, state) => const ExamPinScreen(),
+        ),
+        GoRoute(
+          path: '/services/exam',
+          builder: (context, state) => const ExamPinScreen(),
         ),
         GoRoute(
           path: '/wallet',
