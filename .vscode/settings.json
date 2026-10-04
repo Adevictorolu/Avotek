@@ -1,0 +1,7 @@
+{
+    "dart.flutterAdditionalArgs": [
+        "--web-hostname=127.0.0.1"
+    ],
+    "dart.debugSdkLibraries": false,
+    "dart.debugExternalPackageLibraries": false
+}

@@ -16,72 +16,84 @@ class LandingScreen extends StatefulWidget {
 class _LandingScreenState extends State<LandingScreen> {
   String _selectedRateNetwork = 'MTN';
   final ScrollController _scrollController = ScrollController();
+  bool _showDemoRibbon = true;
+
+  // GlobalKeys for accurate smooth scrolling to sections
+  final GlobalKey _servicesKey = GlobalKey();
+  final GlobalKey _howKey = GlobalKey();
+  final GlobalKey _ratesKey = GlobalKey();
+  final GlobalKey _whyKey = GlobalKey();
+  final GlobalKey _faqKey = GlobalKey();
+
+  // Solid service hues matching Kobo template design tokens
+  static const Color sAirtime = Color(0xFF7C3AED); // Solid Violet
+  static const Color sData = Color(0xFF2563EB); // Royal Blue
+  static const Color sCable = Color(0xFFDB2777); // Pink
+  static const Color sPower = Color(0xFFEA580C); // Warm Orange
+  static const Color sExam = Color(0xFF0891B2); // Cyan / Teal
+  static const Color sPrint = Color(0xFF9333EA); // Vibrant Purple
+  static const Color sWallet = Color(0xFF059669); // Emerald Green
+  static const Color sTransfer = Color(0xFF4F46E5); // Indigo
+  static const Color sRefer = Color(0xFFCA8A04); // Amber Gold
 
   final List<Map<String, dynamic>> _faqs = [
     {
       'q': 'How long does an order take?',
-      'a': 'Airtime and data are usually delivered in under fifteen seconds. Cable TV and electricity depend on the utility provider, so those can take up to a minute during peak hours. You can watch the status update in real time.',
+      'a': 'Airtime and data are usually done in under fifteen seconds. Cable and electricity depend on the provider, so those can take a minute at peak times. Either way you watch the status change, you are not left guessing.',
       'isOpen': true,
     },
     {
       'q': 'What happens when an order fails?',
-      'a': 'Your wallet is refunded automatically. You do not need to open a ticket or contact support. The failed order remains in your transaction history with the failure reason attached.',
+      'a': 'The wallet is refunded automatically. You do not open a ticket and you do not chase anybody. The failed order stays in your history with its reason attached.',
       'isOpen': false,
     },
     {
       'q': 'How do I fund my wallet?',
-      'a': 'Every Avotek account receives a dedicated virtual account number (Wema Bank / Providus / Moniepoint). Transfer from any Nigerian bank app and your wallet is credited instantly.',
+      'a': 'Every account gets a dedicated account number. Transfer to it from any Nigerian bank app and the wallet is credited immediately. Card funding is there too if you prefer it.',
       'isOpen': false,
     },
     {
-      'q': 'Is there a minimum amount to start?',
-      'a': 'No. Fund with whatever amount you choose. There is no minimum funding requirement, no monthly subscription fee, and no dormant account charge.',
+      'q': 'Is there a minimum to start?',
+      'a': 'No. Fund with whatever you have and buy from it. There is no monthly fee and no dormant account charge.',
       'isOpen': false,
     },
     {
-      'q': 'Can I resell to my own customers or students?',
-      'a': 'Yes! That is what thousands of agents and campus merchants do on Avotek. You buy at our wholesale discount price and charge your customer whatever you choose. The profit is yours.',
+      'q': 'Can I resell to my own customers?',
+      'a': 'Yes, and that is what most people here do. You buy at your price and charge your customers whatever you like. The difference is yours.',
       'isOpen': false,
     },
     {
-      'q': 'Do I need a laptop or special hardware?',
-      'a': 'No. The entire platform works seamlessly in any smartphone browser, Android app, or iPhone with zero performance lag.',
+      'q': 'Do I need a laptop?',
+      'a': 'No. Everything works in a phone browser, including funding, buying and downloading receipts.',
       'isOpen': false,
     },
   ];
 
+  // Exact 4-plan sample rates matching Kobo index rates table
   final Map<String, List<Map<String, dynamic>>> _ratePlans = {
     'MTN': [
-      {'plan': '500MB SME', 'validity': '30 days', 'price': 340, 'was': 400},
-      {'plan': '1GB SME', 'validity': '30 days', 'price': 620, 'was': 700},
-      {'plan': '2GB SME', 'validity': '30 days', 'price': 1240, 'was': 1400},
-      {'plan': '3GB SME', 'validity': '30 days', 'price': 1860, 'was': 2100},
-      {'plan': '5GB SME', 'validity': '30 days', 'price': 3100, 'was': 3500},
-      {'plan': '10GB SME', 'validity': '30 days', 'price': 3400, 'was': 4000},
+      {'plan': '500MB', 'validity': '30 days', 'price': 340},
+      {'plan': '1GB', 'validity': '30 days', 'price': 620},
+      {'plan': '2GB', 'validity': '30 days', 'price': 1240},
+      {'plan': '5GB', 'validity': '30 days', 'price': 3100},
     ],
     'Glo': [
-      {'plan': '1GB Corporate', 'validity': '30 days', 'price': 280, 'was': 350},
-      {'plan': '2GB Corporate', 'validity': '30 days', 'price': 560, 'was': 700},
-      {'plan': '3GB Corporate', 'validity': '30 days', 'price': 840, 'was': 1050},
-      {'plan': '5GB Corporate', 'validity': '30 days', 'price': 1400, 'was': 1750},
-      {'plan': '10GB Corporate', 'validity': '30 days', 'price': 2800, 'was': 3500},
-      {'plan': '20GB Corporate', 'validity': '30 days', 'price': 5600, 'was': 7000},
+      {'plan': '1GB', 'validity': '30 days', 'price': 280},
+      {'plan': '2GB', 'validity': '30 days', 'price': 560},
+      {'plan': '5GB', 'validity': '30 days', 'price': 1400},
+      {'plan': '10GB', 'validity': '30 days', 'price': 2800},
     ],
     'Airtel': [
-      {'plan': '500MB Gifting', 'validity': '30 days', 'price': 350, 'was': 400},
-      {'plan': '1GB Gifting', 'validity': '30 days', 'price': 640, 'was': 750},
-      {'plan': '2GB Gifting', 'validity': '30 days', 'price': 1280, 'was': 1500},
-      {'plan': '5GB Gifting', 'validity': '30 days', 'price': 3200, 'was': 3750},
-      {'plan': '10GB Gifting', 'validity': '30 days', 'price': 4000, 'was': 4500},
-      {'plan': '15GB Gifting', 'validity': '30 days', 'price': 6000, 'was': 6800},
+      {'plan': '500MB', 'validity': '30 days', 'price': 350},
+      {'plan': '1GB', 'validity': '30 days', 'price': 640},
+      {'plan': '2GB', 'validity': '30 days', 'price': 1280},
+      {'plan': '5GB', 'validity': '30 days', 'price': 3200},
     ],
     '9mobile': [
-      {'plan': '1GB SME', 'validity': '30 days', 'price': 300, 'was': 400},
-      {'plan': '2GB SME', 'validity': '30 days', 'price': 600, 'was': 800},
-      {'plan': '3GB SME', 'validity': '30 days', 'price': 900, 'was': 1200},
-      {'plan': '5GB SME', 'validity': '30 days', 'price': 1500, 'was': 2000},
-      {'plan': '10GB SME', 'validity': '30 days', 'price': 3000, 'was': 4000},
-      {'plan': '20GB SME', 'validity': '30 days', 'price': 6000, 'was': 8000},
+      {'plan': '1GB', 'validity': '30 days', 'price': 300},
+      {'plan': '2GB', 'validity': '30 days', 'price': 600},
+      {'plan': '3GB', 'validity': '30 days', 'price': 900},
+      {'plan': '5GB', 'validity': '30 days', 'price': 1500},
     ],
   };
 
@@ -91,12 +103,14 @@ class _LandingScreenState extends State<LandingScreen> {
     super.dispose();
   }
 
-  void _scrollToSection(double offset) {
-    _scrollController.animateTo(
-      offset,
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.easeInOut,
-    );
+  void _scrollToKey(GlobalKey key) {
+    if (key.currentContext != null) {
+      Scrollable.ensureVisible(
+        key.currentContext!,
+        duration: const Duration(milliseconds: 550),
+        curve: Curves.easeInOutCubic,
+      );
+    }
   }
 
   @override
@@ -107,106 +121,266 @@ class _LandingScreenState extends State<LandingScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          // Sticky Top Navigation Bar
-          SliverAppBar(
-            pinned: true,
-            elevation: 0,
-            backgroundColor: isDark
-                ? AppColors.darkBg.withValues(alpha: 0.95)
-                : AppColors.lightBg.withValues(alpha: 0.95),
-            titleSpacing: isDesktop ? 48 : 16,
-            title: Row(
-              children: [
-                const AvotekLogo(size: 34, showText: true),
-                if (isDesktop) ...[
-                  const SizedBox(width: 48),
-                  _navLink('Services', () => _scrollToSection(600), isDark),
-                  _navLink('Rates', () => context.push('/rates'), isDark),
-                  _navLink('How it works', () => _scrollToSection(1300), isDark),
-                  _navLink('Why us', () => _scrollToSection(1800), isDark),
-                  _navLink('FAQ', () => _scrollToSection(2600), isDark),
-                ],
-              ],
-            ),
-            actions: [
-              IconButton(
-                tooltip: 'Toggle Theme',
-                icon: Icon(
-                  isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-                  size: 20,
-                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+      endDrawer: !isDesktop ? _buildMobileDrawer(isDark) : null,
+      body: Builder(
+        builder: (scaffoldContext) {
+          return CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              // 0. Optional Demo Announcement Ribbon matching Kobo
+              if (_showDemoRibbon)
+                SliverToBoxAdapter(
+                  child: Container(
+                    color: isDark ? const Color(0xFF162032) : const Color(0xFFE0F2FE),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: RichText(
+                            textAlign: TextAlign.center,
+                            text: TextSpan(
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF0369A1),
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: 'Live VTU Platform. ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : const Color(0xFF0C4A6E),
+                                  ),
+                                ),
+                                const TextSpan(
+                                  text: 'Dedicated NUBAN funding & automated refunds are active. Top up in seconds.',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => setState(() => _showDemoRibbon = false),
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 16,
+                            color: isDark ? Colors.white54 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                onPressed: widget.onToggleTheme,
-              ),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: () => context.push('/login'),
-                style: TextButton.styleFrom(
-                  foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-                child: const Text('Sign in', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: () => context.push('/login'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryCyan,
-                  foregroundColor: Colors.black,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                ),
-                child: const Text('Create account', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-              ),
-              SizedBox(width: isDesktop ? 48 : 16),
-            ],
-          ),
 
-          // Content Sections
-          SliverToBoxAdapter(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+              // Sticky Top Navigation Bar
+              SliverAppBar(
+                pinned: true,
+                elevation: 0,
+                backgroundColor: isDark
+                    ? AppColors.darkBg.withValues(alpha: 0.95)
+                    : AppColors.lightBg.withValues(alpha: 0.95),
+                titleSpacing: isDesktop ? 48 : 16,
+                title: Row(
                   children: [
-                    _buildHeroSection(isDesktop, isDark),
-                    _buildStatsStrip(isDark),
-                    _buildServicesSection(isDesktop, isDark),
-                    _buildHowItWorksSection(isDesktop, isDark),
-                    _buildRatesPreviewSection(isDesktop, isDark),
-                    _buildWhyUsSection(isDesktop, isDark),
-                    _buildTestimonialsSection(isDesktop, isDark),
-                    _buildPhoneCounterBanner(isDesktop, isDark),
-                    _buildFaqSection(isDesktop, isDark),
-                    _buildReadyCtaBanner(isDesktop, isDark),
-                    _buildFooter(isDesktop, isDark),
+                    const AvotekLogo(size: 34, showText: true),
+                    if (isDesktop) ...[
+                      const SizedBox(width: 40),
+                      _navLink('Services', () => _scrollToKey(_servicesKey), isDark),
+                      _navLink('Rates', () => context.push('/rates'), isDark),
+                      _navLink('How it works', () => _scrollToKey(_howKey), isDark),
+                      _navLink('Why us', () => _scrollToKey(_whyKey), isDark),
+                      _navLink('FAQ', () => _scrollToKey(_faqKey), isDark),
+                    ],
                   ],
                 ),
+                actions: [
+                  IconButton(
+                    tooltip: 'Toggle Theme',
+                    icon: Icon(
+                      isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                      size: 20,
+                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    ),
+                    onPressed: widget.onToggleTheme,
+                  ),
+                  if (isDesktop) ...[
+                    const SizedBox(width: 4),
+                    TextButton(
+                      onPressed: () => context.push('/login'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      child: const Text('Sign in', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () => context.push('/login'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryCyan,
+                        foregroundColor: const Color(0xFF0A0E17),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                      ),
+                      child: const Text('Create account', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                    ),
+                    const SizedBox(width: 48),
+                  ] else ...[
+                    IconButton(
+                      icon: const Icon(Icons.menu_rounded),
+                      onPressed: () => Scaffold.of(scaffoldContext).openEndDrawer(),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ],
+              ),
+
+              // Content Sections
+              SliverToBoxAdapter(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildHeroSection(isDesktop, isDark),
+                        _buildStatsStrip(isDark),
+                        Container(key: _servicesKey, child: _buildServicesSection(isDesktop, isDark)),
+                        Container(key: _howKey, child: _buildHowItWorksSection(isDesktop, isDark)),
+                        Container(key: _ratesKey, child: _buildRatesPreviewSection(isDesktop, isDark)),
+                        Container(key: _whyKey, child: _buildWhyUsSection(isDesktop, isDark)),
+                        _buildTestimonialsSection(isDesktop, isDark),
+                        _buildPhoneCounterBanner(isDesktop, isDark),
+                        Container(key: _faqKey, child: _buildFaqSection(isDesktop, isDark)),
+                        _buildReadyCtaBanner(isDesktop, isDark),
+                        _buildFooter(isDesktop, isDark),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMobileDrawer(bool isDark) {
+    return Drawer(
+      backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const AvotekLogo(size: 32, showText: true),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.grid_view_rounded, size: 20),
+              title: const Text('Services', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.of(context).pop();
+                _scrollToKey(_servicesKey);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.credit_card_rounded, size: 20),
+              title: const Text('Rates', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/rates');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.bolt_rounded, size: 20),
+              title: const Text('How it works', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.of(context).pop();
+                _scrollToKey(_howKey);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.shield_outlined, size: 20),
+              title: const Text('Why us', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.of(context).pop();
+                _scrollToKey(_whyKey);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.help_outline_rounded, size: 20),
+              title: const Text('FAQ', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.of(context).pop();
+                _scrollToKey(_faqKey);
+              },
+            ),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.push('/login');
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Sign in', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.push('/login');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryCyan,
+                      foregroundColor: const Color(0xFF0A0E17),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Create free account', style: TextStyle(fontWeight: FontWeight.w800)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _navLink(String label, VoidCallback onTap, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
               color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
             ),
@@ -216,12 +390,14 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // 1. HERO SECTION
+  // ====================================================================
+  // 1. HERO SECTION (Matching Kobopay .hero)
+  // ====================================================================
   Widget _buildHeroSection(bool isDesktop, bool isDark) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop ? 48 : 20,
-        vertical: isDesktop ? 60 : 36,
+        vertical: isDesktop ? 64 : 36,
       ),
       child: isDesktop
           ? Row(
@@ -235,7 +411,7 @@ class _LandingScreenState extends State<LandingScreen> {
           : Column(
               children: [
                 _buildHeroCopy(isDark),
-                const SizedBox(height: 36),
+                const SizedBox(height: 40),
                 _buildPhoneMockup(isDark),
               ],
             ),
@@ -246,7 +422,7 @@ class _LandingScreenState extends State<LandingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Pill note
+        // Pill note: New Dedicated account numbers are live
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
@@ -254,23 +430,25 @@ class _LandingScreenState extends State<LandingScreen> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.auto_awesome, size: 14, color: AppColors.primaryCyan),
-              SizedBox(width: 6),
-              Text(
-                'Dedicated account numbers are live',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primaryCyan,
+              const Icon(Icons.auto_awesome, size: 14, color: AppColors.primaryCyan),
+              const SizedBox(width: 6),
+              RichText(
+                text: const TextSpan(
+                  style: TextStyle(fontSize: 12, color: AppColors.primaryCyan),
+                  children: [
+                    TextSpan(text: 'New  ', style: TextStyle(fontWeight: FontWeight.w900)),
+                    TextSpan(text: 'Dedicated account numbers are live', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ],
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 20),
+        // Headline: Airtime, data and bills. Sorted in seconds.
         RichText(
           text: TextSpan(
             style: GoogleFonts.montserrat(
@@ -280,8 +458,8 @@ class _LandingScreenState extends State<LandingScreen> {
               color: isDark ? Colors.white : const Color(0xFF0F172A),
               letterSpacing: -0.8,
             ),
-            children: [
-              const TextSpan(text: 'Airtime, data & bills.\n'),
+            children: const [
+              TextSpan(text: 'Airtime, data and bills.\n'),
               TextSpan(
                 text: 'Sorted in seconds.',
                 style: TextStyle(
@@ -293,8 +471,9 @@ class _LandingScreenState extends State<LandingScreen> {
           ),
         ),
         const SizedBox(height: 18),
+        // Deck: One wallet for every top-up you make and every one you sell...
         Text(
-          'One wallet for every top-up you make and every one you sell. Fund from any bank, buy at reseller prices, and get your money back automatically when a network misbehaves.',
+          'One wallet for every top-up you make and every one you sell. Fund it from any bank, buy at reseller prices, and get your money back automatically when a network misbehaves.',
           style: TextStyle(
             fontSize: 15,
             height: 1.6,
@@ -302,6 +481,7 @@ class _LandingScreenState extends State<LandingScreen> {
           ),
         ),
         const SizedBox(height: 28),
+        // CTAs: Create free account -> / See our rates
         Wrap(
           spacing: 14,
           runSpacing: 12,
@@ -309,10 +489,10 @@ class _LandingScreenState extends State<LandingScreen> {
             ElevatedButton.icon(
               onPressed: () => context.push('/login'),
               icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-              label: const Text('Create free account', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+              label: const Text('Create free account', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryCyan,
-                foregroundColor: Colors.black,
+                foregroundColor: const Color(0xFF0A0E17),
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -331,16 +511,27 @@ class _LandingScreenState extends State<LandingScreen> {
           ],
         ),
         const SizedBox(height: 28),
+        // Trust social proof: 4 avatars + 18,400 people buy here every week
         Row(
           children: [
             _buildAvatarGroup(),
             const SizedBox(width: 12),
-            Text(
-              '18,400+ students & agents buy weekly',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+            RichText(
+              text: TextSpan(
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                ),
+                children: [
+                  TextSpan(
+                    text: '18,400 people ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const TextSpan(text: 'buy here every week'),
+                ],
               ),
             ),
           ],
@@ -373,22 +564,24 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // INTERACTIVE PHONE MOCKUP (Matching Kobopay)
+  // ====================================================================
+  // INTERACTIVE PHONE MOCKUP (Matching Kobopay .phone & .phone__screen)
+  // ====================================================================
   Widget _buildPhoneMockup(bool isDark) {
     return Container(
       constraints: const BoxConstraints(maxWidth: 360),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(36),
         border: Border.all(
           color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
-            blurRadius: 32,
-            offset: const Offset(0, 16),
+            color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+            blurRadius: 36,
+            offset: const Offset(0, 18),
           ),
         ],
       ),
@@ -396,12 +589,25 @@ class _LandingScreenState extends State<LandingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Phone top
+          // Speaker notch simulation
+          Center(
+            child: Container(
+              width: 54,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white24 : Colors.black12,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Phone Top Card (Gradient with wallet balance)
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primaryBlue, AppColors.primaryCyan],
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0077B6), AppColors.primaryCyan],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -431,28 +637,36 @@ class _LandingScreenState extends State<LandingScreen> {
                 const Text('Wallet balance', style: TextStyle(fontSize: 10, color: Colors.white70)),
                 const Text(
                   '₦248,500.00',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          // 8 mini service tiles
+
+          // 8 Quick Service Icons (Solid circular badges matching Kobo tokens)
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _miniServiceTile('Airtime', Icons.phone_android, AppColors.primaryCyan),
-              _miniServiceTile('Data', Icons.wifi, AppColors.success),
-              _miniServiceTile('Cable', Icons.tv, Colors.pink),
-              _miniServiceTile('Power', Icons.bolt, AppColors.warning),
-              _miniServiceTile('Exams', Icons.school, Colors.cyan),
-              _miniServiceTile('Print', Icons.print, Colors.deepPurple),
-              _miniServiceTile('Fund', Icons.account_balance_wallet, Colors.teal),
-              _miniServiceTile('Send', Icons.send, Colors.indigo),
+              _miniServiceTile('Airtime', Icons.phone_android_rounded, sAirtime, () => context.push('/services/airtime')),
+              _miniServiceTile('Data', Icons.wifi_rounded, sData, () => context.push('/services/data')),
+              _miniServiceTile('Cable', Icons.tv_rounded, sCable, () => context.push('/services/tv')),
+              _miniServiceTile('Power', Icons.bolt_rounded, sPower, () => context.push('/services/electricity')),
+              _miniServiceTile('Exams', Icons.school_rounded, sExam, () => context.push('/services/exam_pin')),
+              _miniServiceTile('Print', Icons.print_rounded, sPrint, () => context.push('/services/airtime')),
+              _miniServiceTile('Fund', Icons.account_balance_wallet_rounded, sWallet, () => context.push('/wallet/fund')),
+              _miniServiceTile('Send', Icons.send_rounded, sTransfer, () => context.push('/dashboard')),
             ],
           ),
           const SizedBox(height: 16),
+
+          // Live Recent Transactions List
           Text(
             'Recent Orders',
             style: TextStyle(
@@ -462,42 +676,59 @@ class _LandingScreenState extends State<LandingScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          _miniTxTile('MTN 10GB SME', 'Delivered • 12:41', '-₦3,400', isDark, false),
-          _miniTxTile('Wallet Funding', 'Credited • 11:52', '+₦100,000', isDark, true),
+          _miniTxTile('MTN 10GB SME', 'Delivered • 12:41', '-₦3,400', isDark, false, sData, Icons.wifi_rounded),
+          _miniTxTile('Wallet funding', 'Credited • 11:52', '+₦100,000', isDark, true, sWallet, Icons.account_balance_wallet_rounded),
         ],
       ),
     );
   }
 
-  Widget _miniServiceTile(String label, IconData icon, Color color) {
-    return Container(
-      width: 72,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
-        ],
+  Widget _miniServiceTile(String label, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 72,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 17,
+              backgroundColor: color,
+              child: Icon(icon, size: 16, color: Colors.white),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _miniTxTile(String title, String sub, String amt, bool isDark, bool isCredit) {
+  Widget _miniTxTile(String title, String sub, String amt, bool isDark, bool isCredit, Color dotColor, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
-              Text(sub, style: const TextStyle(fontSize: 9, color: Colors.grey)),
+              CircleAvatar(
+                radius: 12,
+                backgroundColor: dotColor,
+                child: Icon(icon, size: 11, color: Colors.white),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                  Text(sub, style: const TextStyle(fontSize: 9, color: Colors.grey)),
+                ],
+              ),
             ],
           ),
           Text(
@@ -513,15 +744,24 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // 2. STATS STRIP
+  // ====================================================================
+  // 2. STATS STRIP (Matching Kobopay .stats-wrap & .stats)
+  // ====================================================================
   Widget _buildStatsStrip(bool isDark) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -576,24 +816,80 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // 3. SERVICES SECTION
+  // ====================================================================
+  // 3. SERVICES SECTION (Matching Kobopay #services)
+  // ====================================================================
   Widget _buildServicesSection(bool isDesktop, bool isDark) {
     final services = [
-      {'title': 'Airtime top-up', 'desc': 'MTN, Glo, Airtel and 9mobile at wholesale discount, delivered immediately.', 'icon': Icons.phone_android, 'color': AppColors.primaryCyan, 'route': '/services/airtime'},
-      {'title': 'Data bundles', 'desc': 'SME, Gifting and Corporate plans. Daily, weekly and monthly, every network.', 'icon': Icons.wifi, 'color': AppColors.success, 'route': '/services/data'},
-      {'title': 'Cable TV', 'desc': 'DStv, GOtv and Startimes renewals. Instant decoder recharge without downtime.', 'icon': Icons.tv, 'color': Colors.pink, 'route': '/services/tv'},
-      {'title': 'Electricity DISCOs', 'desc': 'Prepaid tokens and postpaid bills for all DISCOs. Token generated instantly.', 'icon': Icons.bolt, 'color': AppColors.warning, 'route': '/services/electricity'},
-      {'title': 'Result checkers', 'desc': 'WAEC, NECO and NABTEB pins issued instantly. Zero reselling or duplicate pins.', 'icon': Icons.school, 'color': Colors.cyan, 'route': '/services/exam_pin'},
-      {'title': 'Card printing', 'desc': 'Print branded recharge pins in custom layouts and sell offline in your school/store.', 'icon': Icons.print, 'color': Colors.deepPurple, 'route': '/services/airtime'},
-      {'title': 'Wallet funding', 'desc': 'Dedicated account number with instant bank transfer credit and zero delay.', 'icon': Icons.account_balance_wallet, 'color': Colors.teal, 'route': '/wallet/fund'},
-      {'title': 'Referral earnings', 'desc': 'Invite friends and fellow students, and earn commissions on every top-up they make.', 'icon': Icons.group_add, 'color': Colors.indigo, 'route': '/dashboard'},
+      {
+        'title': 'Airtime top-up',
+        'desc': 'MTN, Glo, Airtel and 9mobile at a discount, delivered the second you pay.',
+        'icon': Icons.phone_android_rounded,
+        'color': sAirtime,
+        'route': '/services/airtime',
+      },
+      {
+        'title': 'Data bundles',
+        'desc': 'SME, gifting and corporate plans. Daily, weekly and monthly, every network.',
+        'icon': Icons.wifi_rounded,
+        'color': sData,
+        'route': '/services/data',
+      },
+      {
+        'title': 'Cable TV',
+        'desc': 'DStv, GOtv and Startimes renewals. Enter the smartcard, the box comes back on.',
+        'icon': Icons.tv_rounded,
+        'color': sCable,
+        'route': '/services/tv',
+      },
+      {
+        'title': 'Electricity',
+        'desc': 'Prepaid tokens and postpaid bills for every disco, token shown on screen.',
+        'icon': Icons.bolt_rounded,
+        'color': sPower,
+        'route': '/services/electricity',
+      },
+      {
+        'title': 'Result checkers',
+        'desc': 'WAEC, NECO and NABTEB pins issued instantly, never resold to anyone else.',
+        'icon': Icons.school_rounded,
+        'color': sExam,
+        'route': '/services/exam_pin',
+      },
+      {
+        'title': 'Card printing',
+        'desc': 'Print your own recharge cards in your own design and sell them offline.',
+        'icon': Icons.print_rounded,
+        'color': sPrint,
+        'route': '/services/airtime',
+      },
+      {
+        'title': 'Wallet funding',
+        'desc': 'A dedicated account number. Transfer from any bank and it reflects at once.',
+        'icon': Icons.account_balance_wallet_rounded,
+        'color': sWallet,
+        'route': '/wallet/fund',
+      },
+      {
+        'title': 'Referral earnings',
+        'desc': 'Bring people in and earn on everything they buy, paid into the same wallet.',
+        'icon': Icons.group_add_rounded,
+        'color': sRefer,
+        'route': '/dashboard',
+      },
     ];
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 56),
       child: Column(
         children: [
-          _sectionHeader('WHAT YOU CAN BUY', 'One wallet, everything people pay for', 'Eight core academic & utility services on a single balance. Buy for yourself, or sell to customers.', isDark),
+          _sectionHeader(
+            'WHAT YOU CAN BUY',
+            'One wallet, everything people pay for',
+            'Eight services on a single balance. Buy for yourself, or sell to the customer standing in front of you.',
+            isDark,
+            icon: Icons.grid_view_rounded,
+          ),
           const SizedBox(height: 36),
           GridView.builder(
             shrinkWrap: true,
@@ -622,8 +918,8 @@ class _LandingScreenState extends State<LandingScreen> {
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundColor: (s['color'] as Color).withValues(alpha: 0.15),
-                        child: Icon(s['icon'] as IconData, color: s['color'] as Color, size: 20),
+                        backgroundColor: s['color'] as Color,
+                        child: Icon(s['icon'] as IconData, color: Colors.white, size: 20),
                       ),
                       const SizedBox(height: 14),
                       Text(s['title'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
@@ -631,14 +927,18 @@ class _LandingScreenState extends State<LandingScreen> {
                       Expanded(
                         child: Text(
                           s['desc'] as String,
-                          style: TextStyle(fontSize: 12, color: isDark ? AppColors.metallicLight : AppColors.slateGrey, height: 1.4),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            height: 1.4,
+                          ),
                         ),
                       ),
                       Row(
                         children: [
-                          Text('Open', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryCyan)),
+                          const Text('Open', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryCyan)),
                           const SizedBox(width: 4),
-                          const Icon(Icons.arrow_forward, size: 12, color: AppColors.primaryCyan),
+                          const Icon(Icons.arrow_forward_rounded, size: 12, color: AppColors.primaryCyan),
                         ],
                       ),
                     ],
@@ -652,20 +952,40 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // 4. HOW IT WORKS
+  // ====================================================================
+  // 4. HOW IT WORKS (Matching Kobopay #how)
+  // ====================================================================
   Widget _buildHowItWorksSection(bool isDesktop, bool isDark) {
     final steps = [
-      {'step': '1', 'title': 'Create your account', 'desc': 'Name, phone number and a secure password. Verify once with OTP and you are ready to top up.'},
-      {'step': '2', 'title': 'Fund your wallet', 'desc': 'You get an assigned dedicated account number. Transfer from any Nigerian banking app and funds reflect instantly.'},
-      {'step': '3', 'title': 'Start transacting & selling', 'desc': 'Top up for yourself or sell to customers and students. Every order includes a permanent downloadable receipt.'},
+      {
+        'step': '1',
+        'title': 'Create your account',
+        'desc': 'Name, phone number and a password. One OTP and you are in, no paperwork.',
+      },
+      {
+        'step': '2',
+        'title': 'Fund your wallet',
+        'desc': 'You get a dedicated account number. Transfer from any bank app and it lands instantly.',
+      },
+      {
+        'step': '3',
+        'title': 'Start selling',
+        'desc': 'Buy for yourself or for a customer standing in front of you. Every order keeps a receipt.',
+      },
     ];
 
     return Container(
-      color: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
+      color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8F6FD),
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 56),
       child: Column(
         children: [
-          _sectionHeader('GETTING STARTED', 'Three steps, about two minutes', 'No paperwork, no manual authorization. Start topping up in moments.', isDark),
+          _sectionHeader(
+            'GETTING STARTED',
+            'Three steps, about five minutes',
+            '',
+            isDark,
+            icon: Icons.bolt_rounded,
+          ),
           const SizedBox(height: 36),
           isDesktop
               ? Row(
@@ -699,7 +1019,7 @@ class _LandingScreenState extends State<LandingScreen> {
               color: AppColors.primaryCyan,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Text(num, style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black, fontSize: 16)),
+            child: Text(num, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0A0E17), fontSize: 16)),
           ),
           const SizedBox(height: 16),
           Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -710,7 +1030,9 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // 5. RATES PREVIEW SECTION
+  // ====================================================================
+  // 5. RATES PREVIEW SECTION (Matching Kobopay #rates)
+  // ====================================================================
   Widget _buildRatesPreviewSection(bool isDesktop, bool isDark) {
     final plans = _ratePlans[_selectedRateNetwork] ?? [];
 
@@ -719,8 +1041,14 @@ class _LandingScreenState extends State<LandingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader('RATES', 'Know the price before you pay', 'A sample of our wholesale data plans. Full rates for all networks, airtime discounts and bills are on the rates page.', isDark),
-          const SizedBox(height: 24),
+          _sectionHeader(
+            'RATES',
+            'Know the price before you pay',
+            'A sample of the data plans. The full list, including airtime discounts, cable and electricity, is on the rates page.',
+            isDark,
+            icon: Icons.credit_card_rounded,
+          ),
+          const SizedBox(height: 28),
           // Network selector tabs
           Row(
             children: ['MTN', 'Glo', 'Airtel', '9mobile'].map((net) {
@@ -728,7 +1056,13 @@ class _LandingScreenState extends State<LandingScreen> {
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: ChoiceChip(
-                  label: Text(net, style: TextStyle(fontWeight: FontWeight.bold, color: isSel ? Colors.black : (isDark ? Colors.white : Colors.black))),
+                  label: Text(
+                    net,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isSel ? const Color(0xFF0A0E17) : (isDark ? Colors.white : Colors.black),
+                    ),
+                  ),
                   selected: isSel,
                   selectedColor: AppColors.primaryCyan,
                   backgroundColor: isDark ? AppColors.darkCard : Colors.white,
@@ -738,12 +1072,12 @@ class _LandingScreenState extends State<LandingScreen> {
             }).toList(),
           ),
           const SizedBox(height: 20),
-          // Rates cards
+          // Exact 4 rates cards matching Kobopay
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isDesktop ? 3 : (MediaQuery.of(context).size.width > 600 ? 2 : 1),
+              crossAxisCount: isDesktop ? 4 : (MediaQuery.of(context).size.width > 600 ? 2 : 1),
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
               childAspectRatio: 2.2,
@@ -752,7 +1086,7 @@ class _LandingScreenState extends State<LandingScreen> {
             itemBuilder: (context, idx) {
               final p = plans[idx];
               return Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.darkCard : Colors.white,
                   borderRadius: BorderRadius.circular(14),
@@ -770,19 +1104,9 @@ class _LandingScreenState extends State<LandingScreen> {
                         Text(p['validity'] as String, style: TextStyle(fontSize: 12, color: isDark ? AppColors.metallicLight : AppColors.slateGrey)),
                       ],
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '₦${p['was']}',
-                          style: const TextStyle(fontSize: 11, color: Colors.grey, decoration: TextDecoration.lineThrough),
-                        ),
-                        Text(
-                          '₦${p['price']}',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.primaryCyan),
-                        ),
-                      ],
+                    Text(
+                      '₦${p['price']}',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.primaryCyan),
                     ),
                   ],
                 ),
@@ -793,7 +1117,7 @@ class _LandingScreenState extends State<LandingScreen> {
           ElevatedButton.icon(
             onPressed: () => context.push('/rates'),
             icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-            label: const Text('See every price & discount', style: TextStyle(fontWeight: FontWeight.w700)),
+            label: const Text('See every price', style: TextStyle(fontWeight: FontWeight.w700)),
             style: ElevatedButton.styleFrom(
               backgroundColor: isDark ? AppColors.darkCardVariant : const Color(0xFF0F172A),
               foregroundColor: Colors.white,
@@ -806,23 +1130,55 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // 6. WHY US SECTION
+  // ====================================================================
+  // 6. WHY US SECTION (Matching Kobopay #why)
+  // ====================================================================
   Widget _buildWhyUsSection(bool isDesktop, bool isDark) {
     final features = [
-      {'title': 'Delivered or refunded', 'desc': 'If a network drops an order, the funds are credited back automatically. Nobody has to chase anyone.', 'icon': Icons.bolt_rounded},
-      {'title': 'A PIN on every purchase', 'desc': 'Your password logs you in. A separate 4-digit transaction PIN authorizes money leaving your wallet.', 'icon': Icons.lock_outline_rounded},
-      {'title': 'A receipt for everything', 'desc': 'Every order stores its transaction reference, token, and timestamp permanently for instant dispute resolution.', 'icon': Icons.receipt_long_rounded},
-      {'title': 'Prices that stay low', 'desc': 'Aggregator volume discounts passed directly to you. What you see is what leaves your wallet.', 'icon': Icons.trending_down_rounded},
-      {'title': 'Built for any phone', 'desc': 'Optimized for smooth performance on entry-level Android devices as well as high-end iPhones and PCs.', 'icon': Icons.smartphone_rounded},
-      {'title': 'Support that replies', 'desc': 'Direct WhatsApp human support during business hours and an automated ticketing pipeline for quick follow-ups.', 'icon': Icons.support_agent_rounded},
+      {
+        'title': 'Delivered or refunded',
+        'desc': 'If a network rejects an order the wallet is credited back automatically. Nobody has to chase anybody.',
+        'icon': Icons.bolt_rounded,
+      },
+      {
+        'title': 'A PIN on every purchase',
+        'desc': 'Your password signs you in. A separate transaction PIN authorises money leaving the wallet.',
+        'icon': Icons.shield_outlined,
+      },
+      {
+        'title': 'A receipt for everything',
+        'desc': 'Every order keeps its reference, token and status permanently, so a dispute is settled in seconds.',
+        'icon': Icons.receipt_long_rounded,
+      },
+      {
+        'title': 'Prices that stay low',
+        'desc': 'Volume pricing passed straight down. What you see on the rates page is what you are charged.',
+        'icon': Icons.trending_down_rounded,
+      },
+      {
+        'title': 'Built for a phone',
+        'desc': 'The whole platform works on the cheapest Android in the shop, not only on a laptop.',
+        'icon': Icons.smartphone_rounded,
+      },
+      {
+        'title': 'Support that replies',
+        'desc': 'A human on WhatsApp during working hours, and a ticket trail for anything that needs following up.',
+        'icon': Icons.support_agent_rounded,
+      },
     ];
 
     return Container(
-      color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+      color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8F6FD),
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 56),
       child: Column(
         children: [
-          _sectionHeader('WHY PEOPLE STAY', 'Built around what people complain about', 'Not flashy features that only look good in demos. The core reliability that keeps your business running.', isDark),
+          _sectionHeader(
+            'WHY PEOPLE STAY',
+            'Built around what people complain about',
+            'Not the features that demo well. The ones that decide whether somebody comes back tomorrow.',
+            isDark,
+            icon: Icons.shield_outlined,
+          ),
           const SizedBox(height: 36),
           GridView.builder(
             shrinkWrap: true,
@@ -846,7 +1202,11 @@ class _LandingScreenState extends State<LandingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(f['icon'] as IconData, size: 24, color: AppColors.primaryCyan),
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: AppColors.primaryCyan.withValues(alpha: 0.15),
+                      child: Icon(f['icon'] as IconData, size: 20, color: AppColors.primaryCyan),
+                    ),
                     const SizedBox(height: 12),
                     Text(f['title'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 6),
@@ -864,25 +1224,27 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // 7. TESTIMONIALS SECTION
+  // ====================================================================
+  // 7. TESTIMONIALS SECTION (Matching Kobopay What people say)
+  // ====================================================================
   Widget _buildTestimonialsSection(bool isDesktop, bool isDark) {
     final reviews = [
       {
-        'text': 'I sell airtime beside my stationery shop now. A customer pays cash and I deliver it before they finish counting change. That alone brings people into the shop.',
+        'text': 'I sell airtime beside my main goods now. A customer pays me cash and I load it before they finish counting change. That alone brings people into the shop.',
         'name': 'Amaka Obi',
-        'role': 'Runs phone accessories shop, Onitsha',
+        'role': 'Runs a phone accessories shop, Onitsha',
         'avatar': 'AO',
       },
       {
-        'text': 'What sold me was the instant refund. Before Avotek, a failed order meant messaging someone and waiting till evening. Here it just returns to the wallet automatically.',
+        'text': 'What sold me was the refund. Before this, a failed order meant messaging somebody and waiting till evening. Here it just comes back into the wallet by itself.',
         'name': 'Suleiman Bello',
-        'role': 'Campus Data Reseller, Kaduna',
+        'role': 'Data reseller, Kaduna',
         'avatar': 'SB',
       },
       {
-        'text': 'I fund via bank app transfer and it reflects before I even switch back. No more waiting for manual confirmations when I need to purchase midnight data or an exam pin.',
+        'text': 'I fund from my bank app and it reflects before I switch back. No more waiting on a confirmation before I can buy data at 2am.',
         'name': 'Tolu Adeyemi',
-        'role': 'Undergraduate Student, Ibadan',
+        'role': 'Student, Ibadan',
         'avatar': 'TA',
       },
     ];
@@ -891,7 +1253,13 @@ class _LandingScreenState extends State<LandingScreen> {
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 56),
       child: Column(
         children: [
-          _sectionHeader('CUSTOMERS', 'What people say', 'Real experiences from students, agents, and store owners across Nigeria.', isDark),
+          _sectionHeader(
+            'CUSTOMERS',
+            'What people say',
+            '',
+            isDark,
+            icon: Icons.star_rounded,
+          ),
           const SizedBox(height: 36),
           isDesktop
               ? Row(
@@ -929,7 +1297,6 @@ class _LandingScreenState extends State<LandingScreen> {
             style: TextStyle(
               fontSize: 13,
               height: 1.5,
-              fontStyle: FontStyle.italic,
               color: isDark ? Colors.white70 : const Color(0xFF334155),
             ),
           ),
@@ -956,7 +1323,9 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // 8. PHONE COUNTER BANNER (Matching Kobopay .band)
+  // ====================================================================
+  // 8. POCKET COUNTER BAND (Matching Kobopay .band)
+  // ====================================================================
   Widget _buildPhoneCounterBanner(bool isDesktop, bool isDark) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 32),
@@ -965,7 +1334,7 @@ class _LandingScreenState extends State<LandingScreen> {
         gradient: LinearGradient(
           colors: isDark
               ? [const Color(0xFF0F2B48), const Color(0xFF061826)]
-              : [const Color(0xFF0084D6), const Color(0xFF005A94)],
+              : [const Color(0xFF0077B6), const Color(0xFF005A94)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1021,7 +1390,7 @@ class _LandingScreenState extends State<LandingScreen> {
         ),
         const SizedBox(height: 10),
         const Text(
-          'The entire platform runs in your mobile browser or as an app. Fast, lightweight, and zero bloat.',
+          'The whole platform runs in a phone browser. Add it to your home screen and it opens like an app, with no download and no storage taken.',
           style: TextStyle(fontSize: 14, color: Colors.white70, height: 1.5),
         ),
         const SizedBox(height: 20),
@@ -1033,12 +1402,12 @@ class _LandingScreenState extends State<LandingScreen> {
               onPressed: () => context.push('/login'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryCyan,
-                foregroundColor: Colors.black,
+                foregroundColor: const Color(0xFF0A0E17),
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Text('Create free account', style: TextStyle(fontWeight: FontWeight.w700)),
+              child: const Text('Create free account', style: TextStyle(fontWeight: FontWeight.w800)),
             ),
             OutlinedButton(
               onPressed: () => context.push('/dashboard'),
@@ -1048,7 +1417,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Text('Preview dashboard', style: TextStyle(fontWeight: FontWeight.w600)),
+              child: const Text('Preview the dashboard', style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -1058,10 +1427,10 @@ class _LandingScreenState extends State<LandingScreen> {
 
   Widget _buildBandChecklist() {
     final pts = [
-      'Works in any Android or iPhone browser without downloads',
-      'Bank transfers credit while you are still inside your bank app',
-      'Downloadable transaction receipts you can share with customers',
-      'Mandatory 4-digit transaction PIN before any money leaves',
+      'Works in any Android or iPhone browser',
+      'Funding reflects while you are still in your bank app',
+      'Receipts you can download or forward to a customer',
+      'A transaction PIN before any money leaves',
     ];
 
     return Column(
@@ -1086,13 +1455,22 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // 9. FAQ SECTION
+  // ====================================================================
+  // 9. FAQ SECTION (Matching Kobopay #faq)
+  // ====================================================================
   Widget _buildFaqSection(bool isDesktop, bool isDark) {
     return Container(
+      color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8F6FD),
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 56),
       child: Column(
         children: [
-          _sectionHeader('QUESTIONS', 'Frequently asked', 'Everything you need to know about purchasing and reselling on Avotek.', isDark),
+          _sectionHeader(
+            'QUESTIONS',
+            'Frequently asked',
+            '',
+            isDark,
+            icon: Icons.support_agent_rounded,
+          ),
           const SizedBox(height: 36),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
@@ -1137,7 +1515,9 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // 10. READY CTA BANNER
+  // ====================================================================
+  // 10. BOTTOM READY CTA BANNER
+  // ====================================================================
   Widget _buildReadyCtaBanner(bool isDesktop, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
@@ -1154,11 +1534,11 @@ class _LandingScreenState extends State<LandingScreen> {
               color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
             child: Text(
-              'No monthly fee, no minimum funding and no paperwork. Create your account, fund with whatever you have, and buy.',
+              'No monthly fee, no minimum funding and no paperwork. Create the account, fund it with whatever you have, and buy.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
@@ -1167,17 +1547,18 @@ class _LandingScreenState extends State<LandingScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           Wrap(
             spacing: 12,
+            runSpacing: 10,
             children: [
               ElevatedButton.icon(
                 onPressed: () => context.push('/login'),
                 icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                label: const Text('Create free account', style: TextStyle(fontWeight: FontWeight.w700)),
+                label: const Text('Create free account', style: TextStyle(fontWeight: FontWeight.w800)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryCyan,
-                  foregroundColor: Colors.black,
+                  foregroundColor: const Color(0xFF0A0E17),
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -1191,7 +1572,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text('I already have an account', style: TextStyle(fontWeight: FontWeight.w600)),
+                child: const Text('I already have one', style: TextStyle(fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -1200,10 +1581,12 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // 11. FOOTER
+  // ====================================================================
+  // 11. FOOTER (Matching Kobopay .foot)
+  // ====================================================================
   Widget _buildFooter(bool isDesktop, bool isDark) {
     return Container(
-      color: isDark ? AppColors.darkCard : const Color(0xFF0F172A),
+      color: isDark ? const Color(0xFF070B12) : const Color(0xFF0F172A),
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
       child: Column(
         children: [
@@ -1219,8 +1602,18 @@ class _LandingScreenState extends State<LandingScreen> {
                           const AvotekLogo(size: 32, showText: true, isDark: true),
                           const SizedBox(height: 14),
                           const Text(
-                            'Production-grade Nigerian VTU & Academic Utilities Platform. Built for schools, students, and high-volume retail agents.',
+                            'One wallet for educational utilities and VTU. Dedicated accounts, instant delivery, automated refunds.',
                             style: TextStyle(fontSize: 12, color: Colors.white60, height: 1.6),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              _socialIcon(Icons.email_outlined, () => context.push('/community')),
+                              const SizedBox(width: 10),
+                              _socialIcon(Icons.phone_outlined, () => context.push('/community')),
+                              const SizedBox(width: 10),
+                              _socialIcon(Icons.language_rounded, () => context.push('/')),
+                            ],
                           ),
                         ],
                       ),
@@ -1229,29 +1622,31 @@ class _LandingScreenState extends State<LandingScreen> {
                     Expanded(
                       flex: 2,
                       child: _footerCol('Services', [
-                        {'title': 'Buy Airtime', 'route': '/services/airtime'},
-                        {'title': 'Buy Data', 'route': '/services/data'},
+                        {'title': 'Buy airtime', 'route': '/services/airtime'},
+                        {'title': 'Buy data', 'route': '/services/data'},
                         {'title': 'Cable TV', 'route': '/services/tv'},
                         {'title': 'Electricity', 'route': '/services/electricity'},
-                        {'title': 'Result PINs', 'route': '/services/exam_pin'},
+                        {'title': 'Result pins', 'route': '/services/exam_pin'},
                       ]),
                     ),
                     Expanded(
                       flex: 2,
                       child: _footerCol('Company', [
-                        {'title': 'Rates & Pricing', 'route': '/rates'},
-                        {'title': 'Agent Program', 'route': '/dashboard'},
-                        {'title': 'Developer API', 'route': '/admin'},
-                        {'title': 'Admin Console', 'route': '/admin'},
+                        {'title': 'About us', 'route': '/rates'},
+                        {'title': 'Rates', 'route': '/rates'},
+                        {'title': 'Become an agent', 'route': '/dashboard'},
+                        {'title': 'Developer API', 'route': '/admin-portal'},
+                        {'title': 'Blog', 'route': '/community'},
                       ]),
                     ),
                     Expanded(
                       flex: 2,
                       child: _footerCol('Support', [
-                        {'title': 'WhatsApp Support', 'route': '/community'},
-                        {'title': 'Transaction Dispute', 'route': '/transactions'},
-                        {'title': 'Refund Policy', 'route': '/rates'},
-                        {'title': 'Terms of Service', 'route': '/landing'},
+                        {'title': 'Help centre', 'route': '/community'},
+                        {'title': 'Contact us', 'route': '/community'},
+                        {'title': 'Terms of service', 'route': '/'},
+                        {'title': 'Privacy policy', 'route': '/'},
+                        {'title': 'Refund policy', 'route': '/rates'},
                       ]),
                     ),
                   ],
@@ -1262,15 +1657,16 @@ class _LandingScreenState extends State<LandingScreen> {
                     const AvotekLogo(size: 30, showText: true, isDark: true),
                     const SizedBox(height: 12),
                     const Text(
-                      'Production-grade Nigerian VTU & Academic Utilities Platform.',
+                      'One wallet for educational utilities and VTU. Dedicated accounts, instant delivery, automated refunds.',
                       style: TextStyle(fontSize: 12, color: Colors.white60),
                     ),
                     const SizedBox(height: 24),
                     _footerCol('Services', [
-                      {'title': 'Buy Airtime', 'route': '/services/airtime'},
-                      {'title': 'Buy Data', 'route': '/services/data'},
-                      {'title': 'Rates', 'route': '/rates'},
-                      {'title': 'Dashboard', 'route': '/dashboard'},
+                      {'title': 'Buy airtime', 'route': '/services/airtime'},
+                      {'title': 'Buy data', 'route': '/services/data'},
+                      {'title': 'Cable TV', 'route': '/services/tv'},
+                      {'title': 'Electricity', 'route': '/services/electricity'},
+                      {'title': 'Result pins', 'route': '/services/exam_pin'},
                     ]),
                   ],
                 ),
@@ -1281,16 +1677,28 @@ class _LandingScreenState extends State<LandingScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '© ${DateTime.now().year} AVOTEK Platform. All rights reserved.',
+                '© ${DateTime.now().year} Avotek. Leveraging Technology in Education.',
                 style: const TextStyle(fontSize: 11, color: Colors.white38),
               ),
               Text(
-                'High-Speed PostgreSQL & Serverpod Powered',
-                style: TextStyle(fontSize: 11, color: AppColors.primaryCyan.withValues(alpha: 0.6)),
+                'Built on the Avotek VTU Platform',
+                style: TextStyle(fontSize: 11, color: AppColors.primaryCyan.withValues(alpha: 0.7)),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _socialIcon(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: CircleAvatar(
+        radius: 16,
+        backgroundColor: Colors.white10,
+        child: Icon(icon, size: 16, color: Colors.white70),
       ),
     );
   }
@@ -1317,7 +1725,7 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  Widget _sectionHeader(String eyebrow, String title, String subtitle, bool isDark) {
+  Widget _sectionHeader(String eyebrow, String title, String subtitle, bool isDark, {IconData? icon}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -1327,14 +1735,23 @@ class _LandingScreenState extends State<LandingScreen> {
             color: AppColors.primaryCyan.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Text(
-            eyebrow,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
-              color: AppColors.primaryCyan,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 13, color: AppColors.primaryCyan),
+                const SizedBox(width: 5),
+              ],
+              Text(
+                eyebrow,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.8,
+                  color: AppColors.primaryCyan,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 10),
@@ -1348,19 +1765,21 @@ class _LandingScreenState extends State<LandingScreen> {
             color: isDark ? Colors.white : const Color(0xFF0F172A),
           ),
         ),
-        const SizedBox(height: 8),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-              height: 1.5,
+        if (subtitle.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 620),
+            child: Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                height: 1.5,
+              ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }

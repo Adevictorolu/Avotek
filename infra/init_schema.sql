@@ -108,6 +108,70 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 8. REAL-TIME USER SESSIONS (Active Device and Auth Tracking)
+CREATE TABLE IF NOT EXISTS user_sessions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_token VARCHAR(255) UNIQUE NOT NULL,
+    device_model VARCHAR(150),
+    device_os VARCHAR(80),
+    client_type VARCHAR(50), -- 'flutter_web', 'flutter_android', 'flutter_ios'
+    ip_address VARCHAR(64),
+    geo_location VARCHAR(120), -- e.g. 'Lagos, Nigeria (MTN)'
+    status VARCHAR(30) DEFAULT 'ONLINE', -- 'ONLINE', 'IDLE', 'LOGGED_OUT', 'REVOKED'
+    login_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_heartbeat TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    logout_time TIMESTAMP WITH TIME ZONE,
+    logout_reason VARCHAR(100) -- 'USER_ACTION', 'IDLE_TIMEOUT', 'ADMIN_REVOKED', 'PASSWORD_RESET'
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_status ON user_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(session_token);
+
+-- 9. USER ACTIVITY AUDIT LOG (Immutable Real-Time Lifecycle Stream)
+CREATE TABLE IF NOT EXISTS user_activity_log (
+    id BIGSERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    event_type VARCHAR(50) NOT NULL, -- 'REGISTER', 'LOGIN', 'LOGOUT', 'ORDER_EXECUTED', 'PASSWORD_RESET'
+    user_name VARCHAR(150),
+    phone VARCHAR(30),
+    email VARCHAR(150),
+    ip_address VARCHAR(64),
+    user_agent VARCHAR(255),
+    details JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_activity_log_event_type ON user_activity_log(event_type);
+CREATE INDEX IF NOT EXISTS idx_activity_log_created_at ON user_activity_log(created_at DESC);
+
+-- 10. REAL-TIME POSTGRESQL LISTEN/NOTIFY STREAM TRIGGER
+CREATE OR REPLACE FUNCTION notify_user_session_event()
+RETURNS TRIGGER AS $$
+DECLARE
+    payload JSON;
+BEGIN
+    payload = json_build_object(
+        'id', NEW.id,
+        'user_id', NEW.user_id,
+        'event_type', NEW.event_type,
+        'user_name', NEW.user_name,
+        'phone', NEW.phone,
+        'email', NEW.email,
+        'ip_address', NEW.ip_address,
+        'created_at', NEW.created_at
+    );
+    PERFORM pg_notify('admin_live_activity', payload::text);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_user_activity_stream ON user_activity_log;
+CREATE TRIGGER trg_user_activity_stream
+AFTER INSERT ON user_activity_log
+FOR EACH ROW EXECUTE FUNCTION notify_user_session_event();
+
 -- ====================================================================
 -- SEED DATA (INITIAL SERVICE CATALOG & DEMO ACCOUNTS)
 -- ====================================================================
@@ -167,3 +231,16 @@ VALUES
   (1, 'debit', 540.00, 25000.00, 24460.00, 'TX-AVO-DATA-002', 'completed', 'Data Top-Up: MTN SME 2.0GB to 08031234567', NOW() - INTERVAL '1 hour'),
   (1, 'debit', 3500.00, 24460.00, 20960.00, 'TX-AVO-EXAM-003', 'completed', 'WAEC Result Checker PIN purchase (Token: 981245019284)', NOW() - INTERVAL '30 minutes')
 ON CONFLICT (reference) DO NOTHING;
+
+-- Seed Real-Time User Sessions & Activity Log
+INSERT INTO user_sessions (user_id, session_token, device_model, device_os, client_type, ip_address, geo_location, status, login_time, last_heartbeat)
+VALUES
+  (1, 'sess_live_demo_001', 'Tecno Spark 10 Pro', 'Android 13', 'flutter_android', '102.89.41.18', 'Lagos, Nigeria (MTN)', 'ONLINE', NOW() - INTERVAL '45 minutes', NOW() - INTERVAL '2 minutes')
+ON CONFLICT (session_token) DO NOTHING;
+
+INSERT INTO user_activity_log (user_id, event_type, user_name, phone, email, ip_address, user_agent, details, created_at)
+VALUES
+  (1, 'REGISTER', 'Chukwuemeka Obi', '08031234567', 'demo@avotek.africa', '102.89.41.18', 'Avotek Android/1.0.0', '{"channel": "mobile_app", "kyc": "tier2"}'::jsonb, NOW() - INTERVAL '2 hours'),
+  (1, 'LOGIN', 'Chukwuemeka Obi', '08031234567', 'demo@avotek.africa', '102.89.41.18', 'Avotek Android/1.0.0', '{"device": "Tecno Spark 10 Pro", "auth_method": "password_otp"}'::jsonb, NOW() - INTERVAL '45 minutes'),
+  (1, 'ORDER_EXECUTED', 'Chukwuemeka Obi', '08031234567', 'demo@avotek.africa', '102.89.41.18', 'Avotek Android/1.0.0', '{"service": "MTN SME 2.0GB", "amount": 540.00, "status": "delivered"}'::jsonb, NOW() - INTERVAL '1 hour');
+

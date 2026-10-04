@@ -116,15 +116,20 @@
   </div>
 
   <script>
-    window.addEventListener('flutter-first-frame', function () {
+    function removeLoader() {
       var loader = document.getElementById('loading-indicator');
       if (loader) {
         loader.style.opacity = '0';
         setTimeout(function() {
-          loader.remove();
-        }, 500);
+          if (loader && loader.parentNode) {
+            loader.parentNode.removeChild(loader);
+          }
+        }, 400);
       }
-    });
+    }
+    window.addEventListener('flutter-first-frame', removeLoader);
+    // Fallback: hide loader after 3 seconds in case event already passed or took too long
+    setTimeout(removeLoader, 3000);
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

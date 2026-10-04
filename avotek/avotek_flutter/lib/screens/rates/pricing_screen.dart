@@ -52,17 +52,22 @@ class _PricingScreenState extends State<PricingScreen> {
   };
 
   final List<Map<String, dynamic>> _airtimeRates = [
-    {'network': 'MTN', 'discount': '2.5% Cashback', 'sample': '₦1,000 top-up costs ₦975'},
-    {'network': 'Glo', 'discount': '3.5% Cashback', 'sample': '₦1,000 top-up costs ₦965'},
-    {'network': 'Airtel', 'discount': '2.5% Cashback', 'sample': '₦1,000 top-up costs ₦975'},
-    {'network': '9mobile', 'discount': '4.0% Cashback', 'sample': '₦1,000 top-up costs ₦960'},
+    {'network': 'MTN airtime', 'type': 'Instant top-up', 'discount': '3.0% off'},
+    {'network': 'Glo airtime', 'type': 'Instant top-up', 'discount': '5.0% off'},
+    {'network': 'Airtel airtime', 'type': 'Instant top-up', 'discount': '3.5% off'},
+    {'network': '9mobile airtime', 'type': 'Instant top-up', 'discount': '5.5% off'},
   ];
 
-  final List<Map<String, dynamic>> _examPins = [
-    {'service': 'WAEC Result Checker', 'desc': 'Original official WAEC e-PIN', 'fee': '₦3,500.00'},
-    {'service': 'NECO Result Token', 'desc': 'NECO electronic verification token', 'fee': '₦1,200.00'},
-    {'service': 'NABTEB Result PIN', 'desc': 'Instant verification card pin', 'fee': '₦1,100.00'},
-    {'service': 'JAMB UTME PIN', 'desc': 'Profile registration e-PIN with mock', 'fee': '₦6,800.00'},
+  final List<Map<String, dynamic>> _cableAndEducation = [
+    {'item': 'DStv Padi', 'cat': 'Cable TV', 'price': '₦4,400'},
+    {'item': 'DStv Yanga', 'cat': 'Cable TV', 'price': '₦6,000'},
+    {'item': 'DStv Compact', 'cat': 'Cable TV', 'price': '₦19,000'},
+    {'item': 'GOtv Smallie', 'cat': 'Cable TV', 'price': '₦1,900'},
+    {'item': 'GOtv Jinja', 'cat': 'Cable TV', 'price': '₦3,900'},
+    {'item': 'Startimes Nova', 'cat': 'Cable TV', 'price': '₦1,900'},
+    {'item': 'WAEC result pin', 'cat': 'Education', 'price': '₦3,500'},
+    {'item': 'NECO result pin', 'cat': 'Education', 'price': '₦1,300'},
+    {'item': 'NABTEB result pin', 'cat': 'Education', 'price': '₦1,300'},
   ];
 
   @override
@@ -101,31 +106,35 @@ class _PricingScreenState extends State<PricingScreen> {
       body: SingleChildScrollView(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000),
+            constraints: const BoxConstraints(maxWidth: 1040),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16, vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Hero Header
+                  // 1. Hero Header
                   _buildHeader(isDark),
                   const SizedBox(height: 32),
 
-                  // Data Rates Section
+                  // 2. Data Rates Section with Network switcher
                   _buildDataRatesSection(isDark),
                   const SizedBox(height: 40),
 
-                  // Airtime Discounts Section
+                  // 3. Airtime Reseller Discounts Section
                   _buildAirtimeSection(isDark),
                   const SizedBox(height: 40),
 
-                  // Exam Result PINs Section
-                  _buildExamSection(isDark),
+                  // 4. Cable TV and Education Section
+                  _buildCableEducationSection(isDark),
+                  const SizedBox(height: 48),
+
+                  // 5. Account Tiers Section (Matching Kobopay .tiers)
+                  _buildAccountTiersSection(isDesktop, isDark),
                   const SizedBox(height: 40),
 
-                  // Auto-Refund Callout
+                  // 6. Auto-Refund Callout
                   _buildGuaranteeBanner(isDark),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 48),
                 ],
               ),
             ),
@@ -220,7 +229,13 @@ class _PricingScreenState extends State<PricingScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
-                    label: Text(net, style: TextStyle(fontWeight: FontWeight.bold, color: isSel ? Colors.black : (isDark ? Colors.white : Colors.black))),
+                    label: Text(
+                      net,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isSel ? Colors.black : (isDark ? Colors.white : Colors.black),
+                      ),
+                    ),
                     selected: isSel,
                     selectedColor: AppColors.primaryCyan,
                     backgroundColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
@@ -308,112 +323,388 @@ class _PricingScreenState extends State<PricingScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
       ),
-      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Airtime Reseller Discounts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 6),
-          Text(
-            'Discount percentage deducted directly before debiting your wallet balance.',
-            style: TextStyle(fontSize: 12, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
-          ),
-          const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 2.2,
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Airtime discounts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(
+                  'Buy ₦1,000 of airtime and discount leaves your wallet directly.',
+                  style: TextStyle(fontSize: 12, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                ),
+              ],
             ),
-            itemCount: _airtimeRates.length,
-            itemBuilder: (context, idx) {
-              final r = _airtimeRates[idx];
-              return Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(r['network'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.success.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(r['discount'] as String, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.success)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(r['sample'] as String, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                  ],
-                ),
-              );
-            },
           ),
+          const Divider(height: 1),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+            child: const Row(
+              children: [
+                Expanded(flex: 4, child: Text('NETWORK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
+                Expanded(flex: 4, child: Text('TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
+                Expanded(flex: 3, child: Align(alignment: Alignment.centerRight, child: Text('DISCOUNT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)))),
+              ],
+            ),
+          ),
+          ..._airtimeRates.map((r) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: Text(r['network'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  ),
+                  Expanded(
+                    flex: 4,
+                    child: Text(r['type'] as String, style: TextStyle(fontSize: 13, color: isDark ? AppColors.metallicLight : AppColors.slateGrey)),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          r['discount'] as String,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.success),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildExamSection(bool isDark) {
+  Widget _buildCableEducationSection(bool isDark) {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
       ),
-      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Academic Examination PINs', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 6),
-          Text(
-            'Official examination tokens with verified PIN & Serial combination generated instantly.',
-            style: TextStyle(fontSize: 12, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Cable TV and education', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(
+                  'Electricity is charged at face value plus a ₦100 convenience fee.',
+                  style: TextStyle(fontSize: 12, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          ..._examPins.map((item) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+          const Divider(height: 1),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+            child: const Row(
+              children: [
+                Expanded(flex: 4, child: Text('ITEM', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
+                Expanded(flex: 4, child: Text('CATEGORY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
+                Expanded(flex: 3, child: Align(alignment: Alignment.centerRight, child: Text('PRICE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)))),
+              ],
+            ),
+          ),
+          ..._cableAndEducation.map((item) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder)),
+              ),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: AppColors.primaryCyan.withValues(alpha: 0.15),
-                    child: const Icon(Icons.school, size: 16, color: AppColors.primaryCyan),
-                  ),
-                  const SizedBox(width: 14),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(item['service'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                        Text(item['desc'] as String, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                      ],
-                    ),
+                    flex: 4,
+                    child: Text(item['item'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   ),
-                  Text(
-                    item['fee'] as String,
-                    style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primaryCyan, fontSize: 14),
+                  Expanded(
+                    flex: 4,
+                    child: Text(item['cat'] as String, style: TextStyle(fontSize: 13, color: isDark ? AppColors.metallicLight : AppColors.slateGrey)),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        item['price'] as String,
+                        style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primaryCyan, fontSize: 14),
+                      ),
+                    ),
                   ),
                 ],
               ),
             );
           }),
+        ],
+      ),
+    );
+  }
+
+  // 5. ACCOUNT TIERS SECTION (Replicating Kobopay .tiers)
+  Widget _buildAccountTiersSection(bool isDesktop, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Center(
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.emoji_events_outlined, size: 14, color: AppColors.warning),
+                    SizedBox(width: 6),
+                    Text('Account tiers', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.warning)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Pay less as you sell more',
+                style: GoogleFonts.montserrat(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'A one-off upgrade fee, not a subscription. The better rate applies from the moment it clears.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 28),
+
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 800;
+            return isNarrow
+                ? Column(
+                    children: [
+                      _tierCard('Starter', 'Free', '', 'For buying your own top-ups', [
+                        'Every service on the platform',
+                        'Standard reseller pricing',
+                        'A dedicated account number',
+                        'Automatic refund on failed orders',
+                        'Receipts kept permanently',
+                      ], false, isDark),
+                      const SizedBox(height: 16),
+                      _tierCard('Agent', '₦5,000', 'one off', 'For selling to walk-in customers', [
+                        'Everything in Starter',
+                        'A better rate on every service',
+                        'Bulk purchase in one order',
+                        'Referral earnings on your sign-ups',
+                        'Priority support queue',
+                      ], true, isDark),
+                      const SizedBox(height: 16),
+                      _tierCard('Merchant', '₦25,000', 'one off', 'For connecting your own site or app', [
+                        'Everything in Agent',
+                        'Your own merchant API key',
+                        'The best rate available',
+                        'A webhook on every delivery',
+                        'A named support contact',
+                      ], false, isDark),
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _tierCard('Starter', 'Free', '', 'For buying your own top-ups', [
+                          'Every service on the platform',
+                          'Standard reseller pricing',
+                          'A dedicated account number',
+                          'Automatic refund on failed orders',
+                          'Receipts kept permanently',
+                        ], false, isDark),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _tierCard('Agent', '₦5,000', 'one off', 'For selling to walk-in customers', [
+                          'Everything in Starter',
+                          'A better rate on every service',
+                          'Bulk purchase in one order',
+                          'Referral earnings on your sign-ups',
+                          'Priority support queue',
+                        ], true, isDark),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _tierCard('Merchant', '₦25,000', 'one off', 'For connecting your own site or app', [
+                          'Everything in Agent',
+                          'Your own merchant API key',
+                          'The best rate available',
+                          'A webhook on every delivery',
+                          'A named support contact',
+                        ], false, isDark),
+                      ),
+                    ],
+                  );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _tierCard(
+    String title,
+    String price,
+    String subtitle,
+    String desc,
+    List<String> bullets,
+    bool isFeatured,
+    bool isDark,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isFeatured ? AppColors.primaryCyan : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+          width: isFeatured ? 2.0 : 1.0,
+        ),
+        boxShadow: isFeatured
+            ? [
+                BoxShadow(
+                  color: AppColors.primaryCyan.withValues(alpha: 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              if (isFeatured)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryCyan.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text('POPULAR', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.primaryCyan)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                price,
+                style: GoogleFonts.montserrat(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: isFeatured ? AppColors.primaryCyan : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                ),
+              ),
+              if (subtitle.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(desc, style: TextStyle(fontSize: 12, color: isDark ? AppColors.metallicLight : AppColors.slateGrey)),
+          const SizedBox(height: 20),
+          const Divider(height: 1),
+          const SizedBox(height: 16),
+          ...bullets.map((b) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.check_rounded, size: 16, color: AppColors.success),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      b,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: isFeatured
+                ? ElevatedButton(
+                    onPressed: () => context.push('/register'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryCyan,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 0,
+                    ),
+                    child: const Text('Upgrade to Agent', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  )
+                : OutlinedButton(
+                    onPressed: () => context.push('/register'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+                      side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(
+                      title == 'Starter' ? 'Get started free' : 'Upgrade to Merchant',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+          ),
         ],
       ),
     );

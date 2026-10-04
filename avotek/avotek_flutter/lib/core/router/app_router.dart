@@ -6,9 +6,14 @@ import '../../screens/admin/admin_gateway_screen.dart';
 import '../../screens/admin/admin_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/community/community_screen.dart';
+import '../../screens/exams/exam_centre_screen.dart';
 import '../../screens/home/dashboard_screen.dart';
 import '../../screens/landing/landing_screen.dart';
+import '../../screens/learn/learn_screen.dart';
+import '../../screens/learn/practice_screen.dart';
+import '../../screens/learn/progress_screen.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
+import '../../screens/profile/student_profile_screen.dart';
 import '../../screens/rates/pricing_screen.dart';
 import '../../screens/services/airtime_screen.dart';
 import '../../screens/services/betting_screen.dart';
@@ -19,6 +24,7 @@ import '../../screens/services/electricity_screen.dart';
 import '../../screens/services/exam_pin_screen.dart';
 import '../../screens/transactions/transactions_screen.dart';
 import '../../screens/wallet/fund_wallet_screen.dart';
+import '../../screens/wallet/student_wallet_screen.dart';
 
 class AppRouter {
   static GoRouter createRouter({required VoidCallback onToggleTheme}) {
@@ -52,11 +58,42 @@ class AppRouter {
         ),
         GoRoute(
           path: '/login',
-          builder: (context, state) => const LoginScreen(),
+          builder: (context, state) => const LoginScreen(initialSignUp: false),
+        ),
+        GoRoute(
+          path: '/register',
+          builder: (context, state) => const LoginScreen(initialSignUp: true),
         ),
         GoRoute(
           path: '/dashboard',
           builder: (context, state) => DashboardScreen(onToggleTheme: onToggleTheme),
+        ),
+        GoRoute(
+          path: '/learn',
+          builder: (context, state) => LearnScreen(onToggleTheme: onToggleTheme),
+        ),
+        GoRoute(
+          path: '/learn/practice',
+          builder: (context, state) {
+            final sub = state.uri.queryParameters['subject'];
+            return PracticeScreen(initialSubjectId: sub, onToggleTheme: onToggleTheme);
+          },
+        ),
+        GoRoute(
+          path: '/learn/progress',
+          builder: (context, state) => ProgressScreen(onToggleTheme: onToggleTheme),
+        ),
+        GoRoute(
+          path: '/exams',
+          builder: (context, state) => ExamCentreScreen(onToggleTheme: onToggleTheme),
+        ),
+        GoRoute(
+          path: '/wallet',
+          builder: (context, state) => StudentWalletScreen(onToggleTheme: onToggleTheme),
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => StudentProfileScreen(onToggleTheme: onToggleTheme),
         ),
         GoRoute(
           path: '/services/airtime',

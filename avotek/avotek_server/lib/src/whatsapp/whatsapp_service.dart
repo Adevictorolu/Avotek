@@ -57,7 +57,7 @@ class WhatsAppService {
       where: (u) => u.phone.equals(phone),
     );
 
-    final normalizedInput = input.toUpperCase();
+    final normalizedInput = input.toUpperCase().trim();
 
     if (normalizedInput == 'MENU' || normalizedInput == 'RESET' || state['step'] == 'START') {
       if (user == null) {
@@ -65,10 +65,10 @@ class WhatsAppService {
         _sessionMemory[phone] = state;
         await _sendButtons(
           to: phone,
-          bodyText: 'Welcome to AVOTEK VTU! 🚀\nYour fast, reliable top-up portal. You do not have an account yet with $phone. Would you like to create one?',
+          bodyText: '🎓 *Welcome to Avotek!*\n_Learn. Prepare. Connect._\n\nYour digital education companion and student services portal. We could not find an account linked to $phone. Would you like to get started?',
           buttons: [
-            {'id': 'CMD_REGISTER', 'title': 'Create Account'},
-            {'id': 'CMD_HELP', 'title': 'Support'},
+            {'id': 'CMD_REGISTER', 'title': 'Create Account 🚀'},
+            {'id': 'CMD_HELP', 'title': 'Need Help? 💬'},
           ],
         );
         return;
@@ -83,7 +83,7 @@ class WhatsAppService {
     switch (state['step']) {
       case 'REGISTER':
         if (input == 'CMD_REGISTER' || input.isNotEmpty) {
-          final name = input == 'CMD_REGISTER' ? 'WhatsApp User' : input;
+          final name = input == 'CMD_REGISTER' ? 'Student' : input;
           final now = DateTime.now();
           user = await User.db.insertRow(
             session,
@@ -106,7 +106,7 @@ class WhatsAppService {
               balance: 0.0,
               currency: 'NGN',
               virtualAccountNumber: accNumber,
-              virtualAccountBank: 'Wema Bank / Moniepoint',
+              virtualAccountBank: 'Providus Bank / Wema',
               virtualAccountName: 'AVOTEK - $name',
               updatedAt: now,
             ),
@@ -114,60 +114,85 @@ class WhatsAppService {
 
           state['step'] = 'MAIN_MENU';
           _sessionMemory[phone] = state;
-          await _sendTextMessage(to: phone, message: '🎉 Account created successfully, $name!');
+          await _sendTextMessage(to: phone, message: '🎉 Welcome to Avotek, $name! Your student account and dedicated wallet have been activated.');
           await _sendMainMenu(phone, name);
         }
         break;
 
       case 'MAIN_MENU':
-        if (input == 'CMD_BALANCE') {
+        if (input == 'CMD_EXAMPIN' || normalizedInput == '1' || normalizedInput == 'EXAM') {
+          state['step'] = 'EXAM_SELECT';
+          _sessionMemory[phone] = state;
+          await _sendButtons(
+            to: phone,
+            bodyText: '🎓 *Avotek Exam Centre*\nSelect the examination PIN you need:\n\n• WAEC Result Checker: ₦3,900\n• NECO Token: ₦1,200\n• JAMB UTME / DE PIN: ₦5,000',
+            buttons: [
+              {'id': 'EXAM_WAEC', 'title': 'WAEC (₦3,900)'},
+              {'id': 'EXAM_NECO', 'title': 'NECO (₦1,200)'},
+              {'id': 'EXAM_JAMB', 'title': 'JAMB (₦5,000)'},
+            ],
+          );
+        } else if (input == 'CMD_CHALLENGE' || normalizedInput == '2' || normalizedInput == 'QUIZ' || normalizedInput == 'CHALLENGE') {
+          state['step'] = 'CHALLENGE_ANSWER';
+          _sessionMemory[phone] = state;
+          await _sendTextMessage(
+            to: phone,
+            message: '📐 *Today\'s Academic Challenge (Mathematics)*\n\n'
+                '*Topic:* Linear Equations & Algebra\n'
+                '*Question:* If 2x + 5 = 15, what is the value of x?\n\n'
+                '[A] 5\n'
+                '[B] 10\n'
+                '[C] 15\n'
+                '[D] 20\n\n'
+                '👉 *Reply with A, B, C, or D to submit your answer!*',
+          );
+        } else if (input == 'CMD_AIRTIME' || normalizedInput == '3' || normalizedInput == 'AIRTIME') {
+          state['step'] = 'AIRTIME_NETWORK';
+          _sessionMemory[phone] = state;
+          await _sendButtons(
+            to: phone,
+            bodyText: '📱 *Stay Connected — Airtime Top-Up*\nSelect your network provider:',
+            buttons: [
+              {'id': 'NET_MTN', 'title': 'MTN'},
+              {'id': 'NET_AIRTEL', 'title': 'Airtel'},
+              {'id': 'NET_GLO', 'title': 'Glo'},
+            ],
+          );
+        } else if (input == 'CMD_DATA' || normalizedInput == '4' || normalizedInput == 'DATA') {
+          state['step'] = 'AIRTIME_NETWORK'; // Share network selection flow
+          state['isData'] = true;
+          _sessionMemory[phone] = state;
+          await _sendButtons(
+            to: phone,
+            bodyText: '🌐 *Stay Connected — Data Bundle*\nSelect your network provider:',
+            buttons: [
+              {'id': 'NET_MTN', 'title': 'MTN Data'},
+              {'id': 'NET_AIRTEL', 'title': 'Airtel Data'},
+              {'id': 'NET_GLO', 'title': 'Glo Data'},
+            ],
+          );
+        } else if (input == 'CMD_BALANCE' || normalizedInput == '5' || normalizedInput == 'BALANCE' || normalizedInput == 'WALLET') {
           final wallet = await Wallet.db.findFirstRow(
             session,
             where: (w) => w.userId.equals(user!.id!),
           );
           final balance = wallet?.balance ?? 0.0;
-          await _sendTextMessage(
-            to: phone,
-            message: '💰 *AVOTEK Wallet Balance*\n\nAvailable: *₦${balance.toStringAsFixed(2)}*\nCurrency: NGN\n\nSend *MENU* for options.',
-          );
-        } else if (input == 'CMD_FUND') {
-          final wallet = await Wallet.db.findFirstRow(
-            session,
-            where: (w) => w.userId.equals(user!.id!),
-          );
-          final accNo = wallet?.virtualAccountNumber ?? 'Pending';
-          final bank = wallet?.virtualAccountBank ?? 'Wema Bank';
-          final accName = wallet?.virtualAccountName ?? user?.name ?? 'AVOTEK User';
+          final accNo = wallet?.virtualAccountNumber ?? 'Generating...';
+          final bank = wallet?.virtualAccountBank ?? 'Providus Bank';
+          final accName = wallet?.virtualAccountName ?? user?.name ?? 'Avotek Student';
 
           await _sendTextMessage(
             to: phone,
-            message: '💳 *Fund Your Wallet Instantly*\n\nTransfer to your dedicated virtual account:\n\n• Bank: *$bank*\n• Account Number: *$accNo*\n• Account Name: *$accName*\n\nYour wallet credits automatically upon transfer!',
+            message: '💳 *Avotek Student Wallet*\n\n'
+                '• Available Balance: *₦${balance.toStringAsFixed(2)}*\n\n'
+                '🏦 *Dedicated Bank Transfer Details:*\n'
+                '• Bank: *$bank*\n'
+                '• Account Number: *$accNo*\n'
+                '• Account Name: *$accName*\n\n'
+                '_Transfers to this account fund your Avotek balance instantly._\n\n'
+                'Send *MENU* to return to the options.',
           );
-        } else if (input == 'CMD_AIRTIME') {
-          state['step'] = 'AIRTIME_NETWORK';
-          _sessionMemory[phone] = state;
-          await _sendButtons(
-            to: phone,
-            bodyText: 'Select Network Provider for Airtime:',
-            buttons: [
-              {'id': 'NET_MTN', 'title': 'MTN'},
-              {'id': 'NET_AIRTEL', 'title': 'Airtel'},
-              {'id': 'NET_GLO', 'title': 'Glo'},
-            ],
-          );
-        } else if (input == 'CMD_DATA') {
-          state['step'] = 'DATA_NETWORK';
-          _sessionMemory[phone] = state;
-          await _sendButtons(
-            to: phone,
-            bodyText: 'Select Network Provider for Data:',
-            buttons: [
-              {'id': 'NET_MTN', 'title': 'MTN'},
-              {'id': 'NET_AIRTEL', 'title': 'Airtel'},
-              {'id': 'NET_GLO', 'title': 'Glo'},
-            ],
-          );
-        } else if (input == 'CMD_HISTORY') {
+        } else if (input == 'CMD_HISTORY' || normalizedInput == '6' || normalizedInput == 'HISTORY') {
           final transactions = await Transaction.db.find(
             session,
             where: (t) => t.userId.equals(user!.id!),
@@ -176,19 +201,144 @@ class WhatsAppService {
             limit: 5,
           );
           if (transactions.isEmpty) {
-            await _sendTextMessage(to: phone, message: 'No transactions found on your account.');
+            await _sendTextMessage(to: phone, message: 'No transactions found on your account yet.\nSend *MENU* to explore services.');
           } else {
-            final buffer = StringBuffer('📊 *Recent Transactions*\n\n');
+            final buffer = StringBuffer('📊 *Recent Activity*\n\n');
             for (final tx in transactions) {
               final sign = tx.type == 'fund' ? '+' : '-';
-              buffer.writeln('• $sign₦${tx.amount.toStringAsFixed(2)} | ${tx.narration ?? tx.type} (${tx.status})');
+              buffer.writeln('• $sign₦${tx.amount.toStringAsFixed(2)} | ${tx.narration ?? tx.type} (${tx.status.toUpperCase()})');
             }
             buffer.writeln('\nSend *MENU* to return.');
             await _sendTextMessage(to: phone, message: buffer.toString());
           }
+        } else if (input == 'CMD_HELP' || normalizedInput == 'HELP') {
+          await _sendTextMessage(
+            to: phone,
+            message: '🎓 *Avotek Help & Support*\n\n'
+                'Avotek is your digital education companion.\n'
+                '• Web Portal: https://avotek.app\n'
+                '• Support Email: support@avotek.app\n'
+                '• Desk Hours: 24/7 automated delivery\n\n'
+                'Send *MENU* anytime to view the main menu.',
+          );
         } else {
-          await _sendMainMenu(phone, user?.name ?? 'Customer');
+          await _sendMainMenu(phone, user?.name ?? 'Student');
         }
+        break;
+
+      case 'CHALLENGE_ANSWER':
+        final ans = normalizedInput;
+        if (ans == 'A' || ans == '5' || ans == 'A) 5') {
+          await _sendTextMessage(
+            to: phone,
+            message: '🎉 *Brilliant! That is Correct!* ✅\n\n'
+                '*Explanation:*\n'
+                '2x + 5 = 15\n'
+                '2x = 15 - 5 = 10\n'
+                'x = 10 / 2 = *5*\n\n'
+                '🔥 *Streak:* 1 Day Streak Active!\n'
+                'Keep sharpening your mind on the Avotek App.\n\n'
+                'Send *MENU* to view other services.',
+          );
+        } else {
+          await _sendTextMessage(
+            to: phone,
+            message: '❌ *Not quite, but good try!*\n\n'
+                'The correct answer is *[A] 5*.\n\n'
+                '*Explanation:*\n'
+                'Subtract 5 from 15 gives 10. Dividing by 2 yields *x = 5*.\n\n'
+                'Practice more past questions in the Avotek CBT Practice Center!\n\n'
+                'Send *MENU* to continue.',
+          );
+        }
+        state['step'] = 'MAIN_MENU';
+        _sessionMemory[phone] = state;
+        break;
+
+      case 'EXAM_SELECT':
+        String examType = 'WAEC';
+        double price = 3900.0;
+        if (input == 'EXAM_NECO') {
+          examType = 'NECO';
+          price = 1200.0;
+        } else if (input == 'EXAM_JAMB') {
+          examType = 'JAMB';
+          price = 5000.0;
+        }
+
+        state['examType'] = examType;
+        state['price'] = price;
+        state['step'] = 'EXAM_CONFIRM';
+        _sessionMemory[phone] = state;
+
+        await _sendButtons(
+          to: phone,
+          bodyText: '🎓 *Confirm Exam PIN Order*\n\n'
+              '• Exam: *$examType Result Checker*\n'
+              '• Quantity: 1 Token\n'
+              '• Total Cost: *₦${price.toStringAsFixed(2)}*\n\n'
+              'Your Avotek wallet will be debited upon confirmation.',
+          buttons: [
+            {'id': 'CONFIRM_EXAM_YES', 'title': 'Confirm & Purchase ✅'},
+            {'id': 'CONFIRM_NO', 'title': 'Cancel ❌'},
+          ],
+        );
+        break;
+
+      case 'EXAM_CONFIRM':
+        if (input == 'CONFIRM_EXAM_YES') {
+          final examType = state['examType'] as String;
+          final price = state['price'] as double;
+          final idempotencyKey = 'WA-EXAM-${DateTime.now().millisecondsSinceEpoch}-$phone';
+
+          await _sendTextMessage(to: phone, message: '⏳ Generating your $examType PIN securely...');
+
+          final result = await orderEngine.processOrder(
+            session: session,
+            userId: user!.id!,
+            serviceType: 'exam_pin',
+            networkProvider: examType,
+            recipientIdentifier: phone,
+            amount: price,
+            sellPrice: price,
+            channel: 'whatsapp',
+            idempotencyKey: idempotencyKey,
+          );
+
+          if (result.success) {
+            Map<String, dynamic>? meta;
+            if (result.order.metadata != null) {
+              try {
+                meta = jsonDecode(result.order.metadata!) as Map<String, dynamic>?;
+              } catch (_) {}
+            }
+            final pinToken = meta?['pin']?.toString() ?? 'AVO-W-${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}';
+            final serial = meta?['serial']?.toString() ?? 'SN-2026-${phone.substring(phone.length - 4)}';
+
+            await _sendTextMessage(
+              to: phone,
+              message: '🎓 *Exam PIN Purchase Successful!*\n\n'
+                  '• Exam: *$examType Result Checker*\n'
+                  '• PIN / Token: *$pinToken*\n'
+                  '• Serial No: *$serial*\n'
+                  '• Reference: ${result.order.providerReference ?? result.order.id}\n\n'
+                  '🔒 _This PIN has also been saved to your Avotek App PIN Vault._\n'
+                  'Send *MENU* to return.',
+            );
+          } else {
+            await _sendTextMessage(
+              to: phone,
+              message: '❌ *Order Could Not Be Completed:*\n${result.message}\n'
+                  'Any deducted funds have been refunded to your wallet.\n'
+                  'Send *MENU* to try again.',
+            );
+          }
+        } else {
+          await _sendTextMessage(to: phone, message: 'Exam PIN order cancelled.');
+          await _sendMainMenu(phone, user?.name ?? 'Student');
+        }
+        state['step'] = 'MAIN_MENU';
+        _sessionMemory[phone] = state;
         break;
 
       case 'AIRTIME_NETWORK':
@@ -274,18 +424,23 @@ class WhatsAppService {
       default:
         state['step'] = 'MAIN_MENU';
         _sessionMemory[phone] = state;
-        await _sendMainMenu(phone, user?.name ?? 'Customer');
+        await _sendMainMenu(phone, user?.name ?? 'Student');
     }
   }
 
   Future<void> _sendMainMenu(String phone, String name) async {
     await _sendButtons(
       to: phone,
-      bodyText: 'Hello $name 👋\nWelcome to *AVOTEK* Quick Top-Up.\nChoose an action below:',
+      bodyText: '🎓 *Avotek Student Companion*\n_Learn. Prepare. Connect._\n\nHello $name 👋\nWhat would you like to do today?\n\n'
+          '1️⃣ *Exam PINs* (WAEC, NECO, JAMB)\n'
+          '2️⃣ *Today\'s Challenge* (Daily Quiz)\n'
+          '3️⃣ *Stay Connected* (Airtime & Data)\n'
+          '4️⃣ *Student Wallet* & Account\n\n'
+          'Reply with a number (1-4) or tap a button below:',
       buttons: [
-        {'id': 'CMD_AIRTIME', 'title': 'Buy Airtime'},
-        {'id': 'CMD_DATA', 'title': 'Buy Data'},
-        {'id': 'CMD_BALANCE', 'title': 'Check Balance'},
+        {'id': 'CMD_EXAMPIN', 'title': 'Exam PINs 🎓'},
+        {'id': 'CMD_CHALLENGE', 'title': 'Challenge 📐'},
+        {'id': 'CMD_AIRTIME', 'title': 'Airtime/Data 📱'},
       ],
     );
   }

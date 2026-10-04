@@ -3,7 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
 
 class ClientProvider {
-  static late final Client client;
+  static Client? _client;
+
+  static Client get client {
+    _client ??= Client(defaultServerUrl);
+    return _client!;
+  }
 
   static String get defaultServerUrl {
     // 1. Allow build-time override via --dart-define=SERVER_URL=... or API_URL=...
@@ -34,11 +39,11 @@ class ClientProvider {
   static Future<void> initialize({String? overrideUrl}) async {
     final serverUrl = overrideUrl ?? defaultServerUrl;
 
-    client = Client(serverUrl);
+    _client = Client(serverUrl);
     // On web, FlutterConnectivityMonitor can fail/hang; only attach on native platforms
     if (!kIsWeb) {
       try {
-        client.connectivityMonitor = FlutterConnectivityMonitor();
+        _client!.connectivityMonitor = FlutterConnectivityMonitor();
       } catch (_) {}
     }
   }

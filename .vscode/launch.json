@@ -2,18 +2,19 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Avotek Windows (Native Desktop - Fastest & Recommended)",
+            "name": "Avotek Web Chrome (Smooth, Fast & Never Shuts Off)",
             "cwd": "${workspaceFolder}/avotek/avotek_flutter",
             "request": "launch",
             "type": "dart",
+            "flutterMode": "release",
             "program": "lib/main.dart",
             "args": [
                 "-d",
-                "windows"
+                "chrome"
             ]
         },
         {
-            "name": "Avotek Web Server (No Timeout - http://localhost:8080)",
+            "name": "Avotek Web Server (Hot Reload - http://localhost:3000)",
             "cwd": "${workspaceFolder}/avotek/avotek_flutter",
             "request": "launch",
             "type": "dart",
@@ -21,22 +22,54 @@
             "args": [
                 "-d",
                 "web-server",
+                "--web-hostname",
+                "127.0.0.1",
                 "--web-port",
-                "8080"
+                "3000"
             ]
         },
         {
-            "name": "Avotek Web Chrome (Run Without Debugging)",
+            "name": "Avotek Web Edge (Smooth, Fast & Never Shuts Off)",
+            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "edge"
+            ]
+        },
+        {
+            "name": "Avotek Web Chrome (With Dart Debugger)",
             "cwd": "${workspaceFolder}/avotek/avotek_flutter",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
-            "noDebug": true,
             "args": [
                 "-d",
                 "chrome",
+                "--web-hostname",
+                "127.0.0.1",
                 "--web-port",
-                "8080"
+                "3000",
+                "--web-browser-flag",
+                "--remote-allow-origins=*"
+            ]
+        },
+        {
+            "name": "Avotek Web Server (http://localhost:3000 - Any Browser)",
+            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "web-server",
+                "--web-hostname",
+                "127.0.0.1",
+                "--web-port",
+                "3000"
             ]
         },
         {
@@ -45,9 +78,14 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "noDebug": true,
             "args": [
                 "-d",
-                "edge"
+                "edge",
+                "--web-hostname",
+                "127.0.0.1",
+                "--web-port",
+                "3000"
             ]
         },
         {
@@ -59,6 +97,17 @@
             "args": [
                 "-d",
                 "android"
+            ]
+        },
+        {
+            "name": "Avotek Windows (Native Desktop - Requires VS C++)",
+            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "windows"
             ]
         },
         {

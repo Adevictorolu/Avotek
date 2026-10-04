@@ -413,8 +413,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: iconColor.withValues(alpha: 0.15),
-                    child: Icon(icon, size: 16, color: iconColor),
+                    backgroundColor: iconColor,
+                    child: Icon(icon, size: 16, color: Colors.white),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
