@@ -24,6 +24,13 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _user != null;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  String? get authError => _errorMessage;
+
+  Future<bool> loginWithGoogle({
+    required String email,
+    required String displayName,
+    String? photoUrl,
+  }) => socialLogin(provider: 'google', email: email, name: displayName, photoUrl: photoUrl);
 
   /// True if the user has authenticated but hasn't created a 4-digit security PIN yet
   bool get needsPinSetup =>

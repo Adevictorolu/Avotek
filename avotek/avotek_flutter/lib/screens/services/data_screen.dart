@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -9,7 +8,6 @@ import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
-import '../../providers/wallet_provider.dart';
 
 class DataScreen extends StatefulWidget {
   const DataScreen({super.key});
@@ -148,6 +146,7 @@ class _DataScreenState extends State<DataScreen> {
         phone: phone,
         variationCode: _selectedPlan!['code'] as String,
         amount: amount,
+        sellPrice: amount,
       );
 
       setState(() => _isProcessing = false);
@@ -624,6 +623,30 @@ class _DataScreenState extends State<DataScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value, bool isDark) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w800,
+            color: isDark ? Colors.white : Colors.black87,
           ),
         ),
       ],

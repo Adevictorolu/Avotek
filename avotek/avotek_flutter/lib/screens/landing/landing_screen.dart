@@ -16,16 +16,15 @@ class LandingScreen extends StatefulWidget {
 class _LandingScreenState extends State<LandingScreen> {
   String _selectedRateNetwork = 'MTN';
   final ScrollController _scrollController = ScrollController();
-  bool _showDemoRibbon = true;
 
-  // GlobalKeys for accurate smooth scrolling to sections
+  // GlobalKeys for accurate smooth scrolling
   final GlobalKey _servicesKey = GlobalKey();
   final GlobalKey _howKey = GlobalKey();
   final GlobalKey _ratesKey = GlobalKey();
   final GlobalKey _whyKey = GlobalKey();
   final GlobalKey _faqKey = GlobalKey();
 
-  // Solid service hues matching Kobo template design tokens
+  // Solid service hues matching design tokens
   static const Color sAirtime = Color(0xFF7C3AED); // Solid Violet
   static const Color sData = Color(0xFF2563EB); // Royal Blue
   static const Color sCable = Color(0xFFDB2777); // Pink
@@ -33,67 +32,68 @@ class _LandingScreenState extends State<LandingScreen> {
   static const Color sExam = Color(0xFF0891B2); // Cyan / Teal
   static const Color sPrint = Color(0xFF9333EA); // Vibrant Purple
   static const Color sWallet = Color(0xFF059669); // Emerald Green
-  static const Color sTransfer = Color(0xFF4F46E5); // Indigo
   static const Color sRefer = Color(0xFFCA8A04); // Amber Gold
 
   final List<Map<String, dynamic>> _faqs = [
     {
       'q': 'How long does an order take?',
-      'a': 'Airtime and data are usually done in under fifteen seconds. Cable and electricity depend on the provider, so those can take a minute at peak times. Either way you watch the status change, you are not left guessing.',
+      'a': 'Airtime and data are delivered in under 15 seconds automatically. Cable TV and electricity tokens depend on the provider API and usually deliver in 30 to 60 seconds. You watch the live status update on your screen in real time.',
       'isOpen': true,
     },
     {
       'q': 'What happens when an order fails?',
-      'a': 'The wallet is refunded automatically. You do not open a ticket and you do not chase anybody. The failed order stays in your history with its reason attached.',
+      'a': 'Your wallet balance is refunded automatically within minutes. You do not need to open a support ticket or chase customer care. Every failed transaction logs the exact gateway reason in your order history.',
       'isOpen': false,
     },
     {
       'q': 'How do I fund my wallet?',
-      'a': 'Every account gets a dedicated account number. Transfer to it from any Nigerian bank app and the wallet is credited immediately. Card funding is there too if you prefer it.',
+      'a': 'Every Avotek account receives dedicated virtual bank accounts (Wema Bank & Moniepoint/Providus). Transfer money from any Nigerian banking app (OPay, Palmpay, GTB, Kuda, Zenith, etc.) and your wallet is credited automatically within 10 to 60 seconds.',
       'isOpen': false,
     },
     {
-      'q': 'Is there a minimum to start?',
-      'a': 'No. Fund with whatever you have and buy from it. There is no monthly fee and no dormant account charge.',
+      'q': 'Is there a minimum balance or subscription fee to start?',
+      'a': 'No. There are zero monthly charges, zero maintenance fees, and no minimum balance. You can fund as little as ₦100 and buy or resell immediately.',
       'isOpen': false,
     },
     {
-      'q': 'Can I resell to my own customers?',
-      'a': 'Yes, and that is what most people here do. You buy at your price and charge your customers whatever you like. The difference is yours.',
+      'q': 'Can I resell VTU services to my own customers?',
+      'a': 'Yes! Avotek provides wholesale reseller prices. You buy at reseller rates, set your own selling price for your customers, and keep 100% of your profit margin. Every order generates an instant receipt you can share.',
       'isOpen': false,
     },
     {
-      'q': 'Do I need a laptop?',
-      'a': 'No. Everything works in a phone browser, including funding, buying and downloading receipts.',
+      'q': 'Do I need a laptop or computer?',
+      'a': 'No. Avotek is fully responsive and optimized for any smartphone browser and Android/iOS devices. You can manage everything directly from your pocket.',
       'isOpen': false,
     },
   ];
 
-  // Exact 4-plan sample rates matching Kobo index rates table
   final Map<String, List<Map<String, dynamic>>> _ratePlans = {
     'MTN': [
-      {'plan': '500MB', 'validity': '30 days', 'price': 340},
-      {'plan': '1GB', 'validity': '30 days', 'price': 620},
-      {'plan': '2GB', 'validity': '30 days', 'price': 1240},
-      {'plan': '5GB', 'validity': '30 days', 'price': 3100},
+      {'plan': '500MB SME', 'validity': '30 days', 'price': 140},
+      {'plan': '1GB SME', 'validity': '30 days', 'price': 260},
+      {'plan': '2GB SME', 'validity': '30 days', 'price': 520},
+      {'plan': '5GB SME', 'validity': '30 days', 'price': 1300},
+      {'plan': '10GB SME', 'validity': '30 days', 'price': 2600},
     ],
     'Glo': [
-      {'plan': '1GB', 'validity': '30 days', 'price': 280},
-      {'plan': '2GB', 'validity': '30 days', 'price': 560},
-      {'plan': '5GB', 'validity': '30 days', 'price': 1400},
-      {'plan': '10GB', 'validity': '30 days', 'price': 2800},
+      {'plan': '500MB Corp', 'validity': '30 days', 'price': 145},
+      {'plan': '1GB Corp', 'validity': '30 days', 'price': 255},
+      {'plan': '2GB Corp', 'validity': '30 days', 'price': 510},
+      {'plan': '5GB Corp', 'validity': '30 days', 'price': 1275},
+      {'plan': '10GB Corp', 'validity': '30 days', 'price': 2550},
     ],
     'Airtel': [
-      {'plan': '500MB', 'validity': '30 days', 'price': 350},
-      {'plan': '1GB', 'validity': '30 days', 'price': 640},
-      {'plan': '2GB', 'validity': '30 days', 'price': 1280},
-      {'plan': '5GB', 'validity': '30 days', 'price': 3200},
+      {'plan': '500MB CG', 'validity': '30 days', 'price': 150},
+      {'plan': '1GB CG', 'validity': '30 days', 'price': 265},
+      {'plan': '2GB CG', 'validity': '30 days', 'price': 530},
+      {'plan': '5GB CG', 'validity': '30 days', 'price': 1325},
+      {'plan': '10GB CG', 'validity': '30 days', 'price': 2650},
     ],
     '9mobile': [
-      {'plan': '1GB', 'validity': '30 days', 'price': 300},
-      {'plan': '2GB', 'validity': '30 days', 'price': 600},
-      {'plan': '3GB', 'validity': '30 days', 'price': 900},
-      {'plan': '5GB', 'validity': '30 days', 'price': 1500},
+      {'plan': '1GB Data', 'validity': '30 days', 'price': 240},
+      {'plan': '2GB Data', 'validity': '30 days', 'price': 480},
+      {'plan': '3GB Data', 'validity': '30 days', 'price': 720},
+      {'plan': '5GB Data', 'validity': '30 days', 'price': 1200},
     ],
   };
 
@@ -115,121 +115,91 @@ class _LandingScreenState extends State<LandingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth >= 960;
+    final isDesktop = screenWidth >= 980;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
-      endDrawer: !isDesktop ? _buildMobileDrawer(isDark) : null,
+      backgroundColor: const Color(0xFF0D0F15),
+      endDrawer: !isDesktop ? _buildMobileDrawer() : null,
       body: Builder(
         builder: (scaffoldContext) {
           return CustomScrollView(
             controller: _scrollController,
             slivers: [
-              // 0. Optional Demo Announcement Ribbon matching Kobo
-              if (_showDemoRibbon)
-                SliverToBoxAdapter(
-                  child: Container(
-                    color: isDark ? const Color(0xFF162032) : const Color(0xFFE0F2FE),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: RichText(
-                            textAlign: TextAlign.center,
-                            text: TextSpan(
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF0369A1),
-                              ),
-                              children: [
-                                TextSpan(
-                                  text: 'Live VTU Platform. ',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : const Color(0xFF0C4A6E),
-                                  ),
-                                ),
-                                const TextSpan(
-                                  text: 'Dedicated NUBAN funding & automated refunds are active. Top up in seconds.',
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        InkWell(
-                          onTap: () => setState(() => _showDemoRibbon = false),
-                          child: Icon(
-                            Icons.close_rounded,
-                            size: 16,
-                            color: isDark ? Colors.white54 : Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
               // Sticky Top Navigation Bar
               SliverAppBar(
                 pinned: true,
                 elevation: 0,
-                backgroundColor: isDark
-                    ? AppColors.darkBg.withValues(alpha: 0.95)
-                    : AppColors.lightBg.withValues(alpha: 0.95),
+                backgroundColor: const Color(0xFF0D0F15).withOpacity(0.96),
                 titleSpacing: isDesktop ? 48 : 16,
                 title: Row(
                   children: [
-                    const AvotekLogo(size: 34, showText: true),
+                    // Brand Logo + Name
+                    InkWell(
+                      onTap: () => context.go('/'),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF141720),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.5)),
+                            ),
+                            child: const Center(
+                              child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.w900, fontSize: 18)),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Avotek',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     if (isDesktop) ...[
-                      const SizedBox(width: 40),
-                      _navLink('Services', () => _scrollToKey(_servicesKey), isDark),
-                      _navLink('Rates', () => context.push('/rates'), isDark),
-                      _navLink('How it works', () => _scrollToKey(_howKey), isDark),
-                      _navLink('Why us', () => _scrollToKey(_whyKey), isDark),
-                      _navLink('FAQ', () => _scrollToKey(_faqKey), isDark),
+                      const SizedBox(width: 48),
+                      _navLink('Services', () => _scrollToKey(_servicesKey)),
+                      _navLink('Rates', () => context.push('/rates')),
+                      _navLink('How it works', () => _scrollToKey(_howKey)),
+                      _navLink('Why us', () => _scrollToKey(_whyKey)),
+                      _navLink('FAQ', () => _scrollToKey(_faqKey)),
                     ],
                   ],
                 ),
                 actions: [
-                  IconButton(
-                    tooltip: 'Toggle Theme',
-                    icon: Icon(
-                      isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-                      size: 20,
-                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                    ),
-                    onPressed: widget.onToggleTheme,
-                  ),
                   if (isDesktop) ...[
-                    const SizedBox(width: 4),
                     TextButton(
                       onPressed: () => context.push('/login'),
                       style: TextButton.styleFrom(
-                        foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                       ),
-                      child: const Text('Sign in', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      child: Text('Sign in', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13.5)),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
-                      onPressed: () => context.push('/login'),
+                      onPressed: () => context.push('/register'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryCyan,
-                        foregroundColor: const Color(0xFF0A0E17),
+                        backgroundColor: const Color(0xFFE5A93C),
+                        foregroundColor: Colors.black,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
-                      child: const Text('Create account', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                      child: Text('Create account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13.5)),
                     ),
                     const SizedBox(width: 48),
                   ] else ...[
                     IconButton(
-                      icon: const Icon(Icons.menu_rounded),
+                      icon: const Icon(Icons.menu_rounded, color: Colors.white),
                       onPressed: () => Scaffold.of(scaffoldContext).openEndDrawer(),
                     ),
                     const SizedBox(width: 8),
@@ -245,17 +215,17 @@ class _LandingScreenState extends State<LandingScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _buildHeroSection(isDesktop, isDark),
-                        _buildStatsStrip(isDark),
-                        Container(key: _servicesKey, child: _buildServicesSection(isDesktop, isDark)),
-                        Container(key: _howKey, child: _buildHowItWorksSection(isDesktop, isDark)),
-                        Container(key: _ratesKey, child: _buildRatesPreviewSection(isDesktop, isDark)),
-                        Container(key: _whyKey, child: _buildWhyUsSection(isDesktop, isDark)),
-                        _buildTestimonialsSection(isDesktop, isDark),
-                        _buildPhoneCounterBanner(isDesktop, isDark),
-                        Container(key: _faqKey, child: _buildFaqSection(isDesktop, isDark)),
-                        _buildReadyCtaBanner(isDesktop, isDark),
-                        _buildFooter(isDesktop, isDark),
+                        _buildHeroSection(isDesktop),
+                        _buildStatsStrip(),
+                        Container(key: _servicesKey, child: _buildServicesSection(isDesktop)),
+                        Container(key: _howKey, child: _buildHowItWorksSection(isDesktop)),
+                        Container(key: _ratesKey, child: _buildRatesSection(isDesktop)),
+                        Container(key: _whyKey, child: _buildWhyUsSection(isDesktop)),
+                        _buildTestimonialsSection(isDesktop),
+                        _buildMobilePocketBand(isDesktop),
+                        Container(key: _faqKey, child: _buildFaqSection(isDesktop)),
+                        _buildFinalCtaSection(isDesktop),
+                        _buildFooter(isDesktop),
                       ],
                     ),
                   ),
@@ -268,97 +238,91 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  Widget _buildMobileDrawer(bool isDark) {
+  Widget _buildMobileDrawer() {
     return Drawer(
-      backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+      backgroundColor: const Color(0xFF141720),
       child: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const AvotekLogo(size: 32, showText: true),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.of(context).pop(),
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D0F15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFD4AF37)),
+                    ),
+                    child: const Center(
+                      child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
                   ),
+                  const SizedBox(width: 10),
+                  Text('Avotek', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
                 ],
               ),
             ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.grid_view_rounded, size: 20),
-              title: const Text('Services', style: TextStyle(fontWeight: FontWeight.w600)),
-              onTap: () {
-                Navigator.of(context).pop();
-                _scrollToKey(_servicesKey);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.credit_card_rounded, size: 20),
-              title: const Text('Rates', style: TextStyle(fontWeight: FontWeight.w600)),
-              onTap: () {
-                Navigator.of(context).pop();
-                context.push('/rates');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.bolt_rounded, size: 20),
-              title: const Text('How it works', style: TextStyle(fontWeight: FontWeight.w600)),
-              onTap: () {
-                Navigator.of(context).pop();
-                _scrollToKey(_howKey);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.shield_outlined, size: 20),
-              title: const Text('Why us', style: TextStyle(fontWeight: FontWeight.w600)),
-              onTap: () {
-                Navigator.of(context).pop();
-                _scrollToKey(_whyKey);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.help_outline_rounded, size: 20),
-              title: const Text('FAQ', style: TextStyle(fontWeight: FontWeight.w600)),
-              onTap: () {
-                Navigator.of(context).pop();
-                _scrollToKey(_faqKey);
-              },
-            ),
+            const Divider(color: Color(0xFF26334D)),
+            _drawerItem('Services', () {
+              Navigator.pop(context);
+              _scrollToKey(_servicesKey);
+            }),
+            _drawerItem('Rates', () {
+              Navigator.pop(context);
+              context.push('/rates');
+            }),
+            _drawerItem('How it works', () {
+              Navigator.pop(context);
+              _scrollToKey(_howKey);
+            }),
+            _drawerItem('Why us', () {
+              Navigator.pop(context);
+              _scrollToKey(_whyKey);
+            }),
+            _drawerItem('FAQ', () {
+              Navigator.pop(context);
+              _scrollToKey(_faqKey);
+            }),
             const Spacer(),
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      context.push('/login');
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        context.push('/login');
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xFF26334D)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text('Sign in', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
                     ),
-                    child: const Text('Sign in', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      context.push('/login');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryCyan,
-                      foregroundColor: const Color(0xFF0A0E17),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        context.push('/register');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE5A93C),
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text('Create account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
                     ),
-                    child: const Text('Create free account', style: TextStyle(fontWeight: FontWeight.w800)),
                   ),
                 ],
               ),
@@ -369,20 +333,28 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  Widget _navLink(String label, VoidCallback onTap, bool isDark) {
+  Widget _drawerItem(String title, VoidCallback onTap) {
+    return ListTile(
+      title: Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+      trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 18),
+      onTap: onTap,
+    );
+  }
+
+  Widget _navLink(String label, VoidCallback onTap) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Text(
             label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFFCBD5E1),
             ),
           ),
         ),
@@ -391,9 +363,9 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   // ====================================================================
-  // 1. HERO SECTION (Matching Kobopay .hero)
+  // 1. HERO SECTION (UI Psychology: Instant Clarity + Risk Elimination)
   // ====================================================================
-  Widget _buildHeroSection(bool isDesktop, bool isDark) {
+  Widget _buildHeroSection(bool isDesktop) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop ? 48 : 20,
@@ -403,67 +375,68 @@ class _LandingScreenState extends State<LandingScreen> {
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(flex: 6, child: _buildHeroCopy(isDark)),
+                Expanded(flex: 6, child: _buildHeroCopy()),
                 const SizedBox(width: 48),
-                Expanded(flex: 5, child: _buildPhoneMockup(isDark)),
+                Expanded(flex: 5, child: _buildPhoneMockup()),
               ],
             )
           : Column(
               children: [
-                _buildHeroCopy(isDark),
+                _buildHeroCopy(),
                 const SizedBox(height: 40),
-                _buildPhoneMockup(isDark),
+                _buildPhoneMockup(),
               ],
             ),
     );
   }
 
-  Widget _buildHeroCopy(bool isDark) {
+  Widget _buildHeroCopy() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Pill note: New Dedicated account numbers are live
+        // Pill note: Dedicated account numbers are live
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
           decoration: BoxDecoration(
-            color: AppColors.primaryCyan.withValues(alpha: 0.12),
+            color: const Color(0xFF10B981).withOpacity(0.12),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
+            border: Border.all(color: const Color(0xFF10B981).withOpacity(0.35)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.auto_awesome, size: 14, color: AppColors.primaryCyan),
-              const SizedBox(width: 6),
+              const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF10B981)),
+              const SizedBox(width: 8),
               RichText(
-                text: const TextSpan(
-                  style: TextStyle(fontSize: 12, color: AppColors.primaryCyan),
-                  children: [
+                text: TextSpan(
+                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF10B981)),
+                  children: const [
                     TextSpan(text: 'New  ', style: TextStyle(fontWeight: FontWeight.w900)),
-                    TextSpan(text: 'Dedicated account numbers are live', style: TextStyle(fontWeight: FontWeight.w600)),
+                    TextSpan(text: 'Dedicated automated virtual bank accounts are live', style: TextStyle(fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 20),
-        // Headline: Airtime, data and bills. Sorted in seconds.
+        const SizedBox(height: 22),
+
+        // Headline
         RichText(
           text: TextSpan(
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 38,
+              fontSize: 44,
               height: 1.15,
-              fontWeight: FontWeight.w800,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-              letterSpacing: -0.8,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -1.0,
             ),
             children: const [
               TextSpan(text: 'Airtime, data and bills.\n'),
               TextSpan(
                 text: 'Sorted in seconds.',
                 style: TextStyle(
-                  color: AppColors.primaryCyan,
+                  color: Color(0xFFE5A93C),
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -471,66 +444,65 @@ class _LandingScreenState extends State<LandingScreen> {
           ),
         ),
         const SizedBox(height: 18),
-        // Deck: One wallet for every top-up you make and every one you sell...
+
+        // Deck
         Text(
-          'One wallet for every top-up you make and every one you sell. Fund it from any bank, buy at reseller prices, and get your money back automatically when a network misbehaves.',
-          style: TextStyle(
+          'One wallet for every top-up you make and every one you sell. Fund it from any bank app, buy at wholesale reseller prices, and get your money back automatically when a network misbehaves.',
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 15,
             height: 1.6,
-            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF94A3B8),
           ),
         ),
         const SizedBox(height: 28),
+
         // CTAs: Create free account -> / See our rates
         Wrap(
           spacing: 14,
           runSpacing: 12,
           children: [
             ElevatedButton.icon(
-              onPressed: () => context.push('/login'),
+              onPressed: () => context.push('/register'),
               icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-              label: const Text('Create free account', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+              label: Text('Create free account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryCyan,
-                foregroundColor: const Color(0xFF0A0E17),
+                backgroundColor: const Color(0xFFE5A93C),
+                foregroundColor: Colors.black,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shadowColor: const Color(0xFFE5A93C).withOpacity(0.4),
               ),
             ),
             OutlinedButton(
               onPressed: () => context.push('/rates'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
-                side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder, width: 1.5),
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: Color(0xFF26334D), width: 1.5),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              child: const Text('See our rates', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              child: Text('See our rates', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
             ),
           ],
         ),
         const SizedBox(height: 28),
-        // Trust social proof: 4 avatars + 18,400 people buy here every week
+
+        // Trust proof
         Row(
           children: [
             _buildAvatarGroup(),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             RichText(
               text: TextSpan(
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                ),
-                children: [
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF94A3B8)),
+                children: const [
                   TextSpan(
-                    text: '18,400 people ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
+                    text: '18,400+ people ',
+                    style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
                   ),
-                  const TextSpan(text: 'buy here every week'),
+                  TextSpan(text: 'buy & resell here every week'),
                 ],
               ),
             ),
@@ -541,11 +513,11 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   Widget _buildAvatarGroup() {
-    final colors = [AppColors.primaryCyan, AppColors.success, AppColors.warning, Colors.purple];
+    final colors = [const Color(0xFFE5A93C), const Color(0xFF10B981), const Color(0xFF0284C7), Colors.purple];
     final initials = ['AO', 'SB', 'TA', 'NE'];
     return SizedBox(
       height: 32,
-      width: 88,
+      width: 90,
       child: Stack(
         children: List.generate(4, (i) {
           return Positioned(
@@ -555,7 +527,7 @@ class _LandingScreenState extends State<LandingScreen> {
               backgroundColor: colors[i],
               child: Text(
                 initials[i],
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white),
               ),
             ),
           );
@@ -564,28 +536,23 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // ====================================================================
-  // INTERACTIVE PHONE MOCKUP (Matching Kobopay .phone & .phone__screen)
-  // ====================================================================
-  Widget _buildPhoneMockup(bool isDark) {
+  // Interactive Phone Mockup matching Kobo .phone screen
+  Widget _buildPhoneMockup() {
     return Container(
       constraints: const BoxConstraints(maxWidth: 360),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
+        color: const Color(0xFF141720),
         borderRadius: BorderRadius.circular(36),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-          width: 2,
-        ),
+        border: Border.all(color: const Color(0xFF26334D), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+            color: Colors.black.withOpacity(0.55),
             blurRadius: 36,
             offset: const Offset(0, 18),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -594,20 +561,37 @@ class _LandingScreenState extends State<LandingScreen> {
             child: Container(
               width: 54,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white24 : Colors.black12,
-                borderRadius: BorderRadius.circular(2),
-              ),
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
             ),
           ),
+          // User Greeting inside phone
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Good afternoon', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF94A3B8))),
+                  Text('Ada O.', style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
+                ],
+              ),
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: const Color(0xFFE5A93C).withOpacity(0.2),
+                child: Text('AO', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C))),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
 
-          // Phone Top Card (Gradient with wallet balance)
+          // Wallet Balance Card inside phone
           Container(
+            width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0077B6), AppColors.primaryCyan],
+                colors: [Color(0xFFE5A93C), Color(0xFFD4AF37)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -616,127 +600,111 @@ class _LandingScreenState extends State<LandingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Good afternoon', style: TextStyle(fontSize: 10, color: Colors.white70)),
-                        Text('Ada O.', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-                      ],
-                    ),
-                    CircleAvatar(
-                      radius: 14,
-                      backgroundColor: Colors.white.withValues(alpha: 0.25),
-                      child: const Text('AO', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                const Text('Wallet balance', style: TextStyle(fontSize: 10, color: Colors.white70)),
-                const Text(
-                  '₦248,500.00',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: -0.5,
-                  ),
-                ),
+                Text('Wallet balance', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF3E2700))),
+                const SizedBox(height: 2),
+                Text('₦248,500.00', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
               ],
             ),
           ),
           const SizedBox(height: 16),
 
-          // 8 Quick Service Icons (Solid circular badges matching Kobo tokens)
+          // 8 Quick Service Icons Grid
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 12,
+            runSpacing: 12,
             children: [
-              _miniServiceTile('Airtime', Icons.phone_android_rounded, sAirtime, () => context.push('/services/airtime')),
-              _miniServiceTile('Data', Icons.wifi_rounded, sData, () => context.push('/services/data')),
-              _miniServiceTile('Cable', Icons.tv_rounded, sCable, () => context.push('/services/tv')),
-              _miniServiceTile('Power', Icons.bolt_rounded, sPower, () => context.push('/services/electricity')),
-              _miniServiceTile('Exams', Icons.school_rounded, sExam, () => context.push('/services/exam_pin')),
-              _miniServiceTile('Print', Icons.print_rounded, sPrint, () => context.push('/services/airtime')),
-              _miniServiceTile('Fund', Icons.account_balance_wallet_rounded, sWallet, () => context.push('/wallet/fund')),
-              _miniServiceTile('Send', Icons.send_rounded, sTransfer, () => context.push('/dashboard')),
+              _buildPhoneServiceIcon(Icons.phone_android_rounded, 'Airtime', sAirtime),
+              _buildPhoneServiceIcon(Icons.wifi_rounded, 'Data', sData),
+              _buildPhoneServiceIcon(Icons.tv_rounded, 'Cable', sCable),
+              _buildPhoneServiceIcon(Icons.flash_on_rounded, 'Power', sPower),
+              _buildPhoneServiceIcon(Icons.school_rounded, 'Exams', sExam),
+              _buildPhoneServiceIcon(Icons.print_rounded, 'Print', sPrint),
+              _buildPhoneServiceIcon(Icons.account_balance_wallet_rounded, 'Fund', sWallet),
+              _buildPhoneServiceIcon(Icons.send_rounded, 'Send', sRefer),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
-          // Live Recent Transactions List
-          Text(
-            'Recent Orders',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-            ),
+          // Live Activity Items
+          Text('RECENT ACTIVITY', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: const Color(0xFF64748B), letterSpacing: 0.8)),
+          const SizedBox(height: 8),
+          _buildPhoneTxItem(
+            icon: Icons.wifi_rounded,
+            color: sData,
+            title: 'MTN 10GB SME',
+            subtitle: 'Delivered | 12:41',
+            amount: '-₦2,600',
+            isCredit: false,
           ),
           const SizedBox(height: 8),
-          _miniTxTile('MTN 10GB SME', 'Delivered • 12:41', '-₦3,400', isDark, false, sData, Icons.wifi_rounded),
-          _miniTxTile('Wallet funding', 'Credited • 11:52', '+₦100,000', isDark, true, sWallet, Icons.account_balance_wallet_rounded),
+          _buildPhoneTxItem(
+            icon: Icons.account_balance_wallet_rounded,
+            color: sWallet,
+            title: 'Wema Virtual Transfer',
+            subtitle: 'Credited | 11:52',
+            amount: '+₦50,000',
+            isCredit: true,
+          ),
         ],
       ),
     );
   }
 
-  Widget _miniServiceTile(String label, IconData icon, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 72,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          children: [
-            CircleAvatar(
-              radius: 17,
-              backgroundColor: color,
-              child: Icon(icon, size: 16, color: Colors.white),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
+  Widget _buildPhoneServiceIcon(IconData icon, String label, Color color) {
+    return SizedBox(
+      width: 62,
+      child: Column(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            child: Icon(icon, color: Colors.white, size: 18),
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.white70)),
+        ],
       ),
     );
   }
 
-  Widget _miniTxTile(String title, String sub, String amt, bool isDark, bool isCredit, Color dotColor, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+  Widget _buildPhoneTxItem({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required String amount,
+    required bool isCredit,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E222D),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 12,
-                backgroundColor: dotColor,
-                child: Icon(icon, size: 11, color: Colors.white),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
-                  Text(sub, style: const TextStyle(fontSize: 9, color: Colors.grey)),
-                ],
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(color: color.withOpacity(0.2), shape: BoxShape.circle),
+            child: Icon(icon, color: color, size: 14),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
+                Text(subtitle, style: GoogleFonts.plusJakartaSans(fontSize: 9.5, color: Colors.grey)),
+              ],
+            ),
           ),
           Text(
-            amt,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isCredit ? AppColors.success : (isDark ? Colors.white : Colors.black),
+            amount,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: isCredit ? const Color(0xFF10B981) : Colors.white,
             ),
           ),
         ],
@@ -745,71 +713,68 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   // ====================================================================
-  // 2. STATS STRIP (Matching Kobopay .stats-wrap & .stats)
+  // 2. STATS STRIP (Social Proof & Reliability Metrics)
   // ====================================================================
-  Widget _buildStatsStrip(bool isDark) {
+  Widget _buildStatsStrip() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      margin: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 28),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: const Color(0xFF141720),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFF26334D)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isNarrow = constraints.maxWidth < 600;
-          return isNarrow
-              ? Column(
-                  children: [
-                    _statItem('99.9%', 'Orders delivered first try', isDark),
-                    const Divider(height: 24),
-                    _statItem('186,000+', 'Top-ups processed', isDark),
-                    const Divider(height: 24),
-                    _statItem('12 sec', 'Average delivery time', isDark),
-                    const Divider(height: 24),
-                    _statItem('24/7', 'Support that answers', isDark),
-                  ],
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _statItem('99.9%', 'Orders delivered first try', isDark),
-                    _statItem('186,000+', 'Top-ups processed', isDark),
-                    _statItem('12 sec', 'Average delivery time', isDark),
-                    _statItem('24/7', 'Support that answers', isDark),
-                  ],
-                );
+          final isNarrow = constraints.maxWidth < 640;
+          if (isNarrow) {
+            return Column(
+              children: [
+                _buildStatItem('99.9%', 'Orders delivered first try'),
+                const Divider(color: Color(0xFF26334D)),
+                _buildStatItem('186,000+', 'Top-ups processed'),
+                const Divider(color: Color(0xFF26334D)),
+                _buildStatItem('12 sec', 'Average delivery time'),
+                const Divider(color: Color(0xFF26334D)),
+                _buildStatItem('24/7', 'Instant support on WhatsApp'),
+              ],
+            );
+          }
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem('99.9%', 'Orders delivered first try'),
+              Container(width: 1, height: 40, color: const Color(0xFF26334D)),
+              _buildStatItem('186,000+', 'Top-ups processed'),
+              Container(width: 1, height: 40, color: const Color(0xFF26334D)),
+              _buildStatItem('12 sec', 'Average delivery time'),
+              Container(width: 1, height: 40, color: const Color(0xFF26334D)),
+              _buildStatItem('24/7', 'Support that answers'),
+            ],
+          );
         },
       ),
     );
   }
 
-  Widget _statItem(String val, String label, bool isDark) {
+  Widget _buildStatItem(String stat, String label) {
     return Column(
       children: [
         Text(
-          val,
+          stat,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 26,
-            fontWeight: FontWeight.w800,
-            color: AppColors.primaryCyan,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFFE5A93C),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
-            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF94A3B8),
           ),
         ),
       ],
@@ -817,128 +782,118 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   // ====================================================================
-  // 3. SERVICES SECTION (Matching Kobopay #services)
+  // 3. SERVICES SECTION ("What you can buy")
   // ====================================================================
-  Widget _buildServicesSection(bool isDesktop, bool isDark) {
+  Widget _buildServicesSection(bool isDesktop) {
     final services = [
       {
         'title': 'Airtime top-up',
-        'desc': 'MTN, Glo, Airtel and 9mobile at a discount, delivered the second you pay.',
+        'desc': 'MTN, Glo, Airtel and 9mobile at wholesale discount, delivered the second you pay.',
         'icon': Icons.phone_android_rounded,
         'color': sAirtime,
         'route': '/services/airtime',
       },
       {
         'title': 'Data bundles',
-        'desc': 'SME, gifting and corporate plans. Daily, weekly and monthly, every network.',
+        'desc': 'SME, gifting and corporate plans. Daily, weekly and monthly, every single network.',
         'icon': Icons.wifi_rounded,
         'color': sData,
         'route': '/services/data',
       },
       {
         'title': 'Cable TV',
-        'desc': 'DStv, GOtv and Startimes renewals. Enter the smartcard, the box comes back on.',
+        'desc': 'DStv, GOtv and Startimes renewals. Enter smartcard, the decoder comes on instantly.',
         'icon': Icons.tv_rounded,
         'color': sCable,
         'route': '/services/tv',
       },
       {
-        'title': 'Electricity',
-        'desc': 'Prepaid tokens and postpaid bills for every disco, token shown on screen.',
-        'icon': Icons.bolt_rounded,
+        'title': 'Electricity bills',
+        'desc': 'Prepaid meter tokens and postpaid bills for every Disco with token on screen.',
+        'icon': Icons.flash_on_rounded,
         'color': sPower,
         'route': '/services/electricity',
       },
       {
         'title': 'Result checkers',
-        'desc': 'WAEC, NECO and NABTEB pins issued instantly, never resold to anyone else.',
+        'desc': 'WAEC, NECO and NABTEB exam pins issued instantly, never resold to anyone.',
         'icon': Icons.school_rounded,
         'color': sExam,
-        'route': '/services/exam_pin',
+        'route': '/services/exam',
       },
       {
-        'title': 'Card printing',
-        'desc': 'Print your own recharge cards in your own design and sell them offline.',
+        'title': 'Recharge card printing',
+        'desc': 'Print customized recharge cards with your business branding and sell offline.',
         'icon': Icons.print_rounded,
         'color': sPrint,
-        'route': '/services/airtime',
+        'route': '/services/cac',
       },
       {
         'title': 'Wallet funding',
-        'desc': 'A dedicated account number. Transfer from any bank and it reflects at once.',
+        'desc': 'Dedicated virtual account numbers. Transfer from any bank and it reflects at once.',
         'icon': Icons.account_balance_wallet_rounded,
         'color': sWallet,
         'route': '/wallet/fund',
       },
       {
         'title': 'Referral earnings',
-        'desc': 'Bring people in and earn on everything they buy, paid into the same wallet.',
-        'icon': Icons.group_add_rounded,
+        'desc': 'Bring people in and earn 2% on first deposits, paid directly into your wallet.',
+        'icon': Icons.people_alt_rounded,
         'color': sRefer,
         'route': '/dashboard',
       },
     ];
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 56),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
       child: Column(
         children: [
-          _sectionHeader(
-            'WHAT YOU CAN BUY',
-            'One wallet, everything people pay for',
-            'Eight services on a single balance. Buy for yourself, or sell to the customer standing in front of you.',
-            isDark,
-            icon: Icons.grid_view_rounded,
-          ),
+          _buildSectionHeader('WHAT YOU CAN BUY', 'One wallet, everything people pay for', 'Eight automated services on a single balance. Buy for yourself, or resell to customers.'),
           const SizedBox(height: 36),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isDesktop ? 4 : (MediaQuery.of(context).size.width > 600 ? 2 : 1),
+              crossAxisCount: isDesktop ? 4 : 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: isDesktop ? 1.05 : 1.3,
+              childAspectRatio: isDesktop ? 1.05 : 0.9,
             ),
             itemCount: services.length,
-            itemBuilder: (context, index) {
-              final s = services[index];
+            itemBuilder: (context, i) {
+              final s = services[i];
               return InkWell(
                 onTap: () => context.push(s['route'] as String),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCard : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                    color: const Color(0xFF141720),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF26334D)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: s['color'] as Color,
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: s['color'] as Color, borderRadius: BorderRadius.circular(12)),
                         child: Icon(s['icon'] as IconData, color: Colors.white, size: 20),
                       ),
                       const SizedBox(height: 14),
-                      Text(s['title'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                      Text(s['title'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
                       const SizedBox(height: 6),
                       Expanded(
                         child: Text(
                           s['desc'] as String,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                            height: 1.4,
-                          ),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF94A3B8), height: 1.4),
                         ),
                       ),
                       Row(
                         children: [
-                          const Text('Open', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryCyan)),
+                          Text('Open', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w800, color: const Color(0xFFE5A93C))),
                           const SizedBox(width: 4),
-                          const Icon(Icons.arrow_forward_rounded, size: 12, color: AppColors.primaryCyan),
+                          const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFFE5A93C)),
                         ],
                       ),
                     ],
@@ -953,60 +908,48 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   // ====================================================================
-  // 4. HOW IT WORKS (Matching Kobopay #how)
+  // 4. HOW IT WORKS SECTION ("Three steps, about five minutes")
   // ====================================================================
-  Widget _buildHowItWorksSection(bool isDesktop, bool isDark) {
-    final steps = [
-      {
-        'step': '1',
-        'title': 'Create your account',
-        'desc': 'Name, phone number and a password. One OTP and you are in, no paperwork.',
-      },
-      {
-        'step': '2',
-        'title': 'Fund your wallet',
-        'desc': 'You get a dedicated account number. Transfer from any bank app and it lands instantly.',
-      },
-      {
-        'step': '3',
-        'title': 'Start selling',
-        'desc': 'Buy for yourself or for a customer standing in front of you. Every order keeps a receipt.',
-      },
-    ];
-
+  Widget _buildHowItWorksSection(bool isDesktop) {
     return Container(
-      color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8F6FD),
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 56),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
+      color: const Color(0xFF10131B),
       child: Column(
         children: [
-          _sectionHeader(
-            'GETTING STARTED',
-            'Three steps, about five minutes',
-            '',
-            isDark,
-            icon: Icons.bolt_rounded,
-          ),
+          _buildSectionHeader('GETTING STARTED', 'Three steps, about five minutes', 'Everything is automated so you can start buying and reselling right away.'),
           const SizedBox(height: 36),
           isDesktop
               ? Row(
-                  children: steps.map((s) => Expanded(child: _stepCard(s['step']!, s['title']!, s['desc']!, isDark))).toList(),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _buildStepItem('1', 'Create your account', 'Name, phone number and a secure password. Setup your 4-digit PIN in 60 seconds.')),
+                    const SizedBox(width: 24),
+                    Expanded(child: _buildStepItem('2', 'Fund your wallet', 'You receive dedicated automated bank accounts. Transfer from any bank app and it reflects instantly.')),
+                    const SizedBox(width: 24),
+                    Expanded(child: _buildStepItem('3', 'Start buying or selling', 'Buy for yourself or sell to customers with instant receipts and automated transaction protection.')),
+                  ],
                 )
               : Column(
-                  children: steps.map((s) => Padding(padding: const EdgeInsets.only(bottom: 16), child: _stepCard(s['step']!, s['title']!, s['desc']!, isDark))).toList(),
+                  children: [
+                    _buildStepItem('1', 'Create your account', 'Name, phone number and a secure password. Setup your 4-digit PIN in 60 seconds.'),
+                    const SizedBox(height: 20),
+                    _buildStepItem('2', 'Fund your wallet', 'You receive dedicated automated bank accounts. Transfer from any bank app and it reflects instantly.'),
+                    const SizedBox(height: 20),
+                    _buildStepItem('3', 'Start buying or selling', 'Buy for yourself or sell to customers with instant receipts and automated transaction protection.'),
+                  ],
                 ),
         ],
       ),
     );
   }
 
-  Widget _stepCard(String num, String title, String desc, bool isDark) {
+  Widget _buildStepItem(String num, String title, String desc) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+        color: const Color(0xFF141720),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF26334D)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1014,100 +957,96 @@ class _LandingScreenState extends State<LandingScreen> {
           Container(
             width: 36,
             height: 36,
-            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.primaryCyan,
+              color: const Color(0xFFE5A93C).withOpacity(0.18),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Text(num, style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0A0E17), fontSize: 16)),
+            child: Center(
+              child: Text(num, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C))),
+            ),
           ),
           const SizedBox(height: 16),
-          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
           const SizedBox(height: 8),
-          Text(desc, style: TextStyle(fontSize: 13, height: 1.5, color: isDark ? AppColors.metallicLight : AppColors.slateGrey)),
+          Text(desc, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF94A3B8), height: 1.5)),
         ],
       ),
     );
   }
 
   // ====================================================================
-  // 5. RATES PREVIEW SECTION (Matching Kobopay #rates)
+  // 5. LIVE INTERACTIVE RATES SECTION ("Know the price before you pay")
   // ====================================================================
-  Widget _buildRatesPreviewSection(bool isDesktop, bool isDark) {
+  Widget _buildRatesSection(bool isDesktop) {
+    final networks = ['MTN', 'Glo', 'Airtel', '9mobile'];
     final plans = _ratePlans[_selectedRateNetwork] ?? [];
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 56),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader(
-            'RATES',
-            'Know the price before you pay',
-            'A sample of the data plans. The full list, including airtime discounts, cable and electricity, is on the rates page.',
-            isDark,
-            icon: Icons.credit_card_rounded,
-          ),
-          const SizedBox(height: 28),
+          _buildSectionHeader('RATES', 'Know the price before you pay', 'Real-time data bundle prices. Clear, wholesale, and 100% transparent.'),
+          const SizedBox(height: 24),
           // Network selector tabs
           Row(
-            children: ['MTN', 'Glo', 'Airtel', '9mobile'].map((net) {
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: networks.map((net) {
               final isSel = _selectedRateNetwork == net;
               return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(
-                    net,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isSel ? const Color(0xFF0A0E17) : (isDark ? Colors.white : Colors.black),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: InkWell(
+                  onTap: () => setState(() => _selectedRateNetwork = net),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSel ? const Color(0xFFE5A93C) : const Color(0xFF141720),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: isSel ? const Color(0xFFE5A93C) : const Color(0xFF26334D)),
+                    ),
+                    child: Text(
+                      net,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: isSel ? Colors.black : Colors.white,
+                      ),
                     ),
                   ),
-                  selected: isSel,
-                  selectedColor: AppColors.primaryCyan,
-                  backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-                  onSelected: (_) => setState(() => _selectedRateNetwork = net),
                 ),
               );
             }).toList(),
           ),
-          const SizedBox(height: 20),
-          // Exact 4 rates cards matching Kobopay
+          const SizedBox(height: 28),
+          // Rate Cards Grid
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isDesktop ? 4 : (MediaQuery.of(context).size.width > 600 ? 2 : 1),
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 2.2,
+              crossAxisCount: isDesktop ? 4 : 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: isDesktop ? 1.5 : 1.3,
             ),
             itemCount: plans.length,
-            itemBuilder: (context, idx) {
-              final p = plans[idx];
+            itemBuilder: (context, i) {
+              final p = plans[i];
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCard : Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                  color: const Color(0xFF141720),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF26334D)),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(p['plan'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        Text(p['validity'] as String, style: TextStyle(fontSize: 12, color: isDark ? AppColors.metallicLight : AppColors.slateGrey)),
-                      ],
-                    ),
-                    Text(
-                      '₦${p['price']}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.primaryCyan),
-                    ),
+                    Text(p['plan'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                    const SizedBox(height: 4),
+                    Text(p['validity'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF94A3B8))),
+                    const Spacer(),
+                    Text('₦${p["price"]}', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C))),
                   ],
                 ),
               );
@@ -1117,12 +1056,13 @@ class _LandingScreenState extends State<LandingScreen> {
           ElevatedButton.icon(
             onPressed: () => context.push('/rates'),
             icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-            label: const Text('See every price', style: TextStyle(fontWeight: FontWeight.w700)),
+            label: Text('See complete rates table', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13.5)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? AppColors.darkCardVariant : const Color(0xFF0F172A),
+              backgroundColor: const Color(0xFF1E222D),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              side: const BorderSide(color: Color(0xFF26334D)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ],
@@ -1131,89 +1071,80 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   // ====================================================================
-  // 6. WHY US SECTION (Matching Kobopay #why)
+  // 6. WHY US SECTION ("Built around what people complain about")
   // ====================================================================
-  Widget _buildWhyUsSection(bool isDesktop, bool isDark) {
-    final features = [
+  Widget _buildWhyUsSection(bool isDesktop) {
+    final reasons = [
       {
         'title': 'Delivered or refunded',
-        'desc': 'If a network rejects an order the wallet is credited back automatically. Nobody has to chase anybody.',
+        'desc': 'If a network rejects an order, your wallet balance is credited back automatically. Nobody has to chase anyone.',
         'icon': Icons.bolt_rounded,
       },
       {
         'title': 'A PIN on every purchase',
-        'desc': 'Your password signs you in. A separate transaction PIN authorises money leaving the wallet.',
-        'icon': Icons.shield_outlined,
+        'desc': 'Your password signs you in. A dedicated 4-digit security transaction PIN authorises money leaving your wallet.',
+        'icon': Icons.lock_outline_rounded,
       },
       {
         'title': 'A receipt for everything',
-        'desc': 'Every order keeps its reference, token and status permanently, so a dispute is settled in seconds.',
+        'desc': 'Every order keeps its verifiable reference, token, and status permanently, so disputes are settled in seconds.',
         'icon': Icons.receipt_long_rounded,
       },
       {
-        'title': 'Prices that stay low',
-        'desc': 'Volume pricing passed straight down. What you see on the rates page is what you are charged.',
-        'icon': Icons.trending_down_rounded,
+        'title': 'Wholesale prices that stay low',
+        'desc': 'Direct provider volume pricing passed straight to you. What you see on the rates page is what you pay.',
+        'icon': Icons.trending_up_rounded,
       },
       {
-        'title': 'Built for a phone',
-        'desc': 'The whole platform works on the cheapest Android in the shop, not only on a laptop.',
-        'icon': Icons.smartphone_rounded,
+        'title': 'Built for every phone',
+        'desc': 'Lightweight, ultra-fast, and responsive. Works smoothly on low-end Androids as well as high-end devices.',
+        'icon': Icons.phone_android_rounded,
       },
       {
-        'title': 'Support that replies',
-        'desc': 'A human on WhatsApp during working hours, and a ticket trail for anything that needs following up.',
+        'title': 'Support that actually replies',
+        'desc': 'Direct human assistance on WhatsApp and in-app live chat. Quick answers whenever you need guidance.',
         'icon': Icons.support_agent_rounded,
       },
     ];
 
     return Container(
-      color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8F6FD),
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 56),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
+      color: const Color(0xFF10131B),
       child: Column(
         children: [
-          _sectionHeader(
-            'WHY PEOPLE STAY',
-            'Built around what people complain about',
-            'Not the features that demo well. The ones that decide whether somebody comes back tomorrow.',
-            isDark,
-            icon: Icons.shield_outlined,
-          ),
+          _buildSectionHeader('WHY PEOPLE STAY', 'Built around what people complain about', 'Not just features that demo well. The real safeguards that decide whether you stay tomorrow.'),
           const SizedBox(height: 36),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isDesktop ? 3 : (MediaQuery.of(context).size.width > 600 ? 2 : 1),
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: isDesktop ? 1.4 : 1.6,
+              crossAxisCount: isDesktop ? 3 : 1,
+              crossAxisSpacing: 18,
+              mainAxisSpacing: 18,
+              childAspectRatio: isDesktop ? 1.6 : 2.2,
             ),
-            itemCount: features.length,
-            itemBuilder: (context, idx) {
-              final f = features[idx];
+            itemCount: reasons.length,
+            itemBuilder: (context, i) {
+              final r = reasons[i];
               return Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCard : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                  color: const Color(0xFF141720),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFF26334D)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: AppColors.primaryCyan.withValues(alpha: 0.15),
-                      child: Icon(f['icon'] as IconData, size: 20, color: AppColors.primaryCyan),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: const Color(0xFFE5A93C).withOpacity(0.18), shape: BoxShape.circle),
+                      child: Icon(r['icon'] as IconData, color: const Color(0xFFE5A93C), size: 18),
                     ),
                     const SizedBox(height: 12),
-                    Text(f['title'] as String, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    Text(r['title'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
                     const SizedBox(height: 6),
-                    Text(
-                      f['desc'] as String,
-                      style: TextStyle(fontSize: 12, height: 1.4, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
-                    ),
+                    Text(r['desc'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8), height: 1.45)),
                   ],
                 ),
               );
@@ -1225,95 +1156,86 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   // ====================================================================
-  // 7. TESTIMONIALS SECTION (Matching Kobopay What people say)
+  // 7. TESTIMONIALS SECTION ("What people say")
   // ====================================================================
-  Widget _buildTestimonialsSection(bool isDesktop, bool isDark) {
+  Widget _buildTestimonialsSection(bool isDesktop) {
     final reviews = [
       {
-        'text': 'I sell airtime beside my main goods now. A customer pays me cash and I load it before they finish counting change. That alone brings people into the shop.',
+        'quote': 'I sell airtime beside my main goods now. A customer pays cash and I load it before they finish counting change. That alone brings people into the shop.',
         'name': 'Amaka Obi',
-        'role': 'Runs a phone accessories shop, Onitsha',
-        'avatar': 'AO',
+        'role': 'Phone accessories shop owner, Onitsha',
+        'initials': 'AO',
       },
       {
-        'text': 'What sold me was the refund. Before this, a failed order meant messaging somebody and waiting till evening. Here it just comes back into the wallet by itself.',
+        'quote': 'What sold me was the automated refund. Before this, a network failure meant messaging somebody and waiting till evening. Here it just returns to the wallet by itself.',
         'name': 'Suleiman Bello',
         'role': 'Data reseller, Kaduna',
-        'avatar': 'SB',
+        'initials': 'SB',
       },
       {
-        'text': 'I fund from my bank app and it reflects before I switch back. No more waiting on a confirmation before I can buy data at 2am.',
+        'quote': 'I fund from my bank app and it reflects before I even switch apps. No more waiting on confirmations when I need data late at night.',
         'name': 'Tolu Adeyemi',
-        'role': 'Student, Ibadan',
-        'avatar': 'TA',
+        'role': 'Student & campus reseller, Ibadan',
+        'initials': 'TA',
       },
     ];
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 56),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
       child: Column(
         children: [
-          _sectionHeader(
-            'CUSTOMERS',
-            'What people say',
-            '',
-            isDark,
-            icon: Icons.star_rounded,
-          ),
+          _buildSectionHeader('CUSTOMERS', 'What people say', 'Real experiences from everyday merchants, students, and businesses.'),
           const SizedBox(height: 36),
           isDesktop
               ? Row(
-                  children: reviews.map((r) => Expanded(child: _testimonialCard(r, isDark))).toList(),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: reviews.map((rev) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: _buildReviewCard(rev)))).toList(),
                 )
               : Column(
-                  children: reviews.map((r) => Padding(padding: const EdgeInsets.only(bottom: 16), child: _testimonialCard(r, isDark))).toList(),
+                  children: reviews.map((rev) => Padding(padding: const EdgeInsets.only(bottom: 16), child: _buildReviewCard(rev))).toList(),
                 ),
         ],
       ),
     );
   }
 
-  Widget _testimonialCard(Map<String, String> r, bool isDark) {
+  Widget _buildReviewCard(Map<String, String> rev) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+        color: const Color(0xFF141720),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF26334D)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 5 Stars
           Row(
             children: List.generate(
               5,
-              (_) => const Icon(Icons.star_rounded, size: 18, color: AppColors.warning),
+              (_) => const Icon(Icons.star_rounded, color: Color(0xFFE5A93C), size: 18),
             ),
           ),
           const SizedBox(height: 14),
           Text(
-            '"${r['text']}"',
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.5,
-              color: isDark ? Colors.white70 : const Color(0xFF334155),
-            ),
+            '“${rev['quote']!}”',
+            style: GoogleFonts.plusJakartaSans(fontSize: 13, height: 1.5, color: const Color(0xFFCBD5E1), fontStyle: FontStyle.italic),
           ),
           const SizedBox(height: 18),
           Row(
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: AppColors.primaryCyan.withValues(alpha: 0.2),
-                child: Text(r['avatar']!, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryCyan)),
+                backgroundColor: const Color(0xFFE5A93C),
+                child: Text(rev['initials']!, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.black)),
               ),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(r['name']!, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                  Text(r['role']!, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  Text(rev['name']!, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
+                  Text(rev['role']!, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF94A3B8))),
                 ],
               ),
             ],
@@ -1324,190 +1246,148 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   // ====================================================================
-  // 8. POCKET COUNTER BAND (Matching Kobopay .band)
+  // 8. MOBILE SHOWCASE BAND ("Your shop counter fits in your pocket")
   // ====================================================================
-  Widget _buildPhoneCounterBanner(bool isDesktop, bool isDark) {
+  Widget _buildMobilePocketBand(bool isDesktop) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 32),
-      padding: EdgeInsets.all(isDesktop ? 44 : 24),
+      margin: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 24),
+      padding: const EdgeInsets.all(36),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF0F2B48), const Color(0xFF061826)]
-              : [const Color(0xFF0077B6), const Color(0xFF005A94)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
+        color: const Color(0xFF141720),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFFE5A93C).withOpacity(0.3)),
       ),
       child: isDesktop
           ? Row(
               children: [
-                Expanded(flex: 6, child: _buildBandCopy()),
+                Expanded(
+                  flex: 6,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('ON YOUR PHONE', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C), letterSpacing: 1.0)),
+                      const SizedBox(height: 8),
+                      Text('Your shop counter fits in your pocket', style: GoogleFonts.plusJakartaSans(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
+                      const SizedBox(height: 10),
+                      Text('The whole platform runs smoothly in any mobile browser or app. Instant automated funding and lightning top-ups wherever you are.', style: GoogleFonts.plusJakartaSans(fontSize: 13.5, color: const Color(0xFF94A3B8), height: 1.5)),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () => context.push('/register'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE5A93C),
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text('Create free account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13)),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(width: 36),
-                Expanded(flex: 5, child: _buildBandChecklist()),
+                Expanded(
+                  flex: 5,
+                  child: Column(
+                    children: [
+                      _buildCheckBullet('Works on any Android or iPhone browser'),
+                      _buildCheckBullet('Funding reflects while still in your bank app'),
+                      _buildCheckBullet('Receipts you can download or forward instantly'),
+                      _buildCheckBullet('A 4-digit transaction PIN before any money leaves'),
+                    ],
+                  ),
+                ),
               ],
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildBandCopy(),
-                const SizedBox(height: 24),
-                _buildBandChecklist(),
+                Text('ON YOUR PHONE', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C))),
+                const SizedBox(height: 8),
+                Text('Your shop counter fits in your pocket', style: GoogleFonts.plusJakartaSans(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
+                const SizedBox(height: 16),
+                _buildCheckBullet('Works on any Android or iPhone browser'),
+                _buildCheckBullet('Funding reflects while still in your bank app'),
+                _buildCheckBullet('Receipts you can download or forward instantly'),
+                _buildCheckBullet('A 4-digit transaction PIN before money leaves'),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => context.push('/register'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE5A93C),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text('Create free account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+                  ),
+                ),
               ],
             ),
     );
   }
 
-  Widget _buildBandCopy() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
+  Widget _buildCheckBullet(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(text, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
           ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.smartphone_rounded, size: 14, color: Colors.white),
-              SizedBox(width: 6),
-              Text('ON YOUR PHONE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        Text(
-          'Your shop counter fits in your pocket',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          'The whole platform runs in a phone browser. Add it to your home screen and it opens like an app, with no download and no storage taken.',
-          style: TextStyle(fontSize: 14, color: Colors.white70, height: 1.5),
-        ),
-        const SizedBox(height: 20),
-        Wrap(
-          spacing: 12,
-          runSpacing: 10,
-          children: [
-            ElevatedButton(
-              onPressed: () => context.push('/login'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryCyan,
-                foregroundColor: const Color(0xFF0A0E17),
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Create free account', style: TextStyle(fontWeight: FontWeight.w800)),
-            ),
-            OutlinedButton(
-              onPressed: () => context.push('/dashboard'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: const BorderSide(color: Colors.white38, width: 1.5),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Preview the dashboard', style: TextStyle(fontWeight: FontWeight.w600)),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBandChecklist() {
-    final pts = [
-      'Works in any Android or iPhone browser',
-      'Funding reflects while you are still in your bank app',
-      'Receipts you can download or forward to a customer',
-      'A transaction PIN before any money leaves',
-    ];
-
-    return Column(
-      children: pts.map((p) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.check_circle_rounded, size: 18, color: AppColors.primaryCyan),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  p,
-                  style: const TextStyle(fontSize: 13, color: Colors.white, height: 1.4),
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
+        ],
+      ),
     );
   }
 
   // ====================================================================
-  // 9. FAQ SECTION (Matching Kobopay #faq)
+  // 9. FAQ SECTION (Accordion)
   // ====================================================================
-  Widget _buildFaqSection(bool isDesktop, bool isDark) {
-    return Container(
-      color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8F6FD),
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 56),
+  Widget _buildFaqSection(bool isDesktop) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
       child: Column(
         children: [
-          _sectionHeader(
-            'QUESTIONS',
-            'Frequently asked',
-            '',
-            isDark,
-            icon: Icons.support_agent_rounded,
-          ),
+          _buildSectionHeader('QUESTIONS', 'Frequently asked', 'Everything you need to know about wallet funding, automated refunds, and reselling.'),
           const SizedBox(height: 36),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
+            constraints: const BoxConstraints(maxWidth: 820),
             child: Column(
-              children: List.generate(_faqs.length, (idx) {
-                final faq = _faqs[idx];
+              children: _faqs.map((faq) {
                 final isOpen = faq['isOpen'] as bool;
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCard : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                    color: const Color(0xFF141720),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFF26334D)),
                   ),
-                  child: ExpansionTile(
-                    initiallyExpanded: isOpen,
-                    shape: const Border(),
-                    title: Text(
-                      faq['q'] as String,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                    ),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: Text(
-                          faq['a'] as String,
-                          style: TextStyle(
-                            fontSize: 13,
-                            height: 1.5,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                  child: Theme(
+                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                    child: ExpansionTile(
+                      initiallyExpanded: isOpen,
+                      title: Text(
+                        faq['q'] as String,
+                        style: GoogleFonts.plusJakartaSans(fontSize: 14.5, fontWeight: FontWeight.w800, color: Colors.white),
+                      ),
+                      iconColor: const Color(0xFFE5A93C),
+                      collapsedIconColor: Colors.grey,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: Text(
+                            faq['a'] as String,
+                            style: GoogleFonts.plusJakartaSans(fontSize: 13, height: 1.5, color: const Color(0xFF94A3B8)),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
-              }),
+              }).toList(),
             ),
           ),
         ],
@@ -1516,77 +1396,74 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   // ====================================================================
-  // 10. BOTTOM READY CTA BANNER
+  // 10. FINAL CTA CONVERSION BANNER
   // ====================================================================
-  Widget _buildReadyCtaBanner(bool isDesktop, bool isDark) {
+  Widget _buildFinalCtaSection(bool isDesktop) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
-      alignment: Alignment.center,
-      child: Column(
-        children: [
-          Text(
-            'Ready to start? It takes two minutes',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 14),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Text(
-              'No monthly fee, no minimum funding and no paperwork. Create the account, fund it with whatever you have, and buy.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                height: 1.5,
-              ),
-            ),
-          ),
-          const SizedBox(height: 28),
-          Wrap(
-            spacing: 12,
-            runSpacing: 10,
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 64),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Column(
             children: [
-              ElevatedButton.icon(
-                onPressed: () => context.push('/login'),
-                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                label: const Text('Create free account', style: TextStyle(fontWeight: FontWeight.w800)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryCyan,
-                  foregroundColor: const Color(0xFF0A0E17),
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              Text(
+                'Ready to start? It takes two minutes',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: isDesktop ? 36 : 26,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -0.6,
                 ),
               ),
-              OutlinedButton(
-                onPressed: () => context.push('/login'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
-                  side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder, width: 1.5),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text('I already have one', style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 14),
+              Text(
+                'No monthly fee, no minimum funding, and zero paperwork. Create your account, fund it with whatever you have, and top-up in seconds.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(fontSize: 14.5, height: 1.6, color: const Color(0xFF94A3B8)),
+              ),
+              const SizedBox(height: 28),
+              Wrap(
+                spacing: 14,
+                runSpacing: 12,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () => context.push('/register'),
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                    label: Text('Create free account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE5A93C),
+                      foregroundColor: Colors.black,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => context.push('/login'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Color(0xFF26334D), width: 1.5),
+                      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: Text('I already have one', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   // ====================================================================
-  // 11. FOOTER (Matching Kobopay .foot)
+  // 11. FOOTER (Real Avotek Brand & Links)
   // ====================================================================
-  Widget _buildFooter(bool isDesktop, bool isDark) {
+  Widget _buildFooter(bool isDesktop) {
     return Container(
-      color: isDark ? const Color(0xFF070B12) : const Color(0xFF0F172A),
+      color: const Color(0xFF090B0F),
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
       child: Column(
         children: [
@@ -1599,21 +1476,28 @@ class _LandingScreenState extends State<LandingScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const AvotekLogo(size: 32, showText: true, isDark: true),
-                          const SizedBox(height: 14),
-                          const Text(
-                            'One wallet for educational utilities and VTU. Dedicated accounts, instant delivery, automated refunds.',
-                            style: TextStyle(fontSize: 12, color: Colors.white60, height: 1.6),
-                          ),
-                          const SizedBox(height: 16),
                           Row(
                             children: [
-                              _socialIcon(Icons.email_outlined, () => context.push('/community')),
-                              const SizedBox(width: 10),
-                              _socialIcon(Icons.phone_outlined, () => context.push('/community')),
-                              const SizedBox(width: 10),
-                              _socialIcon(Icons.language_rounded, () => context.push('/')),
+                              Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF141720),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFFD4AF37)),
+                                ),
+                                child: const Center(
+                                  child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold, fontSize: 14)),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text('Avotek', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
                             ],
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            'The fastest way to pay for airtime, data, cable TV and electricity in Nigeria. One wallet, wholesale reseller rates, and automatic instant refunds.',
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8), height: 1.6),
                           ),
                         ],
                       ),
@@ -1626,7 +1510,7 @@ class _LandingScreenState extends State<LandingScreen> {
                         {'title': 'Buy data', 'route': '/services/data'},
                         {'title': 'Cable TV', 'route': '/services/tv'},
                         {'title': 'Electricity', 'route': '/services/electricity'},
-                        {'title': 'Result pins', 'route': '/services/exam_pin'},
+                        {'title': 'Result pins', 'route': '/services/exam'},
                       ]),
                     ),
                     Expanded(
@@ -1636,14 +1520,14 @@ class _LandingScreenState extends State<LandingScreen> {
                         {'title': 'Rates', 'route': '/rates'},
                         {'title': 'Become an agent', 'route': '/dashboard'},
                         {'title': 'Developer API', 'route': '/admin-portal'},
-                        {'title': 'Blog', 'route': '/community'},
+                        {'title': 'Community', 'route': '/community'},
                       ]),
                     ),
                     Expanded(
                       flex: 2,
                       child: _footerCol('Support', [
                         {'title': 'Help centre', 'route': '/community'},
-                        {'title': 'Contact us', 'route': '/community'},
+                        {'title': 'WhatsApp Support', 'route': '/community'},
                         {'title': 'Terms of service', 'route': '/'},
                         {'title': 'Privacy policy', 'route': '/'},
                         {'title': 'Refund policy', 'route': '/rates'},
@@ -1654,11 +1538,28 @@ class _LandingScreenState extends State<LandingScreen> {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AvotekLogo(size: 30, showText: true, isDark: true),
+                    Row(
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF141720),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFD4AF37)),
+                          ),
+                          child: const Center(
+                            child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold, fontSize: 14)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text('Avotek', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
+                      ],
+                    ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'One wallet for educational utilities and VTU. Dedicated accounts, instant delivery, automated refunds.',
-                      style: TextStyle(fontSize: 12, color: Colors.white60),
+                    Text(
+                      'The fastest way to pay for airtime, data, bills, and cable in Nigeria.',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF94A3B8)),
                     ),
                     const SizedBox(height: 24),
                     _footerCol('Services', [
@@ -1666,23 +1567,22 @@ class _LandingScreenState extends State<LandingScreen> {
                       {'title': 'Buy data', 'route': '/services/data'},
                       {'title': 'Cable TV', 'route': '/services/tv'},
                       {'title': 'Electricity', 'route': '/services/electricity'},
-                      {'title': 'Result pins', 'route': '/services/exam_pin'},
                     ]),
                   ],
                 ),
           const SizedBox(height: 40),
-          const Divider(color: Colors.white12),
+          const Divider(color: Color(0xFF26334D)),
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '© ${DateTime.now().year} Avotek. Leveraging Technology in Education.',
-                style: const TextStyle(fontSize: 11, color: Colors.white38),
+                '© ${DateTime.now().year} Avotek. All rights reserved. NDPR Compliant.',
+                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF64748B)),
               ),
               Text(
-                'Built on the Avotek VTU Platform',
-                style: TextStyle(fontSize: 11, color: AppColors.primaryCyan.withValues(alpha: 0.7)),
+                'Avotek VTU Platform',
+                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFFD4AF37), fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -1691,23 +1591,11 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  Widget _socialIcon(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: CircleAvatar(
-        radius: 16,
-        backgroundColor: Colors.white10,
-        child: Icon(icon, size: 16, color: Colors.white70),
-      ),
-    );
-  }
-
   Widget _footerCol(String header, List<Map<String, String>> links) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(header, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+        Text(header, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
         const SizedBox(height: 12),
         ...links.map((link) {
           return Padding(
@@ -1716,7 +1604,7 @@ class _LandingScreenState extends State<LandingScreen> {
               onTap: () => context.push(link['route']!),
               child: Text(
                 link['title']!,
-                style: const TextStyle(fontSize: 12, color: Colors.white60),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF94A3B8)),
               ),
             ),
           );
@@ -1725,44 +1613,35 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  Widget _sectionHeader(String eyebrow, String title, String subtitle, bool isDark, {IconData? icon}) {
+  Widget _buildSectionHeader(String eyebrow, String title, String subtitle) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           decoration: BoxDecoration(
-            color: AppColors.primaryCyan.withValues(alpha: 0.12),
+            color: const Color(0xFFE5A93C).withOpacity(0.12),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 13, color: AppColors.primaryCyan),
-                const SizedBox(width: 5),
-              ],
-              Text(
-                eyebrow,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.8,
-                  color: AppColors.primaryCyan,
-                ),
-              ),
-            ],
+          child: Text(
+            eyebrow,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
+              color: const Color(0xFFE5A93C),
+            ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Text(
           title,
           textAlign: TextAlign.center,
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.6,
+            color: Colors.white,
           ),
         ),
         if (subtitle.isNotEmpty) ...[
@@ -1772,9 +1651,9 @@ class _LandingScreenState extends State<LandingScreen> {
             child: Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
-                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                color: const Color(0xFF94A3B8),
                 height: 1.5,
               ),
             ),

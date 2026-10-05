@@ -75,6 +75,9 @@ class AppUserRecord {
         virtualAccountName: json['virtualAccountName'] as String? ?? 'AVOTEK - User',
       );
 
+  String get virtualAccountWema => virtualAccountNumber;
+  String get virtualAccountProvidus => '99${virtualAccountNumber.length >= 8 ? virtualAccountNumber.substring(virtualAccountNumber.length - 8) : virtualAccountNumber}';
+
   User toClientUser() => User(
         id: id,
         phone: phone,
@@ -424,6 +427,7 @@ class AppDatabaseService {
   }
 
   AppUserRecord? getUserById(int id) => _usersById[id];
+  AppUserRecord? findUserById(int id) => _usersById[id];
 
   // --- Session Management ---
   void _saveActiveSession(int userId) {

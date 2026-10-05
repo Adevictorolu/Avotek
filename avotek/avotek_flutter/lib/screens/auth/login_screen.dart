@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../../core/responsive/responsive_layout.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
-import '../../widgets/avotek_logo.dart';
 import '../../widgets/onboarding_pin_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -50,7 +48,6 @@ class _LoginScreenState extends State<LoginScreen> {
   // --- Real Google OAuth Sign-in Flow ---
   Future<void> _handleGoogleSignIn() async {
     final auth = context.read<AuthProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final accounts = [
       {'name': 'Adevictorolu', 'email': 'adevictorolu@avotek.africa'},
@@ -201,10 +198,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (success) {
           if (auth.needsPinSetup) {
-            final pinSetupComplete = await OnboardingPinDialog.show(context);
-            if (pinSetupComplete != true) return;
+            await OnboardingPinDialog.show(context);
           }
 
+          if (!mounted) return;
           final wallet = context.read<WalletProvider>();
           if (auth.user?.id != null) {
             wallet.fetchWallet(auth.user!.id!);
@@ -233,16 +230,19 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isProcessing = true);
     final auth = context.read<AuthProvider>();
 
-    final success = await auth.login(identifier, password);
+    final success = await auth.login(
+      identifier: identifier,
+      password: password,
+    );
     if (!mounted) return;
     setState(() => _isProcessing = false);
 
     if (success) {
       if (auth.needsPinSetup) {
-        final pinSetupComplete = await OnboardingPinDialog.show(context);
-        if (pinSetupComplete != true) return;
+        await OnboardingPinDialog.show(context);
       }
 
+      if (!mounted) return;
       final wallet = context.read<WalletProvider>();
       if (auth.user?.id != null) {
         wallet.fetchWallet(auth.user!.id!);
@@ -272,18 +272,18 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await auth.register(
       name: fullName,
       email: email,
-      username: username,
-      phone: phone.isNotEmpty ? phone : '08000000000',
+      phone: phone.isNotEmpty ? phone : (username.startsWith('0') ? username : '08000000000'),
       password: password,
+      referralCode: username,
     );
 
     if (!mounted) return;
     setState(() => _isProcessing = false);
 
     if (success) {
-      final pinSetupComplete = await OnboardingPinDialog.show(context);
-      if (pinSetupComplete != true) return;
+      await OnboardingPinDialog.show(context);
 
+      if (!mounted) return;
       final wallet = context.read<WalletProvider>();
       if (auth.user?.id != null) {
         wallet.fetchWallet(auth.user!.id!);
