@@ -454,6 +454,133 @@ class AppDatabaseService {
     }
     return null;
   }
+
+  // --- Global Admin Funding Account (PalmPay: 8167002789) ---
+  static const String _fundingAccountKey = 'avotek_admin_funding_account_v1';
+  String _fundingBank = 'PalmPay';
+  String _fundingAccountNumber = '8167002789';
+  String _fundingAccountName = 'ADEVICTOROLU / AVOTEK';
+
+  Map<String, String> getFundingAccount() {
+    if (kIsWeb) {
+      final raw = _getWebLocalStorage(_fundingAccountKey);
+      if (raw != null && raw.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(raw) as Map<String, dynamic>;
+          return {
+            'bank': decoded['bank'] as String? ?? _fundingBank,
+            'accountNumber': decoded['accountNumber'] as String? ?? _fundingAccountNumber,
+            'accountName': decoded['accountName'] as String? ?? _fundingAccountName,
+          };
+        } catch (_) {}
+      }
+    }
+    return {
+      'bank': _fundingBank,
+      'accountNumber': _fundingAccountNumber,
+      'accountName': _fundingAccountName,
+    };
+  }
+
+  Future<void> updateFundingAccount({
+    required String bank,
+    required String accountNumber,
+    required String accountName,
+  }) async {
+    _fundingBank = bank;
+    _fundingAccountNumber = accountNumber;
+    _fundingAccountName = accountName;
+
+    if (kIsWeb) {
+      _setWebLocalStorage(
+        _fundingAccountKey,
+        jsonEncode({
+          'bank': bank,
+          'accountNumber': accountNumber,
+          'accountName': accountName,
+        }),
+      );
+    }
+  }
+
+  // --- Password Reset Flow (Real OTP Code verification) ---
+  final Map<String, String> _resetCodes = {};
+
+  Future<String> requestPasswordReset(String identifier) async {
+    await init();
+    final cleanId = identifier.trim().toLowerCase();
+    final cleanPhone = identifier.replaceAll(RegExp(r'\D'), '');
+
+    AppUserRecord? foundUser;
+    for (final user in _usersById.values) {
+      if (user.email.toLowerCase() == cleanId ||
+          user.phone.replaceAll(RegExp(r'\D'), '') == cleanPhone ||
+          user.name.toLowerCase() == cleanId) {
+        foundUser = user;
+        break;
+      }
+    }
+
+    if (foundUser == null) {
+      throw Exception('No account found associated with "$identifier". Please register.');
+    }
+
+    // Generate 6-digit verification code
+    final code = (100000 + (foundUser.id * 83) % 900000).toString();
+    _resetCodes[foundUser.email.toLowerCase()] = code;
+    _resetCodes[foundUser.phone.replaceAll(RegExp(r'\D'), '')] = code;
+    return code;
+  }
+
+  Future<bool> resetPassword({
+    required String identifier,
+    required String code,
+    required String newPassword,
+  }) async {
+    await init();
+    final cleanId = identifier.trim().toLowerCase();
+    final cleanPhone = identifier.replaceAll(RegExp(r'\D'), '');
+
+    final expectedCode = _resetCodes[cleanId] ?? _resetCodes[cleanPhone];
+    if (expectedCode == null || expectedCode != code.trim()) {
+      return false;
+    }
+
+    AppUserRecord? foundUser;
+    for (final user in _usersById.values) {
+      if (user.email.toLowerCase() == cleanId ||
+          user.phone.replaceAll(RegExp(r'\D'), '') == cleanPhone ||
+          user.name.toLowerCase() == cleanId) {
+        foundUser = user;
+        break;
+      }
+    }
+
+    if (foundUser == null) return false;
+
+    foundUser.passwordHash = sha256.convert(utf8.encode(newPassword)).toString();
+    _saveToStorage();
+    _resetCodes.remove(cleanId);
+    _resetCodes.remove(cleanPhone);
+    return true;
+  }
+
+  // --- Onboarding Tracking (Only for new users) ---
+  static const String _onboardingKey = 'avotek_has_seen_onboarding_v1';
+
+  bool hasSeenOnboarding() {
+    if (kIsWeb) {
+      final val = _getWebLocalStorage(_onboardingKey);
+      return val == 'true';
+    }
+    return false;
+  }
+
+  void markOnboardingSeen() {
+    if (kIsWeb) {
+      _setWebLocalStorage(_onboardingKey, 'true');
+    }
+  }
 }
 
 // Global JS window.localStorage accessor wrapper that works across web and non-web without errors

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/database/app_database.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/avotek_illustrations.dart';
 import '../../widgets/avotek_logo.dart';
@@ -69,6 +70,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _finishOnboarding() {
+    AppDatabaseService.instance.markOnboardingSeen();
     context.go('/login');
   }
 

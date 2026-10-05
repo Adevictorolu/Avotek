@@ -78,10 +78,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _showAddMoneyDialog() {
     final auth = context.read<AuthProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = auth.userRecord;
-    final accountNumber = user?.virtualAccountNumber ?? '9034119920';
-    final bankName = user?.virtualAccountBank ?? 'Wema Bank / Moniepoint';
-    final accountName = user?.virtualAccountName ?? 'AVOTEK - ${auth.user?.name ?? "User"}';
+    final funding = AppDatabaseService.instance.getFundingAccount();
+    final accountNumber = funding['accountNumber'] ?? '8167002789';
+    final bankName = funding['bank'] ?? 'PalmPay';
+    final accountName = funding['accountName'] ?? 'ADEVICTOROLU / AVOTEK';
 
     final testFundCtrl = TextEditingController(text: '5000');
 

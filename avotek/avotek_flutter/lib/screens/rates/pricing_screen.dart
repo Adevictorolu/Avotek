@@ -67,7 +67,7 @@ class _PricingScreenState extends State<PricingScreen> {
     {'item': 'Startimes Nova', 'cat': 'Cable TV', 'price': '₦1,900'},
     {'item': 'IKEDC / EKEDC Prepaid', 'cat': 'Electricity', 'price': 'Face Value'},
     {'item': 'AEDC / IBEDC Prepaid', 'cat': 'Electricity', 'price': 'Face Value'},
-    {'item': 'SportyBet / Bet9ja Funding', 'cat': 'Betting', 'price': 'Zero Fee'},
+    {'item': 'WAEC / JAMB e-PIN', 'cat': 'Exam PIN', 'price': '₦3,800'},
   ];
 
   @override

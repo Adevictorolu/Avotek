@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/database/app_database.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
@@ -26,8 +27,9 @@ class StudentWalletScreen extends StatelessWidget {
 
     final currencyFormat = NumberFormat('#,##0.00', 'en_US');
     final formattedBalance = currencyFormat.format(wallet.balance);
-    final accountNumber = wallet.walletSummary?.virtualAccountNumber ?? '2205178431';
-    final bankName = wallet.walletSummary?.virtualAccountBank ?? 'Providus Bank';
+    final funding = AppDatabaseService.instance.getFundingAccount();
+    final accountNumber = funding['accountNumber'] ?? '8167002789';
+    final bankName = funding['bank'] ?? 'PalmPay';
 
     return ResponsiveShell(
       currentRoute: '/wallet',
@@ -185,11 +187,11 @@ class StudentWalletScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Automated Virtual Account (Providus / Moniepoint)',
+                                  'Official Deposit Account ($bankName - Instant Credit)',
                                   style: GoogleFonts.plusJakartaSans(
-                                    color: Colors.white60,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white70,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(height: 4),

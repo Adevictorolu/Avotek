@@ -6,9 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/database/app_database.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/wallet_provider.dart';
 import '../../widgets/avotek_card.dart';
 import '../../widgets/status_badge.dart';
 
@@ -130,14 +130,14 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final wallet = context.watch<WalletProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final userName = auth.user?.name ?? 'Avotek Customer';
     final userEmail = auth.user?.email ?? 'customer@avotek.africa';
     final userPhone = auth.user?.phone ?? '0803 123 4567';
-    final accountNumber = wallet.walletSummary?.virtualAccountNumber ?? '2205178431';
-    final bankName = wallet.walletSummary?.virtualAccountBank ?? 'Providus Bank';
+    final funding = AppDatabaseService.instance.getFundingAccount();
+    final accountNumber = funding['accountNumber'] ?? '8167002789';
+    final bankName = funding['bank'] ?? 'PalmPay';
 
     final initials = userName.isNotEmpty
         ? userName.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join()
@@ -268,7 +268,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Dedicated Virtual Account',
+                              'Official Deposit Account ($bankName)',
                               style: GoogleFonts.plusJakartaSans(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 4),

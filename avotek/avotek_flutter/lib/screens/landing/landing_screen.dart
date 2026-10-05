@@ -47,7 +47,7 @@ class _LandingScreenState extends State<LandingScreen> {
     },
     {
       'q': 'How do I fund my wallet?',
-      'a': 'Every Avotek account receives dedicated virtual bank accounts (Wema Bank & Moniepoint/Providus). Transfer money from any Nigerian banking app (OPay, Palmpay, GTB, Kuda, Zenith, etc.) and your wallet is credited automatically within 10 to 60 seconds.',
+      'a': 'Transfer money directly from any Nigerian banking app (OPay, PalmPay, GTB, Kuda, Zenith, etc.) to the official Avotek PalmPay funding account (8167002789) and your wallet is credited instantly.',
       'isOpen': false,
     },
     {
@@ -394,33 +394,6 @@ class _LandingScreenState extends State<LandingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Pill note: Dedicated account numbers are live
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-          decoration: BoxDecoration(
-            color: const Color(0xFF10B981).withOpacity(0.12),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF10B981).withOpacity(0.35)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF10B981)),
-              const SizedBox(width: 8),
-              RichText(
-                text: TextSpan(
-                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF10B981)),
-                  children: const [
-                    TextSpan(text: 'New  ', style: TextStyle(fontWeight: FontWeight.w900)),
-                    TextSpan(text: 'Dedicated automated virtual bank accounts are live', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 22),
-
         // Headline
         RichText(
           text: TextSpan(
@@ -1577,8 +1550,8 @@ class _LandingScreenState extends State<LandingScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '© ${DateTime.now().year} Avotek. All rights reserved. NDPR Compliant.',
-                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF64748B)),
+                '© ${DateTime.now().year} Avotek. All rights reserved.',
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF64748B)),
               ),
               Text(
                 'Avotek VTU Platform',

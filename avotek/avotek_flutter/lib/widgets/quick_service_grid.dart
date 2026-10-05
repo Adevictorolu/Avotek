@@ -83,11 +83,11 @@ class QuickServiceGrid extends StatelessWidget {
       color: Color(0xFF6366F1),
     ),
     ServiceItem(
-      id: 'betting',
-      title: 'Betting',
-      subtitle: 'SportyBet, etc',
-      icon: Icons.sports_soccer_rounded,
-      color: Color(0xFF06B6D4),
+      id: 'print_card',
+      title: 'Recharge PIN',
+      subtitle: 'Print VTU Cards',
+      icon: Icons.print_rounded,
+      color: Color(0xFFEA580C),
     ),
   ];
 

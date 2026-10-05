@@ -24,7 +24,7 @@ class AvotekApp extends StatefulWidget {
 
 class _AvotekAppState extends State<AvotekApp> {
   ThemeMode _themeMode =
-      ThemeMode.dark; // Default to sleek dark mode matching the logo
+      ThemeMode.light; // Default to clean white/light theme as requested
 
   void _toggleTheme() {
     setState(() {

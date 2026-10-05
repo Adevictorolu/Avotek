@@ -56,12 +56,12 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
       'color': Color(0xFF8B5CF6),
     },
     {
-      'title': 'Betting Wallet Top-up',
-      'category': 'Gaming',
-      'desc': 'Fund SportyBet, Bet9ja, 1xBet, BangBet instantly',
-      'route': '/services/betting',
-      'icon': Icons.sports_soccer_rounded,
-      'color': Color(0xFF06B6D4),
+      'title': 'CAC Business Registration',
+      'category': 'Corporate',
+      'desc': 'Register Business Name, Ltd Company, NGO with CAC easily',
+      'route': '/services/cac',
+      'icon': Icons.corporate_fare_rounded,
+      'color': Color(0xFF6366F1),
     },
     {
       'title': 'Fund Wallet',
@@ -137,7 +137,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Search data, airtime, electricity, cable, betting...',
+                  hintText: 'Search data, airtime, electricity, cable TV, exam PINs...',
                   hintStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),

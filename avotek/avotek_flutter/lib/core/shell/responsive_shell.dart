@@ -811,8 +811,8 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
           _drawerItem(Icons.wifi_rounded, 'Buy Data', '/services/data'),
           _drawerItem(Icons.phone_android_rounded, 'Buy Airtime', '/services/airtime'),
           _drawerItem(Icons.flash_on_rounded, 'Electricity Bills', '/services/electricity'),
-          _drawerItem(Icons.tv_rounded, 'Cable TV', '/services/tv'),
-          _drawerItem(Icons.sports_soccer_rounded, 'Betting Topup', '/services/betting'),
+          _drawerItem(Icons.school_rounded, 'Exam PINs (WAEC/JAMB)', '/services/exam_pin'),
+          _drawerItem(Icons.corporate_fare_rounded, 'CAC Registration', '/services/cac'),
 
           _drawerSection('FINANCE & ACCOUNT'),
           _drawerItem(Icons.add_card_rounded, 'Fund Wallet', '/wallet/fund'),
