@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../core/database/app_database.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/client/client_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -285,12 +286,6 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
       AdminCatalogItem(id: 14, name: 'Eko Electric (EKEDC) Prepaid', serviceType: 'electricity', provider: 'EKEDC', variationCode: 'ekedc-prepaid', costPrice: 5000.0, markup: 100.0, active: true),
       AdminCatalogItem(id: 15, name: 'Abuja Electric (AEDC) Prepaid', serviceType: 'electricity', provider: 'AEDC', variationCode: 'aedc-prepaid', costPrice: 5000.0, markup: 100.0, active: true),
 
-      // Academic Exam PINs
-      AdminCatalogItem(id: 16, name: 'WAEC Result Checker e-PIN', serviceType: 'exam_pin', provider: 'WAEC', variationCode: 'waec-pin', costPrice: 3350.0, markup: 150.0, active: true),
-      AdminCatalogItem(id: 17, name: 'NECO Result Token', serviceType: 'exam_pin', provider: 'NECO', variationCode: 'neco-token', costPrice: 1150.0, markup: 100.0, active: true),
-      AdminCatalogItem(id: 18, name: 'JAMB UTME Registration e-PIN', serviceType: 'exam_pin', provider: 'JAMB', variationCode: 'jamb-utme', costPrice: 6200.0, markup: 100.0, active: true),
-      AdminCatalogItem(id: 19, name: 'NABTEB Result Checker e-PIN', serviceType: 'exam_pin', provider: 'NABTEB', variationCode: 'nabteb-pin', costPrice: 1100.0, markup: 100.0, active: true),
-
       // CAC Registration Services
       AdminCatalogItem(id: 20, name: 'CAC Business Name Reservation', serviceType: 'cac', provider: 'Corporate Affairs Commission', variationCode: 'CAC-BN', costPrice: 13500.0, markup: 3000.0, active: true),
       AdminCatalogItem(id: 21, name: 'CAC Company Limited by Shares (LTD)', serviceType: 'cac', provider: 'Corporate Affairs Commission', variationCode: 'CAC-LTD', costPrice: 38000.0, markup: 10000.0, active: true),
@@ -315,12 +310,12 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         id: 102,
         userId: 2,
         userName: 'Amina Bello',
-        serviceType: 'exam_pin',
-        provider: 'WAEC',
+        serviceType: 'airtime',
+        provider: 'MTN',
         recipient: '08129841029',
-        amount: 3500.0,
-        profit: 150.0,
-        reference: 'TX-AVO-EXAM-002',
+        amount: 1000.0,
+        profit: 20.0,
+        reference: 'TX-AVO-AIR-002',
         status: 'success',
         createdAt: now.subtract(const Duration(hours: 1)),
       ),
@@ -444,6 +439,37 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
     } catch (_) {
       // Offline fallback preserved seamlessly
     }
+
+    try {
+      final localUsers = await AppDatabaseService.instance.getAllUsers();
+      final List<AdminUserRecord> localMapped = [];
+      for (final u in localUsers) {
+        if (!_users.any((existing) => existing.id == u.id)) {
+          localMapped.add(AdminUserRecord(
+            id: u.id,
+            name: u.name,
+            phone: u.phone,
+            email: u.email,
+            kycStatus: u.kycStatus,
+            bvn: 'Verified',
+            nin: 'Verified',
+            walletBalance: u.balance,
+            isBanned: false,
+            referralCode: u.referralCode,
+            virtualAccountNumber: u.virtualAccountNumber,
+            virtualAccountBank: u.virtualAccountBank,
+            createdAt: u.createdAt,
+            lastLogin: DateTime.now(),
+          ));
+        }
+      }
+      if (localMapped.isNotEmpty && mounted) {
+        setState(() {
+          _users.addAll(localMapped);
+          _runDefaultSqlQuery();
+        });
+      }
+    } catch (_) {}
   }
 
   // KPI Calculations

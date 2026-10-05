@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/database/app_database.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
@@ -43,10 +44,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadData() async {
     final auth = context.read<AuthProvider>();
+    final wallet = context.read<WalletProvider>();
     if (auth.user?.id != null) {
       setState(() => _isRefreshing = true);
       await auth.refreshWallet();
-      await context.read<WalletProvider>().fetchWallet(auth.user!.id!);
+      await wallet.fetchWallet(auth.user!.id!);
       if (mounted) setState(() => _isRefreshing = false);
     }
   }
@@ -227,12 +229,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             final amt = double.tryParse(testFundCtrl.text.trim()) ?? 5000.0;
                             await auth.creditWallet(amt);
                             if (ctx.mounted) Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('₦${amt.toStringAsFixed(2)} successfully credited to your wallet!', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-                                backgroundColor: AppColors.success,
-                              ),
-                            );
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('₦${amt.toStringAsFixed(2)} successfully credited to your wallet!', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+                                  backgroundColor: AppColors.success,
+                                ),
+                              );
+                            }
                           },
                           child: Text('Credit Now', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 12)),
                         ),

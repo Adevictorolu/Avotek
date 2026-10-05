@@ -26,10 +26,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       illustrationType: 0,
     ),
     _OnboardingSlideData(
-      title: 'Academic & Campus Utilities',
+      title: 'Seamless Bill Payments',
       subtitle:
-          'Purchase WAEC, NECO, JAMB, and NABTEB exam tokens and PINs instantly. Direct result check access empowering academic success on campuses nationwide.',
-      badge: 'EDUCATION FIRST',
+          'Pay electricity tokens, Cable TV subscriptions (DStv, GOtv, Startimes), and business CAC registrations with instant automated receipt generation.',
+      badge: 'BILLS & UTILITIES',
       illustrationType: 1,
     ),
     _OnboardingSlideData(

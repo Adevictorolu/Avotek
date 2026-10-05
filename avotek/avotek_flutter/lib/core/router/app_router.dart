@@ -6,7 +6,6 @@ import '../../providers/auth_provider.dart';
 import '../../screens/admin/admin_gateway_screen.dart';
 import '../../screens/admin/admin_screen.dart';
 import '../../screens/auth/login_screen.dart';
-import '../../screens/community/community_screen.dart';
 import '../../screens/home/dashboard_screen.dart';
 import '../../screens/landing/landing_screen.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
@@ -17,7 +16,6 @@ import '../../screens/services/cable_screen.dart';
 import '../../screens/services/cac_screen.dart';
 import '../../screens/services/data_screen.dart';
 import '../../screens/services/electricity_screen.dart';
-import '../../screens/services/exam_pin_screen.dart';
 import '../../screens/transactions/transactions_screen.dart';
 import '../../screens/wallet/fund_wallet_screen.dart';
 import '../../screens/wallet/student_wallet_screen.dart';
@@ -110,39 +108,6 @@ class AppRouter {
             DashboardScreen(onToggleTheme: onToggleTheme),
           ),
         ),
-        // Deprecated routes redirect to dashboard
-        GoRoute(
-          path: '/learn',
-          redirect: (context, state) => '/dashboard',
-        ),
-        GoRoute(
-          path: '/learn/practice',
-          redirect: (context, state) => '/dashboard',
-        ),
-        GoRoute(
-          path: '/learn/progress',
-          redirect: (context, state) => '/dashboard',
-        ),
-        GoRoute(
-          path: '/exams',
-          redirect: (context, state) => '/dashboard',
-        ),
-        GoRoute(
-          path: '/services/exam_pin',
-          pageBuilder: (context, state) => buildAvotekTransitionPage(
-            context,
-            state,
-            const ExamPinScreen(),
-          ),
-        ),
-        GoRoute(
-          path: '/services/exam',
-          pageBuilder: (context, state) => buildAvotekTransitionPage(
-            context,
-            state,
-            const ExamPinScreen(),
-          ),
-        ),
         GoRoute(
           path: '/wallet',
           pageBuilder: (context, state) => buildAvotekTransitionPage(
@@ -203,14 +168,6 @@ class AppRouter {
         GoRoute(
           path: '/services/betting',
           redirect: (context, state) => '/dashboard',
-        ),
-        GoRoute(
-          path: '/community',
-          pageBuilder: (context, state) => buildAvotekTransitionPage(
-            context,
-            state,
-            const CommunityScreen(),
-          ),
         ),
         GoRoute(
           path: '/wallet/fund',

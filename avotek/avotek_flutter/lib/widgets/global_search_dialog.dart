@@ -137,7 +137,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Search data, airtime, electricity, cable TV, exam PINs...',
+                  hintText: 'Search data, airtime, electricity, cable TV, CAC registration...',
                   hintStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),

@@ -9,7 +9,7 @@ class AppUserRecord {
   final String name;
   final String phone;
   final String email;
-  final String passwordHash;
+  String passwordHash;
   String? transactionPinHash;
   bool isEmailVerified;
   String kycStatus;

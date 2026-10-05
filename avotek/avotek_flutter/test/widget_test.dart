@@ -7,7 +7,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: AvotekLogo(size: 32, isDark: false),
+          body: AvotekLogo(size: 32, isDark: false, useAssetImage: false),
         ),
       ),
     );

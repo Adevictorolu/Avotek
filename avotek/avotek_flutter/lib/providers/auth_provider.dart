@@ -147,10 +147,8 @@ class AuthProvider extends ChangeNotifier {
       try {
         final cleanPhone = record.phone.replaceAll(RegExp(r'\D'), '');
         final res = await client.auth.verifyOtp(cleanPhone, password);
-        if (res.user != null) {
-          _user = res.user;
-          _wallet = res.wallet;
-        }
+        _user = res.user;
+        _wallet = res.wallet;
       } catch (_) {
         // Local DB has authoritative priority
       }
@@ -202,10 +200,8 @@ class AuthProvider extends ChangeNotifier {
           name: name,
           referralCode: referralCode,
         );
-        if (res.user != null) {
-          _user = res.user;
-          _wallet = res.wallet;
-        }
+        _user = res.user;
+        _wallet = res.wallet;
       } catch (_) {}
 
       _isLoading = false;

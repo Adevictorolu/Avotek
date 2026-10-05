@@ -4,7 +4,6 @@ import 'core/client/client_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
-import 'providers/education_provider.dart';
 import 'providers/vtu_provider.dart';
 import 'providers/wallet_provider.dart';
 
@@ -46,9 +45,6 @@ class _AvotekAppState extends State<AvotekApp> {
         ),
         ChangeNotifierProvider(
           create: (_) => VtuProvider(client: ClientProvider.client),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => EducationProvider(),
         ),
       ],
       child: MaterialApp.router(

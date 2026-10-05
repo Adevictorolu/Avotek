@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/theme/app_theme.dart';
-import '../../widgets/avotek_logo.dart';
 
 class LandingScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -29,7 +27,6 @@ class _LandingScreenState extends State<LandingScreen> {
   static const Color sData = Color(0xFF2563EB); // Royal Blue
   static const Color sCable = Color(0xFFDB2777); // Pink
   static const Color sPower = Color(0xFFEA580C); // Warm Orange
-  static const Color sExam = Color(0xFF0891B2); // Cyan / Teal
   static const Color sPrint = Color(0xFF9333EA); // Vibrant Purple
   static const Color sWallet = Color(0xFF059669); // Emerald Green
   static const Color sRefer = Color(0xFFCA8A04); // Amber Gold
@@ -590,7 +587,7 @@ class _LandingScreenState extends State<LandingScreen> {
               _buildPhoneServiceIcon(Icons.wifi_rounded, 'Data', sData),
               _buildPhoneServiceIcon(Icons.tv_rounded, 'Cable', sCable),
               _buildPhoneServiceIcon(Icons.flash_on_rounded, 'Power', sPower),
-              _buildPhoneServiceIcon(Icons.school_rounded, 'Exams', sExam),
+              _buildPhoneServiceIcon(Icons.business_rounded, 'CAC', sPrint),
               _buildPhoneServiceIcon(Icons.print_rounded, 'Print', sPrint),
               _buildPhoneServiceIcon(Icons.account_balance_wallet_rounded, 'Fund', sWallet),
               _buildPhoneServiceIcon(Icons.send_rounded, 'Send', sRefer),
@@ -788,11 +785,11 @@ class _LandingScreenState extends State<LandingScreen> {
         'route': '/services/electricity',
       },
       {
-        'title': 'Result checkers',
-        'desc': 'WAEC, NECO and NABTEB exam pins issued instantly, never resold to anyone.',
-        'icon': Icons.school_rounded,
-        'color': sExam,
-        'route': '/services/exam',
+        'title': 'Business & CAC registration',
+        'desc': 'Fast corporate CAC registration and business name filing assistance for entrepreneurs.',
+        'icon': Icons.business_rounded,
+        'color': sPrint,
+        'route': '/services/cac',
       },
       {
         'title': 'Recharge card printing',
@@ -1493,14 +1490,14 @@ class _LandingScreenState extends State<LandingScreen> {
                         {'title': 'Rates', 'route': '/rates'},
                         {'title': 'Become an agent', 'route': '/dashboard'},
                         {'title': 'Developer API', 'route': '/admin-portal'},
-                        {'title': 'Community', 'route': '/community'},
+                        {'title': 'Transactions', 'route': '/transactions'},
                       ]),
                     ),
                     Expanded(
                       flex: 2,
                       child: _footerCol('Support', [
-                        {'title': 'Help centre', 'route': '/community'},
-                        {'title': 'WhatsApp Support', 'route': '/community'},
+                        {'title': 'Help centre', 'route': '/dashboard'},
+                        {'title': 'WhatsApp Support', 'route': '/dashboard'},
                         {'title': 'Terms of service', 'route': '/'},
                         {'title': 'Privacy policy', 'route': '/'},
                         {'title': 'Refund policy', 'route': '/rates'},

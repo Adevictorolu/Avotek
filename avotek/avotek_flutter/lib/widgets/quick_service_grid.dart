@@ -46,15 +46,6 @@ class QuickServiceGrid extends StatelessWidget {
       borderColor: Color(0xFF0284C7),
     ),
     ServiceItem(
-      id: 'exam_pin',
-      title: 'Exam PINs',
-      subtitle: 'WAEC, JAMB',
-      icon: Icons.school_rounded,
-      color: Color(0xFF10B981),
-      backgroundColor: Color(0xFFF0FDF4),
-      borderColor: Color(0xFF10B981),
-    ),
-    ServiceItem(
       id: 'electricity',
       title: 'Electricity',
       subtitle: 'Prepaid Token',
@@ -108,11 +99,7 @@ class QuickServiceGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final service = services[index];
         final cardBg = isDark
-            ? (service.backgroundColor != null
-                ? (service.id == 'exam_pin'
-                    ? const Color(0xFF064E3B).withValues(alpha: 0.4)
-                    : const Color(0xFF1E293B))
-                : AppColors.darkCard)
+            ? (service.backgroundColor != null ? const Color(0xFF1E293B) : AppColors.darkCard)
             : (service.backgroundColor ?? AppColors.lightCard);
 
         final cardBorder = service.borderColor ?? (isDark ? AppColors.darkBorder : AppColors.lightBorder);

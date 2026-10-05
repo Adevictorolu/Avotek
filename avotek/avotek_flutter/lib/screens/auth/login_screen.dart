@@ -24,11 +24,11 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isProcessing = false;
 
   // Controllers
-  final _usernameController = TextEditingController(text: 'adevictorolu');
+  final _usernameController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController(text: 'password123');
+  final _passwordController = TextEditingController();
 
   @override
   void initState() {
@@ -505,14 +505,17 @@ class _LoginScreenState extends State<LoginScreen> {
                               newPassword: pass,
                             );
 
+                            if (!ctx.mounted) return;
                             if (ok) {
                               Navigator.pop(ctx);
-                              _usernameController.text = idCtrl.text.trim();
-                              _passwordController.text = pass;
-                              _showSnackBar(
-                                'Password reset successfully! You can now log in.',
-                                const Color(0xFF10B981),
-                              );
+                              if (mounted) {
+                                _usernameController.text = idCtrl.text.trim();
+                                _passwordController.text = pass;
+                                _showSnackBar(
+                                  'Password reset successfully! You can now log in.',
+                                  const Color(0xFF10B981),
+                                );
+                              }
                             } else {
                               setDialogState(() {
                                 isSubmitting = false;
