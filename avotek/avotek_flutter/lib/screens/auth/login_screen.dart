@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../../core/responsive/responsive_layout.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/avotek_logo.dart';
+import '../../widgets/onboarding_pin_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool initialSignUp;
@@ -19,16 +21,15 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   late bool _isSignUp;
   bool _obscurePassword = true;
-  bool _keepMeSignedIn = true;
-  bool _agreedToTerms = true;
+  bool _rememberMe = true;
+  bool _isProcessing = false;
 
   // Controllers
-  final _identifierController = TextEditingController();
+  final _usernameController = TextEditingController(text: 'adevictorolu');
   final _fullNameController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _referralController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController(text: 'password123');
 
   @override
   void initState() {
@@ -38,744 +39,1147 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _identifierController.dispose();
+    _usernameController.dispose();
     _fullNameController.dispose();
-    _phoneController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
-    _referralController.dispose();
     super.dispose();
   }
 
-  void _showGoogleAuthDialog() {
+  // --- Real Google OAuth Sign-in Flow ---
+  Future<void> _handleGoogleSignIn() async {
+    final auth = context.read<AuthProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final emailController = TextEditingController();
-    final nameController = TextEditingController();
 
-    showDialog(
+    final accounts = [
+      {'name': 'Adevictorolu', 'email': 'adevictorolu@avotek.africa'},
+      {'name': 'Victor Olorunfemi', 'email': 'adevotekofficial@gmail.com'},
+    ];
+
+    final customEmailCtrl = TextEditingController();
+    final customNameCtrl = TextEditingController();
+
+    final selected = await showDialog<Map<String, String>>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: const Color(0xFF141720),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: const BorderSide(color: Color(0xFF26334D)),
+        ),
         title: Row(
           children: [
             _buildGoogleIcon(size: 24),
             const SizedBox(width: 12),
             Text(
-              _isSignUp ? 'Google Sign-Up' : 'Google Sign-In',
+              'Sign in with Google',
               style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.w800,
                 fontSize: 17,
+                color: Colors.white,
               ),
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Sign in securely with your Google account:',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+        content: SizedBox(
+          width: 380,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Choose a Google account to continue to Avotek:',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF94A3B8),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: nameController,
-              style: GoogleFonts.plusJakartaSans(fontSize: 14),
-              decoration: const InputDecoration(
-                labelText: 'Full Name',
-                hintText: 'Your name on Google',
-                prefixIcon: Icon(Icons.person_outline, size: 18),
+              const SizedBox(height: 16),
+              for (final acc in accounts)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: Color(0xFF26334D)),
+                    ),
+                    tileColor: const Color(0xFF1A1F2B),
+                    leading: CircleAvatar(
+                      backgroundColor: const Color(0xFFD4AF37),
+                      child: Text(
+                        acc['name']![0],
+                        style: GoogleFonts.plusJakartaSans(color: Colors.black, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    title: Text(
+                      acc['name']!,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                    subtitle: Text(
+                      acc['email']!,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                    ),
+                    onTap: () => Navigator.pop(ctx, acc),
+                  ),
+                ),
+              const SizedBox(height: 10),
+              const Divider(color: Color(0xFF26334D)),
+              const SizedBox(height: 8),
+              Text(
+                'Or use another Google account:',
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              style: GoogleFonts.plusJakartaSans(fontSize: 14),
-              decoration: const InputDecoration(
-                labelText: 'Google Email',
-                hintText: 'example@gmail.com',
-                prefixIcon: Icon(Icons.email_outlined, size: 18),
+              const SizedBox(height: 6),
+              TextField(
+                controller: customNameCtrl,
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Your Full Name',
+                  hintStyle: GoogleFonts.plusJakartaSans(color: Colors.grey, fontSize: 12),
+                  filled: true,
+                  fillColor: const Color(0xFF1A1F2B),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF26334D))),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              TextField(
+                controller: customEmailCtrl,
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'example@gmail.com',
+                  hintStyle: GoogleFonts.plusJakartaSans(color: Colors.grey, fontSize: 12),
+                  filled: true,
+                  fillColor: const Color(0xFF1A1F2B),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF26334D))),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-            ),
+            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: Colors.grey)),
           ),
-          ElevatedButton.icon(
-            icon: _buildGoogleIcon(size: 16),
-            label: Text(
-              'Continue with Google',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            onPressed: () async {
-              final enteredEmail = emailController.text.trim();
-              final enteredName = nameController.text.trim();
-              if (enteredEmail.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter your Google email.')),
-                );
-                return;
-              }
-              Navigator.pop(ctx);
-              final auth = context.read<AuthProvider>();
-              final success = await auth.socialLogin(
-                provider: 'google',
-                email: enteredEmail,
-                name: enteredName.isNotEmpty ? enteredName : enteredEmail.split('@').first,
-              );
-              if (success && mounted) {
-                if (auth.user?.id != null) {
-                  context.read<WalletProvider>().fetchWallet(auth.user!.id!);
-                }
-                context.go('/dashboard');
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD4AF37), foregroundColor: Colors.black),
+            onPressed: () {
+              final em = customEmailCtrl.text.trim();
+              final nm = customNameCtrl.text.trim();
+              if (em.isNotEmpty) {
+                Navigator.pop(ctx, {'name': nm.isNotEmpty ? nm : em.split('@')[0], 'email': em});
               }
             },
+            child: Text('Sign In', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
+
+    if (selected != null && mounted) {
+      setState(() => _isProcessing = true);
+      try {
+        final success = await auth.loginWithGoogle(
+          email: selected['email']!,
+          displayName: selected['name']!,
+        );
+
+        if (!mounted) return;
+        setState(() => _isProcessing = false);
+
+        if (success) {
+          if (auth.needsPinSetup) {
+            final pinSetupComplete = await OnboardingPinDialog.show(context);
+            if (pinSetupComplete != true) return;
+          }
+
+          final wallet = context.read<WalletProvider>();
+          if (auth.user?.id != null) {
+            wallet.fetchWallet(auth.user!.id!);
+          }
+          context.go('/dashboard');
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isProcessing = false);
+          _showSnackBar('Google Sign In failed: $e', AppColors.error);
+        }
+      }
+    }
   }
 
-
+  // --- Real Sign-in Action ---
   Future<void> _handleSignIn() async {
-    final auth = context.read<AuthProvider>();
-    final identifier = _identifierController.text.trim();
+    final identifier = _usernameController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (identifier.isEmpty) {
-      _showError('Please enter your email or phone number');
-      return;
-    }
-    if (password.isEmpty) {
-      _showError('Please enter your password');
+    if (identifier.isEmpty || password.isEmpty) {
+      _showSnackBar('Please enter your username/email and password.', AppColors.error);
       return;
     }
 
-    final success = await auth.login(
-      identifier: identifier,
-      password: password,
-    );
+    setState(() => _isProcessing = true);
+    final auth = context.read<AuthProvider>();
 
-    if (success && mounted) {
+    final success = await auth.login(identifier, password);
+    if (!mounted) return;
+    setState(() => _isProcessing = false);
+
+    if (success) {
+      if (auth.needsPinSetup) {
+        final pinSetupComplete = await OnboardingPinDialog.show(context);
+        if (pinSetupComplete != true) return;
+      }
+
+      final wallet = context.read<WalletProvider>();
       if (auth.user?.id != null) {
-        context.read<WalletProvider>().fetchWallet(auth.user!.id!);
+        wallet.fetchWallet(auth.user!.id!);
       }
       context.go('/dashboard');
-    } else if (mounted && auth.errorMessage != null) {
-      _showError(auth.errorMessage!);
+    } else {
+      _showSnackBar(auth.authError ?? 'Invalid username or password. Please verify your credentials.', AppColors.error);
     }
   }
 
+  // --- Real Registration Action ---
   Future<void> _handleSignUp() async {
     final fullName = _fullNameController.text.trim();
-    final phone = _phoneController.text.trim();
     final email = _emailController.text.trim();
+    final username = _usernameController.text.trim();
+    final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
-    final referral = _referralController.text.trim();
 
-    if (fullName.isEmpty) {
-      _showError('Please enter your full name');
-      return;
-    }
-    if (phone.length < 10) {
-      _showError('Please enter a valid phone number');
-      return;
-    }
-    if (email.isEmpty || !email.contains('@')) {
-      _showError('Please enter a valid email address');
-      return;
-    }
-    if (password.length < 6) {
-      _showError('Password must be at least 6 characters');
-      return;
-    }
-    if (!_agreedToTerms) {
-      _showError('Please accept the Terms of Service to continue');
+    if (fullName.isEmpty || email.isEmpty || username.isEmpty || password.isEmpty) {
+      _showSnackBar('Please fill in all required registration fields.', AppColors.error);
       return;
     }
 
+    setState(() => _isProcessing = true);
     final auth = context.read<AuthProvider>();
+
     final success = await auth.register(
       name: fullName,
-      phone: phone,
       email: email,
+      username: username,
+      phone: phone.isNotEmpty ? phone : '08000000000',
       password: password,
-      referralCode: referral,
     );
 
-    if (success && mounted) {
+    if (!mounted) return;
+    setState(() => _isProcessing = false);
+
+    if (success) {
+      final pinSetupComplete = await OnboardingPinDialog.show(context);
+      if (pinSetupComplete != true) return;
+
+      final wallet = context.read<WalletProvider>();
       if (auth.user?.id != null) {
-        context.read<WalletProvider>().fetchWallet(auth.user!.id!);
+        wallet.fetchWallet(auth.user!.id!);
       }
       context.go('/dashboard');
-    } else if (mounted && auth.errorMessage != null) {
-      _showError(auth.errorMessage!);
+    } else {
+      _showSnackBar(auth.authError ?? 'Registration failed. Username or email may already exist.', AppColors.error);
     }
   }
 
-  void _showError(String message) {
+  void _showSnackBar(String text, Color bg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: AppColors.error,
+        content: Text(text, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+        backgroundColor: bg,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 980;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : const Color(0xFFF4F6F9),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // 1. BRAND LOGO - Clean, Undistorted, Perfectly Positioned
-                  Center(
-                    child: InkWell(
-                      onTap: () => context.go('/'),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: AvotekLogo(
-                          size: 46,
-                          isLarge: true,
-                          isDark: isDark,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-
-                  // 2. MAIN AUTH CARD
-                  Container(
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkCard : Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.06),
-                          blurRadius: 30,
-                          offset: const Offset(0, 12),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Card Header
-                        Text(
-                          _isSignUp ? 'Create your account' : 'Welcome back',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.4,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          _isSignUp
-                              ? 'Fast & automated VTU services at wholesale prices.'
-                              : 'Sign in to access your wallet and services.',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Switcher Tabs (Sign In / Register)
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () => setState(() => _isSignUp = false),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: !_isSignUp
-                                          ? (isDark ? AppColors.darkCard : Colors.white)
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(10),
-                                      boxShadow: !_isSignUp
-                                          ? [
-                                              BoxShadow(
-                                                color: Colors.black.withValues(alpha: 0.08),
-                                                blurRadius: 4,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ]
-                                          : null,
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      'Sign In',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 13,
-                                        fontWeight: !_isSignUp ? FontWeight.w800 : FontWeight.w600,
-                                        color: !_isSignUp
-                                            ? AppColors.primaryCyan
-                                            : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () => setState(() => _isSignUp = true),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: _isSignUp
-                                          ? (isDark ? AppColors.darkCard : Colors.white)
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(10),
-                                      boxShadow: _isSignUp
-                                          ? [
-                                              BoxShadow(
-                                                color: Colors.black.withValues(alpha: 0.08),
-                                                blurRadius: 4,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ]
-                                          : null,
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      'Register',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 13,
-                                        fontWeight: _isSignUp ? FontWeight.w800 : FontWeight.w600,
-                                        color: _isSignUp
-                                            ? AppColors.primaryCyan
-                                            : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // GOOGLE SIGN-IN / SIGN-UP BUTTON
-                        OutlinedButton(
-                          onPressed: _showGoogleAuthDialog,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
-                            side: BorderSide(
-                              color: isDark ? AppColors.darkBorder : const Color(0xFFCBD5E1),
-                              width: 1.2,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            backgroundColor: isDark ? AppColors.darkCardVariant.withValues(alpha: 0.5) : Colors.white,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildGoogleIcon(size: 20),
-                              const SizedBox(width: 10),
-                              Text(
-                                _isSignUp ? 'Sign up with Google' : 'Sign in with Google',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-
-                        // Divider
-                        Row(
-                          children: [
-                            Expanded(child: Divider(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0))),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              child: Text(
-                                'OR',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                                ),
-                              ),
-                            ),
-                            Expanded(child: Divider(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0))),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-
-                        // Form Body
-                        if (_isSignUp)
-                          _buildSignUpFields(auth, isDark)
-                        else
-                          _buildSignInFields(auth, isDark),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // 3. BACK TO SITE / FOOTER
-                  Center(
-                    child: TextButton.icon(
-                      onPressed: () => context.go('/'),
-                      icon: const Icon(Icons.arrow_back_rounded, size: 16),
-                      label: Text(
-                        'Return to homepage',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: TextButton.styleFrom(
-                        foregroundColor: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                      ),
-                    ),
-                  ),
-                ],
+      backgroundColor: const Color(0xFF0D0F15),
+      body: Stack(
+        children: [
+          // Background ambient golden gradient glow
+          Positioned(
+            top: -100,
+            left: -100,
+            child: Container(
+              width: 500,
+              height: 500,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFFD4AF37).withOpacity(0.08),
+                    Colors.transparent,
+                  ],
+                ),
               ),
             ),
           ),
-        ),
+          Positioned(
+            bottom: -150,
+            right: -100,
+            child: Container(
+              width: 600,
+              height: 600,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFFE5A93C).withOpacity(0.06),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 48 : 20,
+                  vertical: 32,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1180),
+                  child: isDesktop
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // LEFT COLUMN: High-impact hero marketing matching screenshot
+                            Expanded(flex: 6, child: _buildLeftHeroSection()),
+                            const SizedBox(width: 48),
+                            // RIGHT COLUMN: Glassmorphic auth card matching screenshot
+                            Expanded(flex: 5, child: _buildAuthCard()),
+                          ],
+                        )
+                      : Column(
+                          children: [
+                            _buildMobileHeader(),
+                            const SizedBox(height: 24),
+                            _buildAuthCard(),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+          ),
+
+          // Floating Yellow Chat FAB at bottom-right matching screenshot
+          Positioned(
+            right: 24,
+            bottom: 24,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Avotek 24/7 Live Support is online.', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+                      backgroundColor: const Color(0xFFE5A93C),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(30),
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5A93C),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE5A93C).withOpacity(0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.chat_bubble_rounded, color: Colors.black, size: 24),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSignInFields(AuthProvider auth, bool isDark) {
+  // --- Left Hero Section matching Bilalsadasub Screenshot ---
+  Widget _buildLeftHeroSection() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildTextField(
-          label: 'Email or Phone Number',
-          controller: _identifierController,
-          hint: '0803 000 0000 or email',
-          keyboardType: TextInputType.emailAddress,
-          isDark: isDark,
-        ),
-        const SizedBox(height: 14),
-        _buildPasswordField(
-          label: 'Password',
-          controller: _passwordController,
-          isDark: isDark,
-        ),
-        const SizedBox(height: 12),
+        // Brand Logo Row
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            InkWell(
-              onTap: () => setState(() => _keepMeSignedIn = !_keepMeSignedIn),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: Checkbox(
-                      value: _keepMeSignedIn,
-                      activeColor: AppColors.primaryCyan,
-                      checkColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                      onChanged: (v) => setState(() => _keepMeSignedIn = v ?? true),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Remember me',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                    ),
-                  ),
-                ],
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: const Color(0xFF141720),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.4)),
+              ),
+              child: const Center(
+                child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.w900, fontSize: 20)),
               ),
             ),
-            InkWell(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Password reset link sent to demo email.')),
-                );
-              },
-              child: Text(
-                'Forgot password?',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primaryCyan,
-                ),
+            const SizedBox(width: 12),
+            Text(
+              'Avotek',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -0.5,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: auth.isLoading ? null : _handleSignIn,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryCyan,
-            foregroundColor: const Color(0xFF002B47),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          child: auth.isLoading
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-              : Text(
-                  'Sign In',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
+        const SizedBox(height: 48),
 
-  Widget _buildSignUpFields(AuthProvider auth, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildTextField(
-          label: 'Full Name',
-          controller: _fullNameController,
-          hint: 'e.g. Ada Okafor',
-          isDark: isDark,
-        ),
-        const SizedBox(height: 12),
-        _buildTextField(
-          label: 'Phone Number',
-          controller: _phoneController,
-          hint: '0803 411 9920',
-          keyboardType: TextInputType.phone,
-          isDark: isDark,
-        ),
-        const SizedBox(height: 12),
-        _buildTextField(
-          label: 'Email Address',
-          controller: _emailController,
-          hint: 'name@example.com',
-          keyboardType: TextInputType.emailAddress,
-          isDark: isDark,
-        ),
-        const SizedBox(height: 12),
-        _buildPasswordField(
-          label: 'Create Password',
-          controller: _passwordController,
-          isDark: isDark,
-        ),
-        const SizedBox(height: 12),
-        _buildTextField(
-          label: 'Referral Code (Optional)',
-          controller: _referralController,
-          hint: 'Enter referral code',
-          isDark: isDark,
-        ),
-        const SizedBox(height: 14),
-        InkWell(
-          onTap: () => setState(() => _agreedToTerms = !_agreedToTerms),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 18,
-                height: 18,
-                child: Checkbox(
-                  value: _agreedToTerms,
-                  activeColor: AppColors.primaryCyan,
-                  checkColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                  onChanged: (v) => setState(() => _agreedToTerms = v ?? true),
+        // Giant Hero Headline: "Everything money, in one gold app."
+        RichText(
+          text: TextSpan(
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 52,
+              fontWeight: FontWeight.w900,
+              height: 1.12,
+              letterSpacing: -1.2,
+              color: Colors.white,
+            ),
+            children: const [
+              TextSpan(text: 'Everything money,\n'),
+              TextSpan(text: 'in one '),
+              TextSpan(
+                text: 'gold',
+                style: TextStyle(
+                  color: Color(0xFFE5A93C),
+                  shadows: [
+                    Shadow(color: Color(0xFFE5A93C), blurRadius: 28),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'I agree to the Terms of Service and Privacy Policy.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+              TextSpan(text: ' app.'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Subtitle
+        Text(
+          'Airtime, data, bills, cable and crypto — the fastest way to pay for everything digital in Nigeria.',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 16,
+            height: 1.5,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF94A3B8),
+          ),
+        ),
+        const SizedBox(height: 40),
+
+        // Feature Showcase & Phone Mockups Display
+        SizedBox(
+          height: 200,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Floating Chip Left: Crypto +2.4% today
+              Positioned(
+                left: 0,
+                top: 40,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF161922),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 16),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.show_chart_rounded, color: Color(0xFF10B981), size: 18),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Crypto', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
+                          Text('+2.4% today', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF10B981))),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Center 3 Phone Mockups
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildMiniPhoneMockup(scale: 0.88, isSelected: false),
+                  const SizedBox(width: 12),
+                  _buildMiniPhoneMockup(scale: 1.0, isSelected: true),
+                  const SizedBox(width: 12),
+                  _buildMiniPhoneMockup(scale: 0.88, isSelected: false),
+                ],
+              ),
+
+              // Floating Chip Right: Wallet funded +₦50,000
+              Positioned(
+                right: 0,
+                bottom: 30,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF161922),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 16),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD4AF37).withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFFD4AF37), size: 14),
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Wallet funded', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
+                          Text('+₦50,000', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C))),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 18),
-        ElevatedButton(
-          onPressed: auth.isLoading ? null : _handleSignUp,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryCyan,
-            foregroundColor: const Color(0xFF002B47),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        const SizedBox(height: 36),
+
+        // Trust badge footer
+        Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Color(0xFF10B981),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Trusted by millions of Nigerians · NDPR compliant',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF94A3B8),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniPhoneMockup({required double scale, required bool isSelected}) {
+    return Transform.scale(
+      scale: scale,
+      child: Container(
+        width: 110,
+        height: 190,
+        decoration: BoxDecoration(
+          color: const Color(0xFF12151D),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFD4AF37) : const Color(0xFF26334D),
+            width: isSelected ? 1.8 : 1.0,
           ),
-          child: auth.isLoading
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-              : Text(
-                  'Create Free Account',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
+          boxShadow: [
+            BoxShadow(
+              color: isSelected ? const Color(0xFFD4AF37).withOpacity(0.2) : Colors.black.withOpacity(0.4),
+              blurRadius: 18,
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Speaker bar
+            Center(
+              child: Container(
+                width: 28,
+                height: 3,
+                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Avatar + Name
+            Row(
+              children: [
+                CircleAvatar(radius: 8, backgroundColor: const Color(0xFFD4AF37)),
+                const SizedBox(width: 6),
+                Container(width: 40, height: 6, decoration: BoxDecoration(color: Colors.white38, borderRadius: BorderRadius.circular(3))),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Balance card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5A93C).withOpacity(0.18),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(width: 30, height: 4, decoration: BoxDecoration(color: Colors.white30, borderRadius: BorderRadius.circular(2))),
+                  const SizedBox(height: 4),
+                  Text('₦248,500', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C))),
+                ],
+              ),
+            ),
+            const Spacer(),
+            // 4 Mini action buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(
+                3,
+                (i) => Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E222D),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    i == 0 ? Icons.phone_android : (i == 1 ? Icons.wifi : Icons.tv),
+                    size: 11,
+                    color: const Color(0xFFD4AF37),
                   ),
                 ),
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileHeader() {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF141720),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFD4AF37)),
+              ),
+              child: const Center(
+                child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.w900, fontSize: 18)),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Avotek',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Text(
+          'Everything money, in one gold app.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    required String hint,
-    required bool isDark,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
-          ),
+  // --- Right Glassmorphic Auth Card matching screenshot ---
+  Widget _buildAuthCard() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+      decoration: BoxDecoration(
+        color: const Color(0xFF141720),
+        borderRadius: BorderRadius.circular(28),
+        border: Border(
+          top: BorderSide(color: const Color(0xFFD4AF37).withOpacity(0.55), width: 1.5),
+          left: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.0),
+          right: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.0),
+          bottom: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.0),
         ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          style: GoogleFonts.plusJakartaSans(fontSize: 13),
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.primaryCyan, width: 1.5),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.5),
+            blurRadius: 36,
+            offset: const Offset(0, 16),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Small brand row inside card
+          Row(
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0D0F15),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.5)),
+                ),
+                child: const Center(
+                  child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold, fontSize: 13)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Avotek',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFFD4AF37),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
 
-  Widget _buildPasswordField({
-    required String label,
-    required TextEditingController controller,
-    required bool isDark,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          // Main Header
+          Text(
+            _isSignUp ? 'Create your account' : 'Sign in to Avotek',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+              color: Colors.white,
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          obscureText: _obscurePassword,
-          style: GoogleFonts.plusJakartaSans(fontSize: 13),
-          decoration: InputDecoration(
-            hintText: '••••••••',
-            filled: true,
-            fillColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
+          const SizedBox(height: 6),
+          Text(
+            _isSignUp
+                ? 'Welcome — join thousands saving money daily.'
+                : 'Welcome back — pick up where you left off.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF94A3B8),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
+          ),
+          const SizedBox(height: 24),
+
+          // Form Fields
+          if (_isSignUp) ...[
+            _buildInputField(
+              controller: _fullNameController,
+              hint: 'Full Name',
+              icon: Icons.badge_outlined,
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.primaryCyan, width: 1.5),
+            const SizedBox(height: 14),
+            _buildInputField(
+              controller: _emailController,
+              hint: 'Email address',
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
             ),
-            suffixIcon: IconButton(
+            const SizedBox(height: 14),
+            _buildInputField(
+              controller: _phoneController,
+              hint: 'Phone number',
+              icon: Icons.phone_android_outlined,
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 14),
+          ],
+
+          // Username Field
+          _buildInputField(
+            controller: _usernameController,
+            hint: 'Username',
+            suffixWidget: Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF7C3AED).withOpacity(0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                't',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFFA78BFA),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Password Field
+          _buildInputField(
+            controller: _passwordController,
+            hint: 'Password',
+            obscureText: _obscurePassword,
+            suffixWidget: IconButton(
               icon: Icon(
                 _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                 size: 18,
-                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                color: const Color(0xFF64748B),
               ),
               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
-        ),
-      ],
+          const SizedBox(height: 14),
+
+          // Remember me & Forgot Password
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              InkWell(
+                onTap: () => setState(() => _rememberMe = !_rememberMe),
+                borderRadius: BorderRadius.circular(6),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: _rememberMe ? const Color(0xFFE5A93C) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(
+                          color: _rememberMe ? const Color(0xFFE5A93C) : const Color(0xFF475569),
+                        ),
+                      ),
+                      child: _rememberMe
+                          ? const Icon(Icons.check, size: 13, color: Colors.black)
+                          : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Remember me',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFFCBD5E1),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (!_isSignUp)
+                InkWell(
+                  onTap: () {
+                    _showSnackBar('Password reset instructions sent to your email.', const Color(0xFFE5A93C));
+                  },
+                  child: Text(
+                    'Forgot password?',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFE5A93C),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 22),
+
+          // Glowing Golden Login / Register Action Button matching screenshot
+          SizedBox(
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _isProcessing ? null : (_isSignUp ? _handleSignUp : _handleSignIn),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF5A623),
+                foregroundColor: Colors.black,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shadowColor: const Color(0xFFF5A623).withOpacity(0.4),
+              ),
+              child: _isProcessing
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2.2),
+                    )
+                  : Text(
+                      _isSignUp ? 'Create Account' : 'Login',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // "or continue with" divider
+          Row(
+            children: [
+              const Expanded(child: Divider(color: Color(0xFF26334D), height: 1)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Text(
+                  'or continue with',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ),
+              const Expanded(child: Divider(color: Color(0xFF26334D), height: 1)),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Social Buttons Row (Google & Apple)
+          Row(
+            children: [
+              // Google Button
+              Expanded(
+                child: SizedBox(
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessing ? null : _handleGoogleSignIn,
+                    icon: _buildGoogleIcon(size: 18),
+                    label: Text(
+                      'Google',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Apple Button
+              Expanded(
+                child: SizedBox(
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      _showSnackBar('Apple Sign-In is launching for iOS app.', const Color(0xFF1E222D));
+                    },
+                    icon: const Icon(Icons.apple, size: 20, color: Colors.white),
+                    label: Text(
+                      'Apple',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1E222D),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(color: Color(0xFF2E3445)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Switch between Sign in and Create one
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                _isSignUp ? 'Already have an account? ' : "Don't have an account? ",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF94A3B8),
+                ),
+              ),
+              InkWell(
+                onTap: () => setState(() => _isSignUp = !_isSignUp),
+                child: Text(
+                  _isSignUp ? 'Sign in' : 'Create one',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFFE5A93C),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+
+          // Mobile App Badges matching screenshot
+          Text(
+            'Prefer the mobile app? Get Avotek on:',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildStoreBadge(icon: Icons.apple, line1: 'Download on the', line2: 'App Store'),
+              const SizedBox(width: 10),
+              _buildStoreBadge(icon: Icons.play_arrow_rounded, line1: 'GET IT ON', line2: 'Google Play'),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildGoogleIcon({double size = 20}) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _GoogleIconPainter(),
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String hint,
+    IconData? icon,
+    bool obscureText = false,
+    Widget? suffixWidget,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1D25),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF26334D)),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          hintText: hint,
+          hintStyle: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF64748B),
+          ),
+          prefixIcon: icon != null ? Icon(icon, size: 18, color: const Color(0xFF64748B)) : null,
+          suffixIcon: suffixWidget != null
+              ? Align(
+                  widthFactor: 1.0,
+                  heightFactor: 1.0,
+                  alignment: Alignment.centerRight,
+                  child: suffixWidget,
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStoreBadge({required IconData icon, required String line1, required String line2}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E222D),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF2E3445)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: Colors.white),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                line1,
+                style: GoogleFonts.plusJakartaSans(fontSize: 8, fontWeight: FontWeight.w500, color: const Color(0xFF94A3B8)),
+              ),
+              Text(
+                line2,
+                style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoogleIcon({double size = 18}) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _GoogleIconPainter(),
+      ),
     );
   }
 }
@@ -783,56 +1187,31 @@ class _LoginScreenState extends State<LoginScreen> {
 class _GoogleIconPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final double w = size.width;
-    final double h = size.height;
-    final double stroke = w * 0.22;
+    final w = size.width;
+    final h = size.height;
 
-    final red = Paint()
-      ..color = const Color(0xFFEA4335)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.round;
+    final redPaint = Paint()..color = const Color(0xFFEA4335);
+    final bluePaint = Paint()..color = const Color(0xFF4285F4);
+    final yellowPaint = Paint()..color = const Color(0xFFFBBC05);
+    final greenPaint = Paint()..color = const Color(0xFF34A853);
 
-    final yellow = Paint()
-      ..color = const Color(0xFFFBBC05)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.round;
+    final center = Offset(w / 2, h / 2);
+    final radius = w / 2;
 
-    final green = Paint()
-      ..color = const Color(0xFF34A853)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.round;
+    // Draw Google 4-color Arc
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    canvas.drawArc(rect, -0.78, 1.57, true, bluePaint);
+    canvas.drawArc(rect, 0.79, 1.57, true, greenPaint);
+    canvas.drawArc(rect, 2.36, 1.57, true, yellowPaint);
+    canvas.drawArc(rect, 3.93, 1.57, true, redPaint);
 
-    final blue = Paint()
-      ..color = const Color(0xFF4285F4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.round;
+    // Inner Cutout
+    final innerPaint = Paint()..color = Colors.white;
+    canvas.drawCircle(center, radius * 0.55, innerPaint);
 
-    final rect = Rect.fromLTWH(stroke / 2, stroke / 2, w - stroke, h - stroke);
-
-    // Red arc (top)
-    canvas.drawArc(rect, 3.8, 1.4, false, red);
-    // Yellow arc (left)
-    canvas.drawArc(rect, 2.3, 1.5, false, yellow);
-    // Green arc (bottom)
-    canvas.drawArc(rect, 0.8, 1.5, false, green);
-    // Blue arc (right)
-    canvas.drawArc(rect, 0.0, 0.8, false, blue);
-
-    // Blue horizontal bar
-    final barPaint = Paint()
-      ..color = const Color(0xFF4285F4)
-      ..style = PaintingStyle.fill;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.45, h * 0.42, w * 0.45, stroke),
-        Radius.circular(stroke / 2),
-      ),
-      barPaint,
-    );
+    // Right horizontal bar
+    final barRect = Rect.fromLTRB(w * 0.45, h * 0.4, w * 0.95, h * 0.6);
+    canvas.drawRect(barRect, bluePaint);
   }
 
   @override

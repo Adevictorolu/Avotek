@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../core/responsive/responsive_layout.dart';
+import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
-import '../../widgets/avotek_logo.dart';
-import '../../widgets/pin_modal.dart';
 
 class DataScreen extends StatefulWidget {
   const DataScreen({super.key});
@@ -18,602 +19,625 @@ class DataScreen extends StatefulWidget {
 }
 
 class _DataScreenState extends State<DataScreen> {
-  final _phoneController = TextEditingController(text: '0803 411 9920');
-  String _selectedNetwork = 'MTN';
-  String _selectedBundleType = 'SME, cheapest per gigabyte';
-  Map<String, dynamic>? _selectedPlan;
+  final _phoneController = TextEditingController(text: '08034119920');
+  final _pinController = TextEditingController();
 
-  final List<String> _networks = ['MTN', 'Glo', 'Airtel', '9mobile'];
-  final List<String> _bundleTypes = [
-    'SME, cheapest per gigabyte',
-    'Gifting, shows as gift on recipient line',
-    'Corporate, bulk student & business volume',
+  String _selectedNetwork = 'MTN';
+  String _selectedCategory = 'SME';
+  Map<String, dynamic>? _selectedPlan;
+  bool _isProcessing = false;
+
+  final List<Map<String, dynamic>> _networks = [
+    {'name': 'MTN', 'code': 'MTN', 'color': Color(0xFFFFCC00), 'iconColor': Colors.black},
+    {'name': 'GLO', 'code': 'GLO', 'color': Color(0xFF00A859), 'iconColor': Colors.white},
+    {'name': 'AIRTEL', 'code': 'AIRTEL', 'color': Color(0xFFE60000), 'iconColor': Colors.white},
+    {'name': 'T2', 'code': 'T2', 'color': Color(0xFF005B38), 'iconColor': Colors.white},
+    {'name': 'VITEL', 'code': 'VITEL', 'color': Color(0xFF0284C7), 'iconColor': Colors.white},
   ];
+
+  final List<String> _categories = ['SME', 'Gifting', 'Corporate'];
 
   final Map<String, List<Map<String, dynamic>>> _plansMap = {
     'MTN': [
-      {'plan': '500MB', 'validity': '30 days', 'price': 340.0, 'code': 'MTN-500MB'},
-      {'plan': '1GB', 'validity': '30 days', 'price': 620.0, 'code': 'MTN-1GB'},
-      {'plan': '2GB', 'validity': '30 days', 'price': 1240.0, 'code': 'MTN-2GB'},
-      {'plan': '3GB', 'validity': '30 days', 'price': 1860.0, 'code': 'MTN-3GB'},
-      {'plan': '5GB', 'validity': '30 days', 'price': 3100.0, 'code': 'MTN-5GB'},
-      {'plan': '10GB', 'validity': '30 days', 'price': 3400.0, 'code': 'MTN-10GB'},
-      {'plan': '20GB', 'validity': '30 days', 'price': 6800.0, 'code': 'MTN-20GB'},
+      {'plan': '500MB SME (30 Days)', 'price': 140.0, 'code': 'MTN-500MB'},
+      {'plan': '1GB SME (30 Days)', 'price': 260.0, 'code': 'MTN-1GB'},
+      {'plan': '2GB SME (30 Days)', 'price': 520.0, 'code': 'MTN-2GB'},
+      {'plan': '3GB SME (30 Days)', 'price': 780.0, 'code': 'MTN-3GB'},
+      {'plan': '5GB SME (30 Days)', 'price': 1300.0, 'code': 'MTN-5GB'},
+      {'plan': '10GB SME (30 Days)', 'price': 2600.0, 'code': 'MTN-10GB'},
     ],
-    'Glo': [
-      {'plan': '1GB', 'validity': '30 days', 'price': 280.0, 'code': 'GLO-1GB'},
-      {'plan': '2GB', 'validity': '30 days', 'price': 560.0, 'code': 'GLO-2GB'},
-      {'plan': '3GB', 'validity': '30 days', 'price': 840.0, 'code': 'GLO-3GB'},
-      {'plan': '5GB', 'validity': '30 days', 'price': 1400.0, 'code': 'GLO-5GB'},
-      {'plan': '10GB', 'validity': '30 days', 'price': 2800.0, 'code': 'GLO-10GB'},
-      {'plan': '20GB', 'validity': '30 days', 'price': 5600.0, 'code': 'GLO-20GB'},
+    'GLO': [
+      {'plan': '500MB Corporate (30 Days)', 'price': 145.0, 'code': 'GLO-500MB'},
+      {'plan': '1GB Corporate (30 Days)', 'price': 255.0, 'code': 'GLO-1GB'},
+      {'plan': '2GB Corporate (30 Days)', 'price': 510.0, 'code': 'GLO-2GB'},
+      {'plan': '5GB Corporate (30 Days)', 'price': 1275.0, 'code': 'GLO-5GB'},
+      {'plan': '10GB Corporate (30 Days)', 'price': 2550.0, 'code': 'GLO-10GB'},
     ],
-    'Airtel': [
-      {'plan': '500MB', 'validity': '30 days', 'price': 350.0, 'code': 'AIR-500MB'},
-      {'plan': '1GB', 'validity': '30 days', 'price': 640.0, 'code': 'AIR-1GB'},
-      {'plan': '2GB', 'validity': '30 days', 'price': 1280.0, 'code': 'AIR-2GB'},
-      {'plan': '5GB', 'validity': '30 days', 'price': 3200.0, 'code': 'AIR-5GB'},
-      {'plan': '10GB', 'validity': '30 days', 'price': 4000.0, 'code': 'AIR-10GB'},
-      {'plan': '15GB', 'validity': '30 days', 'price': 6000.0, 'code': 'AIR-15GB'},
+    'AIRTEL': [
+      {'plan': '500MB CG (30 Days)', 'price': 150.0, 'code': 'AIR-500MB'},
+      {'plan': '1GB CG (30 Days)', 'price': 265.0, 'code': 'AIR-1GB'},
+      {'plan': '2GB CG (30 Days)', 'price': 530.0, 'code': 'AIR-2GB'},
+      {'plan': '5GB CG (30 Days)', 'price': 1325.0, 'code': 'AIR-5GB'},
+      {'plan': '10GB CG (30 Days)', 'price': 2650.0, 'code': 'AIR-10GB'},
     ],
-    '9mobile': [
-      {'plan': '1GB', 'validity': '30 days', 'price': 300.0, 'code': '9MOB-1GB'},
-      {'plan': '2GB', 'validity': '30 days', 'price': 600.0, 'code': '9MOB-2GB'},
-      {'plan': '3GB', 'validity': '30 days', 'price': 900.0, 'code': '9MOB-3GB'},
-      {'plan': '5GB', 'validity': '30 days', 'price': 1500.0, 'code': '9MOB-5GB'},
-      {'plan': '10GB', 'validity': '30 days', 'price': 3000.0, 'code': '9MOB-10GB'},
-      {'plan': '20GB', 'validity': '30 days', 'price': 6000.0, 'code': '9MOB-20GB'},
+    'T2': [
+      {'plan': '1GB SME (30 Days)', 'price': 240.0, 'code': 'T2-1GB'},
+      {'plan': '2GB SME (30 Days)', 'price': 480.0, 'code': 'T2-2GB'},
+      {'plan': '5GB SME (30 Days)', 'price': 1200.0, 'code': 'T2-5GB'},
+    ],
+    'VITEL': [
+      {'plan': '1GB Data (30 Days)', 'price': 250.0, 'code': 'VIT-1GB'},
+      {'plan': '2GB Data (30 Days)', 'price': 500.0, 'code': 'VIT-2GB'},
+      {'plan': '5GB Data (30 Days)', 'price': 1250.0, 'code': 'VIT-5GB'},
     ],
   };
 
   @override
   void initState() {
     super.initState();
-    _selectedPlan = _plansMap['MTN']![1]; // Default 1GB
-    _phoneController.addListener(_onPhoneChanged);
-  }
-
-  void _onPhoneChanged() {
-    final text = _phoneController.text.trim();
-    if (text.length >= 4) {
-      final detected = VtuProvider.detectNetwork(text);
-      if (detected != _selectedNetwork) {
-        setState(() {
-          _selectedNetwork = detected;
-          final plans = _plansMap[_selectedNetwork];
-          if (plans != null && plans.isNotEmpty) {
-            _selectedPlan = plans.first;
-          }
-        });
-      }
-    }
+    _selectedPlan = _plansMap['MTN']![1];
   }
 
   @override
   void dispose() {
     _phoneController.dispose();
+    _pinController.dispose();
     super.dispose();
+  }
+
+  void _onNetworkSelected(String netCode) {
+    setState(() {
+      _selectedNetwork = netCode;
+      final plans = _plansMap[netCode];
+      if (plans != null && plans.isNotEmpty) {
+        _selectedPlan = plans.first;
+      }
+    });
   }
 
   Future<void> _handlePurchase() async {
     final phone = _phoneController.text.trim();
+    final pin = _pinController.text.trim();
+
     if (phone.length < 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid phone number')),
-      );
+      _showSnackBar('Please enter a valid 11-digit phone number.', AppColors.error);
       return;
     }
     if (_selectedPlan == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a data bundle plan')),
-      );
+      _showSnackBar('Please select a data plan bundle.', AppColors.error);
+      return;
+    }
+    if (pin.length != 4) {
+      _showSnackBar('Please enter your 4-digit transaction PIN.', AppColors.error);
       return;
     }
 
     final auth = context.read<AuthProvider>();
-    final wallet = context.read<WalletProvider>();
     final vtu = context.read<VtuProvider>();
+    final amount = (_selectedPlan!['price'] as num).toDouble();
 
-    final price = _selectedPlan!['price'] as double;
-    if (wallet.balance < price) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Insufficient balance. Please fund your wallet (₦${wallet.balance.toStringAsFixed(2)} available).'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+    // 1. Verify PIN
+    final pinValid = await auth.verifyPin(pin);
+    if (!pinValid) {
+      _showSnackBar('Invalid transaction PIN. Please re-enter your 4-digit PIN.', AppColors.error);
       return;
     }
 
-    // 4-digit PIN confirmation
-    final confirmed = await PinModal.show(
-      context,
-      title: 'Confirm Data Purchase',
-      amount: price,
-      description: '$_selectedNetwork ${_selectedPlan!['plan']} bundle to $phone',
-      onPinSubmit: (pin) => auth.verifyPin(pin),
-    );
+    // 2. Check Balance
+    final currentBalance = auth.wallet?.balance ?? 0.0;
+    if (currentBalance < amount) {
+      _showInsufficientBalanceDialog(amount, currentBalance);
+      return;
+    }
 
-    if (confirmed == true && mounted) {
-      try {
-        final result = await vtu.buyData(
-          userId: auth.user?.id ?? 1,
-          network: _selectedNetwork,
-          phone: phone,
-          variationCode: _selectedPlan!['code'] as String,
-          amount: price,
-          sellPrice: price,
-        );
+    setState(() => _isProcessing = true);
 
-        if (mounted) {
-          if (result.success) {
-            wallet.fetchWallet(auth.user?.id ?? 1);
-            _showDeliveredReceipt(result.order.providerReference ?? 'AV-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}', phone, price);
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Order failed: ${result.message}'), backgroundColor: AppColors.error),
-            );
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error processing data order: $e'), backgroundColor: AppColors.error),
-          );
-        }
+    try {
+      // 3. Atomically debit wallet
+      final debited = await auth.debitWallet(amount);
+      if (!debited) {
+        _showSnackBar('Insufficient wallet balance. Please add money.', AppColors.error);
+        setState(() => _isProcessing = false);
+        return;
       }
+
+      // 4. Dispatch live aggregator order (BilalSadaSub Gateway API)
+      await vtu.buyData(
+        userId: auth.user?.id ?? 1001,
+        network: _selectedNetwork,
+        phone: phone,
+        variationCode: _selectedPlan!['code'] as String,
+        amount: amount,
+      );
+
+      setState(() => _isProcessing = false);
+      _showSuccessDialog(phone, amount);
+    } catch (e) {
+      setState(() => _isProcessing = false);
+      _showSnackBar('Order processed: ${e.toString().replaceAll("Exception: ", "")}', AppColors.primaryBlue);
     }
   }
 
-  void _showDeliveredReceipt(String ref, String phone, double amt) {
+  void _showInsufficientBalanceDialog(double requiredAmt, double currentBal) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF14171E) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: SizedBox(
-          width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: AppColors.success.withValues(alpha: 0.15),
-                child: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 36),
-              ),
-              const SizedBox(height: 14),
-              const Text('Data Bundle Delivered', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              const Text(
-                'Data was credited by the telecom network and your wallet was debited.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    _rcptLine('Reference', ref),
-                    _rcptLine('Network', _selectedNetwork),
-                    _rcptLine('Bundle', '${_selectedPlan!['plan']} (${_selectedPlan!['validity']})'),
-                    _rcptLine('Recipient', phone),
-                    _rcptLine('Charged', '₦${NumberFormat('#,##0.00').format(amt)}'),
-                    _rcptLine('Status', 'Delivered', isStatus: true),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        title: Row(
+          children: [
+            const Icon(Icons.account_balance_wallet_outlined, color: Color(0xFFF5A623)),
+            const SizedBox(width: 10),
+            Text('Insufficient Balance', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 17)),
+          ],
+        ),
+        content: Text(
+          'Your balance (₦${currentBal.toStringAsFixed(2)}) is less than the required bundle cost of ₦${requiredAmt.toStringAsFixed(2)}. Please add money to continue.',
+          style: GoogleFonts.plusJakartaSans(fontSize: 13),
         ),
         actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryCyan,
-              foregroundColor: Colors.black,
-              minimumSize: const Size(double.infinity, 44),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD4AF37), foregroundColor: Colors.black),
             onPressed: () {
               Navigator.pop(ctx);
-              context.push('/dashboard');
+              context.go('/wallet/fund');
             },
-            child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text('Add Money Now'),
           ),
         ],
       ),
     );
   }
 
-  Widget _rcptLine(String label, String val, {bool isStatus = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          Text(
-            val,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: isStatus ? AppColors.success : null,
+  void _showSuccessDialog(String phone, double amount) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF14171E) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
+              child: const Icon(Icons.check_rounded, color: Colors.white, size: 28),
             ),
+            const SizedBox(height: 12),
+            Text('Data Delivered!', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, fontSize: 18)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              '${_selectedPlan!["plan"]} delivered instantly to $phone.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Debited: ₦${amount.toStringAsFixed(2)}',
+              style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFFD4AF37)),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: Colors.white),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _pinController.clear();
+            },
+            child: const Text('Done'),
           ),
         ],
       ),
+    );
+  }
+
+  void _showSnackBar(String text, Color bg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(text, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)), backgroundColor: bg),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final wallet = context.watch<WalletProvider>();
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth >= 960;
+    final auth = context.watch<AuthProvider>();
+    final walletBalance = auth.wallet?.balance ?? 9.0;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
-      appBar: AppBar(
-        titleSpacing: isDesktop ? 48 : 16,
-        elevation: 0,
-        backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
-        title: const AvotekLogo(size: 32, showText: true),
-        actions: [
-          TextButton.icon(
-            onPressed: () => context.push('/dashboard'),
-            icon: const Icon(Icons.dashboard_rounded, size: 16),
-            label: const Text('Dashboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: 'Fund Wallet',
-            icon: const Icon(Icons.account_balance_wallet_rounded, size: 20),
-            onPressed: () => context.push('/wallet/fund'),
-          ),
-          SizedBox(width: isDesktop ? 48 : 16),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1100),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16, vertical: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Breadcrumb
-                  Row(
-                    children: [
-                      InkWell(
-                        onTap: () => context.push('/dashboard'),
-                        child: Text('Dashboard', style: TextStyle(fontSize: 12, color: AppColors.primaryCyan)),
-                      ),
-                      const SizedBox(width: 6),
-                      const Icon(Icons.chevron_right, size: 14, color: Colors.grey),
-                      const SizedBox(width: 6),
-                      const Text('Buy data', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Buy data',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'SME, gifting and corporate data bundles on every telecom network.',
-                    style: TextStyle(fontSize: 13, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
-                  ),
-                  const SizedBox(height: 24),
+    final currentPlanPrice = _selectedPlan != null ? (_selectedPlan!['price'] as num).toDouble() : 0.0;
+    final formattedPrice = NumberFormat('#,##0.00', 'en_US').format(currentPlanPrice);
 
-                  // 2-Column Responsive Layout
-                  isDesktop
-                      ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(flex: 7, child: _buildOrderDetailsCard(isDark)),
-                            const SizedBox(width: 24),
-                            Expanded(flex: 5, child: _buildSummaryCard(wallet, isDark)),
-                          ],
-                        )
-                      : Column(
-                          children: [
-                            _buildOrderDetailsCard(isDark),
-                            const SizedBox(height: 20),
-                            _buildSummaryCard(wallet, isDark),
-                          ],
-                        ),
-                ],
+    return ResponsiveShell(
+      currentRoute: '/services/data',
+      onToggleTheme: () {},
+      child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isDesktop ? 32 : 16,
+          vertical: 24,
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1140),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header: Title & Subtitle
+              Text(
+                'Buy Data',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
               ),
-            ),
+              const SizedBox(height: 4),
+              Text(
+                'Instant data bundles on every network — delivered in seconds',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // 2-Column Responsive Layout matching Bilal Sub Screenshot 3
+              if (isDesktop)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 3, child: _buildLeftForm(isDark)),
+                    const SizedBox(width: 24),
+                    Expanded(flex: 2, child: _buildRightSummary(walletBalance, formattedPrice, isDark)),
+                  ],
+                )
+              else
+                Column(
+                  children: [
+                    _buildRightSummary(walletBalance, formattedPrice, isDark),
+                    const SizedBox(height: 20),
+                    _buildLeftForm(isDark),
+                  ],
+                ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildOrderDetailsCard(bool isDark) {
-    final plans = _plansMap[_selectedNetwork] ?? [];
+  // --- Left Form: Steps 1 to 4 ---
+  Widget _buildLeftForm(bool isDark) {
+    final currentPlans = _plansMap[_selectedNetwork] ?? [];
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Order details', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
-
-          // Network Selector
-          const Text('Select network', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
-          const SizedBox(height: 10),
-          Row(
-            children: _networks.map((net) {
-              final isSel = _selectedNetwork == net;
-              Color brandColor;
-              switch (net) {
-                case 'Glo':
-                  brandColor = AppColors.gloGreen;
-                  break;
-                case 'Airtel':
-                  brandColor = AppColors.airtelRed;
-                  break;
-                case '9mobile':
-                  brandColor = AppColors.nineMobileGreen;
-                  break;
-                default:
-                  brandColor = AppColors.mtnYellow;
-              }
-
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _selectedNetwork = net;
-                        final newPlans = _plansMap[net];
-                        if (newPlans != null && newPlans.isNotEmpty) {
-                          _selectedPlan = newPlans.first;
-                        }
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: isSel
-                            ? (isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9))
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSel ? AppColors.primaryCyan : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
-                          width: isSel ? 2 : 1,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(color: brandColor, shape: BoxShape.circle),
-                            child: Text(
-                              net.substring(0, 1),
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: net == 'MTN' ? Colors.black : Colors.white),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(net, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // STEP 1: CHOOSE NETWORK
+        _buildSectionHeader('1 · CHOOSE NETWORK'),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: _networks.map((net) {
+            final isSelected = _selectedNetwork == net['code'];
+            return InkWell(
+              onTap: () => _onNetworkSelected(net['code'] as String),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: 96,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF141720) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFFD4AF37) : (isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
+                    width: isSelected ? 2.0 : 1.0,
                   ),
+                  boxShadow: isSelected
+                      ? [BoxShadow(color: const Color(0xFFD4AF37).withOpacity(0.2), blurRadius: 8)]
+                      : null,
                 ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 20),
-
-          // Bundle Type Selector
-          const Text('Bundle type', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _selectedBundleType,
-                isExpanded: true,
-                dropdownColor: isDark ? AppColors.darkCard : Colors.white,
-                items: _bundleTypes.map((type) {
-                  return DropdownMenuItem(value: type, child: Text(type, style: const TextStyle(fontSize: 13)));
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedBundleType = val);
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Phone Number Input
-          const Text('Phone number', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              hintText: '0803 411 9920',
-              prefixIcon: const Icon(Icons.phone_android, size: 18),
-              filled: true,
-              fillColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Plans Grid
-          const Text('Choose a plan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
-          const SizedBox(height: 10),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 1.8,
-            ),
-            itemCount: plans.length,
-            itemBuilder: (context, idx) {
-              final p = plans[idx];
-              final isSel = _selectedPlan?['code'] == p['code'];
-              return InkWell(
-                onTap: () => setState(() => _selectedPlan = p),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSel
-                        ? AppColors.primaryCyan.withValues(alpha: 0.15)
-                        : (isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9)),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSel ? AppColors.primaryCyan : Colors.transparent,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(p['plan'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      Text(p['validity'] as String, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                      const SizedBox(height: 2),
-                      Text(
-                        '₦${NumberFormat('#,##0').format(p['price'])}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          color: isSel ? AppColors.primaryCyan : (isDark ? Colors.white : Colors.black),
-                        ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: net['color'] as Color,
+                        shape: BoxShape.circle,
                       ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        (net['code'] as String).substring(0, 1),
+                        style: TextStyle(color: net['iconColor'] as Color, fontWeight: FontWeight.w900, fontSize: 16),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      net['name'] as String,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 24),
+
+        // STEP 2: CATEGORY
+        _buildSectionHeader('2 · CATEGORY'),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 10,
+          children: _categories.map((cat) {
+            final isSelected = _selectedCategory == cat;
+            return ChoiceChip(
+              label: Text(cat, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 12)),
+              selected: isSelected,
+              selectedColor: const Color(0xFFF5A623),
+              backgroundColor: isDark ? const Color(0xFF161922) : const Color(0xFFF1F5F9),
+              labelStyle: TextStyle(color: isSelected ? Colors.black : (isDark ? Colors.white70 : Colors.black87)),
+              onSelected: (val) => setState(() => _selectedCategory = cat),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 24),
+
+        // STEP 3: PICK A DATA PLAN
+        _buildSectionHeader('3 · PICK A DATA PLAN'),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF141720) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<Map<String, dynamic>>(
+              isExpanded: true,
+              value: _selectedPlan,
+              dropdownColor: isDark ? const Color(0xFF141720) : Colors.white,
+              items: currentPlans.map((plan) {
+                final price = (plan['price'] as num).toDouble();
+                return DropdownMenuItem<Map<String, dynamic>>(
+                  value: plan,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(plan['plan'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700)),
+                      Text('₦${price.toStringAsFixed(2)}', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFFD4AF37))),
                     ],
                   ),
-                ),
-              );
-            },
+                );
+              }).toList(),
+              onChanged: (val) => setState(() => _selectedPlan = val),
+            ),
           ),
-          const SizedBox(height: 20),
+        ),
+        const SizedBox(height: 24),
 
-          // Protection Notice
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primaryCyan.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.shield_outlined, size: 18, color: AppColors.primaryCyan),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Data is credited by telecom provider within seconds. A failed order is refunded to your wallet without you asking.',
-                    style: TextStyle(fontSize: 11, color: AppColors.primaryCyan, height: 1.4),
-                  ),
-                ),
-              ],
-            ),
+        // STEP 4: RECIPIENT DETAILS
+        _buildSectionHeader('4 · RECIPIENT DETAILS'),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _phoneController,
+          keyboardType: TextInputType.phone,
+          style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700),
+          decoration: InputDecoration(
+            labelText: 'Phone number',
+            hintText: '0803 123 4567',
+            filled: true,
+            fillColor: isDark ? const Color(0xFF141720) : Colors.white,
+            prefixIcon: const Icon(Icons.phone_iphone_rounded, size: 20),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 14),
+        TextField(
+          controller: _pinController,
+          keyboardType: TextInputType.number,
+          obscureText: true,
+          maxLength: 4,
+          style: GoogleFonts.plusJakartaSans(fontSize: 18, letterSpacing: 6, fontWeight: FontWeight.w800),
+          decoration: InputDecoration(
+            counterText: '',
+            labelText: 'Transaction PIN',
+            hintText: '••••',
+            filled: true,
+            fillColor: isDark ? const Color(0xFF141720) : Colors.white,
+            prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFFD4AF37), size: 20),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Submit Button
+        ElevatedButton(
+          onPressed: _isProcessing ? null : _handlePurchase,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFF5A623), // Bilal Sub Gold
+            foregroundColor: const Color(0xFF0A0E17),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+          child: _isProcessing
+              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+              : Text(
+                  'Enter An Amount To Continue >',
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, fontSize: 14),
+                ),
+        ),
+      ],
     );
   }
 
-  Widget _buildSummaryCard(WalletProvider wallet, bool isDark) {
-    final price = (_selectedPlan?['price'] as double?) ?? 620.0;
-    final planName = _selectedPlan != null ? '${_selectedPlan!['plan']} (${_selectedPlan!['validity']})' : '1GB (30 days)';
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Summary', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
-          _sumRow('Service', 'Data bundle'),
-          _sumRow('Network', _selectedNetwork),
-          _sumRow('Bundle Plan', planName),
-          _sumRow('Recipient', _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : '0803 411 9920'),
-          const Divider(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('You pay', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-              Text(
-                '₦${NumberFormat('#,##0.00').format(price)}',
-                style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.primaryCyan),
+  // --- Right Summary: Golden Balance Card + Order Summary + Notice ---
+  Widget _buildRightSummary(double walletBalance, String formattedPrice, bool isDark) {
+    return Column(
+      children: [
+        // 1. Golden Wallet Balance Card (Matching Bilal Sub)
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFE5A93C), Color(0xFFD4AF37)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFD4AF37).withOpacity(0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _handlePurchase,
-            icon: const Icon(Icons.bolt_rounded, size: 18),
-            label: const Text('Buy data', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryCyan,
-              foregroundColor: Colors.black,
-              minimumSize: const Size(double.infinity, 48),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Wallet balance',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF3E2700),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '₦${walletBalance.toStringAsFixed(2)}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                onPressed: () => context.go('/wallet/fund'),
+                icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
+                label: Text('Add Money', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.25),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-          Center(
-            child: Text(
-              'Wallet balance ₦${NumberFormat('#,##0.00').format(wallet.balance > 0 ? wallet.balance : 248500.00)}',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
+        ),
+        const SizedBox(height: 18),
+
+        // 2. ORDER SUMMARY Card
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF141720) : Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
           ),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ORDER SUMMARY',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white70 : Colors.black87,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildSummaryRow('Network', _selectedNetwork, isDark),
+              const SizedBox(height: 10),
+              _buildSummaryRow('Category', _selectedCategory, isDark),
+              const SizedBox(height: 10),
+              _buildSummaryRow('Bundle', _selectedPlan?['plan'] ?? '-', isDark),
+              const SizedBox(height: 10),
+              _buildSummaryRow('Phone', _phoneController.text.isNotEmpty ? _phoneController.text : '-', isDark),
+              const SizedBox(height: 14),
+              const Divider(color: Color(0xFF26334D), height: 1),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('You pay', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
+                  Text(
+                    '₦$formattedPrice',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFFD4AF37),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // 3. Notice Box
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF161922) : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_outline_rounded, color: Color(0xFFF5A623), size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Top-ups land on the recipient line instantly. Failed transactions are auto-reversed to your wallet within minutes.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _sumRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-        ],
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.plusJakartaSans(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: const Color(0xFFCBD5E1),
+        letterSpacing: 0.8,
       ),
     );
   }

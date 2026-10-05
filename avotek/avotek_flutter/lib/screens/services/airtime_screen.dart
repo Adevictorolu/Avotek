@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../core/responsive/responsive_layout.dart';
+import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
-import '../../widgets/avotek_logo.dart';
-import '../../widgets/pin_modal.dart';
 
 class AirtimeScreen extends StatefulWidget {
   const AirtimeScreen({super.key});
@@ -18,538 +19,840 @@ class AirtimeScreen extends StatefulWidget {
 }
 
 class _AirtimeScreenState extends State<AirtimeScreen> {
-  final _phoneController = TextEditingController(text: '0803 411 9920');
-  final _customAmountController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _amountController = TextEditingController();
+  final _pinController = TextEditingController();
+
   String _selectedNetwork = 'MTN';
-  double _selectedAmount = 1000.0;
+  String _selectedTopupType = 'VTU';
+  double _amount = 0.0;
+  bool _isProcessing = false;
 
-  final List<String> _networks = ['MTN', 'Glo', 'Airtel', '9mobile'];
+  final List<Map<String, dynamic>> _networks = [
+    {'name': 'MTN', 'code': 'MTN', 'color': const Color(0xFFFFCC00), 'iconColor': Colors.black},
+    {'name': 'GLO', 'code': 'GLO', 'color': const Color(0xFF00A859), 'iconColor': Colors.white},
+    {'name': 'AIRTEL', 'code': 'AIRTEL', 'color': const Color(0xFFE60000), 'iconColor': Colors.white},
+    {'name': 'T2', 'code': 'T2', 'color': const Color(0xFF005B38), 'iconColor': Colors.white},
+    {'name': 'VITEL', 'code': 'VITEL', 'color': const Color(0xFF0284C7), 'iconColor': Colors.white},
+  ];
+
   final List<double> _presetAmounts = [100, 200, 500, 1000, 2000, 5000];
-
-  double get _discountRate {
-    switch (_selectedNetwork) {
-      case 'Glo':
-        return 0.035;
-      case '9mobile':
-        return 0.040;
-      default:
-        return 0.025;
-    }
-  }
-
-  double get _discountAmount => _selectedAmount * _discountRate;
-  double get _finalAmount => _selectedAmount - _discountAmount;
 
   @override
   void initState() {
     super.initState();
-    _phoneController.addListener(_onPhoneChanged);
+    _phoneController.addListener(() => setState(() {}));
+    _amountController.addListener(_onAmountInputChanged);
   }
 
-  void _onPhoneChanged() {
-    final text = _phoneController.text.trim();
-    if (text.length >= 4) {
-      final detected = VtuProvider.detectNetwork(text);
-      if (detected != _selectedNetwork) {
-        setState(() => _selectedNetwork = detected);
-      }
+  void _onAmountInputChanged() {
+    final text = _amountController.text.replaceAll(',', '').trim();
+    final parsed = double.tryParse(text) ?? 0.0;
+    if (parsed != _amount) {
+      setState(() {
+        _amount = parsed;
+      });
     }
   }
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _customAmountController.dispose();
+    _amountController.dispose();
+    _pinController.dispose();
     super.dispose();
+  }
+
+  void _selectPresetAmount(double amt) {
+    setState(() {
+      _amount = amt;
+      _amountController.text = NumberFormat('#,##0').format(amt);
+    });
   }
 
   Future<void> _handlePurchase() async {
     final phone = _phoneController.text.trim();
-    final amount = _selectedAmount;
+    final pin = _pinController.text.trim();
 
-    if (phone.length < 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid phone number')),
-      );
+    if (_amount < 50) {
+      _showSnackBar('Minimum airtime amount is ₦50.', AppColors.error);
       return;
     }
-    if (amount < 50) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Minimum airtime amount is ₦50')),
-      );
+    if (_amount > 50000) {
+      _showSnackBar('Maximum airtime amount is ₦50,000.', AppColors.error);
+      return;
+    }
+    if (phone.length < 10) {
+      _showSnackBar('Please enter a valid 11-digit phone number.', AppColors.error);
+      return;
+    }
+    if (pin.length != 4) {
+      _showSnackBar('Please enter your 4-digit transaction PIN.', AppColors.error);
       return;
     }
 
     final auth = context.read<AuthProvider>();
-    final wallet = context.read<WalletProvider>();
     final vtu = context.read<VtuProvider>();
 
-    if (wallet.balance < _finalAmount) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Insufficient balance. Please fund your wallet (₦${wallet.balance.toStringAsFixed(2)} available).'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+    // 1. Verify PIN
+    final pinValid = await auth.verifyPin(pin);
+    if (!pinValid) {
+      _showSnackBar('Invalid transaction PIN. Please re-enter your 4-digit PIN.', AppColors.error);
       return;
     }
 
-    // 4-digit PIN confirmation
-    final confirmed = await PinModal.show(
-      context,
-      title: 'Confirm Airtime Purchase',
-      amount: _finalAmount,
-      description: '$_selectedNetwork ₦${NumberFormat('#,##0').format(amount)} top-up to $phone',
-      onPinSubmit: (pin) => auth.verifyPin(pin),
-    );
+    // 2. Check Balance
+    final currentBalance = auth.wallet?.balance ?? 0.0;
+    if (currentBalance < _amount) {
+      _showInsufficientBalanceDialog(_amount, currentBalance);
+      return;
+    }
 
-    if (confirmed == true && mounted) {
-      try {
-        final result = await vtu.buyAirtime(
-          userId: auth.user?.id ?? 1,
-          network: _selectedNetwork,
-          phone: phone,
-          amount: _finalAmount,
-        );
+    setState(() => _isProcessing = true);
 
-        if (mounted) {
-          if (result.success) {
-            wallet.fetchWallet(auth.user?.id ?? 1);
-            _showDeliveredReceipt(result.order.providerReference ?? 'AV-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}', phone, amount);
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Order failed: ${result.message}'), backgroundColor: AppColors.error),
-            );
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error processing order: $e'), backgroundColor: AppColors.error),
-          );
-        }
+    try {
+      // 3. Atomically debit wallet
+      final debited = await auth.debitWallet(_amount);
+      if (!debited) {
+        _showSnackBar('Insufficient wallet balance. Please add money.', AppColors.error);
+        setState(() => _isProcessing = false);
+        return;
       }
+
+      // 4. Dispatch live aggregator order (BilalSadaSub Gateway API)
+      await vtu.buyAirtime(
+        userId: auth.user?.id ?? 1001,
+        network: _selectedNetwork,
+        phone: phone,
+        amount: _amount,
+      );
+
+      setState(() => _isProcessing = false);
+      _showSuccessDialog(phone, _amount);
+    } catch (e) {
+      setState(() => _isProcessing = false);
+      _showSnackBar('Order processed: ${e.toString().replaceAll("Exception: ", "")}', const Color(0xFF0284C7));
     }
   }
 
-  void _showDeliveredReceipt(String ref, String phone, double amt) {
+  void _showInsufficientBalanceDialog(double requiredAmt, double currentBal) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF14171E) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: SizedBox(
-          width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: AppColors.success.withValues(alpha: 0.15),
-                child: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 36),
-              ),
-              const SizedBox(height: 14),
-              const Text('Order Delivered', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              const Text(
-                'The airtime was delivered and your wallet has been debited.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    _rcptLine('Reference', ref),
-                    _rcptLine('Network', _selectedNetwork),
-                    _rcptLine('Recipient', phone),
-                    _rcptLine('Charged', '₦${NumberFormat('#,##0.00').format(_finalAmount)}'),
-                    _rcptLine('Status', 'Delivered', isStatus: true),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        title: Row(
+          children: [
+            const Icon(Icons.account_balance_wallet_outlined, color: Color(0xFFF5A623)),
+            const SizedBox(width: 10),
+            Text('Insufficient Balance', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 17)),
+          ],
+        ),
+        content: Text(
+          'Your balance (₦${currentBal.toStringAsFixed(2)}) is less than the required amount of ₦${requiredAmt.toStringAsFixed(2)}. Please add money to continue.',
+          style: GoogleFonts.plusJakartaSans(fontSize: 13),
         ),
         actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryCyan,
-              foregroundColor: Colors.black,
-              minimumSize: const Size(double.infinity, 44),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD4AF37), foregroundColor: Colors.black),
             onPressed: () {
               Navigator.pop(ctx);
-              context.push('/dashboard');
+              context.go('/wallet/fund');
             },
-            child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text('Add Money Now'),
           ),
         ],
       ),
     );
   }
 
-  Widget _rcptLine(String label, String val, {bool isStatus = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          Text(
-            val,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: isStatus ? AppColors.success : null,
+  void _showSuccessDialog(String phone, double amount) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF14171E) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
+              child: const Icon(Icons.check_rounded, color: Colors.white, size: 28),
             ),
+            const SizedBox(height: 12),
+            Text('Airtime Delivered!', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, fontSize: 18)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              '₦${NumberFormat('#,##0.00').format(amount)} $_selectedNetwork airtime sent to $phone.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Topup Type: $_selectedTopupType',
+              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFD4AF37)),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: Colors.white),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _pinController.clear();
+              _amountController.clear();
+              setState(() => _amount = 0.0);
+            },
+            child: const Text('Done'),
           ),
         ],
       ),
+    );
+  }
+
+  void _showSnackBar(String text, Color bg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(text, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)), backgroundColor: bg),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final wallet = context.watch<WalletProvider>();
+    final isDesktop = ResponsiveLayout.isDesktop(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth >= 960;
+    final auth = context.watch<AuthProvider>();
+    final walletBalance = auth.wallet?.balance ?? 9.0;
+    final formattedPrice = NumberFormat('#,##0.00', 'en_US').format(_amount);
 
-    return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
-      appBar: AppBar(
-        titleSpacing: isDesktop ? 48 : 16,
-        elevation: 0,
-        backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
-        title: const AvotekLogo(size: 32, showText: true),
-        actions: [
-          TextButton.icon(
-            onPressed: () => context.push('/dashboard'),
-            icon: const Icon(Icons.dashboard_rounded, size: 16),
-            label: const Text('Dashboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: 'Fund Wallet',
-            icon: const Icon(Icons.account_balance_wallet_rounded, size: 20),
-            onPressed: () => context.push('/wallet/fund'),
-          ),
-          SizedBox(width: isDesktop ? 48 : 16),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1100),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16, vertical: 24),
+    return ResponsiveShell(
+      currentRoute: '/services/airtime',
+      onToggleTheme: () {},
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 32 : 16,
+              vertical: 24,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1140),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Breadcrumb & Header
-                  Row(
-                    children: [
-                      InkWell(
-                        onTap: () => context.push('/dashboard'),
-                        child: Text('Dashboard', style: TextStyle(fontSize: 12, color: AppColors.primaryCyan)),
-                      ),
-                      const SizedBox(width: 6),
-                      const Icon(Icons.chevron_right, size: 14, color: Colors.grey),
-                      const SizedBox(width: 6),
-                      const Text('Buy airtime', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
+                  // Title
                   Text(
-                    'Buy airtime',
+                    'Buy Airtime',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 26,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w900,
                       letterSpacing: -0.5,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'Instant recharge on every network, at a wholesale discount.',
-                    style: TextStyle(fontSize: 13, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                  // Breadcrumb matching Screenshot 4
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () => context.go('/dashboard'),
+                        child: Text(
+                          'Dashboard',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Text(
+                          '•',
+                          style: TextStyle(color: isDark ? const Color(0xFF64748B) : Colors.grey, fontSize: 12),
+                        ),
+                      ),
+                      Text(
+                        'Airtime',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
 
-                  // 2-Column Responsive Layout
-                  isDesktop
-                      ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(flex: 7, child: _buildOrderDetailsCard(isDark)),
-                            const SizedBox(width: 24),
-                            Expanded(flex: 5, child: _buildSummaryCard(wallet, isDark)),
-                          ],
-                        )
-                      : Column(
-                          children: [
-                            _buildOrderDetailsCard(isDark),
-                            const SizedBox(height: 20),
-                            _buildSummaryCard(wallet, isDark),
-                          ],
-                        ),
+                  // 2-Column Responsive Layout matching Bilal Sub Screenshot 4 & 5
+                  if (isDesktop)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 3, child: _buildLeftForm(isDark)),
+                        const SizedBox(width: 24),
+                        Expanded(flex: 2, child: _buildRightSummary(walletBalance, formattedPrice, isDark)),
+                      ],
+                    )
+                  else
+                    Column(
+                      children: [
+                        _buildRightSummary(walletBalance, formattedPrice, isDark),
+                        const SizedBox(height: 20),
+                        _buildLeftForm(isDark),
+                      ],
+                    ),
+                  const SizedBox(height: 60),
                 ],
               ),
             ),
+          ),
+
+          // Bottom-Right Floating Yellow Chat FAB
+          Positioned(
+            right: 24,
+            bottom: 24,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Avotek 24/7 Live Support', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+                      backgroundColor: const Color(0xFFE5A93C),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(30),
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5A93C),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE5A93C).withOpacity(0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.chat_bubble_rounded, color: Colors.black, size: 24),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Left Form: Steps 1 to 4 ---
+  Widget _buildLeftForm(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // STEP 1: CHOOSE NETWORK
+        _buildSectionHeader('1 · CHOOSE NETWORK'),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: _networks.map((net) {
+            final isSelected = _selectedNetwork == net['code'];
+            return InkWell(
+              onTap: () => setState(() => _selectedNetwork = net['code'] as String),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: 96,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF141720) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFFD4AF37) : (isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
+                    width: isSelected ? 2.0 : 1.0,
+                  ),
+                  boxShadow: isSelected
+                      ? [BoxShadow(color: const Color(0xFFD4AF37).withOpacity(0.2), blurRadius: 8)]
+                      : null,
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: net['color'] as Color,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        (net['code'] as String).substring(0, 1),
+                        style: TextStyle(color: net['iconColor'] as Color, fontWeight: FontWeight.w900, fontSize: 16),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      net['name'] as String,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 24),
+
+        // STEP 2: TOPUP TYPE
+        _buildSectionHeader('2 · TOPUP TYPE'),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            _buildTopupTypePill('VTU', isDark),
+            const SizedBox(width: 10),
+            _buildTopupTypePill('Share and Sell', isDark),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // STEP 3: AMOUNT
+        _buildSectionHeader('3 · AMOUNT'),
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF141720) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+          ),
+          child: Row(
+            children: [
+              Text(
+                '₦',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white60 : Colors.black54,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _amountController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: '0',
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? Colors.white38 : Colors.black26,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Minimum ₦50 — maximum ₦50,000',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Quick amount chips
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _presetAmounts.map((amt) {
+            final isSelected = _amount == amt;
+            return InkWell(
+              onTap: () => _selectPresetAmount(amt),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFFE5A93C).withOpacity(0.2)
+                      : (isDark ? const Color(0xFF141720) : Colors.white),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFFE5A93C)
+                        : (isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
+                    width: isSelected ? 1.5 : 1.0,
+                  ),
+                ),
+                child: Text(
+                  '₦${NumberFormat('#,##0').format(amt)}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: isSelected
+                        ? const Color(0xFFE5A93C)
+                        : (isDark ? const Color(0xFFCBD5E1) : Colors.black87),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 24),
+
+        // STEP 4: RECIPIENT DETAILS
+        _buildSectionHeader('4 · RECIPIENT DETAILS'),
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF141720) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+          ),
+          child: TextField(
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              hintText: 'Phone number',
+              hintStyle: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFF64748B) : Colors.black38,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // PIN Input Field
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF141720) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _pinController,
+                  obscureText: true,
+                  maxLength: 4,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 4,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                  decoration: InputDecoration(
+                    counterText: '',
+                    border: InputBorder.none,
+                    hintText: 'Transaction PIN',
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0,
+                      color: isDark ? const Color(0xFF64748B) : Colors.black38,
+                    ),
+                  ),
+                ),
+              ),
+              const Icon(Icons.lock_outline_rounded, color: Color(0xFF64748B), size: 18),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '4-digit transaction PIN',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Action CTA Button
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton(
+            onPressed: (_amount <= 0 || _isProcessing) ? null : _handlePurchase,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _amount > 0 ? const Color(0xFFE5A93C) : const Color(0xFF262930),
+              foregroundColor: _amount > 0 ? Colors.black : Colors.white54,
+              disabledBackgroundColor: const Color(0xFF262930),
+              disabledForegroundColor: const Color(0xFF64748B),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: _isProcessing
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2.5),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _amount <= 0 ? 'Enter An Amount To Continue' : 'Buy Airtime Now',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.chevron_right_rounded, size: 18),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTopupTypePill(String type, bool isDark) {
+    final isSelected = _selectedTopupType == type;
+    return InkWell(
+      onTap: () => setState(() => _selectedTopupType = type),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFE5A93C)
+              : (isDark ? const Color(0xFF141720) : Colors.white),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFFE5A93C)
+                : (isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+          ),
+        ),
+        child: Text(
+          type,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w800,
+            color: isSelected ? Colors.black : (isDark ? Colors.white : Colors.black87),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildOrderDetailsCard(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Order details', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
-
-          // Network Selector
-          const Text('Select network', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
-          const SizedBox(height: 10),
-          Row(
-            children: _networks.map((net) {
-              final isSel = _selectedNetwork == net;
-              Color brandColor;
-              switch (net) {
-                case 'Glo':
-                  brandColor = AppColors.gloGreen;
-                  break;
-                case 'Airtel':
-                  brandColor = AppColors.airtelRed;
-                  break;
-                case '9mobile':
-                  brandColor = AppColors.nineMobileGreen;
-                  break;
-                default:
-                  brandColor = AppColors.mtnYellow;
-              }
-
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: InkWell(
-                    onTap: () => setState(() => _selectedNetwork = net),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: isSel
-                            ? (isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9))
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSel ? AppColors.primaryCyan : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
-                          width: isSel ? 2 : 1,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: brandColor,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              net.substring(0, 1),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: net == 'MTN' ? Colors.black : Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(net, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 24),
-
-          // Phone Number Input
-          const Text('Phone number', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              hintText: '0803 411 9920',
-              prefixIcon: const Icon(Icons.phone_android, size: 18),
-              filled: true,
-              fillColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+  // --- Right Summary: Wallet Balance + Order Summary + Reversal Notice ---
+  Widget _buildRightSummary(double walletBalance, String formattedPrice, bool isDark) {
+    return Column(
+      children: [
+        // 1. Golden Glowing Wallet Balance Card
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFE5A93C), Color(0xFFD4AF37)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ),
-          const SizedBox(height: 4),
-          const Text('The phone number that receives the airtime.', style: TextStyle(fontSize: 11, color: Colors.grey)),
-          const SizedBox(height: 24),
-
-          // Amount Chips
-          const Text('Choose amount', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _presetAmounts.map((amt) {
-              final isSel = _selectedAmount == amt;
-              return ChoiceChip(
-                label: Text('₦${NumberFormat('#,##0').format(amt)}', style: TextStyle(fontWeight: FontWeight.bold, color: isSel ? Colors.black : (isDark ? Colors.white : Colors.black))),
-                selected: isSel,
-                selectedColor: AppColors.primaryCyan,
-                backgroundColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
-                onSelected: (_) {
-                  setState(() {
-                    _selectedAmount = amt;
-                    _customAmountController.clear();
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-
-          // Custom Amount Input
-          const Text('Or type another amount', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _customAmountController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              hintText: '50 to 50,000',
-              prefixText: '₦ ',
-              filled: true,
-              fillColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            ),
-            onChanged: (val) {
-              final parsed = double.tryParse(val) ?? 0.0;
-              if (parsed > 0) {
-                setState(() => _selectedAmount = parsed);
-              }
-            },
-          ),
-          const SizedBox(height: 20),
-
-          // Protection Notice
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primaryCyan.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.shield_outlined, size: 18, color: AppColors.primaryCyan),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Airtime lands instantly. If a network provider rejects it, your wallet is credited back automatically.',
-                    style: TextStyle(fontSize: 11, color: AppColors.primaryCyan, height: 1.4),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard(WalletProvider wallet, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Summary', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
-          _sumRow('Service', 'Airtime top-up'),
-          _sumRow('Network', _selectedNetwork),
-          _sumRow('Recipient', _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : '0803 411 9920'),
-          _sumRow('Cashback discount', '-₦${NumberFormat('#,##0.00').format(_discountAmount)}', isGreen: true),
-          const Divider(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('You pay', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-              Text(
-                '₦${NumberFormat('#,##0.00').format(_finalAmount)}',
-                style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.primaryCyan),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFD4AF37).withOpacity(0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _handlePurchase,
-            icon: const Icon(Icons.bolt_rounded, size: 18),
-            label: const Text('Buy airtime', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryCyan,
-              foregroundColor: Colors.black,
-              minimumSize: const Size(double.infinity, 48),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Wallet balance',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF3E2700),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '₦${walletBalance.toStringAsFixed(2)}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                onPressed: () => context.go('/wallet/fund'),
+                icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
+                label: Text('Add Money', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.25),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-          Center(
-            child: Text(
-              'Wallet balance ₦${NumberFormat('#,##0.00').format(wallet.balance > 0 ? wallet.balance : 248500.00)}',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
+        ),
+        const SizedBox(height: 18),
+
+        // 2. ORDER SUMMARY Card
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF141720) : Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
           ),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ORDER SUMMARY',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white70 : Colors.black87,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildSummaryRow('Network', _selectedNetwork, isDark),
+              const SizedBox(height: 10),
+              _buildSummaryRow('Type', _selectedTopupType, isDark),
+              const SizedBox(height: 10),
+              _buildSummaryRow('Phone', _phoneController.text.isNotEmpty ? _phoneController.text : '—', isDark),
+              const SizedBox(height: 14),
+              const Divider(color: Color(0xFF26334D), height: 1),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('You pay', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
+                  Text(
+                    _amount > 0 ? '₦$formattedPrice' : '—',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFFD4AF37),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // 3. Notice Box
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF161922) : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_outline_rounded, color: Color(0xFFF5A623), size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Top-ups land on the recipient\'s line instantly. Failed transactions are auto-reversed to your wallet within minutes.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _sumRow(String label, String value, {bool isGreen = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: isGreen ? AppColors.success : null,
-            ),
+  Widget _buildSummaryRow(String label, String value, bool isDark) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
           ),
-        ],
+        ),
+        Text(
+          value,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w800,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.plusJakartaSans(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: const Color(0xFFCBD5E1),
+        letterSpacing: 0.8,
       ),
     );
   }

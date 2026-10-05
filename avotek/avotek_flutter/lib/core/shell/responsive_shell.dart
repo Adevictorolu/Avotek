@@ -381,32 +381,131 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     WalletProvider wallet,
   ) {
     final currentRoute = widget.currentRoute;
+    final userName = auth.user?.name ?? 'Adevictorolu';
 
     return Container(
-      width: 250,
+      width: 256,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
+        color: isDark ? const Color(0xFF0D0F15) : Colors.white,
         border: Border(
           right: BorderSide(
-            color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF1E222D) : const Color(0xFFE2E8F0),
             width: 1.0,
           ),
         ),
       ),
       child: Column(
         children: [
-          // Sidebar Brand (Undistorted Logo)
+          // 1. Sidebar Brand with Rounded Container, Border Radius, AVOTEK, and << Collapse Icon
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-            alignment: Alignment.centerLeft,
-            child: const AvotekLogo(size: 42, isLarge: true),
+            padding: const EdgeInsets.fromLTRB(16, 20, 14, 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF14171E) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFFD4AF37).withOpacity(0.35) : const Color(0xFFE2E8F0),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.12),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.asset(
+                    isDark ? 'assets/images/logo.png' : 'assets/images/logo_light.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Bilalsadasub',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.keyboard_double_arrow_left_rounded, size: 18),
+                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () {},
+                ),
+              ],
+            ),
           ),
-          const Divider(height: 1),
+
+          // 2. User Profile Pill (Avatar, ADEVICTOROLU, SMART badge)
+          InkWell(
+            onTap: () => context.go('/profile'),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF161922) : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 17,
+                    backgroundColor: const Color(0xFF1E293B),
+                    child: const Icon(Icons.person, color: Color(0xFF00A3FF), size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName.toUpperCase(),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          'SMART',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFF5A623), // Golden amber badge
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
 
           // Nav Items Scroll
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               children: [
                 _buildSidebarGroup('MAIN'),
                 _buildSidebarItem(
@@ -416,16 +515,35 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   isActive: currentRoute == '/dashboard' || currentRoute == '/',
                 ),
                 _buildSidebarItem(
+                  icon: Icons.send_rounded,
+                  label: 'Send To User',
+                  route: '/wallet',
+                  isActive: currentRoute == '/wallet/transfer',
+                ),
+                _buildSidebarItem(
+                  icon: Icons.arrow_downward_rounded,
+                  label: 'Withdraw',
+                  route: '/wallet',
+                  isActive: currentRoute == '/wallet/withdraw',
+                ),
+                _buildSidebarItem(
+                  icon: Icons.credit_card_rounded,
+                  label: 'Virtual Cards',
+                  route: '/wallet',
+                  isActive: false,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.currency_bitcoin_rounded,
+                  label: 'Crypto',
+                  route: '/services/data',
+                  isActive: false,
+                ),
+                _buildSidebarItem(
                   icon: Icons.add_circle_outline_rounded,
                   label: 'Fund Wallet',
                   route: '/wallet/fund',
                   isActive: currentRoute == '/wallet/fund',
-                ),
-                _buildSidebarItem(
-                  icon: Icons.account_balance_wallet_rounded,
-                  label: 'My Wallet',
-                  route: '/wallet',
-                  isActive: currentRoute == '/wallet',
+                  hasChevron: true,
                 ),
 
                 const SizedBox(height: 14),
@@ -443,8 +561,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   isActive: currentRoute == '/services/airtime',
                 ),
                 _buildSidebarItem(
+                  icon: Icons.sync_alt_rounded,
+                  label: 'Airtime to Cash',
+                  route: '/services/airtime',
+                  isActive: false,
+                ),
+                _buildSidebarItem(
                   icon: Icons.flash_on_rounded,
-                  label: 'Electricity Bills',
+                  label: 'Electricity',
                   route: '/services/electricity',
                   isActive: currentRoute == '/services/electricity',
                 ),
@@ -455,75 +579,79 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   isActive: currentRoute == '/services/tv',
                 ),
                 _buildSidebarItem(
-                  icon: Icons.sports_soccer_rounded,
-                  label: 'Betting Topup',
-                  route: '/services/betting',
-                  isActive: currentRoute == '/services/betting',
+                  icon: Icons.sms_rounded,
+                  label: 'Bulk SMS',
+                  route: '/services/airtime',
+                  isActive: false,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.school_rounded,
+                  label: 'Education',
+                  route: '/exams',
+                  isActive: currentRoute == '/exams',
                 ),
 
                 const SizedBox(height: 14),
-                _buildSidebarGroup('RECORDS & RATES'),
+                _buildSidebarGroup('INTERNATIONAL & STORES'),
                 _buildSidebarItem(
-                  icon: Icons.receipt_long_rounded,
-                  label: 'Transactions',
-                  route: '/transactions',
-                  isActive: currentRoute == '/transactions' || currentRoute == '/history',
+                  icon: Icons.sim_card_rounded,
+                  label: 'eSIM',
+                  route: '/services/data',
+                  isActive: false,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.flight_takeoff_rounded,
+                  label: 'Flight',
+                  route: '/services/data',
+                  isActive: false,
                 ),
                 _buildSidebarItem(
                   icon: Icons.price_change_outlined,
-                  label: 'Wholesale Pricing',
+                  label: 'Wholesale Rates',
                   route: '/rates',
                   isActive: currentRoute == '/rates',
                 ),
-
-                const SizedBox(height: 14),
-                _buildSidebarGroup('ACCOUNT'),
-                _buildSidebarItem(
-                  icon: Icons.person_outline_rounded,
-                  label: 'My Profile',
-                  route: '/profile',
-                  isActive: currentRoute == '/profile',
-                ),
-                if (auth.isSuperAdmin)
+                if (auth.isSuperAdmin) ...[
+                  const SizedBox(height: 14),
+                  _buildSidebarGroup('MANAGEMENT'),
                   _buildSidebarItem(
                     icon: Icons.admin_panel_settings_rounded,
                     label: 'Admin Console',
                     route: '/admin',
                     isActive: currentRoute == '/admin',
                   ),
+                ],
               ],
             ),
           ),
 
-          // Sidebar Footer
-          const Divider(height: 1),
+          // Sidebar Footer with Sign Out
+          const Divider(height: 1, color: Color(0xFF1E222D)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      auth.signOut();
-                      context.go('/login');
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.logout_rounded, size: 18, color: Colors.grey),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Sign out',
-                            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600),
-                          ),
-                        ],
+            child: InkWell(
+              onTap: () {
+                auth.signOut();
+                context.go('/login');
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.logout_rounded, size: 18, color: Colors.grey),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Sign out',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -533,14 +661,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
 
   Widget _buildSidebarGroup(String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
       child: Text(
         title,
         style: GoogleFonts.plusJakartaSans(
-          fontSize: 10,
+          fontSize: 10.5,
           fontWeight: FontWeight.w800,
-          color: Colors.grey,
-          letterSpacing: 0.8,
+          color: const Color(0xFF64748B),
+          letterSpacing: 1.0,
         ),
       ),
     );
@@ -551,48 +679,64 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     required String label,
     required String route,
     required bool isActive,
+    bool hasChevron = false,
     String? badgeText,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeBg = isDark
-        ? AppColors.primaryCyan.withValues(alpha: 0.15)
-        : const Color(0xFFEFF6FF);
-    final activeColor = AppColors.primaryCyan;
+
+    // Active pill container with golden amber border matching Bilal Sub
+    final activeBg = isDark ? const Color(0xFF171A22) : const Color(0xFFFEF3C7);
+    final activeBorderColor = const Color(0xFFD4AF37);
+    final activeColor = isDark ? const Color(0xFFF5A623) : const Color(0xFFB45309);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
+      padding: const EdgeInsets.only(bottom: 3),
       child: Material(
         color: isActive ? activeBg : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: () => context.go(route),
-          borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: isActive
+                  ? Border.all(color: activeBorderColor, width: 1.2)
+                  : Border.all(color: Colors.transparent, width: 1.2),
+            ),
             child: Row(
               children: [
                 Icon(
                   icon,
-                  size: 18,
-                  color: isActive ? activeColor : (isDark ? Colors.white70 : Colors.black87),
+                  size: 19,
+                  color: isActive ? activeColor : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     label,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.5,
+                      fontSize: 13,
                       fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                      color: isActive ? activeColor : (isDark ? Colors.white70 : Colors.black87),
+                      color: isActive
+                          ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                          : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155)),
                     ),
                   ),
                 ),
+                if (hasChevron)
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                  ),
                 if (badgeText != null)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.success.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       badgeText,
