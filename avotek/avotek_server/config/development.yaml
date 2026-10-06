@@ -29,11 +29,11 @@ webServer:
 
 # This is the database setup for your server.
 database:
-  host: localhost
-  port: 8090
-  name: avotek
-  user: postgres
-  #requireSsl: true # defaults to false
+  host: ep-autumn-mode-b1d96ces-pooler.c-5.eu-central-1.aws.neon.tech
+  port: 5432
+  name: neondb
+  user: neondb_owner
+  requireSsl: true
   #isUnixSocket: true # defaults to false
   #maxConnectionCount: 10 # Defaults to 10, a negative or null value removes the limit
 
