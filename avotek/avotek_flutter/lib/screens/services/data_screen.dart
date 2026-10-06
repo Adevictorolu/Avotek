@@ -166,7 +166,7 @@ class _DataScreenState extends State<DataScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.account_balance_wallet_outlined, color: Color(0xFFF5A623)),
+            Icon(Icons.account_balance_wallet_outlined, color: AppColors.electricCyan),
             const SizedBox(width: 10),
             Text('Insufficient Balance', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 17)),
           ],
@@ -178,7 +178,7 @@ class _DataScreenState extends State<DataScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD4AF37), foregroundColor: Colors.black),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue, foregroundColor: Colors.white),
             onPressed: () {
               Navigator.pop(ctx);
               context.go('/wallet/fund');
@@ -220,7 +220,7 @@ class _DataScreenState extends State<DataScreen> {
             const SizedBox(height: 12),
             Text(
               'Debited: ₦${amount.toStringAsFixed(2)}',
-              style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFFD4AF37)),
+              style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF00D2FF)),
             ),
           ],
         ),
@@ -338,11 +338,11 @@ class _DataScreenState extends State<DataScreen> {
                   color: isDark ? const Color(0xFF141720) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFFD4AF37) : (isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
+                    color: isSelected ? const Color(0xFF00D2FF) : (isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
                     width: isSelected ? 2.0 : 1.0,
                   ),
                   boxShadow: isSelected
-                      ? [BoxShadow(color: const Color(0xFFD4AF37).withOpacity(0.2), blurRadius: 8)]
+                      ? [BoxShadow(color: const Color(0xFF00D2FF).withOpacity(0.2), blurRadius: 8)]
                       : null,
                 ),
                 child: Column(
@@ -387,9 +387,9 @@ class _DataScreenState extends State<DataScreen> {
             return ChoiceChip(
               label: Text(cat, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 12)),
               selected: isSelected,
-              selectedColor: const Color(0xFFF5A623),
+              selectedColor: const Color(0xFF0052FF),
               backgroundColor: isDark ? const Color(0xFF161922) : const Color(0xFFF1F5F9),
-              labelStyle: TextStyle(color: isSelected ? Colors.black : (isDark ? Colors.white70 : Colors.black87)),
+              labelStyle: TextStyle(color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87)),
               onSelected: (val) => setState(() => _selectedCategory = cat),
             );
           }).toList(),
@@ -419,7 +419,7 @@ class _DataScreenState extends State<DataScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(plan['plan'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700)),
-                      Text('₦${price.toStringAsFixed(2)}', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFFD4AF37))),
+                      Text('₦${price.toStringAsFixed(2)}', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF00D2FF))),
                     ],
                   ),
                 );
@@ -459,7 +459,7 @@ class _DataScreenState extends State<DataScreen> {
             hintText: '••••',
             filled: true,
             fillColor: isDark ? const Color(0xFF141720) : Colors.white,
-            prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFFD4AF37), size: 20),
+            prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF00D2FF), size: 20),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
         ),
@@ -469,8 +469,8 @@ class _DataScreenState extends State<DataScreen> {
         ElevatedButton(
           onPressed: _isProcessing ? null : _handlePurchase,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF5A623), // Bilal Sub Gold
-            foregroundColor: const Color(0xFF0A0E17),
+            backgroundColor: AppColors.primaryBlue,
+            foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             minimumSize: const Size(double.infinity, 50),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -490,20 +490,20 @@ class _DataScreenState extends State<DataScreen> {
   Widget _buildRightSummary(double walletBalance, String formattedPrice, bool isDark) {
     return Column(
       children: [
-        // 1. Golden Wallet Balance Card (Matching Bilal Sub)
+        // 1. Glowing Brand Wallet Balance Card
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: const LinearGradient(
-              colors: [Color(0xFFE5A93C), Color(0xFFD4AF37)],
+              colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFD4AF37).withOpacity(0.3),
+                color: const Color(0xFF0052FF).withOpacity(0.3),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -517,7 +517,7 @@ class _DataScreenState extends State<DataScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF3E2700),
+                  color: Colors.white70,
                 ),
               ),
               const SizedBox(height: 4),
@@ -588,7 +588,7 @@ class _DataScreenState extends State<DataScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
-                      color: const Color(0xFFD4AF37),
+                      color: const Color(0xFF00D2FF),
                     ),
                   ),
                 ],
@@ -610,7 +610,7 @@ class _DataScreenState extends State<DataScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.info_outline_rounded, color: Color(0xFFF5A623), size: 18),
+              Icon(Icons.info_outline_rounded, color: AppColors.electricCyan, size: 18),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

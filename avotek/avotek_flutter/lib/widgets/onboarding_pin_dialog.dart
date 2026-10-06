@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
+import 'avotek_logo.dart';
 
 class OnboardingPinDialog extends StatefulWidget {
   final VoidCallback onCompleted;
@@ -95,7 +96,7 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
             color: isDark ? const Color(0xFF14171E) : Colors.white,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isDark ? const Color(0xFFD4AF37).withOpacity(0.3) : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
               width: 1.5,
             ),
             boxShadow: [
@@ -113,23 +114,7 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
               // Header with Brand Logo
               Row(
                 children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F1117) : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: const Color(0xFFD4AF37).withOpacity(0.4),
-                        width: 1.2,
-                      ),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.asset(
-                      isDark ? 'assets/images/logo.png' : 'assets/images/logo_light.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
+                  const AvotekLogo(size: 42, hasFrame: true, borderRadius: 14),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
@@ -150,8 +135,8 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
                           _currentStep == 0 ? 'Account Setup & Quick Guide' : 'Set Your 4-Digit Security PIN',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFFD4AF37),
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF00D2FF),
                           ),
                         ),
                       ],
@@ -176,7 +161,7 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
                 const SizedBox(height: 14),
                 _buildGuideTile(
                   icon: Icons.account_balance_wallet_rounded,
-                  iconColor: const Color(0xFFD4AF37),
+                  iconColor: const Color(0xFF00D2FF),
                   title: '1. Fund Your Wallet Instantly',
                   description: 'Transfer directly to your dedicated virtual account number shown on the dashboard. Wallet credits in seconds.',
                   isDark: isDark,
@@ -201,8 +186,8 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
                 ElevatedButton(
                   onPressed: () => setState(() => _currentStep = 1),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD4AF37),
-                    foregroundColor: const Color(0xFF0A0E17),
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
@@ -263,7 +248,7 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
                   decoration: InputDecoration(
                     counterText: '',
                     hintText: '••••',
-                    prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFFD4AF37)),
+                    prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF00D2FF)),
                     filled: true,
                     fillColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -295,7 +280,7 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
                   decoration: InputDecoration(
                     counterText: '',
                     hintText: '••••',
-                    prefixIcon: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFFD4AF37)),
+                    prefixIcon: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF00D2FF)),
                     filled: true,
                     fillColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -326,8 +311,8 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
                 ElevatedButton(
                   onPressed: _isSubmitting ? null : _handleSavePin,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD4AF37),
-                    foregroundColor: const Color(0xFF0A0E17),
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),

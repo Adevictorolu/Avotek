@@ -401,37 +401,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
             padding: const EdgeInsets.fromLTRB(16, 20, 14, 12),
             child: Row(
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF14171E) : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDark ? const Color(0xFFD4AF37).withOpacity(0.35) : const Color(0xFFE2E8F0),
-                      width: 1.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.12),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Image.asset(
-                    isDark ? 'assets/images/logo.png' : 'assets/images/logo_light.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
+                const AvotekLogo(size: 38, hasFrame: true, showText: false, borderRadius: 10),
                 const SizedBox(width: 10),
                 Text(
-                  'Bilalsadasub',
+                  'Avotek',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 17,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.2,
+                    letterSpacing: -0.3,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                 ),
@@ -489,7 +466,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFFF5A623), // Golden amber badge
+                            color: AppColors.electricCyan,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -525,12 +502,6 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   label: 'Withdraw',
                   route: '/wallet',
                   isActive: currentRoute == '/wallet/withdraw',
-                ),
-                _buildSidebarItem(
-                  icon: Icons.credit_card_rounded,
-                  label: 'Virtual Cards',
-                  route: '/wallet',
-                  isActive: false,
                 ),
                 _buildSidebarItem(
                   icon: Icons.add_circle_outline_rounded,
@@ -586,17 +557,17 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                 ),
 
                 const SizedBox(height: 14),
-                _buildSidebarGroup('INTERNATIONAL & STORES'),
+                _buildSidebarGroup('PRINTING & CARDS'),
                 _buildSidebarItem(
-                  icon: Icons.sim_card_rounded,
-                  label: 'eSIM',
-                  route: '/services/data',
+                  icon: Icons.nfc_rounded,
+                  label: 'Data Card',
+                  route: '/dashboard',
                   isActive: false,
                 ),
                 _buildSidebarItem(
-                  icon: Icons.flight_takeoff_rounded,
-                  label: 'Flight',
-                  route: '/services/data',
+                  icon: Icons.receipt_rounded,
+                  label: 'Recharge Card',
+                  route: '/dashboard',
                   isActive: false,
                 ),
                 _buildSidebarItem(
@@ -678,10 +649,10 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Active pill container with golden amber border matching Bilal Sub
-    final activeBg = isDark ? const Color(0xFF171A22) : const Color(0xFFFEF3C7);
-    final activeBorderColor = const Color(0xFFD4AF37);
-    final activeColor = isDark ? const Color(0xFFF5A623) : const Color(0xFFB45309);
+    // Active pill container with Electric Cyan & Royal Blue styling
+    final activeBg = isDark ? const Color(0xFF131B2E) : const Color(0xFFEFF6FF);
+    final activeBorderColor = const Color(0xFF00D2FF);
+    final activeColor = const Color(0xFF0052FF);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 3),

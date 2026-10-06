@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/theme/app_theme.dart';
+import '../../widgets/avotek_logo.dart';
 
 class LandingScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -136,17 +138,11 @@ class _LandingScreenState extends State<LandingScreen> {
                       onTap: () => context.go('/'),
                       child: Row(
                         children: [
-                          Container(
-                            width: 34,
-                            height: 34,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF141720),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.5)),
-                            ),
-                            child: const Center(
-                              child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.w900, fontSize: 18)),
-                            ),
+                          const AvotekLogo(
+                            size: 34,
+                            hasFrame: true,
+                            showText: false,
+                            borderRadius: 10,
                           ),
                           const SizedBox(width: 10),
                           Text(
@@ -185,8 +181,8 @@ class _LandingScreenState extends State<LandingScreen> {
                     ElevatedButton(
                       onPressed: () => context.push('/register'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE5A93C),
-                        foregroundColor: Colors.black,
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -245,17 +241,11 @@ class _LandingScreenState extends State<LandingScreen> {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0D0F15),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFD4AF37)),
-                    ),
-                    child: const Center(
-                      child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold, fontSize: 16)),
-                    ),
+                  const AvotekLogo(
+                    size: 32,
+                    hasFrame: true,
+                    showText: false,
+                    borderRadius: 8,
                   ),
                   const SizedBox(width: 10),
                   Text('Avotek', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
@@ -314,8 +304,8 @@ class _LandingScreenState extends State<LandingScreen> {
                         context.push('/register');
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE5A93C),
-                        foregroundColor: Colors.black,
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: Text('Create account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
@@ -406,7 +396,7 @@ class _LandingScreenState extends State<LandingScreen> {
               TextSpan(
                 text: 'Sorted in seconds.',
                 style: TextStyle(
-                  color: Color(0xFFE5A93C),
+                  color: AppColors.electricCyan,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -437,12 +427,12 @@ class _LandingScreenState extends State<LandingScreen> {
               icon: const Icon(Icons.arrow_forward_rounded, size: 16),
               label: Text('Create free account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE5A93C),
-                foregroundColor: Colors.black,
+                backgroundColor: AppColors.primaryBlue,
+                foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                shadowColor: const Color(0xFFE5A93C).withOpacity(0.4),
+                shadowColor: AppColors.primaryBlue.withOpacity(0.4),
               ),
             ),
             OutlinedButton(
@@ -483,7 +473,7 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   Widget _buildAvatarGroup() {
-    final colors = [const Color(0xFFE5A93C), const Color(0xFF10B981), const Color(0xFF0284C7), Colors.purple];
+    final colors = [AppColors.electricCyan, const Color(0xFF10B981), AppColors.primaryBlue, Colors.purple];
     final initials = ['AO', 'SB', 'TA', 'NE'];
     return SizedBox(
       height: 32,
@@ -548,8 +538,8 @@ class _LandingScreenState extends State<LandingScreen> {
               ),
               CircleAvatar(
                 radius: 16,
-                backgroundColor: const Color(0xFFE5A93C).withOpacity(0.2),
-                child: Text('AO', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C))),
+                backgroundColor: AppColors.electricCyan.withOpacity(0.2),
+                child: Text('AO', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.electricCyan)),
               ),
             ],
           ),
@@ -561,7 +551,7 @@ class _LandingScreenState extends State<LandingScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFE5A93C), Color(0xFFD4AF37)],
+                colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -570,7 +560,7 @@ class _LandingScreenState extends State<LandingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Wallet balance', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF3E2700))),
+                Text('Wallet balance', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white70)),
                 const SizedBox(height: 2),
                 Text('₦248,500.00', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
               ],
@@ -587,8 +577,8 @@ class _LandingScreenState extends State<LandingScreen> {
               _buildPhoneServiceIcon(Icons.wifi_rounded, 'Data', sData),
               _buildPhoneServiceIcon(Icons.tv_rounded, 'Cable', sCable),
               _buildPhoneServiceIcon(Icons.flash_on_rounded, 'Power', sPower),
-              _buildPhoneServiceIcon(Icons.business_rounded, 'CAC', sPrint),
-              _buildPhoneServiceIcon(Icons.print_rounded, 'Print', sPrint),
+              _buildPhoneServiceIcon(Icons.sync_alt_rounded, 'Convert', const Color(0xFF14B8A6)),
+              _buildPhoneServiceIcon(Icons.sms_rounded, 'SMS', const Color(0xFF6366F1)),
               _buildPhoneServiceIcon(Icons.account_balance_wallet_rounded, 'Fund', sWallet),
               _buildPhoneServiceIcon(Icons.send_rounded, 'Send', sRefer),
             ],
@@ -735,7 +725,7 @@ class _LandingScreenState extends State<LandingScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 26,
             fontWeight: FontWeight.w900,
-            color: const Color(0xFFE5A93C),
+            color: AppColors.electricCyan,
           ),
         ),
         const SizedBox(height: 4),
@@ -785,18 +775,18 @@ class _LandingScreenState extends State<LandingScreen> {
         'route': '/services/electricity',
       },
       {
-        'title': 'Business & CAC registration',
-        'desc': 'Fast corporate CAC registration and business name filing assistance for entrepreneurs.',
-        'icon': Icons.business_rounded,
-        'color': sPrint,
-        'route': '/services/cac',
+        'title': 'Airtime to Cash',
+        'desc': 'Convert excess airtime from MTN, Airtel, and 9mobile directly to cash in your bank or wallet.',
+        'icon': Icons.sync_alt_rounded,
+        'color': const Color(0xFF14B8A6),
+        'route': '/services/airtime',
       },
       {
         'title': 'Recharge card printing',
         'desc': 'Print customized recharge cards with your business branding and sell offline.',
         'icon': Icons.print_rounded,
         'color': sPrint,
-        'route': '/services/cac',
+        'route': '/dashboard',
       },
       {
         'title': 'Wallet funding',
@@ -861,9 +851,9 @@ class _LandingScreenState extends State<LandingScreen> {
                       ),
                       Row(
                         children: [
-                          Text('Open', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w800, color: const Color(0xFFE5A93C))),
+                          Text('Open', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.electricCyan)),
                           const SizedBox(width: 4),
-                          const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFFE5A93C)),
+                          const Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.electricCyan),
                         ],
                       ),
                     ],
@@ -928,11 +918,11 @@ class _LandingScreenState extends State<LandingScreen> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: const Color(0xFFE5A93C).withOpacity(0.18),
+              color: AppColors.electricCyan.withOpacity(0.18),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
-              child: Text(num, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C))),
+              child: Text(num, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.electricCyan)),
             ),
           ),
           const SizedBox(height: 16),
@@ -970,9 +960,9 @@ class _LandingScreenState extends State<LandingScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     decoration: BoxDecoration(
-                      color: isSel ? const Color(0xFFE5A93C) : const Color(0xFF141720),
+                      color: isSel ? AppColors.primaryBlue : const Color(0xFF141720),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: isSel ? const Color(0xFFE5A93C) : const Color(0xFF26334D)),
+                      border: Border.all(color: isSel ? AppColors.electricCyan : const Color(0xFF26334D)),
                     ),
                     child: Text(
                       net,
@@ -1016,7 +1006,7 @@ class _LandingScreenState extends State<LandingScreen> {
                     const SizedBox(height: 4),
                     Text(p['validity'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF94A3B8))),
                     const Spacer(),
-                    Text('₦${p["price"]}', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C))),
+                    Text('₦${p["price"]}', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.electricCyan)),
                   ],
                 ),
               );
@@ -1108,8 +1098,8 @@ class _LandingScreenState extends State<LandingScreen> {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: const Color(0xFFE5A93C).withOpacity(0.18), shape: BoxShape.circle),
-                      child: Icon(r['icon'] as IconData, color: const Color(0xFFE5A93C), size: 18),
+                      decoration: BoxDecoration(color: AppColors.electricCyan.withOpacity(0.18), shape: BoxShape.circle),
+                      child: Icon(r['icon'] as IconData, color: AppColors.electricCyan, size: 18),
                     ),
                     const SizedBox(height: 12),
                     Text(r['title'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
@@ -1184,7 +1174,7 @@ class _LandingScreenState extends State<LandingScreen> {
           Row(
             children: List.generate(
               5,
-              (_) => const Icon(Icons.star_rounded, color: Color(0xFFE5A93C), size: 18),
+              (_) => const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 18),
             ),
           ),
           const SizedBox(height: 14),
@@ -1197,8 +1187,8 @@ class _LandingScreenState extends State<LandingScreen> {
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: const Color(0xFFE5A93C),
-                child: Text(rev['initials']!, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.black)),
+                backgroundColor: AppColors.primaryBlue,
+                child: Text(rev['initials']!, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white)),
               ),
               const SizedBox(width: 10),
               Column(
@@ -1225,7 +1215,7 @@ class _LandingScreenState extends State<LandingScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF141720),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFE5A93C).withOpacity(0.3)),
+        border: Border.all(color: AppColors.electricCyan.withOpacity(0.3)),
       ),
       child: isDesktop
           ? Row(
@@ -1235,7 +1225,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('ON YOUR PHONE', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C), letterSpacing: 1.0)),
+                      Text('ON YOUR PHONE', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.electricCyan, letterSpacing: 1.0)),
                       const SizedBox(height: 8),
                       Text('Your shop counter fits in your pocket', style: GoogleFonts.plusJakartaSans(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
                       const SizedBox(height: 10),
@@ -1244,8 +1234,8 @@ class _LandingScreenState extends State<LandingScreen> {
                       ElevatedButton(
                         onPressed: () => context.push('/register'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE5A93C),
-                          foregroundColor: Colors.black,
+                          backgroundColor: AppColors.primaryBlue,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -1271,7 +1261,7 @@ class _LandingScreenState extends State<LandingScreen> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('ON YOUR PHONE', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C))),
+                Text('ON YOUR PHONE', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.electricCyan)),
                 const SizedBox(height: 8),
                 Text('Your shop counter fits in your pocket', style: GoogleFonts.plusJakartaSans(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
                 const SizedBox(height: 16),
@@ -1285,8 +1275,8 @@ class _LandingScreenState extends State<LandingScreen> {
                   child: ElevatedButton(
                     onPressed: () => context.push('/register'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE5A93C),
-                      foregroundColor: Colors.black,
+                      backgroundColor: AppColors.primaryBlue,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -1343,7 +1333,7 @@ class _LandingScreenState extends State<LandingScreen> {
                         faq['q'] as String,
                         style: GoogleFonts.plusJakartaSans(fontSize: 14.5, fontWeight: FontWeight.w800, color: Colors.white),
                       ),
-                      iconColor: const Color(0xFFE5A93C),
+                      iconColor: AppColors.electricCyan,
                       collapsedIconColor: Colors.grey,
                       children: [
                         Padding(
@@ -1402,8 +1392,8 @@ class _LandingScreenState extends State<LandingScreen> {
                     icon: const Icon(Icons.arrow_forward_rounded, size: 16),
                     label: Text('Create free account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE5A93C),
-                      foregroundColor: Colors.black,
+                      backgroundColor: AppColors.primaryBlue,
+                      foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -1448,17 +1438,11 @@ class _LandingScreenState extends State<LandingScreen> {
                         children: [
                           Row(
                             children: [
-                              Container(
-                                width: 28,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF141720),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: const Color(0xFFD4AF37)),
-                                ),
-                                child: const Center(
-                                  child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold, fontSize: 14)),
-                                ),
+                              const AvotekLogo(
+                                size: 28,
+                                hasFrame: true,
+                                showText: false,
+                                borderRadius: 8,
                               ),
                               const SizedBox(width: 8),
                               Text('Avotek', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
@@ -1510,17 +1494,11 @@ class _LandingScreenState extends State<LandingScreen> {
                   children: [
                     Row(
                       children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF141720),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFD4AF37)),
-                          ),
-                          child: const Center(
-                            child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold, fontSize: 14)),
-                          ),
+                        const AvotekLogo(
+                          size: 28,
+                          hasFrame: true,
+                          showText: false,
+                          borderRadius: 8,
                         ),
                         const SizedBox(width: 8),
                         Text('Avotek', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
@@ -1552,7 +1530,7 @@ class _LandingScreenState extends State<LandingScreen> {
               ),
               Text(
                 'Avotek VTU Platform',
-                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFFD4AF37), fontWeight: FontWeight.w700),
+                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.electricCyan, fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -1590,7 +1568,7 @@ class _LandingScreenState extends State<LandingScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           decoration: BoxDecoration(
-            color: const Color(0xFFE5A93C).withOpacity(0.12),
+            color: AppColors.electricCyan.withOpacity(0.12),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
@@ -1599,7 +1577,7 @@ class _LandingScreenState extends State<LandingScreen> {
               fontSize: 11,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.8,
-              color: const Color(0xFFE5A93C),
+              color: AppColors.electricCyan,
             ),
           ),
         ),

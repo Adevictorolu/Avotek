@@ -93,17 +93,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: isDark ? const Color(0xFF14171E) : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
-          side: BorderSide(color: isDark ? const Color(0xFFD4AF37).withOpacity(0.3) : const Color(0xFFE2E8F0)),
+          side: BorderSide(color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0)),
         ),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFD4AF37).withOpacity(0.15),
+                color: const Color(0xFF0052FF).withOpacity(0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.account_balance_rounded, color: Color(0xFFD4AF37), size: 22),
+              child: const Icon(Icons.account_balance_rounded, color: Color(0xFF00D2FF), size: 22),
             ),
             const SizedBox(width: 12),
             Text(
@@ -135,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark ? const Color(0xFFD4AF37).withOpacity(0.4) : const Color(0xFFCBD5E1),
+                    color: isDark ? const Color(0xFF23304B) : const Color(0xFFCBD5E1),
                   ),
                 ),
                 child: Column(
@@ -143,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('ACCOUNT NUMBER', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFFD4AF37))),
+                        Text('ACCOUNT NUMBER', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF00D2FF))),
                         InkWell(
                           onTap: () {
                             Clipboard.setData(ClipboardData(text: accountNumber));
@@ -153,9 +153,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           },
                           child: Row(
                             children: [
-                              const Icon(Icons.copy_rounded, size: 14, color: Color(0xFFD4AF37)),
+                              const Icon(Icons.copy_rounded, size: 14, color: Color(0xFF00D2FF)),
                               const SizedBox(width: 4),
-                              Text('COPY', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: const Color(0xFFD4AF37))),
+                              Text('COPY', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: const Color(0xFF00D2FF))),
                             ],
                           ),
                         ),
@@ -221,8 +221,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(width: 8),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFD4AF37),
-                            foregroundColor: const Color(0xFF0A0E17),
+                            backgroundColor: AppColors.primaryBlue,
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           ),
                           onPressed: () async {
@@ -275,7 +275,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         title: Row(
           children: [
-            const Icon(Icons.arrow_downward_rounded, color: Color(0xFFF5A623)),
+            const Icon(Icons.arrow_downward_rounded, color: AppColors.electricCyan),
             const SizedBox(width: 10),
             Text('Withdraw to Bank', style: GoogleFonts.plusJakartaSans(fontSize: 17, fontWeight: FontWeight.w800)),
           ],
@@ -311,8 +311,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF5A623),
-              foregroundColor: Colors.black,
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
             ),
             onPressed: () {
               Navigator.pop(ctx);
@@ -407,11 +407,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: isDark ? const Color(0xFF14171E) : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
-          side: BorderSide(color: isDark ? const Color(0xFFD4AF37).withOpacity(0.3) : const Color(0xFFE2E8F0)),
+          side: BorderSide(color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0)),
         ),
         title: Row(
           children: [
-            const Icon(Icons.group_add_rounded, color: Color(0xFFD4AF37)),
+            const Icon(Icons.group_add_rounded, color: Color(0xFF00D2FF)),
             const SizedBox(width: 10),
             Text('Refer & Earn 2%', style: GoogleFonts.plusJakartaSans(fontSize: 17, fontWeight: FontWeight.w800)),
           ],
@@ -430,14 +430,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFD4AF37)),
+                border: Border.all(color: const Color(0xFF00D2FF)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(code, style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37), letterSpacing: 1.5)),
+                  Text(code, style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: const Color(0xFF00D2FF), letterSpacing: 1.5)),
                   IconButton(
-                    icon: const Icon(Icons.copy_rounded, color: Color(0xFFD4AF37), size: 18),
+                    icon: const Icon(Icons.copy_rounded, color: Color(0xFF00D2FF), size: 18),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: code));
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -452,7 +452,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         actions: [
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD4AF37), foregroundColor: Colors.black),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue, foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx),
             child: Text('Done', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
           ),
@@ -492,7 +492,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           RefreshIndicator(
             onRefresh: _loadData,
-            color: const Color(0xFFD4AF37),
+            color: AppColors.primaryCyan,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.symmetric(
@@ -608,10 +608,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             right: 24,
             bottom: 24,
             child: Material(
-              color: const Color(0xFFF5A623), // Bilal Sub Yellow
+              color: AppColors.primaryBlue,
               shape: const CircleBorder(),
               elevation: 8,
-              shadowColor: Colors.black.withOpacity(0.4),
+              shadowColor: AppColors.primaryBlue.withOpacity(0.4),
               child: InkWell(
                 onTap: _launchWhatsApp,
                 customBorder: const CircleBorder(),
@@ -620,7 +620,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   height: 54,
                   child: Icon(
                     Icons.chat_bubble_rounded,
-                    color: Color(0xFF0A0E17),
+                    color: Colors.white,
                     size: 24,
                   ),
                 ),
@@ -712,7 +712,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         color: isDark ? const Color(0xFF15171F) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark ? const Color(0xFFD4AF37).withOpacity(0.3) : const Color(0xFFE2E8F0),
+          color: isDark ? AppColors.electricCyan.withOpacity(0.3) : const Color(0xFFE2E8F0),
           width: 1.2,
         ),
         boxShadow: [
@@ -735,7 +735,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFFE5A93C),
+                  color: AppColors.electricCyan,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -757,7 +757,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE5A93C)),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.electricCyan),
                           )
                         : Icon(
                             Icons.refresh_rounded,
@@ -801,8 +801,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE5A93C), // Gold
-                    foregroundColor: const Color(0xFF0A0E17),
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 0,
@@ -903,10 +903,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5A623).withOpacity(0.15),
+                  color: AppColors.electricCyan.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.wifi_rounded, color: Color(0xFFF5A623), size: 22),
+                child: const Icon(Icons.wifi_rounded, color: AppColors.electricCyan, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -959,7 +959,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // --- Services Grid (20 Services matching Bilal Sub Screenshots 1 & 2) ---
+  // --- Services Grid (Matching authentic BigiSub & Avotek VTU services) ---
   Widget _buildServicesGrid(bool isDesktop, bool isDark) {
     final services = [
       {'title': 'Buy Data', 'icon': Icons.wifi_rounded, 'color': const Color(0xFF00A3FF), 'route': '/services/data'},
@@ -968,18 +968,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       {'title': 'Electricity', 'icon': Icons.flash_on_rounded, 'color': const Color(0xFFEAB308), 'route': '/services/electricity'},
       {'title': 'Cable TV', 'icon': Icons.tv_rounded, 'color': const Color(0xFF8B5CF6), 'route': '/services/tv'},
       {'title': 'Bulk SMS', 'icon': Icons.sms_rounded, 'color': const Color(0xFF6366F1), 'action': () => _showComingSoon('Bulk SMS')},
-      {'title': 'Bonus Transfer', 'icon': Icons.card_giftcard_rounded, 'color': const Color(0xFFF5A623), 'action': () => _showComingSoon('Bonus Transfer')},
-      {'title': 'Send to User', 'icon': Icons.send_rounded, 'color': const Color(0xFF10B981), 'action': _showSendToUserDialog},
-      {'title': 'Withdraw', 'icon': Icons.arrow_downward_rounded, 'color': const Color(0xFFF97316), 'action': _showWithdrawDialog},
-      {'title': 'Virtual Cards', 'icon': Icons.credit_card_rounded, 'color': const Color(0xFFA855F7), 'action': () => _showComingSoon('Virtual USD/NGN Cards')},
-      {'title': 'Gift Cards', 'icon': Icons.redeem_rounded, 'color': const Color(0xFFEC4899), 'action': () => _showComingSoon('Gift Cards Exchange')},
-      {'title': 'eSIM', 'icon': Icons.sim_card_rounded, 'color': const Color(0xFF06B6D4), 'action': () => _showComingSoon('Global Travel eSIM')},
-      {'title': 'Flight', 'icon': Icons.flight_takeoff_rounded, 'color': const Color(0xFF38BDF8), 'action': () => _showComingSoon('Domestic & International Flight Booking')},
-      {'title': 'Smile', 'icon': Icons.sentiment_satisfied_alt_rounded, 'color': const Color(0xFF22C55E), 'action': () => _showComingSoon('Smile 4G LTE Top-up')},
-      {'title': 'Alpha', 'icon': Icons.looks_one_rounded, 'color': const Color(0xFF00A3FF), 'action': () => _showComingSoon('Alpha Topup')},
-      {'title': 'Kirani', 'icon': Icons.diamond_outlined, 'color': const Color(0xFFD4AF37), 'action': () => _showComingSoon('Kirani PIN')},
       {'title': 'Data Card', 'icon': Icons.nfc_rounded, 'color': const Color(0xFF2563EB), 'action': () => _showComingSoon('Data Card Printing')},
       {'title': 'Recharge Card', 'icon': Icons.receipt_rounded, 'color': const Color(0xFFF97316), 'action': () => _showComingSoon('Recharge Card Printing')},
+      {'title': 'Send to User', 'icon': Icons.send_rounded, 'color': const Color(0xFF10B981), 'action': _showSendToUserDialog},
+      {'title': 'Withdraw', 'icon': Icons.arrow_downward_rounded, 'color': const Color(0xFF00D2FF), 'action': _showWithdrawDialog},
+      {'title': 'Bonus Transfer', 'icon': Icons.card_giftcard_rounded, 'color': const Color(0xFF0052FF), 'action': () => _showComingSoon('Bonus Transfer')},
+      {'title': 'Fund Wallet', 'icon': Icons.account_balance_wallet_rounded, 'color': const Color(0xFF10B981), 'route': '/wallet/fund'},
     ];
 
     final crossAxisCount = isDesktop ? 4 : 2;
@@ -1089,7 +1083,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         color: isDark ? const Color(0xFF141720) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFFD4AF37).withOpacity(0.25) : const Color(0xFFE2E8F0),
+          color: isDark ? AppColors.electricCyan.withOpacity(0.25) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Row(
@@ -1098,10 +1092,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: const Color(0xFFD4AF37).withOpacity(0.15),
+              color: AppColors.electricCyan.withOpacity(0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.people_alt_rounded, color: Color(0xFFD4AF37), size: 22),
+            child: const Icon(Icons.people_alt_rounded, color: AppColors.electricCyan, size: 22),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -1131,8 +1125,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ElevatedButton(
             onPressed: _showReferralDialog,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF5A623), // Bilal Sub Gold
-              foregroundColor: const Color(0xFF0A0E17),
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               elevation: 0,

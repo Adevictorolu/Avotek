@@ -67,38 +67,45 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at center, #111827 0%, #0A0E17 100%);
+      background: radial-gradient(circle at center, #111827 0%, #0B101D 100%);
       z-index: 999999;
       transition: opacity 0.5s ease-out;
     }
-    .logo-container {
+    .logo-progress-wrapper {
+      position: relative;
+      width: 96px;
+      height: 96px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
+      justify-content: center;
     }
-    .brand-title {
-      color: #F8FAFC;
-      font-size: 26px;
-      font-weight: 800;
-      letter-spacing: 2px;
-    }
-    .brand-sub {
-      color: #00A3FF;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-top: 4px;
-    }
-    .spinner {
-      width: 44px;
-      height: 44px;
-      border: 3px solid rgba(0, 163, 255, 0.15);
+    .progress-ring {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 3.5px solid rgba(0, 210, 255, 0.15);
+      border-top-color: #00D2FF;
+      border-right-color: #0052FF;
       border-radius: 50%;
-      border-top-color: #00A3FF;
-      border-right-color: #0084D6;
-      animation: spin 0.8s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+      animation: spin 1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+    }
+    .logo-frame {
+      width: 62px;
+      height: 62px;
+      border-radius: 18px;
+      background: #131B2E;
+      border: 1.5px solid #23304B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 24px rgba(0, 82, 255, 0.25);
+    }
+    .logo-frame img {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      border-radius: 12px;
     }
     @keyframes spin {
       to { transform: rotate(360deg); }
@@ -107,13 +114,12 @@
 </head>
 <body>
   <div id="loading-indicator">
-    <div class="logo-container">
-      <div style="text-align: center;">
-        <div class="brand-title">AVOTEK</div>
-        <div class="brand-sub">Leveraging Technology in Education</div>
+    <div class="logo-progress-wrapper">
+      <div class="progress-ring"></div>
+      <div class="logo-frame">
+        <img src="assets/images/logo.png" onerror="this.src='favicon.png'" alt="Avotek Logo" />
       </div>
     </div>
-    <div class="spinner"></div>
   </div>
 
   <script>

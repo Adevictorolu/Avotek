@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/database/app_database.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 
 class FundWalletScreen extends StatefulWidget {
@@ -97,11 +98,11 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
         backgroundColor: isDark ? const Color(0xFF141720) : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
+          side: const BorderSide(color: Color(0xFF23304B), width: 1.5),
         ),
         title: Row(
           children: [
-            const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFFD4AF37), size: 24),
+            const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF00D2FF), size: 24),
             const SizedBox(width: 10),
             Text(
               'Update Receiving Account',
@@ -169,8 +170,8 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD4AF37),
-              foregroundColor: Colors.black,
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () async {
@@ -262,8 +263,8 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                     if (isAdmin)
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFFD4AF37),
-                          side: const BorderSide(color: Color(0xFFD4AF37)),
+                          foregroundColor: const Color(0xFF00D2FF),
+                          side: const BorderSide(color: Color(0xFF00D2FF)),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         ),
@@ -366,20 +367,20 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFD4AF37).withOpacity(0.15),
+                                color: const Color(0xFF00D2FF).withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.4)),
+                                border: Border.all(color: const Color(0xFF00D2FF).withOpacity(0.4)),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.copy_rounded, size: 14, color: Color(0xFFD4AF37)),
+                                  const Icon(Icons.copy_rounded, size: 14, color: Color(0xFF00D2FF)),
                                   const SizedBox(width: 6),
                                   Text(
                                     'COPY',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w900,
-                                      color: const Color(0xFFD4AF37),
+                                      color: const Color(0xFF00D2FF),
                                     ),
                                   ),
                                 ],
@@ -436,7 +437,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFFD4AF37),
+                                color: const Color(0xFF00D2FF),
                               ),
                             ),
                           ],
@@ -517,7 +518,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         keyboardType: TextInputType.number,
                         style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800),
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.currency_pound, color: Color(0xFFD4AF37)),
+                          prefixIcon: const Icon(Icons.currency_pound, color: Color(0xFF00D2FF)),
                           hintText: 'Enter amount (e.g. 5000)',
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                           filled: true,
@@ -609,7 +610,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.info_outline_rounded, color: Color(0xFFF5A623), size: 22),
+                      Icon(Icons.info_outline_rounded, color: AppColors.electricCyan, size: 22),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

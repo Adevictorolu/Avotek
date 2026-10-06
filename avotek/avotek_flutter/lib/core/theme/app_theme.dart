@@ -4,7 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 class AppColors {
   // Brand Colors from AVOTEK Logo
   static const Color primaryCyan = Color(0xFF00A3FF); // Electric Cyan
-  static const Color primaryBlue = Color(0xFF0084D6); // Deep Electric Blue
+  static const Color electricCyan = Color(0xFF00D2FF); // Vivid Electric Cyan
+  static const Color primaryBlue = Color(0xFF0052FF); // Vivid Royal Blue
+  static const Color deepElectricBlue = Color(0xFF0084D6);
   static const Color slateGrey = Color(0xFF64748B); // Circuit Grey
   static const Color metallicLight = Color(0xFF94A3B8);
   static const Color darkBg = Color(0xFF0A0E17); // Deep Obsidian

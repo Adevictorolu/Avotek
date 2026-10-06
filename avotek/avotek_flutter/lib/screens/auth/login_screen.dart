@@ -58,140 +58,180 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleGoogleSignIn() async {
     final auth = context.read<AuthProvider>();
 
-    final accounts = [
-      {'name': 'Adevictorolu', 'email': 'adevictorolu@avotek.africa'},
-      {'name': 'Victor Olorunfemi', 'email': 'adevotekofficial@gmail.com'},
-    ];
-
-    final customEmailCtrl = TextEditingController();
-    final customNameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final nameCtrl = TextEditingController();
 
     final selected = await showDialog<Map<String, String>>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF0F172A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
-          side: const BorderSide(color: Color(0xFF23304B)),
-        ),
-        title: Row(
-          children: [
-            _buildGoogleIcon(size: 24),
-            const SizedBox(width: 12),
-            Text(
-              'Sign in with Google',
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w800,
-                fontSize: 17,
-                color: Colors.white,
+      builder: (ctx) {
+        String? errorText;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF0F172A),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+                side: const BorderSide(color: Color(0xFF23304B)),
               ),
-            ),
-          ],
-        ),
-        content: SizedBox(
-          width: 380,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Choose an account to continue to Avotek (Client: 499643353122):',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF94A3B8),
+              title: Row(
+                children: [
+                  _buildGoogleIcon(size: 24),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Sign in with Google',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: 400,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF131B2E),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF23304B)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.verified_user_outlined, size: 16, color: AppColors.electricCyan),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Avotek OAuth Client: 499643353122',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF94A3B8),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Google Account Email',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'name@gmail.com',
+                        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
+                        prefixIcon: const Icon(Icons.alternate_email_rounded, color: AppColors.electricCyan, size: 18),
+                        filled: true,
+                        fillColor: const Color(0xFF131B2E),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF23304B)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF23304B)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.electricCyan, width: 1.5),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Full Name (Optional)',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: nameCtrl,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. Victor Olorunfemi',
+                        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
+                        prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.electricCyan, size: 18),
+                        filled: true,
+                        fillColor: const Color(0xFF131B2E),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF23304B)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF23304B)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.electricCyan, width: 1.5),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      ),
+                    ),
+                    if (errorText != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        errorText!,
+                        style: GoogleFonts.plusJakartaSans(color: AppColors.error, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              for (final acc in accounts)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: Color(0xFF23304B)),
-                    ),
-                    tileColor: const Color(0xFF131B2E),
-                    leading: CircleAvatar(
-                      backgroundColor: AppColors.primaryBlue,
-                      child: Text(
-                        acc['name']![0],
-                        style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    title: Text(
-                      acc['name']!,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: Colors.white,
-                      ),
-                    ),
-                    subtitle: Text(
-                      acc['email']!,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        color: const Color(0xFF94A3B8),
-                      ),
-                    ),
-                    onTap: () => Navigator.pop(ctx, acc),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8))),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
+                  onPressed: () {
+                    final em = emailCtrl.text.trim();
+                          final nm = nameCtrl.text.trim();
+                          if (em.isEmpty || !em.contains('@')) {
+                            setDialogState(() => errorText = 'Please enter a valid Google email address');
+                            return;
+                          }
+                          Navigator.pop(ctx, {
+                            'name': nm.isNotEmpty ? nm : em.split('@')[0],
+                            'email': em,
+                          });
+                        },
+                  child: Text(
+                    'Sign In with Google',
+                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13),
                   ),
                 ),
-              const SizedBox(height: 10),
-              const Divider(color: Color(0xFF23304B)),
-              const SizedBox(height: 8),
-              Text(
-                'Or use another Google account:',
-                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: customNameCtrl,
-                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Your Full Name',
-                  hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 12),
-                  filled: true,
-                  fillColor: const Color(0xFF131B2E),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF23304B))),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: customEmailCtrl,
-                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'user@gmail.com',
-                  hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 12),
-                  filled: true,
-                  fillColor: const Color(0xFF131B2E),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF23304B))),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue, foregroundColor: Colors.white),
-            onPressed: () {
-              final em = customEmailCtrl.text.trim();
-              final nm = customNameCtrl.text.trim();
-              if (em.isNotEmpty) {
-                Navigator.pop(ctx, {'name': nm.isNotEmpty ? nm : em.split('@')[0], 'email': em});
-              }
-            },
-            child: Text('Continue', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+              ],
+            );
+          },
+        );
+      },
     );
 
     if (selected != null && mounted) {

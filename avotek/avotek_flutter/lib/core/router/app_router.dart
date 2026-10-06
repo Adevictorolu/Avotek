@@ -13,7 +13,6 @@ import '../../screens/profile/student_profile_screen.dart';
 import '../../screens/rates/pricing_screen.dart';
 import '../../screens/services/airtime_screen.dart';
 import '../../screens/services/cable_screen.dart';
-import '../../screens/services/cac_screen.dart';
 import '../../screens/services/data_screen.dart';
 import '../../screens/services/electricity_screen.dart';
 import '../../screens/transactions/transactions_screen.dart';
@@ -164,13 +163,10 @@ class AppRouter {
             const CableScreen(),
           ),
         ),
+        // CAC and Betting removed from offered services to match BigiSub VTU model
         GoRoute(
           path: '/services/cac',
-          pageBuilder: (context, state) => buildAvotekTransitionPage(
-            context,
-            state,
-            const CacScreen(),
-          ),
+          redirect: (context, state) => '/dashboard',
         ),
         // Betting is removed from offered services
         GoRoute(
