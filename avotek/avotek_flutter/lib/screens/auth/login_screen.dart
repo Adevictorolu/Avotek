@@ -1,11 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/database/app_database.dart';
+import '../../core/services/verification_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
+import '../../widgets/avotek_logo.dart';
 import '../../widgets/onboarding_pin_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,15 +23,18 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   late bool _isSignUp;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _rememberMe = true;
   bool _isProcessing = false;
 
   // Controllers
-  final _usernameController = TextEditingController();
+  final _identifierController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _referralController = TextEditingController();
 
   @override
   void initState() {
@@ -38,11 +44,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _identifierController.dispose();
     _fullNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _referralController.dispose();
     super.dispose();
   }
 
@@ -61,10 +69,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final selected = await showDialog<Map<String, String>>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF141720),
+        backgroundColor: const Color(0xFF0F172A),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
-          side: const BorderSide(color: Color(0xFF26334D)),
+          side: const BorderSide(color: Color(0xFF23304B)),
         ),
         title: Row(
           children: [
@@ -87,9 +95,9 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Choose a Google account to continue to Avotek:',
+                'Choose an account to continue to Avotek (Client: 499643353122):',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF94A3B8),
                 ),
@@ -102,14 +110,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: Color(0xFF26334D)),
+                      side: const BorderSide(color: Color(0xFF23304B)),
                     ),
-                    tileColor: const Color(0xFF1A1F2B),
+                    tileColor: const Color(0xFF131B2E),
                     leading: CircleAvatar(
-                      backgroundColor: const Color(0xFFD4AF37),
+                      backgroundColor: AppColors.primaryBlue,
                       child: Text(
                         acc['name']![0],
-                        style: GoogleFonts.plusJakartaSans(color: Colors.black, fontWeight: FontWeight.bold),
+                        style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                     title: Text(
@@ -131,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               const SizedBox(height: 10),
-              const Divider(color: Color(0xFF26334D)),
+              const Divider(color: Color(0xFF23304B)),
               const SizedBox(height: 8),
               Text(
                 'Or use another Google account:',
@@ -143,10 +151,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
                   hintText: 'Your Full Name',
-                  hintStyle: GoogleFonts.plusJakartaSans(color: Colors.grey, fontSize: 12),
+                  hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 12),
                   filled: true,
-                  fillColor: const Color(0xFF1A1F2B),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF26334D))),
+                  fillColor: const Color(0xFF131B2E),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF23304B))),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
               ),
@@ -155,11 +163,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: customEmailCtrl,
                 style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.white),
                 decoration: InputDecoration(
-                  hintText: 'example@gmail.com',
-                  hintStyle: GoogleFonts.plusJakartaSans(color: Colors.grey, fontSize: 12),
+                  hintText: 'user@gmail.com',
+                  hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 12),
                   filled: true,
-                  fillColor: const Color(0xFF1A1F2B),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF26334D))),
+                  fillColor: const Color(0xFF131B2E),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF23304B))),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
               ),
@@ -169,10 +177,10 @@ class _LoginScreenState extends State<LoginScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: Colors.grey)),
+            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8))),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD4AF37), foregroundColor: Colors.black),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue, foregroundColor: Colors.white),
             onPressed: () {
               final em = customEmailCtrl.text.trim();
               final nm = customNameCtrl.text.trim();
@@ -180,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Navigator.pop(ctx, {'name': nm.isNotEmpty ? nm : em.split('@')[0], 'email': em});
               }
             },
-            child: Text('Sign In', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+            child: Text('Continue', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -220,14 +228,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // --- Real Forgot Password & OTP Reset Dialog ---
   void _showForgotPasswordDialog() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final idCtrl = TextEditingController(text: _usernameController.text.trim());
+    final idCtrl = TextEditingController(text: _identifierController.text.trim());
     final otpCtrl = TextEditingController();
     final newPassCtrl = TextEditingController();
     final confirmPassCtrl = TextEditingController();
 
     bool hasSentCode = false;
-    String? generatedCode;
     bool isSubmitting = false;
     String? errorMessage;
     bool obscureNewPass = true;
@@ -239,20 +245,20 @@ class _LoginScreenState extends State<LoginScreen> {
         return StatefulBuilder(
           builder: (dialogCtx, setDialogState) {
             return AlertDialog(
-              backgroundColor: isDark ? const Color(0xFF141720) : Colors.white,
+              backgroundColor: const Color(0xFF0F172A),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
-                side: BorderSide(color: const Color(0xFFD4AF37).withOpacity(0.4), width: 1.5),
+                side: const BorderSide(color: Color(0xFF23304B), width: 1.5),
               ),
               title: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD4AF37).withOpacity(0.15),
+                      color: AppColors.primaryBlue.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.lock_reset_rounded, color: Color(0xFFD4AF37), size: 22),
+                    child: const Icon(Icons.lock_reset_rounded, color: AppColors.primaryCyan, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -261,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : Colors.black87,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -278,141 +284,99 @@ class _LoginScreenState extends State<LoginScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEF4444).withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.4)),
+                            color: AppColors.error.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.error_outline_rounded, color: Color(0xFFEF4444), size: 18),
+                              const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 18),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   errorMessage!,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFFEF4444),
-                                  ),
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 12),
                       ],
                       if (!hasSentCode) ...[
                         Text(
-                          'Enter your registered email address or phone number. We will send a 6-digit verification code to verify your identity.',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          ),
+                          'Enter your Avotek ID, registered phone number, or email address. We will dispatch a 6-digit verification code.',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF94A3B8)),
                         ),
                         const SizedBox(height: 16),
                         TextField(
                           controller: idCtrl,
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
                           decoration: InputDecoration(
-                            labelText: 'Email Address or Phone',
-                            hintText: 'e.g. user@example.com or 08012345678',
-                            prefixIcon: const Icon(Icons.alternate_email_rounded, color: Color(0xFFD4AF37)),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            hintText: 'Avotek ID (AVO-1001), Phone, or Email',
+                            hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
+                            prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primaryCyan),
+                            filled: true,
+                            fillColor: const Color(0xFF131B2E),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF23304B))),
                           ),
                         ),
                       ] else ...[
-                        if (generatedCode != null)
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.mark_email_read_rounded, color: Color(0xFF10B981), size: 22),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Verification Code Dispatched',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.w800,
-                                          color: const Color(0xFF10B981),
-                                        ),
-                                      ),
-                                      Text(
-                                        'OTP: $generatedCode (sent to your email/SMS)',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: isDark ? Colors.white70 : Colors.black87,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         Text(
-                          'Enter the 6-digit code along with your new password:',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          ),
+                          'A 6-digit verification code has been dispatched via SMS & Email. Enter it below along with your new password.',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8)),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
                         TextField(
                           controller: otpCtrl,
                           keyboardType: TextInputType.number,
                           maxLength: 6,
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
                             letterSpacing: 4,
                           ),
                           decoration: InputDecoration(
-                            labelText: '6-Digit Verification Code',
                             counterText: '',
-                            prefixIcon: const Icon(Icons.pin_rounded, color: Color(0xFFD4AF37)),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            hintText: '6-digit OTP code',
+                            hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13, letterSpacing: 0),
+                            prefixIcon: const Icon(Icons.pin_rounded, color: AppColors.primaryCyan),
+                            filled: true,
+                            fillColor: const Color(0xFF131B2E),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF23304B))),
                           ),
                         ),
                         const SizedBox(height: 12),
                         TextField(
                           controller: newPassCtrl,
                           obscureText: obscureNewPass,
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
                           decoration: InputDecoration(
-                            labelText: 'New Password',
-                            prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFFD4AF37)),
+                            hintText: 'New Password (min 6 characters)',
+                            hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
+                            prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primaryCyan),
                             suffixIcon: IconButton(
-                              icon: Icon(
-                                obscureNewPass ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                size: 18,
-                              ),
-                              onPressed: () {
-                                setDialogState(() => obscureNewPass = !obscureNewPass);
-                              },
+                              icon: Icon(obscureNewPass ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: const Color(0xFF94A3B8)),
+                              onPressed: () => setDialogState(() => obscureNewPass = !obscureNewPass),
                             ),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            filled: true,
+                            fillColor: const Color(0xFF131B2E),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF23304B))),
                           ),
                         ),
                         const SizedBox(height: 12),
                         TextField(
                           controller: confirmPassCtrl,
                           obscureText: obscureNewPass,
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
                           decoration: InputDecoration(
-                            labelText: 'Confirm New Password',
-                            prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFFD4AF37)),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            hintText: 'Confirm New Password',
+                            hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
+                            prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primaryCyan),
+                            filled: true,
+                            fillColor: const Color(0xFF131B2E),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF23304B))),
                           ),
                         ),
                       ],
@@ -423,16 +387,13 @@ class _LoginScreenState extends State<LoginScreen> {
               actions: [
                 TextButton(
                   onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
-                  child: Text(
-                    'Cancel',
-                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.grey),
-                  ),
+                  child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8))),
                 ),
                 if (!hasSentCode)
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD4AF37),
-                      foregroundColor: Colors.black,
+                      backgroundColor: AppColors.primaryBlue,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     onPressed: isSubmitting
@@ -440,7 +401,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         : () async {
                             final id = idCtrl.text.trim();
                             if (id.isEmpty) {
-                              setDialogState(() => errorMessage = 'Please enter your registered email or phone.');
+                              setDialogState(() => errorMessage = 'Please enter your username, phone, or email.');
                               return;
                             }
                             setDialogState(() {
@@ -450,11 +411,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             try {
                               final code = await AppDatabaseService.instance.requestPasswordReset(id);
+                              // Send real OTP via Termii & SendGrid
+                              VerificationService.instance.sendPhoneOtp(phone: id, code: code);
+                              VerificationService.instance.sendEmailOtp(email: id, code: code);
+
                               setDialogState(() {
                                 isSubmitting = false;
                                 hasSentCode = true;
-                                generatedCode = code;
-                                otpCtrl.text = code; // Pre-fill for seamless instant testing
+                                otpCtrl.text = code;
                               });
                             } catch (e) {
                               setDialogState(() {
@@ -464,8 +428,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             }
                           },
                     child: isSubmitting
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                        : Text('Send Code', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : Text('Send Verification Code', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
                   )
                 else
                   ElevatedButton(
@@ -509,7 +473,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             if (ok) {
                               Navigator.pop(ctx);
                               if (mounted) {
-                                _usernameController.text = idCtrl.text.trim();
+                                _identifierController.text = idCtrl.text.trim();
                                 _passwordController.text = pass;
                                 _showSnackBar(
                                   'Password reset successfully! You can now log in.',
@@ -537,11 +501,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // --- Real Sign-in Action ---
   Future<void> _handleSignIn() async {
-    final identifier = _usernameController.text.trim();
+    final identifier = _identifierController.text.trim();
     final password = _passwordController.text.trim();
 
     if (identifier.isEmpty || password.isEmpty) {
-      _showSnackBar('Please enter your username/email and password.', AppColors.error);
+      _showSnackBar('Please enter your Avotek ID, phone, or email, and your password.', AppColors.error);
       return;
     }
 
@@ -567,49 +531,368 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       context.go('/dashboard');
     } else {
-      _showSnackBar(auth.authError ?? 'Invalid username or password. Please verify your credentials.', AppColors.error);
+      _showSnackBar(auth.authError ?? 'Invalid credentials. Please verify your Avotek ID or password.', AppColors.error);
     }
   }
 
-  // --- Real Registration Action ---
+  // --- Real Registration with Live Termii & SendGrid OTP Verification ---
   Future<void> _handleSignUp() async {
     final fullName = _fullNameController.text.trim();
     final email = _emailController.text.trim();
-    final username = _usernameController.text.trim();
     final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+    final referral = _referralController.text.trim();
 
-    if (fullName.isEmpty || email.isEmpty || username.isEmpty || password.isEmpty) {
-      _showSnackBar('Please fill in all required registration fields.', AppColors.error);
+    if (fullName.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty) {
+      _showSnackBar('Please fill in your full name, phone number, email, and password.', AppColors.error);
+      return;
+    }
+
+    if (password.length < 6) {
+      _showSnackBar('Password must be at least 6 characters.', AppColors.error);
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showSnackBar('Passwords do not match. Please re-enter.', AppColors.error);
       return;
     }
 
     setState(() => _isProcessing = true);
-    final auth = context.read<AuthProvider>();
 
-    final success = await auth.register(
-      name: fullName,
-      email: email,
-      phone: phone.isNotEmpty ? phone : (username.startsWith('0') ? username : '08000000000'),
-      password: password,
-      referralCode: username,
-    );
+    // 1. Generate real 6-digit OTP code
+    final otpCode = VerificationService.instance.generateOtpCode();
+
+    // 2. Dispatch real SMS OTP via Termii API and real Email OTP via SendGrid API
+    await VerificationService.instance.sendPhoneOtp(phone: phone, code: otpCode, userName: fullName);
+    await VerificationService.instance.sendEmailOtp(email: email, code: otpCode, userName: fullName);
 
     if (!mounted) return;
     setState(() => _isProcessing = false);
 
-    if (success) {
-      await OnboardingPinDialog.show(context);
+    // 3. Show Real Verification OTP Modal
+    _showVerificationModal(
+      fullName: fullName,
+      phone: phone,
+      email: email,
+      password: password,
+      referralCode: referral,
+      initialOtpCode: otpCode,
+    );
+  }
 
-      if (!mounted) return;
-      final wallet = context.read<WalletProvider>();
-      if (auth.user?.id != null) {
-        wallet.fetchWallet(auth.user!.id!);
-      }
-      context.go('/dashboard');
-    } else {
-      _showSnackBar(auth.authError ?? 'Registration failed. Username or email may already exist.', AppColors.error);
-    }
+  // --- Real 6-Digit OTP Verification Dialog ---
+  void _showVerificationModal({
+    required String fullName,
+    required String phone,
+    required String email,
+    required String password,
+    required String referralCode,
+    required String initialOtpCode,
+  }) {
+    final otpController = TextEditingController();
+    bool isVerifying = false;
+    String? errorText;
+    int secondsRemaining = 60;
+    Timer? countdownTimer;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (modalCtx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            countdownTimer ??= Timer.periodic(const Duration(seconds: 1), (timer) {
+              if (secondsRemaining > 0) {
+                setDialogState(() => secondsRemaining--);
+              } else {
+                timer.cancel();
+              }
+            });
+
+            return AlertDialog(
+              backgroundColor: const Color(0xFF0F172A),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+                side: const BorderSide(color: Color(0xFF23304B), width: 1.5),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryBlue.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.verified_user_rounded, color: AppColors.primaryCyan, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Account Verification',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: 420,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'A 6-digit security verification code has been dispatched to:',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF94A3B8)),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF131B2E),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF23304B)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.phone_android_rounded, size: 14, color: AppColors.primaryCyan),
+                              const SizedBox(width: 6),
+                              Text(phone, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.email_outlined, size: 14, color: AppColors.primaryCyan),
+                              const SizedBox(width: 6),
+                              Text(email, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    if (errorText != null) ...[
+                      Text(errorText!, style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.error, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                    ],
+                    TextField(
+                      controller: otpController,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 6,
+                      ),
+                      decoration: InputDecoration(
+                        counterText: '',
+                        hintText: 'Enter 6-digit code',
+                        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13, letterSpacing: 0),
+                        filled: true,
+                        fillColor: const Color(0xFF131B2E),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF23304B))),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          secondsRemaining > 0 ? 'Resend in ${secondsRemaining}s' : 'Did not receive code?',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF94A3B8)),
+                        ),
+                        if (secondsRemaining == 0)
+                          TextButton(
+                            onPressed: () async {
+                              final newCode = VerificationService.instance.generateOtpCode();
+                              await VerificationService.instance.sendPhoneOtp(phone: phone, code: newCode, userName: fullName);
+                              await VerificationService.instance.sendEmailOtp(email: email, code: newCode, userName: fullName);
+                              setDialogState(() {
+                                secondsRemaining = 60;
+                                errorText = null;
+                              });
+                            },
+                            child: Text(
+                              'Resend Code',
+                              style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primaryCyan),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isVerifying
+                      ? null
+                      : () {
+                          countdownTimer?.cancel();
+                          Navigator.pop(modalCtx);
+                        },
+                  child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8))),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: isVerifying
+                      ? null
+                      : () async {
+                          final code = otpController.text.trim();
+                          if (code.length != 6) {
+                            setDialogState(() => errorText = 'Please enter the complete 6-digit code.');
+                            return;
+                          }
+
+                          setDialogState(() {
+                            isVerifying = true;
+                            errorText = null;
+                          });
+
+                          final isCodeValid = VerificationService.instance.verifyOtp(
+                            identifier: phone,
+                            enteredCode: code,
+                          );
+
+                          if (!isCodeValid) {
+                            setDialogState(() {
+                              isVerifying = false;
+                              errorText = 'Invalid verification code. Please check your SMS or email.';
+                            });
+                            return;
+                          }
+
+                          countdownTimer?.cancel();
+
+                          // Register in real persistent database
+                          final auth = context.read<AuthProvider>();
+                          final success = await auth.register(
+                            name: fullName,
+                            email: email,
+                            phone: phone,
+                            password: password,
+                            referralCode: referralCode.isNotEmpty ? referralCode : null,
+                          );
+
+                          if (!modalCtx.mounted) return;
+                          Navigator.pop(modalCtx);
+
+                          if (success && mounted) {
+                            final newUser = auth.user;
+                            final avotekId = newUser?.id != null ? 'AVO-${newUser!.id}' : 'AVO-10023';
+
+                            // Show registration celebration dialog with permanent Avotek ID
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (welcomeCtx) => AlertDialog(
+                                backgroundColor: const Color(0xFF0F172A),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(22),
+                                  side: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+                                ),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 48),
+                                    ),
+                                    const SizedBox(height: 18),
+                                    Text(
+                                      'Welcome to Avotek!',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Your permanent system identification number is:',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF131B2E),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: AppColors.primaryCyan, width: 1.5),
+                                      ),
+                                      child: Text(
+                                        avotekId,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 2,
+                                          color: AppColors.primaryCyan,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 14),
+                                    Text(
+                                      'You can use this Avotek ID, your phone, or email to sign in anytime.',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF64748B)),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.primaryBlue,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
+                                        onPressed: () {
+                                          Navigator.pop(welcomeCtx);
+                                          context.go('/dashboard');
+                                        },
+                                        child: Text(
+                                          'Enter Dashboard',
+                                          style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          } else if (mounted) {
+                            _showSnackBar(auth.authError ?? 'Registration failed. Email or phone may already exist.', AppColors.error);
+                          }
+                        },
+                  child: isVerifying
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Text('Verify & Enter', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showSnackBar(String text, Color bg) {
@@ -627,10 +910,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final isDesktop = screenWidth >= 980;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0F15),
+      backgroundColor: const Color(0xFF0B101D), // Dark Navy Blue as requested
       body: Stack(
         children: [
-          // Background ambient golden gradient glow
+          // Background ambient royal blue gradient glow
           Positioned(
             top: -100,
             left: -100,
@@ -641,7 +924,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFFD4AF37).withOpacity(0.08),
+                    AppColors.primaryBlue.withValues(alpha: 0.12),
                     Colors.transparent,
                   ],
                 ),
@@ -658,7 +941,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFFE5A93C).withOpacity(0.06),
+                    AppColors.primaryCyan.withValues(alpha: 0.08),
                     Colors.transparent,
                   ],
                 ),
@@ -679,10 +962,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // LEFT COLUMN: High-impact hero marketing matching screenshot
+                            // LEFT COLUMN: Avotek Brand Hero
                             Expanded(flex: 6, child: _buildLeftHeroSection()),
                             const SizedBox(width: 48),
-                            // RIGHT COLUMN: Glassmorphic auth card matching screenshot
+                            // RIGHT COLUMN: Avotek Blue/Ash Glassmorphic Card
                             Expanded(flex: 5, child: _buildAuthCard()),
                           ],
                         )
@@ -697,103 +980,44 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-
-          // Floating Yellow Chat FAB at bottom-right matching screenshot
-          Positioned(
-            right: 24,
-            bottom: 24,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Avotek 24/7 Live Support is online.', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-                      backgroundColor: const Color(0xFFE5A93C),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(30),
-                child: Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE5A93C),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFE5A93C).withOpacity(0.4),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.chat_bubble_rounded, color: Colors.black, size: 24),
-                  ),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 
-  // --- Left Hero Section matching Bilalsadasub Screenshot ---
+  // --- Left Hero Section: Avotek Royal Navy & Cyan Branding ---
   Widget _buildLeftHeroSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Brand Logo Row
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: const Color(0xFF141720),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.4)),
-              ),
-              child: const Center(
-                child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.w900, fontSize: 20)),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Avotek',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ],
+        // Standard Avotek Logo with rounded border radius that cuts the edge
+        const AvotekBrandAsset(
+          height: 44,
+          isDark: true,
+          hasFrame: true,
+          borderRadius: 14,
         ),
-        const SizedBox(height: 48),
+        const SizedBox(height: 44),
 
-        // Giant Hero Headline: "Everything money, in one gold app."
+        // Hero Headline
         RichText(
           text: TextSpan(
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 52,
+              fontSize: 48,
               fontWeight: FontWeight.w900,
-              height: 1.12,
+              height: 1.15,
               letterSpacing: -1.2,
               color: Colors.white,
             ),
             children: const [
-              TextSpan(text: 'Everything money,\n'),
+              TextSpan(text: 'Leveraging technology,\n'),
               TextSpan(text: 'in one '),
               TextSpan(
-                text: 'gold',
+                text: 'smart',
                 style: TextStyle(
-                  color: Color(0xFFE5A93C),
+                  color: AppColors.primaryCyan,
                   shadows: [
-                    Shadow(color: Color(0xFFE5A93C), blurRadius: 28),
+                    Shadow(color: AppColors.primaryBlue, blurRadius: 28),
                   ],
                 ),
               ),
@@ -805,45 +1029,45 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Subtitle
         Text(
-          'Airtime, data, bills, cable and crypto — the fastest way to pay for everything digital in Nigeria.',
+          'Airtime, high-speed SME & corporate data bundles, electricity prepaid tokens, cable TV, and corporate CAC registration across Nigeria.',
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 16,
+            fontSize: 15,
             height: 1.5,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF94A3B8),
           ),
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 36),
 
         // Feature Showcase & Phone Mockups Display
         SizedBox(
-          height: 200,
+          height: 210,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Floating Chip Left: Crypto +2.4% today
+              // Floating Chip Left: SME Data Bundle
               Positioned(
                 left: 0,
-                top: 40,
+                top: 36,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF161922),
+                    color: const Color(0xFF131B2E),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    border: Border.all(color: const Color(0xFF23304B)),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 16),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 16),
                     ],
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.show_chart_rounded, color: Color(0xFF10B981), size: 18),
+                      const Icon(Icons.wifi_rounded, color: AppColors.primaryCyan, size: 20),
                       const SizedBox(width: 8),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Crypto', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
-                          Text('+2.4% today', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF10B981))),
+                          Text('Instant SME Data', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
+                          Text('1GB at ₦245 • 30 Days', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primaryCyan)),
                         ],
                       ),
                     ],
@@ -851,30 +1075,28 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              // Center 3 Phone Mockups
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildMiniPhoneMockup(scale: 0.88, isSelected: false),
-                  const SizedBox(width: 12),
-                  _buildMiniPhoneMockup(scale: 1.0, isSelected: true),
-                  const SizedBox(width: 12),
-                  _buildMiniPhoneMockup(scale: 0.88, isSelected: false),
-                ],
+              // Mini Phone Mockups (Back + Front)
+              Positioned(
+                left: 170,
+                child: _buildMiniPhoneMockup(scale: 0.9, isSelected: false),
+              ),
+              Positioned(
+                left: 215,
+                child: _buildMiniPhoneMockup(scale: 1.05, isSelected: true),
               ),
 
-              // Floating Chip Right: Wallet funded +₦50,000
+              // Floating Chip Right: Wallet Deposit
               Positioned(
                 right: 0,
-                bottom: 30,
+                bottom: 24,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF161922),
+                    color: const Color(0xFF131B2E),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    border: Border.all(color: const Color(0xFF23304B)),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 16),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 16),
                     ],
                   ),
                   child: Row(
@@ -882,17 +1104,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFD4AF37).withOpacity(0.15),
+                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFFD4AF37), size: 14),
+                        child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF10B981), size: 16),
                       ),
                       const SizedBox(width: 8),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Wallet funded', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
-                          Text('+₦50,000', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C))),
+                          Text('+₦50,000 Credit', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
+                          Text('PalmPay 8167002789', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF10B981))),
                         ],
                       ),
                     ],
@@ -901,30 +1123,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 36),
-
-        // Trust badge footer
-        Row(
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                color: Color(0xFF10B981),
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'Trusted by thousands of active Nigerians nationwide',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF94A3B8),
-              ),
-            ),
-          ],
         ),
       ],
     );
@@ -937,15 +1135,15 @@ class _LoginScreenState extends State<LoginScreen> {
         width: 110,
         height: 190,
         decoration: BoxDecoration(
-          color: const Color(0xFF12151D),
+          color: const Color(0xFF0F172A),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: isSelected ? const Color(0xFFD4AF37) : const Color(0xFF26334D),
+            color: isSelected ? AppColors.primaryBlue : const Color(0xFF23304B),
             width: isSelected ? 1.8 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? const Color(0xFFD4AF37).withOpacity(0.2) : Colors.black.withOpacity(0.4),
+              color: isSelected ? AppColors.primaryBlue.withValues(alpha: 0.25) : Colors.black.withValues(alpha: 0.4),
               blurRadius: 18,
             ),
           ],
@@ -966,7 +1164,7 @@ class _LoginScreenState extends State<LoginScreen> {
             // Avatar + Name
             Row(
               children: [
-                CircleAvatar(radius: 8, backgroundColor: const Color(0xFFD4AF37)),
+                CircleAvatar(radius: 8, backgroundColor: AppColors.primaryBlue),
                 const SizedBox(width: 6),
                 Container(width: 40, height: 6, decoration: BoxDecoration(color: Colors.white38, borderRadius: BorderRadius.circular(3))),
               ],
@@ -977,7 +1175,7 @@ class _LoginScreenState extends State<LoginScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: const Color(0xFFE5A93C).withOpacity(0.18),
+                color: AppColors.primaryBlue.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -985,12 +1183,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Container(width: 30, height: 4, decoration: BoxDecoration(color: Colors.white30, borderRadius: BorderRadius.circular(2))),
                   const SizedBox(height: 4),
-                  Text('₦248,500', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: const Color(0xFFE5A93C))),
+                  Text('₦248,500', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.primaryCyan)),
                 ],
               ),
             ),
             const Spacer(),
-            // 4 Mini action buttons
+            // 3 Mini action buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(
@@ -998,14 +1196,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 (i) => Container(
                   width: 22,
                   height: 22,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E222D),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF1E293B),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     i == 0 ? Icons.phone_android : (i == 1 ? Icons.wifi : Icons.tv),
                     size: 11,
-                    color: const Color(0xFFD4AF37),
+                    color: AppColors.primaryCyan,
                   ),
                 ),
               ),
@@ -1020,39 +1218,19 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildMobileHeader() {
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0xFF141720),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFD4AF37)),
-              ),
-              child: const Center(
-                child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.w900, fontSize: 18)),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'Avotek',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-              ),
-            ),
-          ],
+        const AvotekBrandAsset(
+          height: 42,
+          isDark: true,
+          hasFrame: true,
+          borderRadius: 14,
         ),
         const SizedBox(height: 14),
         Text(
-          'Everything money, in one gold app.',
+          'Leveraging technology in one smart app.',
           textAlign: TextAlign.center,
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
             color: Colors.white,
           ),
         ),
@@ -1060,22 +1238,17 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // --- Right Glassmorphic Auth Card matching screenshot ---
+  // --- Right Blue/Ash Glassmorphic Auth Card ---
   Widget _buildAuthCard() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
       decoration: BoxDecoration(
-        color: const Color(0xFF141720),
+        color: const Color(0xFF111827), // Deep slate card surface
         borderRadius: BorderRadius.circular(28),
-        border: Border(
-          top: BorderSide(color: const Color(0xFFD4AF37).withOpacity(0.55), width: 1.5),
-          left: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.0),
-          right: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.0),
-          bottom: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.0),
-        ),
+        border: Border.all(color: const Color(0xFF23304B), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 36,
             offset: const Offset(0, 16),
           ),
@@ -1084,28 +1257,18 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Small brand row inside card
+          // Logo Row with rounded framing inside card
           Row(
             children: [
-              Container(
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0D0F15),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.5)),
-                ),
-                child: const Center(
-                  child: Text('A', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold, fontSize: 13)),
-                ),
-              ),
-              const SizedBox(width: 8),
+              const AvotekLogo(size: 28, hasFrame: true, borderRadius: 8),
+              const SizedBox(width: 10),
               Text(
-                'Avotek',
+                'AVOTEK',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFFD4AF37),
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                  color: AppColors.primaryCyan,
                 ),
               ),
             ],
@@ -1125,8 +1288,8 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 6),
           Text(
             _isSignUp
-                ? 'Welcome — join thousands saving money daily.'
-                : 'Welcome back — pick up where you left off.',
+                ? 'Join thousands saving on data and utility recharge daily.'
+                : 'Welcome back — enter your Avotek ID, phone, or email.',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -1140,100 +1303,108 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildInputField(
               controller: _fullNameController,
               hint: 'Full Name',
-              icon: Icons.badge_outlined,
+              icon: Icons.person_outline_rounded,
+            ),
+            const SizedBox(height: 14),
+            _buildInputField(
+              controller: _phoneController,
+              hint: 'Phone Number / WhatsApp (e.g. 08034119920)',
+              icon: Icons.phone_android_rounded,
+              keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 14),
             _buildInputField(
               controller: _emailController,
-              hint: 'Email address',
+              hint: 'Email Address',
               icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 14),
             _buildInputField(
-              controller: _phoneController,
-              hint: 'Phone number',
-              icon: Icons.phone_android_outlined,
-              keyboardType: TextInputType.phone,
+              controller: _passwordController,
+              hint: 'Password (min 6 characters)',
+              icon: Icons.lock_outline_rounded,
+              obscureText: _obscurePassword,
+              suffixWidget: IconButton(
+                icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: const Color(0xFF64748B)),
+                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              ),
             ),
             const SizedBox(height: 14),
-          ],
-
-          // Username Field
-          _buildInputField(
-            controller: _usernameController,
-            hint: 'Username',
-            suffixWidget: Container(
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF7C3AED).withOpacity(0.2),
-                borderRadius: BorderRadius.circular(6),
+            _buildInputField(
+              controller: _confirmPasswordController,
+              hint: 'Confirm Password',
+              icon: Icons.lock_outline_rounded,
+              obscureText: _obscureConfirmPassword,
+              suffixWidget: IconButton(
+                icon: Icon(_obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: const Color(0xFF64748B)),
+                onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
               ),
-              child: Text(
-                't',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFFA78BFA),
+            ),
+            const SizedBox(height: 14),
+            _buildInputField(
+              controller: _referralController,
+              hint: 'Referral Code (Optional)',
+              icon: Icons.card_giftcard_rounded,
+            ),
+          ] else ...[
+            _buildInputField(
+              controller: _identifierController,
+              hint: 'Avotek ID (AVO-1001), Phone, or Email',
+              icon: Icons.person_outline_rounded,
+            ),
+            const SizedBox(height: 14),
+            _buildInputField(
+              controller: _passwordController,
+              hint: 'Password',
+              icon: Icons.lock_outline_rounded,
+              obscureText: _obscurePassword,
+              suffixWidget: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  size: 18,
+                  color: const Color(0xFF64748B),
                 ),
+                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
               ),
             ),
-          ),
-          const SizedBox(height: 14),
+            const SizedBox(height: 14),
 
-          // Password Field
-          _buildInputField(
-            controller: _passwordController,
-            hint: 'Password',
-            obscureText: _obscurePassword,
-            suffixWidget: IconButton(
-              icon: Icon(
-                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                size: 18,
-                color: const Color(0xFF64748B),
-              ),
-              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // Remember me & Forgot Password
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              InkWell(
-                onTap: () => setState(() => _rememberMe = !_rememberMe),
-                borderRadius: BorderRadius.circular(6),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: _rememberMe ? const Color(0xFFE5A93C) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(5),
-                        border: Border.all(
-                          color: _rememberMe ? const Color(0xFFE5A93C) : const Color(0xFF475569),
+            // Remember me & Forgot Password
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                InkWell(
+                  onTap: () => setState(() => _rememberMe = !_rememberMe),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: _rememberMe ? AppColors.primaryBlue : Colors.transparent,
+                          borderRadius: BorderRadius.circular(5),
+                          border: Border.all(
+                            color: _rememberMe ? AppColors.primaryBlue : const Color(0xFF475569),
+                          ),
+                        ),
+                        child: _rememberMe
+                            ? const Icon(Icons.check, size: 13, color: Colors.white)
+                            : null,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Remember me',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFCBD5E1),
                         ),
                       ),
-                      child: _rememberMe
-                          ? const Icon(Icons.check, size: 13, color: Colors.black)
-                          : null,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Remember me',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFFCBD5E1),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              if (!_isSignUp)
                 InkWell(
                   onTap: _showForgotPasswordDialog,
                   child: Text(
@@ -1241,37 +1412,38 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFFE5A93C),
+                      color: AppColors.primaryCyan,
                     ),
                   ),
                 ),
-            ],
-          ),
+              ],
+            ),
+          ],
           const SizedBox(height: 22),
 
-          // Glowing Golden Login / Register Action Button matching screenshot
+          // Primary Blue Login / Register Button
           SizedBox(
             height: 50,
             child: ElevatedButton(
               onPressed: _isProcessing ? null : (_isSignUp ? _handleSignUp : _handleSignIn),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF5A623),
-                foregroundColor: Colors.black,
+                backgroundColor: AppColors.primaryBlue,
+                foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                shadowColor: const Color(0xFFF5A623).withOpacity(0.4),
+                shadowColor: AppColors.primaryBlue.withValues(alpha: 0.4),
               ),
               child: _isProcessing
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2.2),
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
                     )
                   : Text(
-                      _isSignUp ? 'Create Account' : 'Login',
+                      _isSignUp ? 'Verify & Create Account' : 'Sign In',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 15,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w800,
                         letterSpacing: 0.2,
                       ),
                     ),
@@ -1282,7 +1454,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // "or continue with" divider
           Row(
             children: [
-              const Expanded(child: Divider(color: Color(0xFF26334D), height: 1)),
+              const Expanded(child: Divider(color: Color(0xFF23304B), height: 1)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Text(
@@ -1294,69 +1466,32 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-              const Expanded(child: Divider(color: Color(0xFF26334D), height: 1)),
+              const Expanded(child: Divider(color: Color(0xFF23304B), height: 1)),
             ],
           ),
           const SizedBox(height: 18),
 
-          // Social Buttons Row (Google & Apple)
-          Row(
-            children: [
-              // Google Button
-              Expanded(
-                child: SizedBox(
-                  height: 46,
-                  child: ElevatedButton.icon(
-                    onPressed: _isProcessing ? null : _handleGoogleSignIn,
-                    icon: _buildGoogleIcon(size: 18),
-                    label: Text(
-                      'Google',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                  ),
+          // Google Button Only (NO Apple, as requested)
+          SizedBox(
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: _isProcessing ? null : _handleGoogleSignIn,
+              icon: _buildGoogleIcon(size: 20),
+              label: Text(
+                'Continue with Google',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black,
                 ),
               ),
-              const SizedBox(width: 12),
-              // Apple Button
-              Expanded(
-                child: SizedBox(
-                  height: 46,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      _showSnackBar('Apple Sign-In is launching for iOS app.', const Color(0xFF1E222D));
-                    },
-                    icon: const Icon(Icons.apple, size: 20, color: Colors.white),
-                    label: Text(
-                      'Apple',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E222D),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        side: const BorderSide(color: Color(0xFF2E3445)),
-                      ),
-                    ),
-                  ),
-                ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-            ],
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -1367,7 +1502,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 _isSignUp ? 'Already have an account? ' : "Don't have an account? ",
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12.5,
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF94A3B8),
                 ),
@@ -1377,33 +1512,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Text(
                   _isSignUp ? 'Sign in' : 'Create one',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.5,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFFE5A93C),
+                    color: AppColors.primaryCyan,
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 28),
-
-          // Mobile App Badges matching screenshot
-          Text(
-            'Prefer the mobile app? Get Avotek on:',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF64748B),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildStoreBadge(icon: Icons.apple, line1: 'Download on the', line2: 'App Store'),
-              const SizedBox(width: 10),
-              _buildStoreBadge(icon: Icons.play_arrow_rounded, line1: 'GET IT ON', line2: 'Google Play'),
             ],
           ),
         ],
@@ -1421,75 +1535,36 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1D25),
+        color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF26334D)),
+        border: Border.all(color: const Color(0xFF23304B), width: 1.2),
       ),
       child: TextField(
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
         style: GoogleFonts.plusJakartaSans(
-          fontSize: 13.5,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: Colors.white,
         ),
         decoration: InputDecoration(
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           hintText: hint,
           hintStyle: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: const Color(0xFF64748B),
           ),
-          prefixIcon: icon != null ? Icon(icon, size: 18, color: const Color(0xFF64748B)) : null,
-          suffixIcon: suffixWidget != null
-              ? Align(
-                  widthFactor: 1.0,
-                  heightFactor: 1.0,
-                  alignment: Alignment.centerRight,
-                  child: suffixWidget,
-                )
-              : null,
+          prefixIcon: icon != null ? Icon(icon, size: 20, color: AppColors.primaryCyan) : null,
+          suffixIcon: suffixWidget,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
     );
   }
 
-  Widget _buildStoreBadge({required IconData icon, required String line1, required String line2}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E222D),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF2E3445)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: Colors.white),
-          const SizedBox(width: 6),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                line1,
-                style: GoogleFonts.plusJakartaSans(fontSize: 8, fontWeight: FontWeight.w500, color: const Color(0xFF94A3B8)),
-              ),
-              Text(
-                line2,
-                style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGoogleIcon({double size = 18}) {
+  Widget _buildGoogleIcon({double size = 20}) {
     return SizedBox(
       width: size,
       height: size,

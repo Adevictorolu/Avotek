@@ -77,6 +77,7 @@ class AppUserRecord {
 
   String get virtualAccountWema => virtualAccountNumber;
   String get virtualAccountProvidus => '99${virtualAccountNumber.length >= 8 ? virtualAccountNumber.substring(virtualAccountNumber.length - 8) : virtualAccountNumber}';
+  String get avotekId => 'AVO-$id';
 
   User toClientUser() => User(
         id: id,
@@ -303,8 +304,9 @@ class AppDatabaseService {
       final emailMatch = user.email.toLowerCase() == idClean;
       final phoneMatch = user.phone.replaceAll(RegExp(r'\D'), '') == phoneClean && phoneClean.isNotEmpty;
       final nameMatch = user.name.toLowerCase() == idClean;
+      final idMatch = user.avotekId.toLowerCase() == idClean || user.id.toString() == idClean;
 
-      if (emailMatch || phoneMatch || nameMatch) {
+      if (emailMatch || phoneMatch || nameMatch || idMatch) {
         if (user.passwordHash == passHash || password == 'admin1234' || password == 'Avotek2026') {
           _saveActiveSession(user.id);
           return user;

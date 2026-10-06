@@ -33,10 +33,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       illustrationType: 1,
     ),
     _OnboardingSlideData(
-      title: 'Leveraging Technology in Education',
+      title: 'Leveraging Technology Everyday',
       subtitle:
-          'Your secure, all-in-one digital wallet designed for Nigerian students, educational institutions, and VTU entrepreneurs. Fast, reliable, and transparent.',
-      badge: 'AVOTEK MOTTO',
+          'Your secure, all-in-one digital wallet for automated airtime recharge, fast SME/Corporate data bundles, and instant bill settlement across Nigeria.',
+      badge: 'LEVERAGING TECHNOLOGY',
       illustrationType: 2,
     ),
   ];

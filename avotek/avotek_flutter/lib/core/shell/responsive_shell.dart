@@ -533,12 +533,6 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   isActive: false,
                 ),
                 _buildSidebarItem(
-                  icon: Icons.currency_bitcoin_rounded,
-                  label: 'Crypto',
-                  route: '/services/data',
-                  isActive: false,
-                ),
-                _buildSidebarItem(
                   icon: Icons.add_circle_outline_rounded,
                   label: 'Fund Wallet',
                   route: '/wallet/fund',

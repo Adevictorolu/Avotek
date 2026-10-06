@@ -8,6 +8,8 @@ class AvotekLogo extends StatelessWidget {
   final bool? isDark;
   final bool useAssetImage;
   final bool isLarge;
+  final bool hasFrame;
+  final double borderRadius;
 
   const AvotekLogo({
     super.key,
@@ -16,27 +18,50 @@ class AvotekLogo extends StatelessWidget {
     this.isDark,
     this.useAssetImage = true,
     this.isLarge = false,
+    this.hasFrame = false,
+    this.borderRadius = 12,
   });
 
   @override
   Widget build(BuildContext context) {
     final effectiveDark = isDark ?? (Theme.of(context).brightness == Brightness.dark);
+    Widget logoWidget;
 
     if (useAssetImage) {
       final assetPath = isLarge
           ? (effectiveDark ? 'assets/images/logo_large.png' : 'assets/images/logo_large_light.png')
           : (effectiveDark ? 'assets/images/logo.png' : 'assets/images/logo_light.png');
 
-      return Image.asset(
+      logoWidget = Image.asset(
         assetPath,
         height: size,
         fit: BoxFit.contain,
         alignment: Alignment.centerLeft,
         errorBuilder: (context, error, stackTrace) => _buildVectorLogo(effectiveDark),
       );
+    } else {
+      logoWidget = _buildVectorLogo(effectiveDark);
     }
 
-    return _buildVectorLogo(effectiveDark);
+    if (hasFrame) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: effectiveDark ? const Color(0xFF131B2E) : Colors.white,
+          borderRadius: BorderRadius.circular(borderRadius),
+          border: Border.all(
+            color: effectiveDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+            width: 1.2,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(borderRadius > 4 ? borderRadius - 2 : 4),
+          child: logoWidget,
+        ),
+      );
+    }
+
+    return logoWidget;
   }
 
   Widget _buildVectorLogo(bool effectiveDark) {
@@ -97,6 +122,8 @@ class AvotekBrandAsset extends StatelessWidget {
   final double? width;
   final bool isDark;
   final bool isLarge;
+  final bool hasFrame;
+  final double borderRadius;
 
   const AvotekBrandAsset({
     super.key,
@@ -104,6 +131,8 @@ class AvotekBrandAsset extends StatelessWidget {
     this.width,
     required this.isDark,
     this.isLarge = false,
+    this.hasFrame = false,
+    this.borderRadius = 12,
   });
 
   @override
@@ -112,7 +141,7 @@ class AvotekBrandAsset extends StatelessWidget {
         ? (isDark ? 'assets/images/logo_large.png' : 'assets/images/logo_large_light.png')
         : (isDark ? 'assets/images/logo.png' : 'assets/images/logo_light.png');
 
-    return Image.asset(
+    final imageWidget = Image.asset(
       assetPath,
       height: height,
       width: width,
@@ -126,6 +155,26 @@ class AvotekBrandAsset extends StatelessWidget {
         );
       },
     );
+
+    if (hasFrame) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF131B2E) : Colors.white,
+          borderRadius: BorderRadius.circular(borderRadius),
+          border: Border.all(
+            color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+            width: 1.2,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(borderRadius > 4 ? borderRadius - 2 : 4),
+          child: imageWidget,
+        ),
+      );
+    }
+
+    return imageWidget;
   }
 }
 

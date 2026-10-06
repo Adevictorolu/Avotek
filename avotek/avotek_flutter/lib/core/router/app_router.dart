@@ -31,6 +31,14 @@ class AppRouter {
       routes: [
         GoRoute(
           path: '/',
+          redirect: (context, state) {
+            // Web users view landing homepage; mobile users are directed to onboarding/login
+            if (!kIsWeb) {
+              final hasSeen = AppDatabaseService.instance.hasSeenOnboarding();
+              return hasSeen ? '/login' : '/onboarding';
+            }
+            return null;
+          },
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,
             state,
