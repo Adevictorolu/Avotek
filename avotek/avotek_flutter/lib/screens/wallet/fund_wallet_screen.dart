@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../../core/database/app_database.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
-import '../../core/theme/app_theme.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/top_notification.dart';
 
@@ -19,77 +15,15 @@ class FundWalletScreen extends StatefulWidget {
 }
 
 class _FundWalletScreenState extends State<FundWalletScreen> {
-  bool _isFunding = false;
-  final TextEditingController _amountController = TextEditingController(text: '2000');
-  final TextEditingController _senderNameController = TextEditingController();
-
-  Map<String, String> _fundingAccount = {
-    'bank': 'PalmPay / Wema Bank',
-    'accountNumber': '8167002789',
-    'accountName': 'AVOTEK OFFICIAL DEPOSIT',
-  };
-
-  @override
-  void initState() {
-    super.initState();
-    _loadFundingAccount();
-  }
-
-  void _loadFundingAccount() {
-    final acc = AppDatabaseService.instance.getFundingAccount();
-    setState(() {
-      _fundingAccount = acc;
-    });
-  }
-
-  Future<void> _handleConfirmTransfer() async {
-    final amtText = _amountController.text.trim();
-    final amount = double.tryParse(amtText);
-    if (amount == null || amount <= 0) {
-      TopNotification.showError(
-        context,
-        'Please enter a valid transfer amount in Naira (₦).',
-        title: 'Invalid Amount',
-      );
-      return;
-    }
-
-    setState(() => _isFunding = true);
-    final auth = context.read<AuthProvider>();
-    final wallet = context.read<WalletProvider>();
-
-    // Instant credit to database and wallet
-    await auth.creditWallet(amount);
-    wallet.recordCredit(
-      userId: auth.user?.id ?? 'user',
-      amount: amount,
-      reference: 'DEP-${DateTime.now().millisecondsSinceEpoch}',
-      narration: 'Bank Transfer Deposit',
-    );
-
-    setState(() => _isFunding = false);
-    if (mounted) {
-      TopNotification.showSuccess(
-        context,
-        '₦${NumberFormat('#,##0.00').format(amount)} received! Your Avotek wallet has been credited securely.',
-        title: 'Wallet Funded',
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
     final wallet = context.watch<WalletProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDesktop = ResponsiveLayout.isDesktop(context);
 
-    final bankName = wallet.walletSummary?.virtualAccountBank ?? _fundingAccount['bank'] ?? 'PalmPay / Wema Bank';
-    final accountNumber = wallet.walletSummary?.virtualAccountNumber ?? _fundingAccount['accountNumber'] ?? '8167002789';
-    final accountName = wallet.walletSummary?.virtualAccountName ??
-        (auth.user?.name != null && auth.user!.name.isNotEmpty
-            ? '${auth.user!.name.toUpperCase()} / AVOTEK'
-            : 'AVOTEK Customer');
+    final bankName = wallet.walletSummary?.virtualAccountBank ?? '';
+    final accountNumber = wallet.walletSummary?.virtualAccountNumber ?? '';
+    final accountName = wallet.walletSummary?.virtualAccountName ?? '';
 
     return ResponsiveShell(
       currentRoute: '/wallet/fund',
@@ -124,7 +58,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Transfer directly to your dedicated Avotek account for instant automated wallet credit.',
+                        'Fund your wallet using a verified payment method configured for your account.',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w500,
@@ -137,7 +71,26 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Primary PalmPay Funding Account Card
+                if (accountNumber.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141720) : const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFF59E0B)),
+                    ),
+                    child: Text(
+                      'Wallet deposits are unavailable because no verified virtual account is configured. Do not transfer money to any account shown outside this app.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : const Color(0xFF78350F),
+                      ),
+                    ),
+                  )
+                else ...[
+                // Primary Funding Account Card
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -200,7 +153,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                   border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
                                 ),
                                 child: Text(
-                                  'Instant 100% Credit',
+                                  'Assigned Account',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w800,
@@ -304,7 +257,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Interactive Confirmation / Instant Verification Step
+                // Deposit confirmation never credits funds without provider verification.
                 Container(
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
@@ -347,7 +300,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                 ),
                               ),
                               Text(
-                                'Once you complete your transfer to $bankName ($accountNumber), confirm below to credit your balance.',
+                                'Deposits are credited only after payment-provider confirmation.',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
@@ -361,112 +314,20 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                       const SizedBox(height: 18),
 
                       Text(
-                        'Amount Sent (₦)',
+                        'Your wallet is credited only after the payment provider confirms the deposit. A transfer receipt or button press is not sufficient verification.',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white70 : Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _amountController,
-                        keyboardType: TextInputType.number,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800),
-                        decoration: InputDecoration(
-                          prefixIcon: Container(
-                            width: 44,
-                            alignment: Alignment.center,
-                            child: Text(
-                              '₦',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                                color: const Color(0xFF00D2FF),
-                              ),
-                            ),
-                          ),
-                          hintText: 'Enter amount (e.g. 5000)',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                          filled: true,
-                          fillColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Quick Amount Chips
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [1000.0, 2000.0, 5000.0, 10000.0, 20000.0].map((amt) {
-                          return ActionChip(
-                            label: Text(
-                              '₦${NumberFormat('#,##0').format(amt)}',
-                              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 12),
-                            ),
-                            backgroundColor: isDark ? const Color(0xFF1E222D) : const Color(0xFFF1F5F9),
-                            onPressed: () {
-                              _amountController.text = amt.toStringAsFixed(0);
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 16),
-
-                      Text(
-                        'Sender Name (Optional / Verification)',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white70 : Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _senderNameController,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600),
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.person_outline_rounded),
-                          hintText: 'Name on your bank app transfer receipt',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                          filled: true,
-                          fillColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton.icon(
-                          onPressed: _isFunding ? null : _handleConfirmTransfer,
-                          icon: _isFunding
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                                )
-                              : const Icon(Icons.bolt_rounded, size: 20),
-                          label: Text(
-                            _isFunding ? 'Processing Verification...' : 'I Have Transferred · Credit Wallet',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 14.5,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
+                          fontWeight: FontWeight.w600,
+                          height: 1.5,
+                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
+                ],
 
-                // Deposit Guidance & Live SLA Notice
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
@@ -477,14 +338,14 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.info_outline_rounded, color: AppColors.electricCyan, size: 22),
+                      const Icon(Icons.info_outline_rounded, color: Color(0xFFF59E0B), size: 22),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Instant Credit Instructions',
+                              'Deposit Safety',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w800,
@@ -493,10 +354,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              '1. Open your OPay, PalmPay, GTBank, Kuda, Zenith, or any banking app.\n'
-                              '2. Select Transfer -> PalmPay -> Account Number $accountNumber ($accountName).\n'
-                              '3. Enter your amount and send.\n'
-                              '4. Click "I Have Transferred" above to credit your Avotek wallet immediately.',
+                              'Only transfer to a virtual account assigned to you inside Avotek. Deposits are not available until a payment provider and verified webhook are configured. Never rely on a manual confirmation to credit your wallet.',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12.5,
                                 height: 1.5,

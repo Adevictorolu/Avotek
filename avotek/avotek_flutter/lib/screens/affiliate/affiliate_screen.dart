@@ -8,6 +8,7 @@ import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
+import '../../widgets/top_notification.dart';
 
 class AffiliateScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -21,28 +22,12 @@ class AffiliateScreen extends StatefulWidget {
 class _AffiliateScreenState extends State<AffiliateScreen> {
   int _activeTab = 0; // 0: Referral Hub, 1: RIFToken, 2: Leaderboard
   bool _copied = false;
-  int _userRifPoints = 0;
+  final int _userRifPoints = 0;
 
   void _copyToClipboard(String link) {
     Clipboard.setData(ClipboardData(text: link));
     setState(() => _copied = true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              'Referral link copied to clipboard!',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    TopNotification.showSuccess(context, 'Referral link copied to clipboard!');
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _copied = false);
     });
@@ -75,7 +60,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
     }
   }
 
-  void _openRedeemPointsModal(WalletProvider wallet) {
+  void _openRedeemPointsModal() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
@@ -160,24 +145,18 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             ElevatedButton(
               onPressed: _userRifPoints >= 200
                   ? () {
-                      final cash = _userRifPoints.toDouble();
-                      wallet.depositFunds(cash, narration: 'RIFToken Points Redeemed');
-                      setState(() => _userRifPoints = 0);
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('₦$cash credited to your wallet!'),
-                          backgroundColor: AppColors.success,
-                        ),
+                      TopNotification.showWarning(
+                        context,
+                        'Point redemption is unavailable until it can be verified and credited by the backend. Your points were not changed.',
+                        title: 'Redemption Unavailable',
                       );
                     }
                   : () {
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Accumulate at least 200 pts to redeem for cash.'),
-                          backgroundColor: AppColors.warning,
-                        ),
+                      TopNotification.showWarning(
+                        context,
+                        'Accumulate at least 200 pts to redeem for cash.',
                       );
                     },
               style: ElevatedButton.styleFrom(
@@ -1332,7 +1311,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => _openRedeemPointsModal(wallet),
+              onPressed: _openRedeemPointsModal,
               icon: const Icon(Icons.track_changes_rounded, size: 18),
               label: const Text('Redeem Points for Cash'),
               style: ElevatedButton.styleFrom(

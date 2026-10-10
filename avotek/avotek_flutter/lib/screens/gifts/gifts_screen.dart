@@ -4,11 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
-import '../../providers/wallet_provider.dart';
+import '../../widgets/top_notification.dart';
 
 class GiftVoucher {
   final String id;
@@ -44,7 +43,6 @@ class _GiftsScreenState extends State<GiftsScreen> {
   final _currencyFormat = NumberFormat.currency(locale: 'en_NG', symbol: '₦', decimalDigits: 2);
 
   void _openCreateGiftModal() {
-    final wallet = context.read<WalletProvider>();
     final amountCtrl = TextEditingController(text: '1000');
     final recipientCtrl = TextEditingController();
     final noteCtrl = TextEditingController();
@@ -232,54 +230,11 @@ class _GiftsScreenState extends State<GiftsScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    final enteredAmount = double.tryParse(amountCtrl.text.trim()) ?? 0;
-                    if (enteredAmount <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter a valid amount.')),
-                      );
-                      return;
-                    }
-
-                    if (enteredAmount > wallet.balance) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Insufficient wallet balance to create this gift voucher.'),
-                          backgroundColor: AppColors.error,
-                        ),
-                      );
-                      return;
-                    }
-
-                    // Deduct from wallet and add to gifts
-                    wallet.debit(enteredAmount, 'Created Gift Voucher $generatedCode');
-
-                    setState(() {
-                      _gifts.insert(
-                        0,
-                        GiftVoucher(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          code: generatedCode,
-                          amount: enteredAmount,
-                          recipient: recipientCtrl.text.trim().isEmpty ? 'General' : recipientCtrl.text.trim(),
-                          status: 'Active',
-                          createdAt: DateTime.now(),
-                        ),
-                      );
-                    });
-
                     Navigator.pop(ctx);
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            const Icon(Icons.check_circle_rounded, color: Colors.white),
-                            const SizedBox(width: 8),
-                            Text('Gift Voucher $generatedCode created successfully!'),
-                          ],
-                        ),
-                        backgroundColor: AppColors.success,
-                      ),
+                    TopNotification.showWarning(
+                      context,
+                      'Gift vouchers are unavailable until issuance and wallet debit are handled by the backend. No voucher was created and no funds were deducted.',
+                      title: 'Voucher Creation Unavailable',
                     );
                   },
                   style: ElevatedButton.styleFrom(

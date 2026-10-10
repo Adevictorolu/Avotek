@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../../core/database/app_database.dart';
-import '../../core/services/verification_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/wallet_provider.dart';
@@ -56,229 +55,25 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // --- Real Google OAuth Sign-in Flow (General Public) ---
   Future<void> _handleGoogleSignIn() async {
     final auth = context.read<AuthProvider>();
+    setState(() => _isProcessing = true);
 
-    // Clean, neutral controllers for any general public user
-    final emailCtrl = TextEditingController();
-    final nameCtrl = TextEditingController();
+    final success = await auth.loginWithGoogle();
+    if (!mounted) return;
+    setState(() => _isProcessing = false);
 
-    final selected = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (ctx) {
-        String? errorText;
-
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFF0F172A),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(22),
-                side: const BorderSide(color: Color(0xFF23304B)),
-              ),
-              title: Row(
-                children: [
-                  _buildGoogleIcon(size: 24),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Sign in with Google',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-              content: SizedBox(
-                width: 420,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF131B2E),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF23304B)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.security_rounded, size: 18, color: AppColors.electricCyan),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Sign in securely with your Google Account to access Avotek services.',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF94A3B8),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Text(
-                      'Google Account Email',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white70,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      style: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'yourname@gmail.com',
-                        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
-                        prefixIcon: const Icon(Icons.alternate_email_rounded, color: AppColors.electricCyan, size: 18),
-                        filled: true,
-                        fillColor: const Color(0xFF131B2E),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF23304B)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF23304B)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.electricCyan, width: 1.5),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Full Name (Optional)',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white70,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: nameCtrl,
-                      style: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. John Doe',
-                        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
-                        prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.electricCyan, size: 18),
-                        filled: true,
-                        fillColor: const Color(0xFF131B2E),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF23304B)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF23304B)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.electricCyan, width: 1.5),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      ),
-                    ),
-                    if (errorText != null) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        errorText!,
-                        style: GoogleFonts.plusJakartaSans(color: AppColors.error, fontSize: 12, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8))),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
-                  onPressed: () {
-                    final em = emailCtrl.text.trim();
-                    final nm = nameCtrl.text.trim();
-                    if (em.isEmpty || !em.contains('@')) {
-                      setDialogState(() => errorText = 'Please enter a valid Google email address');
-                      return;
-                    }
-                    Navigator.pop(ctx, {
-                      'name': nm.isNotEmpty ? nm : em.split('@')[0],
-                      'email': em,
-                    });
-                  },
-                  child: Text(
-                    'Continue with Google',
-                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (selected != null && mounted) {
-      setState(() => _isProcessing = true);
-      try {
-        final success = await auth.loginWithGoogle(
-          email: selected['email']!,
-          displayName: selected['name']!,
-        );
-
-        if (!mounted) return;
-        setState(() => _isProcessing = false);
-
-        if (success) {
-          if (auth.needsPinSetup) {
-            await OnboardingPinDialog.show(context);
-          }
-
-          if (!mounted) return;
-          final wallet = context.read<WalletProvider>();
-          if (auth.user?.id != null) {
-            wallet.fetchWallet(auth.user!.id);
-          }
-          context.go('/dashboard');
-        }
-      } catch (e) {
-        if (mounted) {
-          setState(() => _isProcessing = false);
-          _showSnackBar('Google Sign In failed: $e', AppColors.error);
-        }
-      }
+    if (!success) {
+      _showSnackBar(auth.authError ?? 'Google sign-in could not be started.', AppColors.error);
     }
   }
 
   // --- Real Forgot Password & OTP Reset Dialog ---
   void _showForgotPasswordDialog() {
     final idCtrl = TextEditingController(text: _identifierController.text.trim());
-    final otpCtrl = TextEditingController();
-    final newPassCtrl = TextEditingController();
-    final confirmPassCtrl = TextEditingController();
 
-    bool hasSentCode = false;
     bool isSubmitting = false;
     String? errorMessage;
-    bool obscureNewPass = true;
 
     showDialog(
       context: context,
@@ -305,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      hasSentCode ? 'Enter Code & New Password' : 'Reset Your Password',
+                      'Reset Your Password',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -345,94 +140,38 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 12),
                       ],
-                      if (!hasSentCode) ...[
-                        Text(
-                          'Enter your Avotek ID, registered phone number, or email address. We will dispatch a 6-digit verification code.',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF94A3B8)),
+                      Text(
+                        'Enter the email address on your account. Supabase will send you a secure password-reset link.',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF94A3B8)),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: idCtrl,
+                        style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: 'Email address',
+                          hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
+                          prefixIcon: const Icon(Icons.alternate_email_rounded, color: AppColors.primaryCyan),
+                          filled: true,
+                          fillColor: const Color(0xFF131B2E),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF23304B))),
                         ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: idCtrl,
-                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
-                          decoration: InputDecoration(
-                            hintText: 'Avotek ID (AVO-1001), Phone, or Email',
-                            hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
-                            prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primaryCyan),
-                            filled: true,
-                            fillColor: const Color(0xFF131B2E),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF23304B))),
-                          ),
-                        ),
-                      ] else ...[
-                        Text(
-                          'A 6-digit verification code has been dispatched via SMS & Email. Enter it below along with your new password.',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8)),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: otpCtrl,
-                          keyboardType: TextInputType.number,
-                          maxLength: 6,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 4,
-                          ),
-                          decoration: InputDecoration(
-                            counterText: '',
-                            hintText: '6-digit OTP code',
-                            hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13, letterSpacing: 0),
-                            prefixIcon: const Icon(Icons.pin_rounded, color: AppColors.primaryCyan),
-                            filled: true,
-                            fillColor: const Color(0xFF131B2E),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF23304B))),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: newPassCtrl,
-                          obscureText: obscureNewPass,
-                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
-                          decoration: InputDecoration(
-                            hintText: 'New Password (min 6 characters)',
-                            hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
-                            prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primaryCyan),
-                            suffixIcon: IconButton(
-                              icon: Icon(obscureNewPass ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: const Color(0xFF94A3B8)),
-                              onPressed: () => setDialogState(() => obscureNewPass = !obscureNewPass),
-                            ),
-                            filled: true,
-                            fillColor: const Color(0xFF131B2E),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF23304B))),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: confirmPassCtrl,
-                          obscureText: obscureNewPass,
-                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
-                          decoration: InputDecoration(
-                            hintText: 'Confirm New Password',
-                            hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
-                            prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primaryCyan),
-                            filled: true,
-                            fillColor: const Color(0xFF131B2E),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF23304B))),
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+                  onPressed: isSubmitting
+                      ? null
+                      : () {
+                          Navigator.pop(ctx);
+                          idCtrl.dispose();
+                        },
                   child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8))),
                 ),
-                if (!hasSentCode)
-                  ElevatedButton(
+                ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
@@ -442,8 +181,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? null
                         : () async {
                             final id = idCtrl.text.trim();
-                            if (id.isEmpty) {
-                              setDialogState(() => errorMessage = 'Please enter your username, phone, or email.');
+                            if (!id.contains('@')) {
+                              setDialogState(() => errorMessage = 'Please enter a valid email address.');
                               return;
                             }
                             setDialogState(() {
@@ -451,87 +190,25 @@ class _LoginScreenState extends State<LoginScreen> {
                               errorMessage = null;
                             });
 
-                            try {
-                              final code = await AppDatabaseService.instance.requestPasswordReset(id);
-                              // Send real OTP via Termii & SendGrid
-                              VerificationService.instance.sendPhoneOtp(phone: id, code: code);
-                              VerificationService.instance.sendEmailOtp(email: id, code: code);
-
-                              setDialogState(() {
-                                isSubmitting = false;
-                                hasSentCode = true;
-                                otpCtrl.text = code;
-                              });
-                            } catch (e) {
-                              setDialogState(() {
-                                isSubmitting = false;
-                                errorMessage = e.toString().replaceAll('Exception: ', '');
-                              });
-                            }
-                          },
-                    child: isSubmitting
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text('Send Verification Code', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
-                  )
-                else
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    onPressed: isSubmitting
-                        ? null
-                        : () async {
-                            final code = otpCtrl.text.trim();
-                            final pass = newPassCtrl.text.trim();
-                            final confirm = confirmPassCtrl.text.trim();
-
-                            if (code.length != 6) {
-                              setDialogState(() => errorMessage = 'Please enter the complete 6-digit code.');
-                              return;
-                            }
-                            if (pass.length < 6) {
-                              setDialogState(() => errorMessage = 'Password must be at least 6 characters.');
-                              return;
-                            }
-                            if (pass != confirm) {
-                              setDialogState(() => errorMessage = 'Passwords do not match.');
-                              return;
-                            }
-
-                            setDialogState(() {
-                              isSubmitting = true;
-                              errorMessage = null;
-                            });
-
-                            final ok = await AppDatabaseService.instance.resetPassword(
-                              identifier: idCtrl.text.trim(),
-                              code: code,
-                              newPassword: pass,
-                            );
-
+                            final auth = context.read<AuthProvider>();
+                            final sent = await auth.sendPasswordResetEmail(id);
                             if (!ctx.mounted) return;
-                            if (ok) {
+                            if (sent) {
                               Navigator.pop(ctx);
+                              idCtrl.dispose();
                               if (mounted) {
-                                _identifierController.text = idCtrl.text.trim();
-                                _passwordController.text = pass;
-                                _showSnackBar(
-                                  'Password reset successfully! You can now log in.',
-                                  const Color(0xFF10B981),
-                                );
+                                _showSnackBar('Password reset link sent. Check your email.', const Color(0xFF10B981));
                               }
                             } else {
                               setDialogState(() {
                                 isSubmitting = false;
-                                errorMessage = 'Invalid or expired verification code. Please try again.';
+                                errorMessage = auth.errorMessage ?? 'Unable to send the password reset link.';
                               });
                             }
                           },
                     child: isSubmitting
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text('Update Password', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+                        : Text('Send Reset Link', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
                   ),
               ],
             );
@@ -620,7 +297,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final newUser = auth.user;
         final avotekId = (newUser != null && newUser.avoId.isNotEmpty)
             ? newUser.avoId
-            : 'AVO-${(newUser?.id.hashCode.abs() ?? 10000) % 90000 + 10000}';
+            : UserModel.avoIdFor(newUser?.id ?? '');
 
         // Show registration celebration dialog with permanent Avotek ID
         await showDialog(
@@ -967,7 +644,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('+₦50,000 Credit', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
-                          Text('PalmPay 8167002789', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF10B981))),
+                          Text('Wallet activity preview', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF10B981))),
                         ],
                       ),
                     ],
@@ -1413,46 +1090,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildGoogleIcon({double size = 20}) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _GoogleIconPainter(),
-      ),
-    );
+    return Image.asset('assets/images/google_g_logo.png', width: size, height: size, semanticLabel: 'Google');
   }
-}
-
-class _GoogleIconPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    final redPaint = Paint()..color = const Color(0xFFEA4335);
-    final bluePaint = Paint()..color = const Color(0xFF4285F4);
-    final yellowPaint = Paint()..color = const Color(0xFFFBBC05);
-    final greenPaint = Paint()..color = const Color(0xFF34A853);
-
-    final center = Offset(w / 2, h / 2);
-    final radius = w / 2;
-
-    // Draw Google 4-color Arc
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    canvas.drawArc(rect, -0.78, 1.57, true, bluePaint);
-    canvas.drawArc(rect, 0.79, 1.57, true, greenPaint);
-    canvas.drawArc(rect, 2.36, 1.57, true, yellowPaint);
-    canvas.drawArc(rect, 3.93, 1.57, true, redPaint);
-
-    // Inner Cutout
-    final innerPaint = Paint()..color = Colors.white;
-    canvas.drawCircle(center, radius * 0.55, innerPaint);
-
-    // Right horizontal bar
-    final barRect = Rect.fromLTRB(w * 0.45, h * 0.4, w * 0.95, h * 0.6);
-    canvas.drawRect(barRect, bluePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

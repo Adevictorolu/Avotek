@@ -54,12 +54,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           auth.refreshWallet(),
           wallet.fetchWallet(auth.user!.id),
         ]);
+        if (wallet.errorMessage != null && mounted) {
+          setState(() => _loadError = wallet.errorMessage);
+        }
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
-        setState(() {
-          _loadError = e.toString().replaceAll('Exception: ', '');
-        });
+        setState(() => _loadError = 'Your account details are temporarily unavailable. Please try again.');
       }
     } finally {
       if (mounted) {
@@ -456,7 +457,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ) {
     final rawAcct = wallet.walletSummary?.virtualAccountNumber ??
         auth.wallet?.virtualAccountNumber ??
-        '8167002789';
+        '';
+    if (rawAcct.isEmpty) return const SizedBox.shrink();
 
     // Format account into 816  700  2789
     final spacedAcct = rawAcct.length >= 10
@@ -465,7 +467,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final bank = wallet.walletSummary?.virtualAccountBank ??
         auth.wallet?.virtualAccountBank ??
-        'WEMA / PALMPAY';
+        '';
     final formattedBalance = NumberFormat('#,##0.00', 'en_US').format(balance);
     final holderName = (auth.user?.name != null && auth.user!.name.isNotEmpty)
         ? auth.user!.name

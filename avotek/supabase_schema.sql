@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     full_name TEXT NOT NULL DEFAULT 'Avotek User',
     phone TEXT DEFAULT '',
     avatar_url TEXT,
+    avo_id TEXT,
+    username TEXT,
     kyc_status TEXT DEFAULT 'tier1',
     referral_code TEXT UNIQUE,
     referred_by TEXT,
@@ -18,6 +20,19 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avo_id TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS username TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_avo_id ON public.profiles(avo_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_username ON public.profiles(username);
+
+UPDATE public.profiles
+SET avo_id = 'AVO-' || UPPER(SUBSTRING(REPLACE(id::text, '-', ''), 1, 12))
+WHERE avo_id IS NULL OR avo_id = '';
+
+UPDATE public.profiles
+SET username = LOWER(SPLIT_PART(email, '@', 1))
+WHERE username IS NULL OR username = '';
 
 -- 2. WALLETS TABLE (Single Direct Wallet per user)
 CREATE TABLE IF NOT EXISTS public.wallets (
@@ -73,6 +88,8 @@ DECLARE
     clean_phone TEXT;
     clean_avatar TEXT;
     clean_ref TEXT;
+    clean_avo_id TEXT;
+    clean_username TEXT;
 BEGIN
     -- Extract full name from Google metadata or email
     clean_name := COALESCE(
@@ -81,19 +98,31 @@ BEGIN
         split_part(NEW.email, '@', 1)
     );
     clean_phone := COALESCE(NEW.raw_user_meta_data->>'phone', '');
+    clean_username := COALESCE(
+        NULLIF(NEW.raw_user_meta_data->>'username', ''),
+        LOWER(SPLIT_PART(NEW.email, '@', 1))
+    );
+    clean_avo_id := 'AVO-' || UPPER(SUBSTRING(REPLACE(NEW.id::text, '-', ''), 1, 12));
     -- Extract avatar picture from Google metadata
     clean_avatar := COALESCE(
         NEW.raw_user_meta_data->>'avatar_url',
         NEW.raw_user_meta_data->>'picture',
         ''
     );
-    clean_ref := 'AVO' || UPPER(SUBSTRING(NEW.id::text, 1, 6));
+    clean_ref := 'AVO' || UPPER(SUBSTRING(REPLACE(NEW.id::text, '-', ''), 1, 12));
 
     -- Insert or update public.profiles
-    INSERT INTO public.profiles (id, email, full_name, phone, avatar_url, referral_code)
-    VALUES (NEW.id, NEW.email, clean_name, clean_phone, clean_avatar, clean_ref)
+    INSERT INTO public.profiles (
+        id, email, full_name, phone, avatar_url, avo_id, username, referral_code
+    )
+    VALUES (
+        NEW.id, NEW.email, clean_name, clean_phone, clean_avatar,
+        clean_avo_id, clean_username, clean_ref
+    )
     ON CONFLICT (id) DO UPDATE SET
         full_name = EXCLUDED.full_name,
+        avo_id = COALESCE(profiles.avo_id, EXCLUDED.avo_id),
+        username = COALESCE(profiles.username, EXCLUDED.username),
         avatar_url = CASE 
             WHEN profiles.avatar_url IS NULL OR profiles.avatar_url = '' THEN EXCLUDED.avatar_url 
             ELSE profiles.avatar_url 

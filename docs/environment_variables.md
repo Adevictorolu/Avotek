@@ -24,6 +24,7 @@ All platform secrets and configuration values reside on the backend. No secret k
 | `VTPASS_PUBLIC_KEY` | Prod | `your_public_key` | VTpass public key. |
 | `VTPASS_SECRET_KEY` | Prod | `your_secret_key` | VTpass secret key for signature calculation. |
 | `VTPASS_BASE_URL` | No | `https://sandbox.vtpass.com/api` | VTpass gateway endpoint (`https://api-service.vtpass.com/api` in production). |
+| `VTU_BACKEND_URL` | Prod | `https://api.your-domain.example` | Public URL of the authenticated backend proxy; not a secret. |
 | `VTUPRESS_URL` | Prod | `https://yourvtuwebsite.com` | VTUPress base URL if routing via your VTUPress platform. |
 | `VTUPRESS_API_KEY` | Prod | `your_vtupress_api_key` | VTUPress API token/key. |
 | `CK_USER_ID` | Prod | `your_userid` | ClubKonnect user ID for secondary fallback routing. |
@@ -37,6 +38,47 @@ All platform secrets and configuration values reside on the backend. No secret k
 | `WHATSAPP_VERIFY_TOKEN` | Prod | `avotek_whatsapp_secure_2026` | Custom challenge token for Meta webhook subscription verification. |
 | `TERMII_API_KEY` | Prod | `your_termii_key` | Nigerian SMS gateway key for phone OTP verification. |
 | `TERMII_SENDER_ID` | No | `AVOTEK` | Registered alphanumeric sender ID on Termii. |
+
+---
+
+## Supabase Google Sign-In Setup
+
+Google OAuth is initiated by the Flutter app through Supabase Auth. Configure the
+provider outside the app; never add the Google OAuth client secret or Supabase
+service-role key to Flutter assets or source files.
+
+1. In Google Cloud Console, create an OAuth 2.0 Web client and add the Supabase
+   callback URL shown in the Supabase Google provider settings as an authorized
+   redirect URI.
+2. In Supabase Dashboard, enable Google under **Authentication → Providers** and
+   enter the Google client ID and client secret.
+3. Under **Authentication → URL Configuration**, allow the deployed web origin
+   and its `/update-password` path as redirect URLs, plus the equivalent local
+   development URLs.
+4. For Android and iOS, also allow `io.supabase.avotek://login-callback` and
+   `io.supabase.avotek://reset-password`. The app's native deep-link handlers use
+   these URIs.
+5. Apply `avotek/supabase_schema.sql` to the Supabase project. Its auth-user
+   trigger provisions a profile and wallet for first-time email and Google users;
+   profile access policies are required for PIN persistence.
+
+After successful OAuth, authenticated users are routed to `/dashboard`.
+First-time accounts create and confirm a transaction PIN there; returning
+accounts reuse their saved PIN and are not asked to create another one.
+Password recovery uses Supabase's reset link and the authenticated
+`/update-password` screen, not a client-generated verification code.
+
+## VTU Provider Credentials
+
+Keep Bigisub credentials and any provider PIN in a trusted backend environment.
+The Flutter client must send only the signed-in Supabase access token to an
+HTTPS backend proxy; it must never send the user's transaction PIN to the VTU
+provider. The Flutter app currently has no configured VTU backend proxy, so
+provider requests fail closed until one is deployed and configured with
+`VTU_BACKEND_URL` (or `VtuApiService.configure(baseUrl: ...)`). Build with
+`--dart-define=VTU_BACKEND_URL=https://api.your-domain.example`. Rotate any
+provider credential that was previously embedded in a Flutter build or source
+file.
 
 ---
 

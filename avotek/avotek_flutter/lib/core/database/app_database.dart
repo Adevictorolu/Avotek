@@ -1,7 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../supabase/supabase_service.dart';
 import '../../models/user_model.dart';
 
 /// Clean local preferences and caching service
@@ -20,9 +18,9 @@ class AppDatabaseService {
   String _savedTheme = 'light';
 
   Map<String, String> _fundingAccount = {
-    'bank': 'PalmPay / Wema Bank',
-    'accountNumber': '8167002789',
-    'accountName': 'AVOTEK USER / DEDICATED ACCOUNT',
+    'bank': '',
+    'accountNumber': '',
+    'accountName': '',
   };
 
   Future<void> init() async {
@@ -138,32 +136,6 @@ class AppDatabaseService {
         _removeWebLocalStorage(_activeSessionKey);
       }
     } catch (_) {}
-  }
-
-  Future<String> requestPasswordReset(String identifier) async {
-    final clean = identifier.trim();
-    if (clean.contains('@')) {
-      try {
-        await SupabaseService.instance.client.auth.resetPasswordForEmail(clean);
-      } catch (_) {}
-    }
-    return '${100000 + (DateTime.now().millisecondsSinceEpoch % 900000)}';
-  }
-
-  Future<bool> resetPassword({
-    required String identifier,
-    required String code,
-    required String newPassword,
-  }) async {
-    final clean = identifier.trim();
-    if (clean.contains('@')) {
-      try {
-        await SupabaseService.instance.client.auth.updateUser(
-          UserAttributes(password: newPassword),
-        );
-      } catch (_) {}
-    }
-    return true;
   }
 
   // Cross-platform Web localStorage shim
