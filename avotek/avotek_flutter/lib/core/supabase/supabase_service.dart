@@ -155,6 +155,11 @@ class SupabaseService {
     }
   }
 
+  /// Send Password Reset Email via Supabase Auth
+  Future<void> sendPasswordResetEmail(String email) async {
+    await client.auth.resetPasswordForEmail(email.trim());
+  }
+
   // ==========================================
   // PROFILE MANAGEMENT
   // ==========================================

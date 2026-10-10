@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/pin_modal.dart';
+import '../../widgets/top_notification.dart';
 
 class ElectricityScreen extends StatefulWidget {
   const ElectricityScreen({super.key});
@@ -52,9 +53,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
   Future<void> _handleVerify() async {
     final meter = _meterController.text.trim();
     if (meter.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid meter number')),
-      );
+      TopNotification.showWarning(context, 'Please enter a valid meter number');
       return;
     }
 
@@ -79,9 +78,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     });
 
     if (!result.isValid && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not verify meter number. Check details and retry.')),
-      );
+      TopNotification.showError(context, 'Could not verify meter number. Check details and retry.');
     }
   }
 
@@ -90,9 +87,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     final amount = double.tryParse(_amountController.text.trim()) ?? 0.0;
 
     if (meter.length < 8 || amount < 500) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Minimum electricity purchase is ₦500')),
-      );
+      TopNotification.showWarning(context, 'Minimum electricity purchase is ₦500');
       return;
     }
 
@@ -101,11 +96,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     final vtu = context.read<VtuProvider>();
 
     if (wallet.balance < amount) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Insufficient balance (₦${wallet.balance.toStringAsFixed(2)} available).'),
-          backgroundColor: AppColors.error,
-        ),
+      TopNotification.showError(
+        context,
+        'Insufficient balance (₦${wallet.balance.toStringAsFixed(2)} available).',
       );
       return;
     }
@@ -128,7 +121,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
           meterType: _selectedMeterType,
           amount: amount,
           customerName: _verifiedCustomerName,
-          phone: auth.user?.phone.isNotEmpty == true ? auth.user!.phone : '08034119920',
+          phone: (auth.user?.phone != null && auth.user!.phone.isNotEmpty) ? auth.user!.phone : '08000000000',
         );
 
         wallet.recordDebit(
@@ -175,9 +168,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                         icon: const Icon(Icons.copy_rounded, size: 18),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: token));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Token copied to clipboard!')),
-                          );
+                          TopNotification.showSuccess(context, 'Token copied to clipboard!');
                         },
                       ),
                     ],
@@ -201,9 +192,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
         );
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Payment failed: $e'), backgroundColor: AppColors.error),
-        );
+        TopNotification.showError(context, 'Payment failed: $e');
       }
     }
   }

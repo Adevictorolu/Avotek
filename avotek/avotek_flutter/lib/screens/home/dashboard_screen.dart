@@ -9,6 +9,7 @@ import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
+import '../../widgets/avotek_loading_indicator.dart';
 import '../../widgets/onboarding_pin_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -22,6 +23,8 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   bool _obscureBalance = false;
+  bool _isLoadingInitial = true;
+  String? _loadError;
 
   @override
   void initState() {
@@ -42,9 +45,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadData() async {
     final auth = context.read<AuthProvider>();
     final wallet = context.read<WalletProvider>();
-    if (auth.user != null) {
-      await auth.refreshWallet();
-      await wallet.fetchWallet(auth.user!.id);
+    setState(() {
+      _loadError = null;
+    });
+    try {
+      if (auth.user != null) {
+        await Future.wait([
+          auth.refreshWallet(),
+          wallet.fetchWallet(auth.user!.id),
+        ]);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadError = e.toString().replaceAll('Exception: ', '');
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingInitial = false;
+        });
+      }
     }
   }
 
@@ -96,7 +118,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final auth = context.watch<AuthProvider>();
     final wallet = context.watch<WalletProvider>();
 
-    final userName = (auth.user?.name != null && auth.user!.name.isNotEmpty) ? auth.user!.name : 'Ademola';
+    if (_isLoadingInitial) {
+      return ResponsiveShell(
+        currentRoute: '/dashboard',
+        onToggleTheme: widget.onToggleTheme,
+        child: const Center(
+          child: AvotekLoadingIndicator(
+            logoSize: 56,
+            message: 'Loading your account securely…',
+          ),
+        ),
+      );
+    }
+
+    if (_loadError != null && auth.wallet == null) {
+      return ResponsiveShell(
+        currentRoute: '/dashboard',
+        onToggleTheme: widget.onToggleTheme,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.cloud_off_rounded, size: 54, color: AppColors.error),
+                const SizedBox(height: 16),
+                Text(
+                  'Could not load account details',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _loadError!,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.slateGrey),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() => _isLoadingInitial = true);
+                    _loadData();
+                  },
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Retry Loading Account'),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue, foregroundColor: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final userName = (auth.user?.name != null && auth.user!.name.isNotEmpty)
+        ? auth.user!.name
+        : (auth.user?.email.split('@').first ?? 'Valued User');
     final effectiveBalance = auth.wallet?.balance ?? wallet.balance;
 
     final hour = DateTime.now().hour;
@@ -378,12 +454,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     bool isDark,
     bool isDesktop,
   ) {
-    final formattedBalance = NumberFormat('#,##0.00').format(balance);
     final rawAcct = wallet.walletSummary?.virtualAccountNumber ??
         auth.wallet?.virtualAccountNumber ??
-        '5005305816';
+        '8167002789';
 
-    // Format account into 500  530  5816
+    // Format account into 816  700  2789
     final spacedAcct = rawAcct.length >= 10
         ? '${rawAcct.substring(0, 3)}  ${rawAcct.substring(3, 6)}  ${rawAcct.substring(6)}'
         : rawAcct;
@@ -391,7 +466,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final bank = wallet.walletSummary?.virtualAccountBank ??
         auth.wallet?.virtualAccountBank ??
         'WEMA / PALMPAY';
-    final cardHolder = 'AVOTEK ${(auth.user?.name ?? "VICTOR OLUOKUN ADEMOLA").toUpperCase()}';
+    final formattedBalance = NumberFormat('#,##0.00', 'en_US').format(balance);
+    final holderName = (auth.user?.name != null && auth.user!.name.isNotEmpty)
+        ? auth.user!.name
+        : (auth.user?.email.split('@').first ?? 'MEMBER');
+    final cardHolder = 'AVOTEK ${holderName.toUpperCase()}';
 
     return Container(
       width: double.infinity,

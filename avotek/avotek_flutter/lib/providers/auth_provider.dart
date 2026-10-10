@@ -335,6 +335,24 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Send Password Reset Email via Supabase Auth
+  Future<bool> sendPasswordResetEmail(String email) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await SupabaseService.instance.sendPasswordResetEmail(email.trim());
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Convenience alias for logout
   Future<void> signOut() => logout();
 }

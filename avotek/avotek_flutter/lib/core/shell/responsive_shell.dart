@@ -137,10 +137,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     final auth = context.watch<AuthProvider>();
     final wallet = context.watch<WalletProvider>();
 
-    final userName = (auth.user?.name != null && auth.user!.name.isNotEmpty) ? auth.user!.name : 'Ademola';
+    final userName = (auth.user?.name != null && auth.user!.name.isNotEmpty)
+        ? auth.user!.name
+        : ((auth.user?.email != null && auth.user!.email.isNotEmpty)
+            ? auth.user!.email.split('@').first
+            : 'User');
     final userInitials = userName.isNotEmpty
-        ? userName.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join()
-        : 'AV';
+        ? userName.split(' ').where((n) => n.isNotEmpty).map((n) => n[0].toUpperCase()).take(2).join()
+        : 'U';
 
     return Scaffold(
       key: _scaffoldKey,

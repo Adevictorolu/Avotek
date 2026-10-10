@@ -2202,8 +2202,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _openEditProfileModal(AuthProvider auth) {
-    final nameCtrl = TextEditingController(text: auth.user?.name ?? 'Ademola Victor Oluokun');
-    final phoneCtrl = TextEditingController(text: auth.user?.phone ?? '08167002789');
+    final nameCtrl = TextEditingController(text: auth.user?.name ?? '');
+    final phoneCtrl = TextEditingController(text: auth.user?.phone ?? '');
 
     showDialog(
       context: context,
@@ -2544,6 +2544,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Opening Avotek Privacy Policy')),
                           );
+                        },
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // --- SECTION 5: ACCOUNT SESSION (Sign Out) ---
+                  _buildSectionContainer(
+                    isDark: isDark,
+                    icon: Icons.logout_rounded,
+                    title: 'Account Session',
+                    children: [
+                      _buildSettingTile(
+                        icon: Icons.logout_rounded,
+                        iconColor: AppColors.error,
+                        iconBg: AppColors.error.withValues(alpha: 0.12),
+                        title: 'Sign Out',
+                        subtitle: 'Safely terminate active session on this device',
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.error, size: 14),
+                        onTap: () async {
+                          final auth = context.read<AuthProvider>();
+                          await auth.signOut();
+                          if (context.mounted) {
+                            context.go('/login');
+                          }
                         },
                         isDark: isDark,
                       ),

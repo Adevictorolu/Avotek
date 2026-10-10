@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import '../database/app_database.dart';
+import '../supabase/supabase_service.dart';
 import '../../screens/affiliate/affiliate_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/coupons/coupons_screen.dart';
@@ -27,8 +28,39 @@ class AppRouter {
     final bool hasSeenOnboarding = AppDatabaseService.instance.hasSeenOnboarding();
 
     return GoRouter(
-      // First-time mobile users get onboarding; once completed or on web, land directly on home
       initialLocation: (kIsWeb || hasSeenOnboarding) ? '/' : '/onboarding',
+      redirect: (context, state) {
+        final path = state.matchedLocation;
+        final hasSession = SupabaseService.instance.currentAuthUser != null ||
+            AppDatabaseService.instance.getCachedSessionUser() != null;
+
+        // Protected routes that unconditionally require authentication
+        const protectedRoutes = [
+          '/dashboard',
+          '/wallet',
+          '/services',
+          '/transactions',
+          '/history',
+          '/profile',
+          '/settings',
+          '/coupons',
+          '/gifts',
+          '/affiliate',
+          '/stats',
+        ];
+
+        final isProtected = protectedRoutes.any((r) => path == r || path.startsWith('$r/'));
+
+        if (isProtected && !hasSession) {
+          return '/login';
+        }
+
+        if (hasSession && (path == '/login' || path == '/register')) {
+          return '/dashboard';
+        }
+
+        return null;
+      },
       routes: [
         GoRoute(
           path: '/',

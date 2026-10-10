@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/pin_modal.dart';
+import '../../widgets/top_notification.dart';
 
 class CableScreen extends StatefulWidget {
   const CableScreen({super.key});
@@ -98,9 +99,7 @@ class _CableScreenState extends State<CableScreen> {
   Future<void> _handleVerify() async {
     final card = _smartcardController.text.trim();
     if (card.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid smartcard/IUC number')),
-      );
+      TopNotification.showWarning(context, 'Please enter a valid smartcard/IUC number');
       return;
     }
 
@@ -119,18 +118,14 @@ class _CableScreenState extends State<CableScreen> {
     });
 
     if (!result.isValid && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not verify smartcard number. Please check.')),
-      );
+      TopNotification.showError(context, 'Could not verify smartcard number. Please check.');
     }
   }
 
   Future<void> _handlePurchase() async {
     final card = _smartcardController.text.trim();
     if (card.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter smartcard number')),
-      );
+      TopNotification.showWarning(context, 'Please enter smartcard number');
       return;
     }
 
@@ -139,11 +134,9 @@ class _CableScreenState extends State<CableScreen> {
     final vtu = context.read<VtuProvider>();
 
     if (wallet.balance < _packageAmount) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Insufficient balance (₦${wallet.balance.toStringAsFixed(2)} available).'),
-          backgroundColor: AppColors.error,
-        ),
+      TopNotification.showError(
+        context,
+        'Insufficient balance (₦${wallet.balance.toStringAsFixed(2)} available).',
       );
       return;
     }
@@ -165,6 +158,7 @@ class _CableScreenState extends State<CableScreen> {
           variationCode: _selectedPackage!,
           amount: _packageAmount,
           customerName: _verifiedCustomerName,
+          phone: auth.user?.phone,
         );
 
         wallet.recordDebit(
@@ -202,9 +196,7 @@ class _CableScreenState extends State<CableScreen> {
         );
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Subscription failed: $e'), backgroundColor: AppColors.error),
-        );
+        TopNotification.showError(context, 'Subscription failed: $e');
       }
     }
   }

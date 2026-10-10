@@ -11,6 +11,7 @@ import '../../providers/theme_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/avotek_logo.dart';
 import '../../widgets/onboarding_pin_dialog.dart';
+import '../../widgets/top_notification.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool initialSignUp;
@@ -947,12 +948,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showSnackBar(String text, Color bg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-        backgroundColor: bg,
-      ),
-    );
+    if (bg == AppColors.error) {
+      TopNotification.showError(context, text);
+    } else {
+      TopNotification.showSuccess(context, text);
+    }
   }
 
   @override

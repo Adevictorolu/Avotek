@@ -9,6 +9,7 @@ import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
+import '../../widgets/top_notification.dart';
 
 class FundWalletScreen extends StatefulWidget {
   const FundWalletScreen({super.key});
@@ -45,14 +46,10 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     final amtText = _amountController.text.trim();
     final amount = double.tryParse(amtText);
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please enter a valid transfer amount.',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-          ),
-          backgroundColor: const Color(0xFFEF4444),
-        ),
+      TopNotification.showError(
+        context,
+        'Please enter a valid transfer amount in Naira (₦).',
+        title: 'Invalid Amount',
       );
       return;
     }
@@ -72,24 +69,10 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
 
     setState(() => _isFunding = false);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  '₦${NumberFormat('#,##0.00').format(amount)} received! Your Avotek wallet has been credited.',
-                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: const Color(0xFF10B981),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
-        ),
+      TopNotification.showSuccess(
+        context,
+        '₦${NumberFormat('#,##0.00').format(amount)} received! Your Avotek wallet has been credited securely.',
+        title: 'Wallet Funded',
       );
     }
   }
@@ -230,12 +213,10 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           InkWell(
                             onTap: () {
                               Clipboard.setData(ClipboardData(text: accountNumber));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Account number copied to clipboard!'),
-                                  backgroundColor: Color(0xFF10B981),
-                                  duration: Duration(seconds: 2),
-                                ),
+                              TopNotification.showSuccess(
+                                context,
+                                'Account number $accountNumber ($bankName) copied to clipboard!',
+                                title: 'Account Number Copied',
                               );
                             },
                             borderRadius: BorderRadius.circular(8),
@@ -393,7 +374,18 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         keyboardType: TextInputType.number,
                         style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800),
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.currency_pound, color: Color(0xFF00D2FF)),
+                          prefixIcon: Container(
+                            width: 44,
+                            alignment: Alignment.center,
+                            child: Text(
+                              '₦',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF00D2FF),
+                              ),
+                            ),
+                          ),
                           hintText: 'Enter amount (e.g. 5000)',
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                           filled: true,

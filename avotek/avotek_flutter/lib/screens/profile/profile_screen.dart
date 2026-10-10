@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
@@ -19,8 +20,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _openViewProfileModal(BuildContext context, String fullName, String email, String phone) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final nameParts = fullName.split(' ');
-    final firstName = nameParts.isNotEmpty ? nameParts.first : 'Ademola';
-    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : 'Victor Oluokun';
+    final firstName = nameParts.isNotEmpty ? nameParts.first : 'User';
+    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
     final initials = fullName.isNotEmpty
         ? fullName.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join()
         : 'AV';
@@ -308,13 +309,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = auth.user;
     final fullName = (user?.name != null && user!.name.isNotEmpty)
         ? user.name
-        : 'Ademola Victor Oluokun';
+        : (user?.email.split('@').first ?? 'Avotek Member');
     final email = (user?.email != null && user!.email.isNotEmpty)
         ? user.email
-        : 'ademolavictor869@gmail.com';
+        : 'user@avotek.com';
     final phone = (user?.phone != null && user!.phone.isNotEmpty)
         ? user.phone
-        : '08167002789';
+        : 'Not configured';
     final initials = fullName.isNotEmpty
         ? fullName.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join()
         : 'AV';
@@ -364,6 +365,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   // --- CARD 3: FULLY VERIFIED / VIEW PROFILE (Matches Screenshot 3) ---
                   _buildFullyVerifiedCard(isDark, fullName, email, phone),
+                  const SizedBox(height: 24),
+
+                  // --- CARD 4: SIGN OUT ---
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkCard : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.error.withOpacity(0.35)),
+                      boxShadow: isDark
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sign Out of Avotek',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Securely terminate your active session and return to sign-in.',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12.5,
+                                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final auth = context.read<AuthProvider>();
+                            await auth.signOut();
+                            if (context.mounted) {
+                              context.go('/login');
+                            }
+                          },
+                          icon: const Icon(Icons.logout_rounded, size: 16),
+                          label: const Text('Sign Out'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.error,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 48),
                 ],
               ),

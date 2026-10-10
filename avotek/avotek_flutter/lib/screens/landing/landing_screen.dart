@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/avotek_logo.dart';
+import '../../widgets/top_notification.dart';
 
 class LandingScreen extends StatefulWidget {
   final VoidCallback? onToggleTheme;
@@ -599,14 +601,14 @@ class _LandingScreenState extends State<LandingScreen> {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _buildPhoneServiceIcon(Icons.phone_android_rounded, 'Airtime', sAirtime),
-              _buildPhoneServiceIcon(Icons.wifi_rounded, 'Data', sData),
-              _buildPhoneServiceIcon(Icons.tv_rounded, 'Cable', sCable),
-              _buildPhoneServiceIcon(Icons.flash_on_rounded, 'Power', sPower),
-              _buildPhoneServiceIcon(Icons.sync_alt_rounded, 'Convert', const Color(0xFF14B8A6)),
-              _buildPhoneServiceIcon(Icons.sms_rounded, 'SMS', const Color(0xFF6366F1)),
-              _buildPhoneServiceIcon(Icons.account_balance_wallet_rounded, 'Fund', sWallet),
-              _buildPhoneServiceIcon(Icons.send_rounded, 'Send', sRefer),
+              _buildPhoneServiceIcon(Icons.phone_android_rounded, 'Airtime', sAirtime, '/services/airtime'),
+              _buildPhoneServiceIcon(Icons.wifi_rounded, 'Data', sData, '/services/data'),
+              _buildPhoneServiceIcon(Icons.tv_rounded, 'Cable', sCable, '/services/tv'),
+              _buildPhoneServiceIcon(Icons.flash_on_rounded, 'Power', sPower, '/services/electricity'),
+              _buildPhoneServiceIcon(Icons.sync_alt_rounded, 'Convert', const Color(0xFF14B8A6), '/services'),
+              _buildPhoneServiceIcon(Icons.sms_rounded, 'SMS', const Color(0xFF6366F1), '/services'),
+              _buildPhoneServiceIcon(Icons.account_balance_wallet_rounded, 'Fund', sWallet, '/wallet/fund'),
+              _buildPhoneServiceIcon(Icons.send_rounded, 'Send', sRefer, '/affiliate'),
             ],
           ),
           const SizedBox(height: 18),
@@ -628,7 +630,7 @@ class _LandingScreenState extends State<LandingScreen> {
             color: sWallet,
             title: 'Wema Virtual Transfer',
             subtitle: 'Credited | 11:52',
-            amount: '+₦50,000',
+            amount: '+₦5,000',
             isCredit: true,
           ),
         ],
@@ -636,20 +638,36 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  Widget _buildPhoneServiceIcon(IconData icon, String label, Color color) {
-    return SizedBox(
-      width: 62,
-      child: Column(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            child: Icon(icon, color: Colors.white, size: 18),
-          ),
-          const SizedBox(height: 4),
-          Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.white70)),
-        ],
+  Widget _buildPhoneServiceIcon(IconData icon, String label, Color color, [String? route]) {
+    return InkWell(
+      onTap: () {
+        final auth = context.read<AuthProvider>();
+        if (auth.isAuthenticated) {
+          context.push(route ?? '/services');
+        } else {
+          TopNotification.showInfo(
+            context,
+            'Please sign in or create an account to access $label.',
+            title: 'Authentication Required',
+          );
+          context.push('/login');
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 62,
+        child: Column(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              child: Icon(icon, color: Colors.white, size: 18),
+            ),
+            const SizedBox(height: 4),
+            Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.white70)),
+          ],
+        ),
       ),
     );
   }
@@ -847,16 +865,38 @@ class _LandingScreenState extends State<LandingScreen> {
             ),
             itemCount: services.length,
             itemBuilder: (context, i) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
               final s = services[i];
               return InkWell(
-                onTap: () => context.push(s['route'] as String),
+                onTap: () {
+                  final auth = context.read<AuthProvider>();
+                  if (!auth.isAuthenticated) {
+                    TopNotification.showInfo(
+                      context,
+                      'Please sign in or create an account to access ${s['title']}.',
+                      title: 'Authentication Required',
+                    );
+                    context.push('/login');
+                    return;
+                  }
+                  context.push(s['route'] as String);
+                },
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF141720),
+                    color: isDark ? const Color(0xFF141720) : Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF26334D)),
+                    border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
+                    boxShadow: isDark
+                        ? null
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -867,19 +907,37 @@ class _LandingScreenState extends State<LandingScreen> {
                         child: Icon(s['icon'] as IconData, color: Colors.white, size: 20),
                       ),
                       const SizedBox(height: 14),
-                      Text(s['title'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
+                      Text(
+                        s['title'] as String,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
                       const SizedBox(height: 6),
                       Expanded(
                         child: Text(
                           s['desc'] as String,
-                          style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF94A3B8), height: 1.4),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            height: 1.4,
+                          ),
                         ),
                       ),
                       Row(
                         children: [
-                          Text('Open', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.electricCyan)),
+                          Text(
+                            'Open',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primaryBlue,
+                            ),
+                          ),
                           const SizedBox(width: 4),
-                          const Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.electricCyan),
+                          const Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.primaryBlue),
                         ],
                       ),
                     ],
@@ -1587,6 +1645,7 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   Widget _buildSectionHeader(String eyebrow, String title, String subtitle) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -1614,7 +1673,7 @@ class _LandingScreenState extends State<LandingScreen> {
             fontSize: 28,
             fontWeight: FontWeight.w900,
             letterSpacing: -0.6,
-            color: Colors.white,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
           ),
         ),
         if (subtitle.isNotEmpty) ...[
@@ -1626,7 +1685,7 @@ class _LandingScreenState extends State<LandingScreen> {
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
-                color: const Color(0xFF94A3B8),
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                 height: 1.5,
               ),
             ),

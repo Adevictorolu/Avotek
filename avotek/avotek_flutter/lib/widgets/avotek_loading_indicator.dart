@@ -93,7 +93,9 @@ class _AvotekLoadingIndicatorState extends State<AvotekLoadingIndicator>
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: AppColors.metallicLight,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.metallicLight
+                  : const Color(0xFF334155),
               letterSpacing: 0.3,
             ),
             textAlign: TextAlign.center,
@@ -122,7 +124,7 @@ class _RingProgressPainter extends CustomPainter {
 
     // Subtle background track
     final trackPaint = Paint()
-      ..color = const Color(0xFF1E293B).withOpacity(0.4)
+      ..color = const Color(0xFF1E293B).withOpacity(0.2)
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
     canvas.drawCircle(center, radius, trackPaint);
@@ -166,18 +168,22 @@ class AvotekPageLoadingOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: AppColors.darkBg.withOpacity(0.85),
+      color: (isDark ? AppColors.darkBg : Colors.black).withOpacity(isDark ? 0.85 : 0.45),
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
           decoration: BoxDecoration(
-            color: AppColors.darkCard,
+            color: isDark ? AppColors.darkCard : Colors.white,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.darkBorder, width: 1.5),
+            border: Border.all(
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              width: 1.5,
+            ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryBlue.withOpacity(0.12),
+                color: Colors.black.withOpacity(isDark ? 0.3 : 0.12),
                 blurRadius: 30,
                 offset: const Offset(0, 10),
               ),

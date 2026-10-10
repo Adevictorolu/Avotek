@@ -8,6 +8,9 @@ import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
+import '../../widgets/avotek_loading_indicator.dart';
+import '../../widgets/service_brand_logo.dart';
+import '../../widgets/top_notification.dart';
 
 class DataScreen extends StatefulWidget {
   const DataScreen({super.key});
@@ -17,20 +20,20 @@ class DataScreen extends StatefulWidget {
 }
 
 class _DataScreenState extends State<DataScreen> {
-  final _phoneController = TextEditingController(text: '08034119920');
+  final _phoneController = TextEditingController();
   final _pinController = TextEditingController();
 
   String _selectedNetwork = 'MTN';
   String _selectedCategory = 'SME';
   Map<String, dynamic>? _selectedPlan;
   bool _isProcessing = false;
+  String _processingMessage = 'Processing your request securely…';
 
   final List<Map<String, dynamic>> _networks = [
     {'name': 'MTN', 'code': 'MTN', 'color': Color(0xFFFFCC00), 'iconColor': Colors.black},
     {'name': 'GLO', 'code': 'GLO', 'color': Color(0xFF00A859), 'iconColor': Colors.white},
     {'name': 'AIRTEL', 'code': 'AIRTEL', 'color': Color(0xFFE60000), 'iconColor': Colors.white},
-    {'name': 'T2', 'code': 'T2', 'color': Color(0xFF005B38), 'iconColor': Colors.white},
-    {'name': 'VITEL', 'code': 'VITEL', 'color': Color(0xFF0284C7), 'iconColor': Colors.white},
+    {'name': '9MOBILE', 'code': '9MOBILE', 'color': Color(0xFF005B38), 'iconColor': Colors.white},
   ];
 
   final List<String> _categories = ['SME', 'Gifting', 'Corporate'];
@@ -167,15 +170,15 @@ class _DataScreenState extends State<DataScreen> {
     final pin = _pinController.text.trim();
 
     if (phone.length < 10) {
-      _showSnackBar('Please enter a valid 11-digit phone number.', AppColors.error);
+      TopNotification.showError(context, 'Please enter a valid 11-digit phone number.', title: 'Invalid Phone');
       return;
     }
     if (_selectedPlan == null) {
-      _showSnackBar('Please select a data plan bundle.', AppColors.error);
+      TopNotification.showError(context, 'Please select a data plan bundle.', title: 'Bundle Required');
       return;
     }
     if (pin.length != 4) {
-      _showSnackBar('Please enter your 4-digit transaction PIN.', AppColors.error);
+      TopNotification.showError(context, 'Please enter your 4-digit transaction PIN.', title: 'PIN Required');
       return;
     }
 
@@ -183,30 +186,53 @@ class _DataScreenState extends State<DataScreen> {
     final vtu = context.read<VtuProvider>();
     final amount = (_selectedPlan!['price'] as num).toDouble();
 
+    setState(() {
+      _isProcessing = true;
+      _processingMessage = 'Verifying your credentials…';
+    });
+
     // 1. Verify PIN
     final pinValid = await auth.verifyPin(pin);
+    if (!mounted) return;
     if (!pinValid) {
-      _showSnackBar('Invalid transaction PIN. Please re-enter your 4-digit PIN.', AppColors.error);
+      setState(() => _isProcessing = false);
+      TopNotification.showError(
+        context,
+        'Invalid transaction PIN. Please re-enter your 4-digit PIN.',
+        title: 'PIN Incorrect',
+      );
       return;
     }
 
     // 2. Check Balance
     final currentBalance = auth.wallet?.balance ?? 0.0;
     if (currentBalance < amount) {
+      setState(() => _isProcessing = false);
       _showInsufficientBalanceDialog(amount, currentBalance);
       return;
     }
 
-    setState(() => _isProcessing = true);
+    setState(() {
+      _processingMessage = 'Processing your request securely…';
+    });
 
     try {
       // 3. Atomically debit wallet in ledger
       final debited = await auth.debitWallet(amount, 'Data Bundle: ${_selectedPlan!['plan']} ($phone)');
+      if (!mounted) return;
       if (!debited) {
-        _showSnackBar('Insufficient wallet balance. Please add money.', AppColors.error);
         setState(() => _isProcessing = false);
+        TopNotification.showError(
+          context,
+          'Insufficient wallet balance. Please add money.',
+          title: 'Debit Failed',
+        );
         return;
       }
+
+      setState(() {
+        _processingMessage = 'Confirming your transaction status…';
+      });
 
       // 4. Dispatch live aggregator order (Bigisub Gateway API)
       final result = await vtu.buyData(
@@ -220,11 +246,41 @@ class _DataScreenState extends State<DataScreen> {
         userPin: pin,
       );
 
+      if (!mounted) return;
       setState(() => _isProcessing = false);
-      _showSuccessDialog(phone, amount, result.message);
+
+      if (!result.success || result.order.status == 'failed') {
+        // Auto-refund wallet
+        await auth.creditWallet(amount);
+        if (!mounted) return;
+        TopNotification.showError(
+          context,
+          result.message,
+          title: 'Transaction Failed',
+        );
+      } else if (result.order.status == 'pending') {
+        TopNotification.showWarning(
+          context,
+          'Your data bundle request is awaiting telecom gateway confirmation.',
+          title: 'Transaction Pending',
+        );
+        _showSuccessDialog(phone, amount, 'Transaction is being confirmed by $_selectedNetwork.');
+      } else {
+        TopNotification.showSuccess(
+          context,
+          '${_selectedPlan!["plan"]} delivered successfully to $phone.',
+          title: 'Transaction completed successfully.',
+        );
+        _showSuccessDialog(phone, amount, result.message);
+      }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isProcessing = false);
-      _showSnackBar('Order processed: ${e.toString().replaceAll("Exception: ", "")}', AppColors.primaryBlue);
+      TopNotification.showError(
+        context,
+        e.toString().replaceAll("Exception: ", ""),
+        title: 'Transaction Notice',
+      );
     }
   }
 
@@ -309,18 +365,13 @@ class _DataScreenState extends State<DataScreen> {
     );
   }
 
-  void _showSnackBar(String text, Color bg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)), backgroundColor: bg),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final auth = context.watch<AuthProvider>();
-    final walletBalance = auth.wallet?.balance ?? 9.0;
+    final walletBalance = auth.wallet?.balance ?? 0.0;
 
     final currentPlanPrice = _selectedPlan != null ? (_selectedPlan!['price'] as num).toDouble() : 0.0;
     final formattedPrice = NumberFormat('#,##0.00', 'en_US').format(currentPlanPrice);
@@ -328,58 +379,66 @@ class _DataScreenState extends State<DataScreen> {
     return ResponsiveShell(
       currentRoute: '/services/data',
       onToggleTheme: () {},
-      child: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(
-          horizontal: isDesktop ? 32 : 16,
-          vertical: 24,
-        ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1140),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header: Title & Subtitle
-              Text(
-                'Buy Data',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Instant data bundles on every network — delivered in seconds',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                ),
-              ),
-              const SizedBox(height: 24),
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 32 : 16,
+              vertical: 24,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1140),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header: Title & Subtitle
+                  Text(
+                    'Buy Data',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Instant data bundles on every network — delivered in seconds',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
 
-              // 2-Column Responsive Layout matching Bilal Sub Screenshot 3
-              if (isDesktop)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(flex: 3, child: _buildLeftForm(isDark)),
-                    const SizedBox(width: 24),
-                    Expanded(flex: 2, child: _buildRightSummary(walletBalance, formattedPrice, isDark)),
-                  ],
-                )
-              else
-                Column(
-                  children: [
-                    _buildRightSummary(walletBalance, formattedPrice, isDark),
-                    const SizedBox(height: 20),
-                    _buildLeftForm(isDark),
-                  ],
-                ),
-            ],
+                  // 2-Column Responsive Layout matching Bilal Sub Screenshot 3
+                  if (isDesktop)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 3, child: _buildLeftForm(isDark)),
+                        const SizedBox(width: 24),
+                        Expanded(flex: 2, child: _buildRightSummary(walletBalance, formattedPrice, isDark)),
+                      ],
+                    )
+                  else
+                    Column(
+                      children: [
+                        _buildRightSummary(walletBalance, formattedPrice, isDark),
+                        const SizedBox(height: 20),
+                        _buildLeftForm(isDark),
+                      ],
+                    ),
+                ],
+              ),
+            ),
           ),
-        ),
+          if (_isProcessing)
+            Positioned.fill(
+              child: AvotekPageLoadingOverlay(message: _processingMessage),
+            ),
+        ],
       ),
     );
   }
@@ -418,18 +477,9 @@ class _DataScreenState extends State<DataScreen> {
                 ),
                 child: Column(
                   children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: net['color'] as Color,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        (net['code'] as String).substring(0, 1),
-                        style: TextStyle(color: net['iconColor'] as Color, fontWeight: FontWeight.w900, fontSize: 16),
-                      ),
+                    ServiceBrandLogo(
+                      provider: net['code'] as String,
+                      size: 36,
                     ),
                     const SizedBox(height: 8),
                     Text(

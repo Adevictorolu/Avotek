@@ -204,7 +204,11 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
 
     final username = (auth.user?.referralCode != null && auth.user!.referralCode.isNotEmpty)
         ? auth.user!.referralCode
-        : (auth.user?.name.replaceAll(' ', '').toLowerCase() ?? 'ademolavictor869');
+        : ((auth.user?.name.isNotEmpty == true)
+            ? auth.user!.name.replaceAll(' ', '').toLowerCase()
+            : ((auth.user?.email.isNotEmpty == true)
+                ? auth.user!.email.split('@').first
+                : 'user'));
     final referralLink = 'https://avotek.ng/@$username';
 
     return ResponsiveShell(

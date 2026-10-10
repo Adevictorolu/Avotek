@@ -464,7 +464,7 @@ class VtuProvider extends ChangeNotifier {
       final liveRes = await VtuApiService.instance.purchaseCableTv(
         cableType: provider,
         smartcardNumber: smartcardNumber,
-        phone: phone ?? '08034119920',
+        phone: (phone != null && phone.isNotEmpty) ? phone : '08000000000',
         amount: amount,
         customerName: customerName ?? 'Avotek Subscriber',
         pin: userPin,
@@ -560,7 +560,7 @@ class VtuProvider extends ChangeNotifier {
         company: disco,
         meterNumber: meterNumber,
         meterType: meterType,
-        phone: phone ?? '08034119920',
+        phone: (phone != null && phone.isNotEmpty) ? phone : '08000000000',
         amount: amount,
         customerName: customerName ?? 'Avotek Customer',
         customerAddress: customerAddress,

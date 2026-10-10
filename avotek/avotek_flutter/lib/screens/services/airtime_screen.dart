@@ -9,6 +9,9 @@ import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
+import '../../widgets/avotek_loading_indicator.dart';
+import '../../widgets/service_brand_logo.dart';
+import '../../widgets/top_notification.dart';
 
 class AirtimeScreen extends StatefulWidget {
   const AirtimeScreen({super.key});
@@ -26,13 +29,13 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
   String _selectedTopupType = 'VTU';
   double _amount = 0.0;
   bool _isProcessing = false;
+  String _processingMessage = 'Processing your request securely…';
 
   final List<Map<String, dynamic>> _networks = [
     {'name': 'MTN', 'code': 'MTN', 'color': const Color(0xFFFFCC00), 'iconColor': Colors.black},
     {'name': 'GLO', 'code': 'GLO', 'color': const Color(0xFF00A859), 'iconColor': Colors.white},
     {'name': 'AIRTEL', 'code': 'AIRTEL', 'color': const Color(0xFFE60000), 'iconColor': Colors.white},
-    {'name': 'T2', 'code': 'T2', 'color': const Color(0xFF005B38), 'iconColor': Colors.white},
-    {'name': 'VITEL', 'code': 'VITEL', 'color': const Color(0xFF0284C7), 'iconColor': Colors.white},
+    {'name': '9MOBILE', 'code': '9MOBILE', 'color': const Color(0xFF005B38), 'iconColor': Colors.white},
   ];
 
   final List<double> _presetAmounts = [100, 200, 500, 1000, 2000, 5000];
@@ -74,49 +77,72 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     final pin = _pinController.text.trim();
 
     if (_amount < 50) {
-      _showSnackBar('Minimum airtime amount is ₦50.', AppColors.error);
+      TopNotification.showError(context, 'Minimum airtime amount is ₦50.', title: 'Invalid Amount');
       return;
     }
     if (_amount > 50000) {
-      _showSnackBar('Maximum airtime amount is ₦50,000.', AppColors.error);
+      TopNotification.showError(context, 'Maximum airtime amount is ₦50,000.', title: 'Amount Exceeded');
       return;
     }
     if (phone.length < 10) {
-      _showSnackBar('Please enter a valid 11-digit phone number.', AppColors.error);
+      TopNotification.showError(context, 'Please enter a valid 11-digit phone number.', title: 'Invalid Phone');
       return;
     }
     if (pin.length != 4) {
-      _showSnackBar('Please enter your 4-digit transaction PIN.', AppColors.error);
+      TopNotification.showError(context, 'Please enter your 4-digit transaction PIN.', title: 'PIN Required');
       return;
     }
 
     final auth = context.read<AuthProvider>();
     final vtu = context.read<VtuProvider>();
 
+    setState(() {
+      _isProcessing = true;
+      _processingMessage = 'Verifying your credentials…';
+    });
+
     // 1. Verify PIN
     final pinValid = await auth.verifyPin(pin);
+    if (!mounted) return;
     if (!pinValid) {
-      _showSnackBar('Invalid transaction PIN. Please re-enter your 4-digit PIN.', AppColors.error);
+      setState(() => _isProcessing = false);
+      TopNotification.showError(
+        context,
+        'Invalid transaction PIN. Please re-enter your 4-digit PIN.',
+        title: 'PIN Incorrect',
+      );
       return;
     }
 
     // 2. Check Balance
     final currentBalance = auth.wallet?.balance ?? 0.0;
     if (currentBalance < _amount) {
+      setState(() => _isProcessing = false);
       _showInsufficientBalanceDialog(_amount, currentBalance);
       return;
     }
 
-    setState(() => _isProcessing = true);
+    setState(() {
+      _processingMessage = 'Processing your request securely…';
+    });
 
     try {
       // 3. Atomically debit wallet in immutable ledger
       final debited = await auth.debitWallet(_amount, 'Airtime: $_selectedNetwork ($phone)');
+      if (!mounted) return;
       if (!debited) {
-        _showSnackBar('Insufficient wallet balance. Please add money.', AppColors.error);
         setState(() => _isProcessing = false);
+        TopNotification.showError(
+          context,
+          'Insufficient wallet balance. Please add money.',
+          title: 'Debit Failed',
+        );
         return;
       }
+
+      setState(() {
+        _processingMessage = 'Confirming your transaction status…';
+      });
 
       // 4. Dispatch live aggregator order (Bigisub Gateway API)
       final result = await vtu.buyAirtime(
@@ -127,11 +153,41 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
         userPin: pin,
       );
 
+      if (!mounted) return;
       setState(() => _isProcessing = false);
-      _showSuccessDialog(phone, _amount, result.message);
+
+      if (!result.success || result.order.status == 'failed') {
+        // Auto-refund wallet
+        await auth.creditWallet(_amount);
+        if (!mounted) return;
+        TopNotification.showError(
+          context,
+          result.message,
+          title: 'Transaction Failed',
+        );
+      } else if (result.order.status == 'pending') {
+        TopNotification.showWarning(
+          context,
+          'Your airtime request is awaiting telecom gateway confirmation.',
+          title: 'Transaction Pending',
+        );
+        _showSuccessDialog(phone, _amount, 'Transaction is being confirmed by $_selectedNetwork.');
+      } else {
+        TopNotification.showSuccess(
+          context,
+          '₦${NumberFormat('#,##0.00').format(_amount)} $_selectedNetwork airtime sent to $phone.',
+          title: 'Transaction completed successfully.',
+        );
+        _showSuccessDialog(phone, _amount, result.message);
+      }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isProcessing = false);
-      _showSnackBar('Order processed: ${e.toString().replaceAll("Exception: ", "")}', const Color(0xFF0284C7));
+      TopNotification.showError(
+        context,
+        e.toString().replaceAll("Exception: ", ""),
+        title: 'Transaction Notice',
+      );
     }
   }
 
@@ -218,18 +274,13 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     );
   }
 
-  void _showSnackBar(String text, Color bg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)), backgroundColor: bg),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final auth = context.watch<AuthProvider>();
-    final walletBalance = auth.wallet?.balance ?? 9.0;
+    final walletBalance = auth.wallet?.balance ?? 0.0;
     final formattedPrice = NumberFormat('#,##0.00', 'en_US').format(_amount);
 
     return ResponsiveShell(
@@ -352,6 +403,10 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
               ),
             ),
           ),
+          if (_isProcessing)
+            Positioned.fill(
+              child: AvotekPageLoadingOverlay(message: _processingMessage),
+            ),
         ],
       ),
     );
@@ -389,18 +444,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                 ),
                 child: Column(
                   children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: net['color'] as Color,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        (net['code'] as String).substring(0, 1),
-                        style: TextStyle(color: net['iconColor'] as Color, fontWeight: FontWeight.w900, fontSize: 16),
-                      ),
+                    ServiceBrandLogo(
+                      provider: net['code'] as String,
+                      size: 36,
                     ),
                     const SizedBox(height: 8),
                     Text(
