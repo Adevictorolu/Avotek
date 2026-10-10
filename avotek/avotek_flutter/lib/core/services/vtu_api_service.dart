@@ -1,40 +1,52 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../supabase/supabase_service.dart';
 
 /// ==============================================================================
-/// AVOTEK VTU API GATEWAY SERVICE (BIGISUB V2 INTEGRATION)
+/// AVOTEK VTU API CLIENT
 /// ==============================================================================
-/// Live integration with Bigisub API Gateway (https://api.bigisub.ng)
-/// Official documentation: https://rif.africa/technotronics/api/bigisub
+/// Requests are sent to an authenticated backend proxy. Provider credentials
+/// must never be present in this Flutter client.
 class VtuApiService {
   static final VtuApiService instance = VtuApiService._internal();
   VtuApiService._internal();
 
   // ----------------------------------------------------------------------------
-  // LIVE API CONFIGURATION & CREDENTIALS
+  // Backend proxy configuration
   // ----------------------------------------------------------------------------
-  static String apiBaseUrl = 'https://api.bigisub.ng';
-  static String secretToken = 'c71a68151b57aaf3c8535d95d6ae0230a834fb43';
-  static String defaultAggregatorPin = '1234';
+  static String apiBaseUrl = const String.fromEnvironment('VTU_BACKEND_URL');
 
-  /// Configure API credentials dynamically if needed
+  /// Configure the public gateway URL. Provider credentials must remain server-side.
   static void configure({
     String? baseUrl,
-    String? token,
-    String? aggregatorPin,
   }) {
     if (baseUrl != null) apiBaseUrl = baseUrl;
-    if (token != null) secretToken = token;
-    if (aggregatorPin != null) defaultAggregatorPin = aggregatorPin;
     debugPrint('VtuApiService configured with Base URL: $apiBaseUrl');
   }
 
-  /// Request headers required by Bigisub API
-  Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        'Authorization': 'Token $secretToken',
-      };
+  Map<String, String> get _headers {
+    if (apiBaseUrl.trim().isEmpty) {
+      throw StateError('Configure a trusted VTU backend before making provider requests.');
+    }
+    final accessToken = SupabaseService.instance.currentSession?.accessToken;
+    if (accessToken == null) {
+      throw StateError('Sign in before making a VTU request.');
+    }
+    final headers = {
+      'Content-Type': 'application/json',
+    };
+    headers['Authorization'] = 'Bearer $accessToken';
+    return headers;
+  }
+
+  void _validatePurchaseResponse(Map<String, dynamic> body, String fallbackMessage) {
+    final status = body['status']?.toString().toLowerCase();
+    if (body['success'] == false ||
+        const {'failed', 'failure', 'error', 'rejected'}.contains(status)) {
+      throw Exception((body['message'] ?? body['detail'] ?? fallbackMessage).toString());
+    }
+  }
 
   // ============================================================================
   // 1. WALLET & ACCOUNT STATUS
@@ -47,7 +59,6 @@ class VtuApiService {
     try {
       final res = await http.get(Uri.parse(endpoint), headers: _headers);
       final body = jsonDecode(res.body) as Map<String, dynamic>;
-      debugPrint('VtuApiService.getWalletBalance response: $body');
       return body;
     } catch (e) {
       debugPrint('VtuApiService.getWalletBalance error: $e');
@@ -65,7 +76,6 @@ class VtuApiService {
     required dynamic network, // int (1-4) or string ('mtn', 'glo', etc.)
     required String phone,
     required double amount,
-    String? pin,
     String airtimeType = 'vtu',
   }) async {
     final endpoint = '$apiBaseUrl/api/v2/vtu/airtime/purchase/';
@@ -78,10 +88,8 @@ class VtuApiService {
       'phone_number': cleanPhone,
       'amount': amtString,
       'airtime_type': airtimeType,
-      'pin': pin ?? defaultAggregatorPin,
     };
 
-    debugPrint('VtuApiService.purchaseAirtime payload: $payload');
 
     try {
       final res = await http.post(
@@ -91,9 +99,9 @@ class VtuApiService {
       );
 
       final body = jsonDecode(res.body) as Map<String, dynamic>;
-      debugPrint('VtuApiService.purchaseAirtime [${res.statusCode}]: $body');
 
       if (res.statusCode == 200 || res.statusCode == 201) {
+        _validatePurchaseResponse(body, 'Airtime purchase failed');
         return body;
       } else {
         final msg = body['message'] ?? body['detail'] ?? 'Airtime purchase failed';
@@ -130,9 +138,9 @@ class VtuApiService {
         return list;
       }
       return [];
-    } catch (e) {
-      debugPrint('VtuApiService.getDataPlans error: $e');
-      return [];
+    } catch (error) {
+      debugPrint('VtuApiService.getDataPlans failed: $error');
+      rethrow;
     }
   }
 
@@ -142,7 +150,6 @@ class VtuApiService {
     required dynamic network,
     required int planId,
     required String phone,
-    String? pin,
     bool portedNumber = true,
   }) async {
     final endpoint = '$apiBaseUrl/api/v2/vtu/data/purchase/';
@@ -153,11 +160,9 @@ class VtuApiService {
       'network': networkId,
       'plan': planId,
       'phone_number': cleanPhone,
-      'pin': pin ?? defaultAggregatorPin,
       'ported_number': portedNumber,
     };
 
-    debugPrint('VtuApiService.purchaseData payload: $payload');
 
     try {
       final res = await http.post(
@@ -167,9 +172,9 @@ class VtuApiService {
       );
 
       final body = jsonDecode(res.body) as Map<String, dynamic>;
-      debugPrint('VtuApiService.purchaseData [${res.statusCode}]: $body');
 
       if (res.statusCode == 200 || res.statusCode == 201) {
+        _validatePurchaseResponse(body, 'Data purchase failed');
         return body;
       } else {
         final msg = body['message'] ?? body['detail'] ?? 'Data purchase failed';
@@ -199,9 +204,9 @@ class VtuApiService {
         return (body['data'] as List).cast<Map<String, dynamic>>();
       }
       return [];
-    } catch (e) {
-      debugPrint('VtuApiService.getCablePlans error: $e');
-      return [];
+    } catch (error) {
+      debugPrint('VtuApiService.getCablePlans failed: $error');
+      rethrow;
     }
   }
 
@@ -219,7 +224,6 @@ class VtuApiService {
       'card_no': smartcardNumber.trim(),
     };
 
-    debugPrint('VtuApiService.verifySmartcard payload: $payload');
 
     try {
       final res = await http.post(
@@ -229,7 +233,6 @@ class VtuApiService {
       );
 
       final body = jsonDecode(res.body) as Map<String, dynamic>;
-      debugPrint('VtuApiService.verifySmartcard [${res.statusCode}]: $body');
 
       if (res.statusCode == 200 && (body['success'] == true || body['data'] != null)) {
         return body;
@@ -251,7 +254,6 @@ class VtuApiService {
     required String phone,
     required double amount,
     required String customerName,
-    String? pin,
   }) async {
     final endpoint = '$apiBaseUrl/api/v2/vtu/cable/purchase/';
     final cleanCable = mapCableProviderToCode(cableType);
@@ -262,10 +264,8 @@ class VtuApiService {
       'phone_number': _cleanPhoneNumber(phone),
       'amount': amount.toInt(),
       'Customer': customerName.trim(),
-      'pin': pin ?? defaultAggregatorPin,
     };
 
-    debugPrint('VtuApiService.purchaseCableTv payload: $payload');
 
     try {
       final res = await http.post(
@@ -275,9 +275,9 @@ class VtuApiService {
       );
 
       final body = jsonDecode(res.body) as Map<String, dynamic>;
-      debugPrint('VtuApiService.purchaseCableTv [${res.statusCode}]: $body');
 
       if (res.statusCode == 200 || res.statusCode == 201) {
+        _validatePurchaseResponse(body, 'Cable TV subscription failed');
         return body;
       } else {
         final msg = body['message'] ?? body['detail'] ?? 'Cable TV subscription failed';
@@ -306,9 +306,9 @@ class VtuApiService {
         return (body['data']['providers'] as List).cast<Map<String, dynamic>>();
       }
       return [];
-    } catch (e) {
-      debugPrint('VtuApiService.getElectricityProviders error: $e');
-      return [];
+    } catch (error) {
+      debugPrint('VtuApiService.getElectricityProviders failed: $error');
+      rethrow;
     }
   }
 
@@ -328,7 +328,6 @@ class VtuApiService {
       'meter_type': meterType.toLowerCase(),
     };
 
-    debugPrint('VtuApiService.verifyMeter payload: $payload');
 
     try {
       final res = await http.post(
@@ -338,7 +337,6 @@ class VtuApiService {
       );
 
       final body = jsonDecode(res.body) as Map<String, dynamic>;
-      debugPrint('VtuApiService.verifyMeter [${res.statusCode}]: $body');
 
       if (res.statusCode == 200 && (body['success'] == true || body['data'] != null)) {
         return body;
@@ -362,7 +360,6 @@ class VtuApiService {
     required double amount,
     required String customerName,
     String? customerAddress,
-    String? pin,
   }) async {
     final endpoint = '$apiBaseUrl/api/v2/bills/electricity/pay/';
     final discoCode = mapDiscoNameToCode(company);
@@ -374,13 +371,11 @@ class VtuApiService {
       'phone_number': _cleanPhoneNumber(phone),
       'amount': amount.toInt(),
       'Customer_name': customerName.trim(),
-      'pin': pin ?? defaultAggregatorPin,
     };
     if (customerAddress != null && customerAddress.isNotEmpty) {
       payload['Customer_address'] = customerAddress.trim();
     }
 
-    debugPrint('VtuApiService.purchaseElectricity payload: $payload');
 
     try {
       final res = await http.post(
@@ -390,9 +385,9 @@ class VtuApiService {
       );
 
       final body = jsonDecode(res.body) as Map<String, dynamic>;
-      debugPrint('VtuApiService.purchaseElectricity [${res.statusCode}]: $body');
 
       if (res.statusCode == 200 || res.statusCode == 201) {
+        _validatePurchaseResponse(body, 'Electricity purchase failed');
         return body;
       } else {
         final msg = body['message'] ?? body['detail'] ?? 'Electricity purchase failed';
@@ -419,9 +414,9 @@ class VtuApiService {
         return (body['data']['prices'] as List).cast<Map<String, dynamic>>();
       }
       return [];
-    } catch (e) {
-      debugPrint('VtuApiService.getResultCheckerPrices error: $e');
-      return [];
+    } catch (error) {
+      debugPrint('VtuApiService.getResultCheckerPrices failed: $error');
+      rethrow;
     }
   }
 
@@ -430,13 +425,11 @@ class VtuApiService {
   Future<Map<String, dynamic>> purchaseResultCheckerPin({
     required String exam, // 'WAEC', 'NECO', 'NABTEB'
     required int quantity, // 1, 2, 5
-    String? pin,
   }) async {
     final endpoint = '$apiBaseUrl/api/v2/bills/result-checker/purchase/';
     final payload = {
       'exam': exam.toUpperCase(),
       'quantity': quantity,
-      'pin_code': pin ?? defaultAggregatorPin,
     };
 
     try {
@@ -446,7 +439,9 @@ class VtuApiService {
         body: jsonEncode(payload),
       );
       final body = jsonDecode(res.body) as Map<String, dynamic>;
+
       if (res.statusCode == 200 || res.statusCode == 201) {
+        _validatePurchaseResponse(body, 'Result checker purchase failed');
         return body;
       } else {
         final msg = body['message'] ?? 'Exam PIN purchase failed';

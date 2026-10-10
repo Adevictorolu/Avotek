@@ -27,6 +27,12 @@ class UserModel {
     this.username,
   });
 
+  static String avoIdFor(String userId) {
+    final compactId = userId.replaceAll('-', '').toUpperCase();
+    if (compactId.length < 12) return 'AVO-10001';
+    return 'AVO-${compactId.substring(0, 12)}';
+  }
+
   UserModel copyWith({
     String? id,
     String? email,
@@ -78,7 +84,7 @@ class UserModel {
     final resolvedAvo = (rawAvo != null && rawAvo.trim().isNotEmpty)
         ? rawAvo.trim().toUpperCase()
         : (rawId.isNotEmpty
-            ? 'AVO-${(rawId.hashCode.abs() % 90000 + 10000)}'
+            ? avoIdFor(rawId)
             : 'AVO-10001');
 
     final rawEmail = json['email'] as String? ?? '';

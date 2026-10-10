@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/database/app_database.dart';
 import 'core/router/app_router.dart';
+import 'core/supabase/supabase_service.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
@@ -12,10 +12,7 @@ import 'providers/wallet_provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Supabase.initialize(
-    url: 'https://gcixbqrridzgobkqnlfz.supabase.co',
-    anonKey: 'sb_publishable__KqtFYoV1zOBWx9oQCySBQ_pIbwAEMO',
-  );
+  await SupabaseService.instance.initialize();
 
   await AppDatabaseService.instance.init();
 
@@ -38,6 +35,7 @@ class AvotekApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
+    final authProvider = context.read<AuthProvider>();
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
@@ -45,7 +43,10 @@ class AvotekApp extends StatelessWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeProvider.themeMode,
-      routerConfig: AppRouter.createRouter(onToggleTheme: () => themeProvider.toggleTheme()),
+      routerConfig: AppRouter.createRouter(
+        onToggleTheme: () => themeProvider.toggleTheme(),
+        authChanges: authProvider,
+      ),
     );
   }
 }

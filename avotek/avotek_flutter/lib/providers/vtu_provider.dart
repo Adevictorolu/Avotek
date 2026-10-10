@@ -3,6 +3,25 @@ import '../core/services/vtu_api_service.dart';
 import '../core/supabase/supabase_service.dart';
 import '../models/vtu_models.dart';
 
+String _providerOrderStatus(dynamic status) {
+  switch (status?.toString().toLowerCase()) {
+    case 'pending':
+    case 'processing':
+    case 'queued':
+      return 'pending';
+    case 'successful':
+    case 'success':
+    case 'completed':
+      return 'successful';
+    case 'failed':
+    case 'failure':
+    case 'error':
+    case 'rejected':
+    default:
+      return 'failed';
+  }
+}
+
 class VtuProvider extends ChangeNotifier {
   List<ServiceCatalog> _catalog = [];
   final List<Beneficiary> _beneficiaries = [];
@@ -269,15 +288,14 @@ class VtuProvider extends ChangeNotifier {
     required String network,
     required String phone,
     required double amount,
-    String? userPin,
   }) async {
     _isLoading = true;
     _lastError = null;
     notifyListeners();
 
-    String providerRef = 'AVO-AIR-${DateTime.now().millisecondsSinceEpoch}';
-    String status = 'successful';
-    String message = 'Airtime of ₦${amount.toStringAsFixed(2)} delivered instantly to $phone ($network).';
+    String? providerRef;
+    String status = 'failed';
+    String message = 'Airtime purchase accepted.';
 
     try {
       // 1. Call live Bigisub API
@@ -285,24 +303,19 @@ class VtuProvider extends ChangeNotifier {
         network: network,
         phone: phone,
         amount: amount,
-        pin: userPin,
       );
 
       final data = liveRes['data'] as Map<String, dynamic>?;
+      status = _providerOrderStatus(data?['status'] ?? liveRes['status']);
       if (data != null) {
         providerRef = data['transaction_id']?.toString() ?? data['reference']?.toString() ?? providerRef;
-        status = data['status']?.toString() ?? 'successful';
       }
       message = liveRes['message']?.toString() ?? message;
     } catch (e) {
       final err = e.toString().replaceAll('Exception: ', '');
       debugPrint('Live Bigisub airtime error (handled): $err');
-      // If merchant wallet on Bigisub needs funding or validation issue:
-      if (err.toLowerCase().contains('insufficient balance') || err.toLowerCase().contains('wallet')) {
-        message = 'Airtime queued: Aggregator partner wallet requires funding. Order logged in your Avotek ledger.';
-      } else {
-        message = 'Airtime request processed: $err';
-      }
+      status = 'failed';
+      message = 'Airtime purchase failed: $err';
     }
 
     // 2. Synchronize and record in Supabase
@@ -322,7 +335,7 @@ class VtuProvider extends ChangeNotifier {
 
     return OrderResult(
       order: order,
-      success: true,
+      success: status != 'failed',
       message: message,
     );
   }
@@ -336,18 +349,17 @@ class VtuProvider extends ChangeNotifier {
     required double amount,
     required double sellPrice,
     int? planId,
-    String? userPin,
   }) async {
     _isLoading = true;
     _lastError = null;
     notifyListeners();
 
-    String providerRef = 'AVO-DATA-${DateTime.now().millisecondsSinceEpoch}';
-    String status = 'successful';
-    String message = '$variationCode activated instantly on $phone ($network).';
+    String? providerRef;
+    String status = 'failed';
+    String message = 'Data purchase accepted.';
 
     // Resolve plan ID
-    int resolvedPlanId = planId ?? 135;
+    int? resolvedPlanId = planId;
     if (planId == null) {
       final netId = VtuApiService.mapNetworkNameToId(network);
       final cached = _liveDataPlansCache[netId];
@@ -357,8 +369,17 @@ class VtuProvider extends ChangeNotifier {
           (p) => (p['amount'] as num?)?.toDouble() == amount || (p['size'] != null && variationCode.contains(p['size'].toString())),
           orElse: () => cached.first,
         );
-        resolvedPlanId = (match['id'] as num?)?.toInt() ?? 135;
+        final id = match['id'];
+        if (id is num) {
+          resolvedPlanId = id.toInt();
+        }
       }
+    }
+    if (resolvedPlanId == null) {
+      _isLoading = false;
+      _lastError = 'No verified data plan is available. Please refresh the plans and try again.';
+      notifyListeners();
+      throw StateError(_lastError!);
     }
 
     try {
@@ -367,23 +388,19 @@ class VtuProvider extends ChangeNotifier {
         network: network,
         planId: resolvedPlanId,
         phone: phone,
-        pin: userPin,
       );
 
       final data = liveRes['data'] as Map<String, dynamic>?;
+      status = _providerOrderStatus(data?['status'] ?? liveRes['status']);
       if (data != null) {
         providerRef = data['transaction_id']?.toString() ?? data['reference']?.toString() ?? providerRef;
-        status = data['status']?.toString() ?? 'successful';
       }
       message = liveRes['message']?.toString() ?? message;
     } catch (e) {
       final err = e.toString().replaceAll('Exception: ', '');
       debugPrint('Live Bigisub data error (handled): $err');
-      if (err.toLowerCase().contains('insufficient balance') || err.toLowerCase().contains('wallet')) {
-        message = 'Data bundle queued: Aggregator partner wallet requires funding. Order logged in your Avotek ledger.';
-      } else {
-        message = '$variationCode order processed: $err';
-      }
+      status = 'failed';
+      message = 'Data purchase failed: $err';
     }
 
     // 2. Synchronize in Supabase
@@ -403,7 +420,7 @@ class VtuProvider extends ChangeNotifier {
 
     return OrderResult(
       order: order,
-      success: true,
+      success: status != 'failed',
       message: message,
     );
   }
@@ -420,22 +437,30 @@ class VtuProvider extends ChangeNotifier {
       );
 
       final data = res['data'] as Map<String, dynamic>?;
-      final name = data?['customer_name']?.toString() ?? 'VERIFIED SUBSCRIBER';
-      final bouquet = data?['current_bouquet']?.toString() ?? '$provider Active';
+      final customerName = data?['customer_name']?.toString().trim() ?? '';
+      if (customerName.isEmpty) {
+        return VerificationResponse(
+          isValid: false,
+          customerName: '',
+          identifier: smartcardNumber,
+          details: 'The provider did not confirm this smartcard.',
+        );
+      }
+      final bouquet = data?['current_bouquet']?.toString() ?? '';
 
       return VerificationResponse(
         isValid: true,
-        customerName: name,
+        customerName: customerName,
         identifier: smartcardNumber,
-        details: '$bouquet • $provider',
+        details: bouquet.isEmpty ? provider : '$bouquet • $provider',
       );
     } catch (e) {
-      debugPrint('Smartcard verify fallback: $e');
+      debugPrint('Smartcard verification failed: $e');
       return VerificationResponse(
-        isValid: true,
-        customerName: 'AVOTEK VERIFIED SUBSCRIBER',
+        isValid: false,
+        customerName: '',
         identifier: smartcardNumber,
-        details: '$provider Active Subscriber',
+        details: 'Could not verify this smartcard right now.',
       );
     }
   }
@@ -449,16 +474,15 @@ class VtuProvider extends ChangeNotifier {
     String? variationCode,
     required double amount,
     String? customerName,
-    String? userPin,
     String? phone,
   }) async {
     _isLoading = true;
     notifyListeners();
 
-    final now = DateTime.now().millisecondsSinceEpoch;
-    String providerRef = 'AVO-CAB-$now';
+    String? providerRef;
+    String status = 'failed';
     final planCode = packageCode ?? variationCode ?? 'Package';
-    String message = '$provider $planCode subscription renewed successfully on Smartcard $smartcardNumber.';
+    String message = 'Cable TV subscription accepted.';
 
     try {
       final liveRes = await VtuApiService.instance.purchaseCableTv(
@@ -467,16 +491,18 @@ class VtuProvider extends ChangeNotifier {
         phone: (phone != null && phone.isNotEmpty) ? phone : '08000000000',
         amount: amount,
         customerName: customerName ?? 'Avotek Subscriber',
-        pin: userPin,
       );
 
       final data = liveRes['data'] as Map<String, dynamic>?;
+      status = _providerOrderStatus(data?['status'] ?? liveRes['status']);
       if (data != null) {
         providerRef = data['transaction_id']?.toString() ?? data['reference']?.toString() ?? providerRef;
       }
       message = liveRes['message']?.toString() ?? message;
     } catch (e) {
-      debugPrint('Cable purchase notice: $e');
+      status = 'failed';
+      message = 'Cable TV purchase failed: ${e.toString().replaceAll('Exception: ', '')}';
+      debugPrint(message);
     }
 
     final order = await SupabaseService.instance.recordOrder(
@@ -486,6 +512,7 @@ class VtuProvider extends ChangeNotifier {
       phone: smartcardNumber,
       plan: planCode,
       amount: amount,
+      status: status,
       providerReference: providerRef,
     );
 
@@ -494,7 +521,7 @@ class VtuProvider extends ChangeNotifier {
 
     return OrderResult(
       order: order,
-      success: true,
+      success: status != 'failed',
       message: message,
     );
   }
@@ -513,23 +540,33 @@ class VtuProvider extends ChangeNotifier {
       );
 
       final data = res['data'] as Map<String, dynamic>?;
-      final name = data?['customer_name']?.toString() ?? 'VERIFIED CUSTOMER';
-      final address = data?['customer_address']?.toString() ?? 'Nigeria';
+      final customerName = data?['customer_name']?.toString().trim() ?? '';
+      if (customerName.isEmpty) {
+        return VerificationResponse(
+          isValid: false,
+          customerName: '',
+          identifier: meterNumber,
+          details: 'The provider did not confirm this meter.',
+        );
+      }
+      final address = data?['customer_address']?.toString() ?? '';
       final discoName = data?['disco']?.toString() ?? disco;
 
       return VerificationResponse(
         isValid: true,
-        customerName: name,
+        customerName: customerName,
         identifier: meterNumber,
-        details: '$discoName ($meterType) • $address',
+        details: address.isEmpty
+            ? '$discoName ($meterType)'
+            : '$discoName ($meterType) • $address',
       );
     } catch (e) {
-      debugPrint('Meter verify fallback: $e');
+      debugPrint('Meter verification failed: $e');
       return VerificationResponse(
-        isValid: true,
-        customerName: 'AVOTEK VERIFIED CUSTOMER',
+        isValid: false,
+        customerName: '',
         identifier: meterNumber,
-        details: '$disco $meterType • Lekki, Lagos',
+        details: 'Could not verify this meter right now.',
       );
     }
   }
@@ -544,16 +581,15 @@ class VtuProvider extends ChangeNotifier {
     String? customerName,
     String? customerAddress,
     String? phone,
-    String? userPin,
   }) async {
     _isLoading = true;
     notifyListeners();
 
-    final now = DateTime.now().millisecondsSinceEpoch;
-    String providerRef = 'AVO-ELEC-$now';
-    String token = '${now.toString().substring(0, 4)}-${now.toString().substring(4, 8)}-${now.toString().substring(8, 12)}-4912';
-    String units = '${(amount / 68.0).toStringAsFixed(1)} kWh';
-    String message = 'Token generated for $disco Meter $meterNumber ($meterType). Units: $units';
+    String? providerRef;
+    String token = '';
+    String units = '';
+    String status = 'failed';
+    String message = 'Electricity purchase accepted.';
 
     try {
       final liveRes = await VtuApiService.instance.purchaseElectricity(
@@ -564,10 +600,10 @@ class VtuProvider extends ChangeNotifier {
         amount: amount,
         customerName: customerName ?? 'Avotek Customer',
         customerAddress: customerAddress,
-        pin: userPin,
       );
 
       final data = liveRes['data'] as Map<String, dynamic>?;
+      status = _providerOrderStatus(data?['status'] ?? liveRes['status']);
       if (data != null) {
         providerRef = data['transaction_id']?.toString() ?? data['reference']?.toString() ?? providerRef;
         if (data['token'] != null && data['token'].toString().isNotEmpty) {
@@ -577,9 +613,11 @@ class VtuProvider extends ChangeNotifier {
           units = data['units'].toString();
         }
       }
-      message = liveRes['message']?.toString() ?? message;
+      message = liveRes['message']?.toString() ?? 'Electricity purchase accepted.';
     } catch (e) {
-      debugPrint('Electricity purchase notice: $e');
+      status = 'failed';
+      message = 'Electricity purchase failed: ${e.toString().replaceAll('Exception: ', '')}';
+      debugPrint(message);
     }
 
     final order = await SupabaseService.instance.recordOrder(
@@ -589,6 +627,7 @@ class VtuProvider extends ChangeNotifier {
       phone: meterNumber,
       plan: '$disco $meterType',
       amount: amount,
+      status: status,
       providerReference: providerRef,
       token: token,
     );
@@ -598,7 +637,7 @@ class VtuProvider extends ChangeNotifier {
 
     return OrderResult(
       order: order,
-      success: true,
+      success: status != 'failed',
       token: token,
       units: units,
       message: message,

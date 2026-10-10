@@ -151,6 +151,20 @@ class _CableScreenState extends State<CableScreen> {
 
     if (confirmed == true && mounted) {
       try {
+        final debited = await auth.debitWallet(
+          _packageAmount,
+          'Cable TV: $_selectedProvider ($_selectedPackage) to $card',
+        );
+        if (!mounted) return;
+        if (!debited) {
+          TopNotification.showError(
+            context,
+            auth.errorMessage ?? 'The wallet could not verify this debit. No transaction was submitted.',
+            title: 'Debit Failed',
+          );
+          return;
+        }
+
         final result = await vtu.payCableTV(
           userId: auth.user!.id,
           provider: _selectedProvider,
@@ -161,15 +175,24 @@ class _CableScreenState extends State<CableScreen> {
           phone: auth.user?.phone,
         );
 
-        wallet.recordDebit(
-          userId: auth.user!.id,
-          amount: _packageAmount,
-          serviceName: 'Cable TV: $_selectedProvider ($_selectedPackage) to $card',
-          reference: result.order.providerReference ?? 'TX-AVO-CAB-${DateTime.now().millisecondsSinceEpoch}',
-        );
+        if (!mounted) return;
+        if (!result.success || result.order.status == 'failed') {
+          TopNotification.showError(context, result.message, title: 'Subscription Failed');
+          return;
+        }
+
         await wallet.fetchWallet(auth.user!.id);
 
         if (!mounted) return;
+        if (result.order.status == 'pending') {
+          TopNotification.showWarning(
+            context,
+            'Your subscription is awaiting provider confirmation.',
+            title: 'Subscription Pending',
+          );
+          return;
+        }
+
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(

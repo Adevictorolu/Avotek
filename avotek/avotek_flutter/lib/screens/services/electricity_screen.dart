@@ -114,6 +114,20 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
 
     if (confirmed == true && mounted) {
       try {
+        final debited = await auth.debitWallet(
+          amount,
+          'Electricity: $_selectedDisco ($meter)',
+        );
+        if (!mounted) return;
+        if (!debited) {
+          TopNotification.showError(
+            context,
+            auth.errorMessage ?? 'The wallet could not verify this debit. No transaction was submitted.',
+            title: 'Debit Failed',
+          );
+          return;
+        }
+
         final result = await vtu.payElectricity(
           userId: auth.user!.id,
           disco: _selectedDisco,
@@ -124,16 +138,34 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
           phone: (auth.user?.phone != null && auth.user!.phone.isNotEmpty) ? auth.user!.phone : '08000000000',
         );
 
-        wallet.recordDebit(
-          userId: auth.user!.id,
-          amount: amount,
-          serviceName: 'Electricity Token: $_selectedDisco ($meter) Units: ${result.units ?? "N/A"}',
-          reference: result.order.providerReference ?? 'TX-AVO-ELEC-${DateTime.now().millisecondsSinceEpoch}',
-        );
+        if (!mounted) return;
+        if (!result.success || result.order.status == 'failed') {
+          TopNotification.showError(context, result.message, title: 'Payment Failed');
+          return;
+        }
+
         await wallet.fetchWallet(auth.user!.id);
 
         if (!mounted) return;
-        final token = result.token ?? '8192-3849-1928-3849';
+        if (result.order.status == 'pending') {
+          TopNotification.showWarning(
+            context,
+            'Your payment is awaiting provider confirmation; the token will appear when available.',
+            title: 'Payment Pending',
+          );
+          return;
+        }
+
+        final token = result.token?.trim() ?? '';
+        if (token.isEmpty) {
+          TopNotification.showWarning(
+            context,
+            result.message,
+            title: 'Token Not Returned',
+          );
+          return;
+        }
+
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(

@@ -4,6 +4,7 @@ import '../database/app_database.dart';
 import '../supabase/supabase_service.dart';
 import '../../screens/affiliate/affiliate_screen.dart';
 import '../../screens/auth/login_screen.dart';
+import '../../screens/auth/update_password_screen.dart';
 import '../../screens/coupons/coupons_screen.dart';
 import '../../screens/gifts/gifts_screen.dart';
 import '../../screens/home/dashboard_screen.dart';
@@ -23,20 +24,21 @@ import '../../screens/wallet/wallet_screen.dart';
 import '../../widgets/avotek_page_transition.dart';
 
 class AppRouter {
-  static GoRouter createRouter({VoidCallback? onToggleTheme}) {
+  static GoRouter createRouter({VoidCallback? onToggleTheme, Listenable? authChanges}) {
     final themeToggle = onToggleTheme ?? () {};
     final bool hasSeenOnboarding = AppDatabaseService.instance.hasSeenOnboarding();
 
     return GoRouter(
+      refreshListenable: authChanges,
       initialLocation: (kIsWeb || hasSeenOnboarding) ? '/' : '/onboarding',
       redirect: (context, state) {
         final path = state.matchedLocation;
-        final hasSession = SupabaseService.instance.currentAuthUser != null ||
-            AppDatabaseService.instance.getCachedSessionUser() != null;
+        final hasSession = SupabaseService.instance.currentAuthUser != null;
 
         // Protected routes that unconditionally require authentication
         const protectedRoutes = [
           '/dashboard',
+          '/update-password',
           '/wallet',
           '/services',
           '/transactions',
@@ -55,7 +57,7 @@ class AppRouter {
           return '/login';
         }
 
-        if (hasSession && (path == '/login' || path == '/register')) {
+        if (hasSession && (path == '/' || path == '/login' || path == '/register')) {
           return '/dashboard';
         }
 
@@ -145,6 +147,14 @@ class AppRouter {
             context,
             state,
             const LoginScreen(initialSignUp: true),
+          ),
+        ),
+        GoRoute(
+          path: '/update-password',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            const UpdatePasswordScreen(),
           ),
         ),
         GoRoute(

@@ -36,13 +36,8 @@ class AuthProvider extends ChangeNotifier {
     if (authUser != null) {
       await _loadUserFromAuth(authUser);
     } else {
-      // Check cached session
-      final cached = AppDatabaseService.instance.getCachedSessionUser();
-      if (cached != null) {
-        _user = cached;
-        await refreshWallet();
-        notifyListeners();
-      }
+      AppDatabaseService.instance.clearSession();
+      notifyListeners();
     }
 
     // Listen to real-time auth state changes from Supabase
@@ -82,7 +77,7 @@ class AuthProvider extends ChangeNotifier {
         final phone = (authUser.userMetadata?['phone'] as String?) ?? '';
 
         final avoId = (authUser.userMetadata?['avo_id'] as String?) ??
-            'AVO-${(authUser.id.toString().hashCode.abs() % 90000 + 10000)}';
+            UserModel.avoIdFor(authUser.id.toString());
         final username = (authUser.userMetadata?['username'] as String?) ??
             (authUser.email?.split('@').first as String?);
 
@@ -109,43 +104,8 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Sign In with Google via Supabase OAuth or Verified Credentials
-  Future<bool> loginWithGoogle({
-    String? email,
-    String? displayName,
-    String? photoUrl,
-  }) async {
-    if (email != null && email.isNotEmpty) {
-      _isLoading = true;
-      _errorMessage = null;
-      notifyListeners();
-      try {
-        final pass = 'GoogleOAuth_${email.hashCode}_Avotek';
-        try {
-          final user = await SupabaseService.instance.signInWithEmail(
-            email: email,
-            password: pass,
-          );
-          _user = user;
-        } catch (_) {
-          final user = await SupabaseService.instance.signUpWithEmail(
-            email: email,
-            password: pass,
-            name: displayName ?? email.split('@').first,
-            phone: '',
-          );
-          _user = user;
-        }
-        AppDatabaseService.instance.cacheUser(_user!);
-        await refreshWallet();
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      } catch (e) {
-        debugPrint('Google quick-auth note: $e');
-      }
-    }
-
+  /// Starts Supabase Google OAuth. The auth-state listener handles the callback.
+  Future<bool> loginWithGoogle() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -258,26 +218,16 @@ class AuthProvider extends ChangeNotifier {
     try {
       _wallet = await SupabaseService.instance.getWallet(_user!.id, userName: _user!.name);
       notifyListeners();
-    } catch (e) {
-      debugPrint('Error refreshing wallet: $e');
+    } catch (_) {
+      _wallet = null;
+      _errorMessage = 'Your wallet is temporarily unavailable. Please try again.';
+      notifyListeners();
     }
   }
 
   /// Direct Wallet Credit
   Future<void> creditWallet(double amount, {String? narration}) async {
-    if (_user == null) return;
-    try {
-      final ref = 'CR-${DateTime.now().millisecondsSinceEpoch}';
-      _wallet = await SupabaseService.instance.creditWallet(
-        userId: _user!.id,
-        amount: amount,
-        reference: ref,
-        narration: narration ?? 'Wallet Funding',
-      );
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error crediting wallet: $e');
-    }
+    throw StateError('Wallet credits are only accepted from verified backend events.');
   }
 
   /// Direct Wallet Debit
@@ -302,7 +252,16 @@ class AuthProvider extends ChangeNotifier {
 
   /// Set 4-digit Security PIN
   Future<bool> setTransactionPin(String pin) async {
-    if (_user == null) return false;
+    if (_user == null) {
+      _errorMessage = 'Sign in before setting a transaction PIN.';
+      notifyListeners();
+      return false;
+    }
+    if (!RegExp(r'^\d{4}$').hasMatch(pin)) {
+      _errorMessage = 'PIN must contain exactly four digits.';
+      notifyListeners();
+      return false;
+    }
     try {
       final pinHash = sha256.convert(utf8.encode(pin.trim())).toString();
       await SupabaseService.instance.setTransactionPin(_user!.id, pin);
@@ -361,6 +320,23 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await SupabaseService.instance.sendPasswordResetEmail(email.trim());
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updatePassword(String password) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await SupabaseService.instance.updatePassword(password);
       _isLoading = false;
       notifyListeners();
       return true;

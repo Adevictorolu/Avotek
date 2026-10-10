@@ -1178,8 +1178,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _openChangePasswordDialog() {
-    final curPassCtrl = TextEditingController();
     final newPassCtrl = TextEditingController();
+    final confirmPassCtrl = TextEditingController();
 
     showDialog(
       context: context,
@@ -1209,21 +1209,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: curPassCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Current Password'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
                 controller: newPassCtrl,
                 obscureText: true,
                 decoration: const InputDecoration(labelText: 'New Password'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: confirmPassCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Confirm New Password'),
               ),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx),
+              onPressed: () {
+                Navigator.pop(ctx);
+                newPassCtrl.dispose();
+                confirmPassCtrl.dispose();
+              },
               child: Text('Cancel', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
             ),
             ElevatedButton(
@@ -1231,11 +1235,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 backgroundColor: AppColors.primaryBlue,
                 foregroundColor: Colors.white,
               ),
-              onPressed: () {
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Password updated successfully!'), backgroundColor: AppColors.success),
-                );
+              onPressed: () async {
+                final password = newPassCtrl.text;
+                if (password.length < 6 || password != confirmPassCtrl.text) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Enter a matching password with at least 6 characters.')),
+                  );
+                  return;
+                }
+
+                final auth = context.read<AuthProvider>();
+                final success = await auth.updatePassword(password);
+                if (!mounted || !ctx.mounted) return;
+                if (success) {
+                  Navigator.pop(ctx);
+                  newPassCtrl.dispose();
+                  confirmPassCtrl.dispose();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Password updated successfully!'), backgroundColor: AppColors.success),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(auth.errorMessage ?? 'Password update failed.')),
+                  );
+                }
               },
               child: Text('Save Password', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
             ),

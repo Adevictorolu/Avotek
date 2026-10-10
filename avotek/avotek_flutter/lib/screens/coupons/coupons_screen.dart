@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/wallet_provider.dart';
+import '../../widgets/top_notification.dart';
 
 class CouponsScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -34,63 +32,17 @@ class _CouponsScreenState extends State<CouponsScreen> {
   Future<void> _handleRedeem() async {
     final code = _codeController.text.trim().toUpperCase();
     if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a coupon code.')),
-      );
+      TopNotification.showError(context, 'Please enter a coupon code.', title: 'Code Required');
       return;
     }
 
     setState(() => _isRedeeming = true);
-
-    final auth = context.read<AuthProvider>();
-    final wallet = context.read<WalletProvider>();
-
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    double rewardAmount = 500.0;
-    if (code == 'WELCOME20' || code == 'WELCOME') {
-      rewardAmount = 1000.0;
-    } else if (code == 'AVOTEK100' || code == 'BONUS') {
-      rewardAmount = 500.0;
-    } else if (code.startsWith('AVO')) {
-      rewardAmount = 750.0;
-    }
-
-    if (auth.user?.id != null) {
-      final ref = 'CPN-${DateTime.now().millisecondsSinceEpoch}';
-      wallet.depositFunds(
-        rewardAmount,
-        reference: ref,
-        narration: 'Coupon $code Redeemed',
-      );
-      await auth.refreshWallet();
-
-      setState(() {
-        _redemptionHistory.insert(0, {
-          'code': code,
-          'amount': rewardAmount,
-          'date': DateTime.now(),
-          'reference': ref,
-          'status': 'SUCCESSFUL',
-        });
-        _codeController.clear();
-        _isRedeeming = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Coupon $code redeemed! ₦${rewardAmount.toStringAsFixed(2)} credited to your wallet.',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-            ),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
-    } else {
-      setState(() => _isRedeeming = false);
-    }
+    setState(() => _isRedeeming = false);
+    TopNotification.showWarning(
+      context,
+      'Coupon redemption is unavailable until codes can be verified by the backend. No funds were credited.',
+      title: 'Redemption Unavailable',
+    );
   }
 
   @override

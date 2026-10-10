@@ -134,7 +134,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
         setState(() => _isProcessing = false);
         TopNotification.showError(
           context,
-          'Insufficient wallet balance. Please add money.',
+          auth.errorMessage ?? 'The wallet could not verify this debit. No transaction was submitted.',
           title: 'Debit Failed',
         );
         return;
@@ -150,15 +150,13 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
         network: _selectedNetwork,
         phone: phone,
         amount: _amount,
-        userPin: pin,
       );
 
       if (!mounted) return;
       setState(() => _isProcessing = false);
 
       if (!result.success || result.order.status == 'failed') {
-        // Auto-refund wallet
-        await auth.creditWallet(_amount);
+        await auth.refreshWallet();
         if (!mounted) return;
         TopNotification.showError(
           context,

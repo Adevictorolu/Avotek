@@ -76,7 +76,7 @@ class _PinModalState extends State<PinModal> {
       setState(() {
         _isLoading = false;
         _pin = '';
-        _errorMessage = 'Incorrect transaction PIN. Default is 1234';
+        _errorMessage = 'Incorrect transaction PIN. Please try again.';
       });
     }
   }

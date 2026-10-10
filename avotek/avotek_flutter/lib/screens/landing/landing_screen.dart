@@ -41,17 +41,17 @@ class _LandingScreenState extends State<LandingScreen> {
   final List<Map<String, dynamic>> _faqs = [
     {
       'q': 'How long does an order take?',
-      'a': 'Airtime and data are delivered in under 15 seconds automatically. Cable TV and electricity tokens depend on the provider API and usually deliver in 30 to 60 seconds. You watch the live status update on your screen in real time.',
+      'a': 'Delivery times depend on provider availability. Your order status is shown after the provider confirms the transaction.',
       'isOpen': true,
     },
     {
       'q': 'What happens when an order fails?',
-      'a': 'Your wallet balance is refunded automatically within minutes. You do not need to open a support ticket or chase customer care. Every failed transaction logs the exact gateway reason in your order history.',
+      'a': 'Failed transactions are reconciled according to the payment and VTU provider status. Contact support if a transaction remains pending or a refund is delayed.',
       'isOpen': false,
     },
     {
       'q': 'How do I fund my wallet?',
-      'a': 'Transfer money directly from any Nigerian banking app (OPay, PalmPay, GTB, Kuda, Zenith, etc.) to the official Avotek PalmPay funding account (8167002789) and your wallet is credited instantly.',
+      'a': 'Wallet funding will be available when a verified payment provider is configured for your account. Never transfer to an account not assigned to you inside Avotek.',
       'isOpen': false,
     },
     {
