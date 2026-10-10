@@ -8,6 +8,7 @@ import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/wallet_provider.dart';
 
 class FundWalletScreen extends StatefulWidget {
   const FundWalletScreen({super.key});
@@ -22,9 +23,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
   final TextEditingController _senderNameController = TextEditingController();
 
   Map<String, String> _fundingAccount = {
-    'bank': 'PalmPay',
+    'bank': 'PalmPay / Wema Bank',
     'accountNumber': '8167002789',
-    'accountName': 'ADEVICTOROLU / AVOTEK',
+    'accountName': 'AVOTEK OFFICIAL DEPOSIT',
   };
 
   @override
@@ -58,9 +59,16 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
 
     setState(() => _isFunding = true);
     final auth = context.read<AuthProvider>();
+    final wallet = context.read<WalletProvider>();
 
     // Instant credit to database and wallet
     await auth.creditWallet(amount);
+    wallet.recordCredit(
+      userId: auth.user?.id ?? 'user',
+      amount: amount,
+      reference: 'DEP-${DateTime.now().millisecondsSinceEpoch}',
+      narration: 'Bank Transfer Deposit',
+    );
 
     setState(() => _isFunding = false);
     if (mounted) {
@@ -86,137 +94,19 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     }
   }
 
-  void _showEditAdminAccountDialog(BuildContext context) {
-    final bankCtrl = TextEditingController(text: _fundingAccount['bank'] ?? 'PalmPay');
-    final numberCtrl = TextEditingController(text: _fundingAccount['accountNumber'] ?? '8167002789');
-    final nameCtrl = TextEditingController(text: _fundingAccount['accountName'] ?? 'ADEVICTOROLU / AVOTEK');
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF141720) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFF23304B), width: 1.5),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF00D2FF), size: 24),
-            const SizedBox(width: 10),
-            Text(
-              'Update Receiving Account',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-          ],
-        ),
-        content: SizedBox(
-          width: 440,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'As administrator, you can change the official bank and account number that all users send deposits to.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12.5,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: bankCtrl,
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-                decoration: const InputDecoration(
-                  labelText: 'Bank Name',
-                  hintText: 'e.g. PalmPay, Moniepoint, OPay',
-                  prefixIcon: Icon(Icons.account_balance_rounded),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: numberCtrl,
-                keyboardType: TextInputType.number,
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 16),
-                decoration: const InputDecoration(
-                  labelText: 'Account Number',
-                  hintText: 'e.g. 8167002789',
-                  prefixIcon: Icon(Icons.numbers_rounded),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: nameCtrl,
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-                decoration: const InputDecoration(
-                  labelText: 'Account Holder Name',
-                  hintText: 'e.g. ADEVICTOROLU / AVOTEK',
-                  prefixIcon: Icon(Icons.person_outline_rounded),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.grey),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () async {
-              final newBank = bankCtrl.text.trim();
-              final newNumber = numberCtrl.text.trim();
-              final newName = nameCtrl.text.trim();
-
-              if (newBank.isNotEmpty && newNumber.isNotEmpty && newName.isNotEmpty) {
-                await AppDatabaseService.instance.updateFundingAccount(
-                  bank: newBank,
-                  accountNumber: newNumber,
-                  accountName: newName,
-                );
-                _loadFundingAccount();
-                if (ctx.mounted) Navigator.pop(ctx);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Receiving account updated successfully!'),
-                      backgroundColor: Color(0xFF10B981),
-                    ),
-                  );
-                }
-              }
-            },
-            child: Text(
-              'Save Account',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final wallet = context.watch<WalletProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    final isAdmin = auth.isSuperAdmin || ((auth.user?.email ?? '').toLowerCase().contains('admin'));
 
-    final bankName = _fundingAccount['bank'] ?? 'PalmPay';
-    final accountNumber = _fundingAccount['accountNumber'] ?? '8167002789';
-    final accountName = _fundingAccount['accountName'] ?? 'ADEVICTOROLU / AVOTEK';
+    final bankName = wallet.walletSummary?.virtualAccountBank ?? _fundingAccount['bank'] ?? 'PalmPay / Wema Bank';
+    final accountNumber = wallet.walletSummary?.virtualAccountNumber ?? _fundingAccount['accountNumber'] ?? '8167002789';
+    final accountName = wallet.walletSummary?.virtualAccountName ??
+        (auth.user?.name != null && auth.user!.name.isNotEmpty
+            ? '${auth.user!.name.toUpperCase()} / AVOTEK'
+            : 'AVOTEK Customer');
 
     return ResponsiveShell(
       currentRoute: '/wallet/fund',
@@ -232,7 +122,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top Header Row with Admin Edit Button
+                // Top Header Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -251,7 +141,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Transfer directly to the Avotek official deposit account for instant automated wallet credit.',
+                          'Transfer directly to your dedicated Avotek account for instant automated wallet credit.',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w500,
@@ -260,21 +150,6 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         ),
                       ],
                     ),
-                    if (isAdmin)
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF00D2FF),
-                          side: const BorderSide(color: Color(0xFF00D2FF)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        ),
-                        onPressed: () => _showEditAdminAccountDialog(context),
-                        icon: const Icon(Icons.settings_rounded, size: 16),
-                        label: Text(
-                          'Edit Receiving Account',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w800),
-                        ),
-                      ),
                   ],
                 ),
                 const SizedBox(height: 24),

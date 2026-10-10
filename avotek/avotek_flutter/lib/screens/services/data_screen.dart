@@ -70,10 +70,68 @@ class _DataScreenState extends State<DataScreen> {
     ],
   };
 
+  List<Map<String, dynamic>> _livePlans = [];
+  bool _isLoadingPlans = false;
+
   @override
   void initState() {
     super.initState();
     _selectedPlan = _plansMap['MTN']![1];
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadLivePlans());
+  }
+
+  Future<void> _loadLivePlans() async {
+    setState(() => _isLoadingPlans = true);
+    try {
+      final vtu = context.read<VtuProvider>();
+      final rawPlans = await vtu.fetchLiveDataPlans(_selectedNetwork);
+      if (rawPlans.isNotEmpty && mounted) {
+        final formatted = rawPlans.map((p) {
+          final size = p['size'] ?? '';
+          final vol = p['plan_volume'] ?? '';
+          final type = p['plantype'] ?? '';
+          final val = p['validity'] ?? '';
+          final amt = (p['amount'] as num?)?.toDouble() ??
+              (p['plan_amount'] as num?)?.toDouble() ??
+              0.0;
+          final id = (p['id'] as num?)?.toInt() ?? 0;
+          return {
+            'id': id,
+            'plan': '$size$vol $type ($val)',
+            'price': amt,
+            'code': 'BIGISUB-$id',
+            'plantype': type.toString().toUpperCase(),
+          };
+        }).toList();
+
+        setState(() {
+          _livePlans = formatted;
+          _isLoadingPlans = false;
+          final filtered = _getFilteredPlans();
+          if (filtered.isNotEmpty) {
+            _selectedPlan = filtered.first;
+          }
+        });
+        return;
+      }
+    } catch (e) {
+      debugPrint('Error loading live plans: $e');
+    }
+    if (mounted) {
+      setState(() => _isLoadingPlans = false);
+    }
+  }
+
+  List<Map<String, dynamic>> _getFilteredPlans() {
+    if (_livePlans.isNotEmpty) {
+      final filtered = _livePlans.where((p) {
+        final type = (p['plantype'] ?? '').toString().toUpperCase();
+        return type.contains(_selectedCategory.toUpperCase());
+      }).toList();
+      if (filtered.isNotEmpty) return filtered;
+      return _livePlans;
+    }
+    return _plansMap[_selectedNetwork] ?? [];
   }
 
   @override
@@ -86,9 +144,20 @@ class _DataScreenState extends State<DataScreen> {
   void _onNetworkSelected(String netCode) {
     setState(() {
       _selectedNetwork = netCode;
-      final plans = _plansMap[netCode];
-      if (plans != null && plans.isNotEmpty) {
-        _selectedPlan = plans.first;
+      final fallback = _plansMap[netCode];
+      if (fallback != null && fallback.isNotEmpty) {
+        _selectedPlan = fallback.first;
+      }
+    });
+    _loadLivePlans();
+  }
+
+  void _onCategorySelected(String cat) {
+    setState(() {
+      _selectedCategory = cat;
+      final filtered = _getFilteredPlans();
+      if (filtered.isNotEmpty) {
+        _selectedPlan = filtered.first;
       }
     });
   }
@@ -131,26 +200,28 @@ class _DataScreenState extends State<DataScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      // 3. Atomically debit wallet
-      final debited = await auth.debitWallet(amount);
+      // 3. Atomically debit wallet in ledger
+      final debited = await auth.debitWallet(amount, 'Data Bundle: ${_selectedPlan!['plan']} ($phone)');
       if (!debited) {
         _showSnackBar('Insufficient wallet balance. Please add money.', AppColors.error);
         setState(() => _isProcessing = false);
         return;
       }
 
-      // 4. Dispatch live aggregator order (BilalSadaSub Gateway API)
-      await vtu.buyData(
+      // 4. Dispatch live aggregator order (Bigisub Gateway API)
+      final result = await vtu.buyData(
         userId: auth.user?.id ?? 1001,
         network: _selectedNetwork,
         phone: phone,
-        variationCode: _selectedPlan!['code'] as String,
+        variationCode: _selectedPlan!['plan'] as String,
         amount: amount,
         sellPrice: amount,
+        planId: _selectedPlan!['id'] as int?,
+        userPin: pin,
       );
 
       setState(() => _isProcessing = false);
-      _showSuccessDialog(phone, amount);
+      _showSuccessDialog(phone, amount, result.message);
     } catch (e) {
       setState(() => _isProcessing = false);
       _showSnackBar('Order processed: ${e.toString().replaceAll("Exception: ", "")}', AppColors.primaryBlue);
@@ -190,7 +261,7 @@ class _DataScreenState extends State<DataScreen> {
     );
   }
 
-  void _showSuccessDialog(String phone, double amount) {
+  void _showSuccessDialog(String phone, double amount, [String? customMsg]) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
@@ -213,7 +284,7 @@ class _DataScreenState extends State<DataScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              '${_selectedPlan!["plan"]} delivered instantly to $phone.',
+              customMsg ?? '${_selectedPlan!["plan"]} delivered instantly to $phone.',
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600),
             ),
@@ -315,7 +386,7 @@ class _DataScreenState extends State<DataScreen> {
 
   // --- Left Form: Steps 1 to 4 ---
   Widget _buildLeftForm(bool isDark) {
-    final currentPlans = _plansMap[_selectedNetwork] ?? [];
+    final currentPlans = _getFilteredPlans();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,14 +461,25 @@ class _DataScreenState extends State<DataScreen> {
               selectedColor: const Color(0xFF0052FF),
               backgroundColor: isDark ? const Color(0xFF161922) : const Color(0xFFF1F5F9),
               labelStyle: TextStyle(color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87)),
-              onSelected: (val) => setState(() => _selectedCategory = cat),
+              onSelected: (val) => _onCategorySelected(cat),
             );
           }).toList(),
         ),
         const SizedBox(height: 24),
 
         // STEP 3: PICK A DATA PLAN
-        _buildSectionHeader('3 · PICK A DATA PLAN'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildSectionHeader('3 · PICK A DATA PLAN'),
+            if (_isLoadingPlans)
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00D2FF)),
+              ),
+          ],
+        ),
         const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -409,7 +491,9 @@ class _DataScreenState extends State<DataScreen> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<Map<String, dynamic>>(
               isExpanded: true,
-              value: _selectedPlan,
+              value: currentPlans.contains(_selectedPlan)
+                  ? _selectedPlan
+                  : (currentPlans.isNotEmpty ? currentPlans.first : null),
               dropdownColor: isDark ? const Color(0xFF141720) : Colors.white,
               items: currentPlans.map((plan) {
                 final price = (plan['price'] as num).toDouble();
@@ -418,8 +502,17 @@ class _DataScreenState extends State<DataScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(plan['plan'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700)),
-                      Text('₦${price.toStringAsFixed(2)}', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF00D2FF))),
+                      Expanded(
+                        child: Text(
+                          plan['plan'] as String,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        '₦${price.toStringAsFixed(2)}',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF00D2FF)),
+                      ),
                     ],
                   ),
                 );

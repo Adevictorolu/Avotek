@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:avotek_client/avotek_client.dart';
-import 'package:avotek_flutter/providers/auth_provider.dart';
+import 'package:avotek_flutter/core/theme/app_theme.dart';
 import 'package:avotek_flutter/widgets/avotek_logo.dart';
-import 'package:avotek_flutter/screens/admin/admin_gateway_screen.dart';
-import 'package:provider/provider.dart';
 
 void main() {
-  group('AVOTEK Brand Asset & Auth Tests', () {
+  group('AVOTEK Brand & Theme Tests', () {
     testWidgets('AvotekBrandAsset renders without distortion', (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -21,49 +18,31 @@ void main() {
       expect(find.byType(Image), findsOneWidget);
     });
 
-    test('AuthProvider validates Super Admin keys accurately and securely', () async {
-      // Mock client with local host
-      final client = Client('http://localhost:8080/');
-      final auth = AuthProvider(client: client);
+    test('Brand color palette enforces Electric Cyan and Royal Blue identity', () {
+      // Primary Cyan & Electric Cyan
+      expect(AppColors.primaryCyan, const Color(0xFF00A3FF));
+      expect(AppColors.electricCyan, const Color(0xFF00D2FF));
 
-      // Default state: not super admin
-      expect(auth.isSuperAdmin, isFalse);
+      // Royal Blue & Deep Electric Blue
+      expect(AppColors.primaryBlue, const Color(0xFF0052FF));
+      expect(AppColors.deepElectricBlue, const Color(0xFF0084D6));
 
-      // Invalid key attempt
-      final failedAttempt = await auth.authenticateSuperAdmin('wrong-key-1234');
-      expect(failedAttempt, isFalse);
-      expect(auth.isSuperAdmin, isFalse);
-      expect(auth.errorMessage, contains('Unauthorized'));
-
-      // Valid key attempt
-      final successfulAttempt = await auth.authenticateSuperAdmin('avotek-admin-2026');
-      expect(successfulAttempt, isTrue);
-      expect(auth.isSuperAdmin, isTrue);
-      expect(auth.errorMessage, isNull);
-
-      // Lock super admin session
-      auth.logoutSuperAdmin();
-      expect(auth.isSuperAdmin, isFalse);
+      // Backgrounds: Deep Obsidian & Slate Pearl
+      expect(AppColors.darkBg, const Color(0xFF0A0E17));
+      expect(AppColors.lightBg, const Color(0xFFF8FAFC));
     });
 
-    testWidgets('AdminGatewayScreen presents secure passkey input', (WidgetTester tester) async {
-      final client = Client('http://localhost:8080/');
-      final auth = AuthProvider(client: client);
-
+    testWidgets('AvotekLogo renders custom circuit painter', (WidgetTester tester) async {
       await tester.pumpWidget(
-        ChangeNotifierProvider<AuthProvider>.value(
-          value: auth,
-          child: const MaterialApp(
-            home: AdminGatewayScreen(),
+        const MaterialApp(
+          home: Scaffold(
+            body: AvotekLogo(size: 40, isDark: true, useAssetImage: false),
           ),
         ),
       );
 
-      // Verify title and security elements are rendered
-      expect(find.text('Security Gateway'), findsOneWidget);
-      expect(find.text('Super Admin Authorization'), findsOneWidget);
-      expect(find.byType(TextField), findsOneWidget);
-      expect(find.text('Authorize Console Access'), findsOneWidget);
+      expect(find.byType(AvotekLogo), findsOneWidget);
+      expect(find.byType(CustomPaint), findsWidgets);
     });
   });
 }

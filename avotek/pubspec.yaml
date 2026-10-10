@@ -5,7 +5,6 @@ environment:
   sdk: '^3.8.0'
 
 workspace:
-  - avotek_client
-  - avotek_server
   - avotek_flutter
+
 

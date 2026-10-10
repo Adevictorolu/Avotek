@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../providers/theme_provider.dart';
 import '../../widgets/avotek_logo.dart';
 
 class PricingScreen extends StatefulWidget {
@@ -83,6 +85,15 @@ class _PricingScreenState extends State<PricingScreen> {
         backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
         title: const AvotekLogo(size: 32, showText: true),
         actions: [
+          IconButton(
+            icon: Icon(
+              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+              color: isDark ? AppColors.electricCyan : AppColors.primaryBlue,
+            ),
+            tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+            onPressed: () => context.read<ThemeProvider>().toggleTheme(),
+          ),
+          const SizedBox(width: 4),
           TextButton.icon(
             onPressed: () => context.push('/dashboard'),
             icon: const Icon(Icons.dashboard_rounded, size: 16),

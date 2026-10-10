@@ -1,4 +1,4 @@
-import 'package:avotek_client/avotek_client.dart';
+import '../models/transaction_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_theme.dart';

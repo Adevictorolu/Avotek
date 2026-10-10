@@ -1,7 +1,0 @@
-class: OrderResult
-fields:
-  order: Order
-  success: bool
-  message: String
-  token: String?
-  units: String?

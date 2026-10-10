@@ -1,5 +1,0 @@
-class: AuthResponse
-fields:
-  token: String
-  user: User
-  wallet: Wallet?

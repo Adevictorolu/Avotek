@@ -27,6 +27,14 @@ class ResponsiveLayout {
     if (width >= mobileBreakpoint && tablet != null) return tablet;
     return mobile;
   }
+
+  static EdgeInsets pagePadding(BuildContext context) {
+    final isDesk = isDesktop(context);
+    return EdgeInsets.symmetric(
+      horizontal: isDesk ? 32 : 16,
+      vertical: isDesk ? 24 : 16,
+    );
+  }
 }
 
 class AdaptiveContainer extends StatelessWidget {

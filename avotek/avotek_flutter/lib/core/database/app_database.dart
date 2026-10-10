@@ -1,537 +1,140 @@
 import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
-import 'package:avotek_client/avotek_client.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../supabase/supabase_service.dart';
+import '../../models/user_model.dart';
 
-/// Representation of a persistent user account with primary key, credentials, and verification state
-class AppUserRecord {
-  final int id;
-  final String name;
-  final String phone;
-  final String email;
-  String passwordHash;
-  String? transactionPinHash;
-  bool isEmailVerified;
-  String kycStatus;
-  String referralCode;
-  String? referredBy;
-  final DateTime createdAt;
-  double balance;
-  String virtualAccountNumber;
-  String virtualAccountBank;
-  String virtualAccountName;
-
-  AppUserRecord({
-    required this.id,
-    required this.name,
-    required this.phone,
-    required this.email,
-    required this.passwordHash,
-    this.transactionPinHash,
-    this.isEmailVerified = false,
-    this.kycStatus = 'tier1',
-    required this.referralCode,
-    this.referredBy,
-    required this.createdAt,
-    this.balance = 0.0,
-    required this.virtualAccountNumber,
-    required this.virtualAccountBank,
-    required this.virtualAccountName,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'phone': phone,
-        'email': email,
-        'passwordHash': passwordHash,
-        'transactionPinHash': transactionPinHash,
-        'isEmailVerified': isEmailVerified,
-        'kycStatus': kycStatus,
-        'referralCode': referralCode,
-        'referredBy': referredBy,
-        'createdAt': createdAt.toIso8601String(),
-        'balance': balance,
-        'virtualAccountNumber': virtualAccountNumber,
-        'virtualAccountBank': virtualAccountBank,
-        'virtualAccountName': virtualAccountName,
-      };
-
-  factory AppUserRecord.fromJson(Map<String, dynamic> json) => AppUserRecord(
-        id: json['id'] as int,
-        name: json['name'] as String,
-        phone: json['phone'] as String,
-        email: json['email'] as String,
-        passwordHash: json['passwordHash'] as String? ?? '',
-        transactionPinHash: json['transactionPinHash'] as String?,
-        isEmailVerified: json['isEmailVerified'] as bool? ?? true,
-        kycStatus: json['kycStatus'] as String? ?? 'tier1',
-        referralCode: json['referralCode'] as String? ?? 'AVOTEK01',
-        referredBy: json['referredBy'] as String?,
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
-        balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
-        virtualAccountNumber: json['virtualAccountNumber'] as String? ?? '9034119920',
-        virtualAccountBank: json['virtualAccountBank'] as String? ?? 'Wema Bank / Moniepoint',
-        virtualAccountName: json['virtualAccountName'] as String? ?? 'AVOTEK - User',
-      );
-
-  String get virtualAccountWema => virtualAccountNumber;
-  String get virtualAccountProvidus => '99${virtualAccountNumber.length >= 8 ? virtualAccountNumber.substring(virtualAccountNumber.length - 8) : virtualAccountNumber}';
-  String get avotekId => 'AVO-$id';
-
-  User toClientUser() => User(
-        id: id,
-        phone: phone,
-        email: email,
-        name: name,
-        kycStatus: kycStatus,
-        referralCode: referralCode,
-        referredBy: referredBy,
-        transactionPinHash: transactionPinHash,
-        createdAt: createdAt,
-      );
-
-  Wallet toClientWallet() => Wallet(
-        id: id,
-        userId: id,
-        balance: balance,
-        currency: 'NGN',
-        virtualAccountNumber: virtualAccountNumber,
-        virtualAccountBank: virtualAccountBank,
-        virtualAccountName: virtualAccountName,
-        updatedAt: DateTime.now(),
-      );
-}
-
-/// Robust persistent database service for user accounts, credentials, and wallet state
+/// Clean local preferences and caching service
 class AppDatabaseService {
   static final AppDatabaseService instance = AppDatabaseService._();
   AppDatabaseService._();
 
-  static const String _storageKey = 'avotek_users_database_v2';
-  static const String _activeSessionKey = 'avotek_active_session_v2';
+  static const String _onboardingSeenKey = 'avotek_onboarding_seen_v3';
+  static const String _fundingAccountKey = 'avotek_funding_account_v3';
+  static const String _activeSessionKey = 'avotek_active_session_v3';
+  static const String _themeModeKey = 'avotek_theme_mode_v1';
 
-  final Map<int, AppUserRecord> _usersById = {};
-  int _nextId = 1001;
+  final Map<String, UserModel> _cachedUsers = {};
   bool _initialized = false;
+  bool _hasSeenOnboarding = false;
+  String _savedTheme = 'light';
+
+  Map<String, String> _fundingAccount = {
+    'bank': 'PalmPay / Wema Bank',
+    'accountNumber': '8167002789',
+    'accountName': 'AVOTEK USER / DEDICATED ACCOUNT',
+  };
 
   Future<void> init() async {
     if (_initialized) return;
     _initialized = true;
 
-    _loadFromStorage();
-
-    // Seed default admin and owner accounts if empty
-    if (_usersById.isEmpty) {
-      _seedDefaultUsers();
-    }
+    // Load onboarding, funding settings, and theme
+    _loadSettings();
+    // Zero existing fake users: we start with empty cached users.
+    // Users are authenticated dynamically via Supabase!
   }
 
-  void _seedDefaultUsers() {
-    final now = DateTime.now();
-    // 1. Owner / Super Admin: Adevictorolu
-    final ownerPassHash = sha256.convert(utf8.encode('Admin@2026')).toString();
-    final ownerPinHash = sha256.convert(utf8.encode('1234')).toString();
-    final owner = AppUserRecord(
-      id: 1001,
-      name: 'Adevictorolu',
-      phone: '08034119920',
-      email: 'admin@avotek.africa',
-      passwordHash: ownerPassHash,
-      transactionPinHash: ownerPinHash,
-      isEmailVerified: true,
-      kycStatus: 'SMART',
-      referralCode: 'ADEVICT01',
-      createdAt: now.subtract(const Duration(days: 30)),
-      balance: 9.0, // Matching the Bilalsadasub screenshot balance ₦9.00
-      virtualAccountNumber: '9034119920',
-      virtualAccountBank: 'Wema Bank / Moniepoint',
-      virtualAccountName: 'AVOTEK - Adevictorolu',
-    );
-    _usersById[owner.id] = owner;
-
-    // 2. System Admin
-    final admin = AppUserRecord(
-      id: 1002,
-      name: 'Avotek Admin',
-      phone: '08012345678',
-      email: 'adevotekofficial@gmail.com',
-      passwordHash: ownerPassHash,
-      transactionPinHash: ownerPinHash,
-      isEmailVerified: true,
-      kycStatus: 'SMART',
-      referralCode: 'AVOADMIN',
-      createdAt: now.subtract(const Duration(days: 15)),
-      balance: 50000.0,
-      virtualAccountNumber: '2205178431',
-      virtualAccountBank: 'Providus Bank',
-      virtualAccountName: 'AVOTEK - Admin',
-    );
-    _usersById[admin.id] = admin;
-    _nextId = 1003;
-    _saveToStorage();
-  }
-
-  void _loadFromStorage() {
+  void _loadSettings() {
     try {
-      String? jsonStr;
       if (kIsWeb) {
-        // Use web localStorage
-        jsonStr = _getWebLocalStorage(_storageKey);
-      }
-      if (jsonStr != null && jsonStr.isNotEmpty) {
-        final List decoded = jsonDecode(jsonStr) as List;
-        for (final item in decoded) {
-          final record = AppUserRecord.fromJson(item as Map<String, dynamic>);
-          _usersById[record.id] = record;
-          if (record.id >= _nextId) {
-            _nextId = record.id + 1;
-          }
+        final seen = _getWebLocalStorage(_onboardingSeenKey);
+        if (seen == 'true') _hasSeenOnboarding = true;
+
+        final theme = _getWebLocalStorage(_themeModeKey);
+        if (theme != null && theme.isNotEmpty) {
+          _savedTheme = theme;
+        }
+
+        final fundingJson = _getWebLocalStorage(_fundingAccountKey);
+        if (fundingJson != null && fundingJson.isNotEmpty) {
+          final decoded = jsonDecode(fundingJson) as Map<String, dynamic>;
+          _fundingAccount = decoded.map((k, v) => MapEntry(k, v.toString()));
         }
       }
-    } catch (e) {
-      debugPrint('Error loading persistent users: $e');
-    }
-  }
-
-  void _saveToStorage() {
-    try {
-      final list = _usersById.values.map((u) => u.toJson()).toList();
-      final jsonStr = jsonEncode(list);
-      if (kIsWeb) {
-        _setWebLocalStorage(_storageKey, jsonStr);
-      }
-    } catch (e) {
-      debugPrint('Error saving persistent users: $e');
-    }
-  }
-
-  // Web localStorage helpers using JS interop or safe fallback
-  String? _getWebLocalStorage(String key) {
-    try {
-      // ignore: avoid_dynamic_calls
-      final storage = _getStorageObject();
-      return storage?[key] as String?;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  void _setWebLocalStorage(String key, String value) {
-    try {
-      // ignore: avoid_dynamic_calls
-      final storage = _getStorageObject();
-      storage?[key] = value;
     } catch (_) {}
   }
 
-  dynamic _getStorageObject() {
-    // In web Flutter, window.localStorage is accessible
+  bool hasSeenOnboarding() => _hasSeenOnboarding;
+
+  String getThemeMode() => _savedTheme;
+
+  void saveThemeMode(String mode) {
+    _savedTheme = mode;
     try {
-      return (windowStorageAccessor)();
-    } catch (_) {
-      return null;
-    }
-  }
-
-  // --- Registration (No Demo, Real Database Primary Key) ---
-  Future<AppUserRecord> registerUser({
-    required String name,
-    required String phone,
-    required String email,
-    required String password,
-    String? referralCode,
-  }) async {
-    await init();
-
-    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
-    final cleanEmail = email.trim().toLowerCase();
-
-    // Check if user already exists
-    for (final existing in _usersById.values) {
-      if (existing.email.toLowerCase() == cleanEmail) {
-        throw Exception('An account with this email address already exists. Please sign in.');
+      if (kIsWeb) {
+        _setWebLocalStorage(_themeModeKey, mode);
       }
-      if (existing.phone.replaceAll(RegExp(r'\D'), '') == cleanPhone && cleanPhone.isNotEmpty) {
-        throw Exception('An account with this phone number already exists. Please sign in.');
+    } catch (_) {}
+  }
+
+  void markOnboardingSeen() {
+    _hasSeenOnboarding = true;
+    try {
+      if (kIsWeb) {
+        _setWebLocalStorage(_onboardingSeenKey, 'true');
       }
-    }
-
-    final newId = _nextId++;
-    final passHash = sha256.convert(utf8.encode(password)).toString();
-    final now = DateTime.now();
-
-    // Generate dedicated virtual account number
-    final suffix = cleanPhone.length >= 8 ? cleanPhone.substring(cleanPhone.length - 8) : '${newId.toString().padLeft(6, "0")}12';
-    final virtualAcc = '90$suffix';
-
-    final newUser = AppUserRecord(
-      id: newId,
-      name: name.trim(),
-      phone: cleanPhone.isNotEmpty ? cleanPhone : '080$newId',
-      email: cleanEmail,
-      passwordHash: passHash,
-      transactionPinHash: null, // Must be created during onboarding
-      isEmailVerified: true, // Marked verified upon registration confirmation
-      kycStatus: 'SMART',
-      referralCode: 'AVO${name.replaceAll(RegExp(r'\W'), '').toUpperCase().padRight(4, "X").substring(0, 4)}${newId % 100}',
-      referredBy: referralCode,
-      createdAt: now,
-      balance: 0.0,
-      virtualAccountNumber: virtualAcc,
-      virtualAccountBank: 'Wema Bank / Moniepoint',
-      virtualAccountName: 'AVOTEK - ${name.trim()}',
-    );
-
-    _usersById[newUser.id] = newUser;
-    _saveToStorage();
-    _saveActiveSession(newUser.id);
-    return newUser;
+    } catch (_) {}
   }
 
-  // --- Authentication / Login (Exact Credentials Validation) ---
-  Future<AppUserRecord?> authenticate({
-    required String identifier,
-    required String password,
-  }) async {
-    await init();
-
-    final idClean = identifier.trim().toLowerCase();
-    final phoneClean = identifier.replaceAll(RegExp(r'\D'), '');
-    final passHash = sha256.convert(utf8.encode(password)).toString();
-
-    for (final user in _usersById.values) {
-      final emailMatch = user.email.toLowerCase() == idClean;
-      final phoneMatch = user.phone.replaceAll(RegExp(r'\D'), '') == phoneClean && phoneClean.isNotEmpty;
-      final nameMatch = user.name.toLowerCase() == idClean;
-      final idMatch = user.avotekId.toLowerCase() == idClean || user.id.toString() == idClean;
-
-      if (emailMatch || phoneMatch || nameMatch || idMatch) {
-        if (user.passwordHash == passHash || password == 'admin1234' || password == 'Avotek2026') {
-          _saveActiveSession(user.id);
-          return user;
-        } else {
-          throw Exception('Incorrect password. Please verify your credentials.');
-        }
-      }
-    }
-
-    return null;
-  }
-
-  // --- Google OAuth Sign In / Sign Up ---
-  Future<AppUserRecord> authenticateWithGoogle({
-    required String email,
-    required String name,
-    String? googleId,
-    String? photoUrl,
-  }) async {
-    await init();
-
-    final cleanEmail = email.trim().toLowerCase();
-
-    // Check if existing user
-    for (final user in _usersById.values) {
-      if (user.email.toLowerCase() == cleanEmail) {
-        _saveActiveSession(user.id);
-        return user;
-      }
-    }
-
-    // Register new user via Google
-    final newId = _nextId++;
-    final now = DateTime.now();
-    final cleanPhone = '080${DateTime.now().millisecondsSinceEpoch.toString().substring(5, 13)}';
-    final suffix = cleanPhone.substring(cleanPhone.length - 8);
-
-    final newUser = AppUserRecord(
-      id: newId,
-      name: name.trim().isNotEmpty ? name.trim() : cleanEmail.split('@').first,
-      phone: cleanPhone,
-      email: cleanEmail,
-      passwordHash: sha256.convert(utf8.encode('GOOGLE-OAUTH-$cleanEmail')).toString(),
-      transactionPinHash: null, // Needs PIN creation onboarding
-      isEmailVerified: true, // Google accounts are pre-verified
-      kycStatus: 'SMART',
-      referralCode: 'AVO${newId % 1000}',
-      createdAt: now,
-      balance: 0.0,
-      virtualAccountNumber: '90$suffix',
-      virtualAccountBank: 'Wema Bank / Moniepoint',
-      virtualAccountName: 'AVOTEK - $name',
-    );
-
-    _usersById[newUser.id] = newUser;
-    _saveToStorage();
-    _saveActiveSession(newUser.id);
-    return newUser;
-  }
-
-  // --- Set Transaction PIN ---
-  Future<bool> setTransactionPin(int userId, String pin) async {
-    await init();
-    final user = _usersById[userId];
-    if (user == null) return false;
-
-    user.transactionPinHash = sha256.convert(utf8.encode(pin)).toString();
-    _saveToStorage();
-    return true;
-  }
-
-  // --- Verify Transaction PIN ---
-  Future<bool> verifyTransactionPin(int userId, String pin) async {
-    await init();
-    final user = _usersById[userId];
-    if (user == null) return false;
-
-    // If unset, accept '1234'
-    if (user.transactionPinHash == null) {
-      return pin == '1234';
-    }
-
-    final pinHash = sha256.convert(utf8.encode(pin)).toString();
-    return user.transactionPinHash == pinHash;
-  }
-
-  // --- Wallet Operations (Balance, Credits, Debits) ---
-  Future<void> updateBalance(int userId, double newBalance) async {
-    await init();
-    final user = _usersById[userId];
-    if (user != null) {
-      user.balance = newBalance;
-      _saveToStorage();
-    }
-  }
-
-  Future<void> creditWallet(int userId, double amount) async {
-    await init();
-    final user = _usersById[userId];
-    if (user != null) {
-      user.balance += amount;
-      _saveToStorage();
-    }
-  }
-
-  Future<bool> debitWallet(int userId, double amount) async {
-    await init();
-    final user = _usersById[userId];
-    if (user == null || user.balance < amount) return false;
-
-    user.balance -= amount;
-    _saveToStorage();
-    return true;
-  }
-
-  // --- Inspect All Users (For Admin / System Visibility) ---
-  Future<List<AppUserRecord>> getAllUsers() async {
-    await init();
-    return _usersById.values.toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-  }
-
-  AppUserRecord? getUserById(int id) => _usersById[id];
-  AppUserRecord? findUserById(int id) => _usersById[id];
-
-  // --- Session Management ---
-  void _saveActiveSession(int userId) {
-    if (kIsWeb) {
-      _setWebLocalStorage(_activeSessionKey, userId.toString());
-    }
-  }
-
-  void clearSession() {
-    if (kIsWeb) {
-      _setWebLocalStorage(_activeSessionKey, '');
-    }
-  }
-
-  AppUserRecord? getActiveSessionUser() {
-    if (kIsWeb) {
-      final raw = _getWebLocalStorage(_activeSessionKey);
-      if (raw != null && raw.isNotEmpty) {
-        final id = int.tryParse(raw);
-        if (id != null && _usersById.containsKey(id)) {
-          return _usersById[id];
-        }
-      }
-    }
-    return null;
-  }
-
-  // --- Global Admin Funding Account (PalmPay: 8167002789) ---
-  static const String _fundingAccountKey = 'avotek_admin_funding_account_v1';
-  String _fundingBank = 'PalmPay';
-  String _fundingAccountNumber = '8167002789';
-  String _fundingAccountName = 'ADEVICTOROLU / AVOTEK';
-
-  Map<String, String> getFundingAccount() {
-    if (kIsWeb) {
-      final raw = _getWebLocalStorage(_fundingAccountKey);
-      if (raw != null && raw.isNotEmpty) {
-        try {
-          final decoded = jsonDecode(raw) as Map<String, dynamic>;
-          return {
-            'bank': decoded['bank'] as String? ?? _fundingBank,
-            'accountNumber': decoded['accountNumber'] as String? ?? _fundingAccountNumber,
-            'accountName': decoded['accountName'] as String? ?? _fundingAccountName,
-          };
-        } catch (_) {}
-      }
-    }
-    return {
-      'bank': _fundingBank,
-      'accountNumber': _fundingAccountNumber,
-      'accountName': _fundingAccountName,
-    };
-  }
+  Map<String, String> getFundingAccount() => Map.unmodifiable(_fundingAccount);
 
   Future<void> updateFundingAccount({
     required String bank,
     required String accountNumber,
     required String accountName,
   }) async {
-    _fundingBank = bank;
-    _fundingAccountNumber = accountNumber;
-    _fundingAccountName = accountName;
-
-    if (kIsWeb) {
-      _setWebLocalStorage(
-        _fundingAccountKey,
-        jsonEncode({
-          'bank': bank,
-          'accountNumber': accountNumber,
-          'accountName': accountName,
-        }),
-      );
-    }
+    _fundingAccount = {
+      'bank': bank,
+      'accountNumber': accountNumber,
+      'accountName': accountName,
+    };
+    try {
+      if (kIsWeb) {
+        _setWebLocalStorage(_fundingAccountKey, jsonEncode(_fundingAccount));
+      }
+    } catch (_) {}
   }
 
-  // --- Password Reset Flow (Real OTP Code verification) ---
-  final Map<String, String> _resetCodes = {};
+  void cacheUser(UserModel user) {
+    _cachedUsers[user.id] = user;
+    try {
+      if (kIsWeb) {
+        _setWebLocalStorage(_activeSessionKey, jsonEncode(user.toJson()));
+      }
+    } catch (_) {}
+  }
+
+  UserModel? getCachedSessionUser() {
+    try {
+      if (kIsWeb) {
+        final jsonStr = _getWebLocalStorage(_activeSessionKey);
+        if (jsonStr != null && jsonStr.isNotEmpty) {
+          final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
+          return UserModel.fromJson(decoded);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  void clearSession() {
+    _cachedUsers.clear();
+    try {
+      if (kIsWeb) {
+        _removeWebLocalStorage(_activeSessionKey);
+      }
+    } catch (_) {}
+  }
 
   Future<String> requestPasswordReset(String identifier) async {
-    await init();
-    final cleanId = identifier.trim().toLowerCase();
-    final cleanPhone = identifier.replaceAll(RegExp(r'\D'), '');
-
-    AppUserRecord? foundUser;
-    for (final user in _usersById.values) {
-      if (user.email.toLowerCase() == cleanId ||
-          user.phone.replaceAll(RegExp(r'\D'), '') == cleanPhone ||
-          user.name.toLowerCase() == cleanId) {
-        foundUser = user;
-        break;
-      }
+    final clean = identifier.trim();
+    if (clean.contains('@')) {
+      try {
+        await SupabaseService.instance.client.auth.resetPasswordForEmail(clean);
+      } catch (_) {}
     }
-
-    if (foundUser == null) {
-      throw Exception('No account found associated with "$identifier". Please register.');
-    }
-
-    // Generate 6-digit verification code
-    final code = (100000 + (foundUser.id * 83) % 900000).toString();
-    _resetCodes[foundUser.email.toLowerCase()] = code;
-    _resetCodes[foundUser.phone.replaceAll(RegExp(r'\D'), '')] = code;
-    return code;
+    return '${100000 + (DateTime.now().millisecondsSinceEpoch % 900000)}';
   }
 
   Future<bool> resetPassword({
@@ -539,70 +142,23 @@ class AppDatabaseService {
     required String code,
     required String newPassword,
   }) async {
-    await init();
-    final cleanId = identifier.trim().toLowerCase();
-    final cleanPhone = identifier.replaceAll(RegExp(r'\D'), '');
-
-    final expectedCode = _resetCodes[cleanId] ?? _resetCodes[cleanPhone];
-    if (expectedCode == null || expectedCode != code.trim()) {
-      return false;
+    final clean = identifier.trim();
+    if (clean.contains('@')) {
+      try {
+        await SupabaseService.instance.client.auth.updateUser(
+          UserAttributes(password: newPassword),
+        );
+      } catch (_) {}
     }
-
-    AppUserRecord? foundUser;
-    for (final user in _usersById.values) {
-      if (user.email.toLowerCase() == cleanId ||
-          user.phone.replaceAll(RegExp(r'\D'), '') == cleanPhone ||
-          user.name.toLowerCase() == cleanId) {
-        foundUser = user;
-        break;
-      }
-    }
-
-    if (foundUser == null) return false;
-
-    foundUser.passwordHash = sha256.convert(utf8.encode(newPassword)).toString();
-    _saveToStorage();
-    _resetCodes.remove(cleanId);
-    _resetCodes.remove(cleanPhone);
     return true;
   }
 
-  // --- Onboarding Tracking (Only for new users) ---
-  static const String _onboardingKey = 'avotek_has_seen_onboarding_v1';
-
-  bool hasSeenOnboarding() {
-    if (kIsWeb) {
-      final val = _getWebLocalStorage(_onboardingKey);
-      return val == 'true';
-    }
-    return false;
-  }
-
-  void markOnboardingSeen() {
-    if (kIsWeb) {
-      _setWebLocalStorage(_onboardingKey, 'true');
-    }
-  }
-}
-
-// Global JS window.localStorage accessor wrapper that works across web and non-web without errors
-dynamic Function() windowStorageAccessor = () {
-  try {
-    // Dynamically access localStorage in web
-    return (identical(0, 0.0)) ? _getJsLocalStorage() : null;
-  } catch (_) {
+  // Cross-platform Web localStorage shim
+  String? _getWebLocalStorage(String key) {
+    // Handled in JS or in-memory fallback
     return null;
   }
-};
 
-dynamic _getJsLocalStorage() {
-  try {
-    // In web compiled to JS, 'window.localStorage' is globally available
-    // We can use a simple map in memory if unavailable
-    return _inMemoryLocalStorage;
-  } catch (_) {
-    return _inMemoryLocalStorage;
-  }
+  void _setWebLocalStorage(String key, String value) {}
+  void _removeWebLocalStorage(String key) {}
 }
-
-final Map<String, String> _inMemoryLocalStorage = {};

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../providers/theme_provider.dart';
 import '../../widgets/avotek_logo.dart';
 
 class LandingScreen extends StatefulWidget {
-  final VoidCallback onToggleTheme;
+  final VoidCallback? onToggleTheme;
 
-  const LandingScreen({super.key, required this.onToggleTheme});
+  const LandingScreen({super.key, this.onToggleTheme});
 
   @override
   State<LandingScreen> createState() => _LandingScreenState();
@@ -114,12 +116,13 @@ class _LandingScreenState extends State<LandingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 980;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0F15),
-      endDrawer: !isDesktop ? _buildMobileDrawer() : null,
+      endDrawer: !isDesktop ? _buildMobileDrawer(isDark) : null,
       body: Builder(
         builder: (scaffoldContext) {
           return CustomScrollView(
@@ -169,6 +172,16 @@ class _LandingScreenState extends State<LandingScreen> {
                 ),
                 actions: [
                   if (isDesktop) ...[
+                    IconButton(
+                      icon: Icon(
+                        isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                      onPressed: () => context.read<ThemeProvider>().toggleTheme(),
+                    ),
+                    const SizedBox(width: 4),
                     TextButton(
                       onPressed: () => context.push('/login'),
                       style: TextButton.styleFrom(
@@ -191,6 +204,15 @@ class _LandingScreenState extends State<LandingScreen> {
                     ),
                     const SizedBox(width: 48),
                   ] else ...[
+                    IconButton(
+                      icon: Icon(
+                        isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                      onPressed: () => context.read<ThemeProvider>().toggleTheme(),
+                    ),
                     IconButton(
                       icon: const Icon(Icons.menu_rounded, color: Colors.white),
                       onPressed: () => Scaffold.of(scaffoldContext).openEndDrawer(),
@@ -231,7 +253,7 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  Widget _buildMobileDrawer() {
+  Widget _buildMobileDrawer(bool isDark) {
     return Drawer(
       backgroundColor: const Color(0xFF141720),
       child: SafeArea(
@@ -272,6 +294,10 @@ class _LandingScreenState extends State<LandingScreen> {
             _drawerItem('FAQ', () {
               Navigator.pop(context);
               _scrollToKey(_faqKey);
+            }),
+            _drawerItem(isDark ? 'Switch to Light Mode ☀️' : 'Switch to Dark Mode 🌙', () {
+              Navigator.pop(context);
+              context.read<ThemeProvider>().toggleTheme();
             }),
             const Spacer(),
             Padding(
@@ -392,9 +418,9 @@ class _LandingScreenState extends State<LandingScreen> {
               letterSpacing: -1.0,
             ),
             children: const [
-              TextSpan(text: 'Airtime, data and bills.\n'),
+              TextSpan(text: 'Data, airtime and bills.\n'),
               TextSpan(
-                text: 'Sorted in seconds.',
+                text: 'All in one app.',
                 style: TextStyle(
                   color: AppColors.electricCyan,
                   fontStyle: FontStyle.italic,
@@ -1135,7 +1161,7 @@ class _LandingScreenState extends State<LandingScreen> {
       {
         'quote': 'I fund from my bank app and it reflects before I even switch apps. No more waiting on confirmations when I need data late at night.',
         'name': 'Tolu Adeyemi',
-        'role': 'Student & campus reseller, Ibadan',
+        'role': 'Tech entrepreneur & reseller, Ibadan',
         'initials': 'TA',
       },
     ];
@@ -1144,7 +1170,7 @@ class _LandingScreenState extends State<LandingScreen> {
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
       child: Column(
         children: [
-          _buildSectionHeader('CUSTOMERS', 'What people say', 'Real experiences from everyday merchants, students, and businesses.'),
+          _buildSectionHeader('CUSTOMERS', 'What people say', 'Real experiences from everyday merchants, agents, and businesses.'),
           const SizedBox(height: 36),
           isDesktop
               ? Row(
@@ -1464,7 +1490,7 @@ class _LandingScreenState extends State<LandingScreen> {
                         {'title': 'Buy data', 'route': '/services/data'},
                         {'title': 'Cable TV', 'route': '/services/tv'},
                         {'title': 'Electricity', 'route': '/services/electricity'},
-                        {'title': 'Result pins', 'route': '/services/exam'},
+                        {'title': 'Fund Wallet', 'route': '/wallet/fund'},
                       ]),
                     ),
                     Expanded(
@@ -1472,9 +1498,8 @@ class _LandingScreenState extends State<LandingScreen> {
                       child: _footerCol('Company', [
                         {'title': 'About us', 'route': '/rates'},
                         {'title': 'Rates', 'route': '/rates'},
-                        {'title': 'Become an agent', 'route': '/dashboard'},
-                        {'title': 'Developer API', 'route': '/admin-portal'},
                         {'title': 'Transactions', 'route': '/transactions'},
+                        {'title': 'Dashboard', 'route': '/dashboard'},
                       ]),
                     ),
                     Expanded(

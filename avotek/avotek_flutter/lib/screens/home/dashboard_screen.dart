@@ -4,10 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
-import '../../core/database/app_database.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
@@ -23,7 +21,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  bool _isRefreshing = false;
   bool _obscureBalance = false;
 
   @override
@@ -45,269 +42,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadData() async {
     final auth = context.read<AuthProvider>();
     final wallet = context.read<WalletProvider>();
-    if (auth.user?.id != null) {
-      setState(() => _isRefreshing = true);
+    if (auth.user != null) {
       await auth.refreshWallet();
-      await wallet.fetchWallet(auth.user!.id!);
-      if (mounted) setState(() => _isRefreshing = false);
+      await wallet.fetchWallet(auth.user!.id);
     }
   }
 
-  Future<void> _launchWhatsApp() async {
-    const phone = '+2348034119920';
-    final uri = Uri.parse('https://wa.me/2348034119920?text=Hello%20Avotek%2C%20I%20want%20to%20buy%20data%20and%20airtime');
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        _showCopySnackBar('WhatsApp Support: $phone');
-      }
-    } catch (_) {
-      _showCopySnackBar('WhatsApp Support: $phone');
-    }
-  }
-
-  void _showCopySnackBar(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-        backgroundColor: const Color(0xFF25D366),
-      ),
-    );
-  }
-
-  // --- Add Money Modal (Dedicated Bank Account Funding) ---
-  void _showAddMoneyDialog() {
-    final auth = context.read<AuthProvider>();
+  void _showUpgradeDialog() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final funding = AppDatabaseService.instance.getFundingAccount();
-    final accountNumber = funding['accountNumber'] ?? '8167002789';
-    final bankName = funding['bank'] ?? 'PalmPay';
-    final accountName = funding['accountName'] ?? 'ADEVICTOROLU / AVOTEK';
-
-    final testFundCtrl = TextEditingController(text: '5000');
-
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF14171E) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
-          side: BorderSide(color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0)),
-        ),
+        backgroundColor: isDark ? const Color(0xFF141722) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0052FF).withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.account_balance_rounded, color: Color(0xFF00D2FF), size: 22),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Fund Your Wallet',
-              style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
+            const Icon(Icons.star_rounded, color: AppColors.electricCyan),
+            const SizedBox(width: 8),
+            Text('Upgrade to VIP Agent', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18)),
           ],
         ),
-        content: SizedBox(
-          width: 440,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Transfer any amount to your dedicated virtual account from your bank app. Your wallet credits automatically in seconds.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // Account Number Box
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF23304B) : const Color(0xFFCBD5E1),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('ACCOUNT NUMBER', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF00D2FF))),
-                        InkWell(
-                          onTap: () {
-                            Clipboard.setData(ClipboardData(text: accountNumber));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Account number copied!'), backgroundColor: AppColors.success),
-                            );
-                          },
-                          child: Row(
-                            children: [
-                              const Icon(Icons.copy_rounded, size: 14, color: Color(0xFF00D2FF)),
-                              const SizedBox(width: 4),
-                              Text('COPY', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: const Color(0xFF00D2FF))),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      accountNumber,
-                      style: GoogleFonts.plusJakartaSans(fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: 2, color: isDark ? Colors.white : const Color(0xFF0F172A)),
-                    ),
-                    const SizedBox(height: 8),
-                    const Divider(color: Color(0xFF26334D), height: 1),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('BANK NAME', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.metallicLight)),
-                        Text(bankName, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('ACCOUNT NAME', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.metallicLight)),
-                        Text(accountName, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // Sandbox / Instant Credit Simulator for quick testing
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E222D) : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Instant Test Credit (Sandbox Simulation):',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.w700, color: isDark ? Colors.white70 : Colors.black87),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: testFundCtrl,
-                            keyboardType: TextInputType.number,
-                            style: GoogleFonts.plusJakartaSans(fontSize: 13),
-                            decoration: const InputDecoration(
-                              prefixText: '₦ ',
-                              hintText: '5000',
-                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryBlue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          ),
-                          onPressed: () async {
-                            final amt = double.tryParse(testFundCtrl.text.trim()) ?? 5000.0;
-                            await auth.creditWallet(amt);
-                            if (ctx.mounted) Navigator.pop(ctx);
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('₦${amt.toStringAsFixed(2)} successfully credited to your wallet!', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-                                  backgroundColor: AppColors.success,
-                                ),
-                              );
-                            }
-                          },
-                          child: Text('Credit Now', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 12)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        content: Text(
+          'Upgrade to VIP Agent tier to get higher commissions, discounted data bundles, and zero funding fees.',
+          style: GoogleFonts.plusJakartaSans(fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Close', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- Withdraw Modal ---
-  void _showWithdrawDialog() {
-    final bankCtrl = TextEditingController(text: 'Access Bank');
-    final acctCtrl = TextEditingController();
-    final amountCtrl = TextEditingController();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF14171E) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
-          side: BorderSide(color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.arrow_downward_rounded, color: AppColors.electricCyan),
-            const SizedBox(width: 10),
-            Text('Withdraw to Bank', style: GoogleFonts.plusJakartaSans(fontSize: 17, fontWeight: FontWeight.w800)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: bankCtrl,
-              style: GoogleFonts.plusJakartaSans(fontSize: 13),
-              decoration: const InputDecoration(labelText: 'Destination Bank', hintText: 'Access Bank'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: acctCtrl,
-              keyboardType: TextInputType.number,
-              style: GoogleFonts.plusJakartaSans(fontSize: 13),
-              decoration: const InputDecoration(labelText: '10-Digit Account Number', hintText: '0123456789'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: amountCtrl,
-              keyboardType: TextInputType.number,
-              style: GoogleFonts.plusJakartaSans(fontSize: 13),
-              decoration: const InputDecoration(labelText: 'Amount (₦)', hintText: 'e.g. 5000'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            child: Text('Maybe Later', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -317,155 +79,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Withdrawal request of ₦${amountCtrl.text} submitted for processing.', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-                  backgroundColor: AppColors.success,
-                ),
+                const SnackBar(content: Text('Agent upgrade request submitted!'), backgroundColor: AppColors.success),
               );
             },
-            child: Text('Withdraw', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+            child: Text('Upgrade Now', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
           ),
         ],
-      ),
-    );
-  }
-
-  // --- Send To User Modal ---
-  void _showSendToUserDialog() {
-    final phoneCtrl = TextEditingController();
-    final amountCtrl = TextEditingController();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF14171E) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
-          side: BorderSide(color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.swap_horiz_rounded, color: AppColors.primaryCyan),
-            const SizedBox(width: 10),
-            Text('Send Money to User', style: GoogleFonts.plusJakartaSans(fontSize: 17, fontWeight: FontWeight.w800)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: phoneCtrl,
-              keyboardType: TextInputType.phone,
-              style: GoogleFonts.plusJakartaSans(fontSize: 13),
-              decoration: const InputDecoration(labelText: 'Recipient Phone or Username', hintText: '0803 123 4567'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: amountCtrl,
-              keyboardType: TextInputType.number,
-              style: GoogleFonts.plusJakartaSans(fontSize: 13),
-              decoration: const InputDecoration(labelText: 'Amount (₦)', hintText: 'e.g. 2000'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryCyan,
-              foregroundColor: const Color(0xFF002B47),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('₦${amountCtrl.text} sent instantly to ${phoneCtrl.text}!', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            },
-            child: Text('Transfer Now', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- Referral Modal ---
-  void _showReferralDialog() {
-    final auth = context.read<AuthProvider>();
-    final code = auth.user?.referralCode ?? 'ADEVICT01';
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF14171E) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
-          side: BorderSide(color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0)),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.group_add_rounded, color: Color(0xFF00D2FF)),
-            const SizedBox(width: 10),
-            Text('Refer & Earn 2%', style: GoogleFonts.plusJakartaSans(fontSize: 17, fontWeight: FontWeight.w800)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Share your referral code. You earn 2% commission on the first deposit of every user who signs up with your link.',
-              style: GoogleFonts.plusJakartaSans(fontSize: 13, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF00D2FF)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(code, style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: const Color(0xFF00D2FF), letterSpacing: 1.5)),
-                  IconButton(
-                    icon: const Icon(Icons.copy_rounded, color: Color(0xFF00D2FF), size: 18),
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: code));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Referral code copied!'), backgroundColor: AppColors.success),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue, foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Done', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showComingSoon(String serviceName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$serviceName is active and connecting to gateway...', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-        backgroundColor: AppColors.primaryBlue,
       ),
     );
   }
@@ -477,359 +96,556 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final auth = context.watch<AuthProvider>();
     final wallet = context.watch<WalletProvider>();
 
-    final userName = auth.user?.name ?? 'Adevictorolu';
+    final userName = (auth.user?.name != null && auth.user!.name.isNotEmpty) ? auth.user!.name : 'Ademola';
     final effectiveBalance = auth.wallet?.balance ?? wallet.balance;
 
     final hour = DateTime.now().hour;
     final timeGreeting = hour < 12
-        ? 'Good morning 🌅'
-        : (hour < 17 ? 'Good afternoon ☀️' : 'Good evening 🌙');
+        ? 'Good morning,'
+        : (hour < 17 ? 'Good afternoon,' : 'Good evening,');
 
     return ResponsiveShell(
       currentRoute: '/dashboard',
       onToggleTheme: widget.onToggleTheme,
-      child: Stack(
-        children: [
-          RefreshIndicator(
-            onRefresh: _loadData,
-            color: AppColors.primaryCyan,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 32 : 16,
-                vertical: 24,
-              ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1140),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: RefreshIndicator(
+        onRefresh: _loadData,
+        color: AppColors.electricCyan,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.symmetric(
+            horizontal: isDesktop ? 36 : 16,
+            vertical: 24,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1140),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. TOP GREETING HEADER (Matches Screenshot 2)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // 1. TOP GREETING & USERNAME (Matching Bilal Sub)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              timeGreeting,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              userName,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: isDesktop ? 32 : 24,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.5,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          timeGreeting,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
                         ),
-                        // Top Right Action Buttons
-                        Row(
-                          children: [
-                            IconButton(
-                              tooltip: 'Buy on WhatsApp',
-                              icon: Container(
-                                padding: const EdgeInsets.all(7),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: const Color(0xFF25D366), width: 1.5),
-                                ),
-                                child: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF25D366), size: 18),
-                              ),
-                              onPressed: _launchWhatsApp,
-                            ),
-                            const SizedBox(width: 6),
-                            IconButton(
-                              tooltip: 'Notifications',
-                              icon: const Icon(Icons.notifications_none_rounded, size: 22),
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('All services operational. 99.9% gateway uptime.')),
-                                );
-                              },
-                            ),
-                            const SizedBox(width: 6),
-                            InkWell(
-                              onTap: () => context.go('/profile'),
-                              borderRadius: BorderRadius.circular(20),
-                              child: CircleAvatar(
-                                radius: 16,
-                                backgroundColor: const Color(0xFF1E293B),
-                                child: const Icon(Icons.person, color: Color(0xFF00A3FF), size: 18),
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 2),
+                        Text(
+                          userName,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: isDesktop ? 26 : 22,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        // Upgrade Pill Button
+                        InkWell(
+                          onTap: _showUpgradeDialog,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF1A1F2C) : const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF2E384D) : const Color(0xFFBFDBFE),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.star_border_rounded, size: 14, color: AppColors.electricCyan),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Upgrade',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : AppColors.primaryBlue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
 
-                    // 2. GREEN WHATSAPP BANNER (Matching Bilal Sub)
-                    _buildWhatsAppBanner(isDark),
-                    const SizedBox(height: 22),
+                        // Regular User Badge Pill
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF131722) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.metallicLight),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Regular',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
 
-                    // 3. BALANCE & STATS CARDS ROW (Matching Bilal Sub)
-                    _buildBalanceSection(effectiveBalance, isDesktop, isDark),
-                    const SizedBox(height: 28),
-
-                    // 4. SERVICES GRID (Matching Bilal Sub 20 Cards)
-                    Text(
-                      'Services',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 21,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
+                        // Theme Toggle Icon
+                        IconButton(
+                          tooltip: 'Toggle Theme',
+                          icon: Icon(
+                            isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                            size: 20,
+                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          ),
+                          onPressed: widget.onToggleTheme,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    _buildServicesGrid(isDesktop, isDark),
-                    const SizedBox(height: 24),
-
-                    // 5. INVITE FRIENDS / REFERRAL BANNER (Matching Bilal Sub)
-                    _buildInviteBanner(isDark),
-                    const SizedBox(height: 60),
                   ],
                 ),
-              ),
-            ),
-          ),
+                const SizedBox(height: 22),
 
-          // 6. FLOATING ACTION BUTTON (Yellow Circular Chat Button matching Bilal Sub)
-          Positioned(
-            right: 24,
-            bottom: 24,
-            child: Material(
-              color: AppColors.primaryBlue,
-              shape: const CircleBorder(),
-              elevation: 8,
-              shadowColor: AppColors.primaryBlue.withOpacity(0.4),
-              child: InkWell(
-                onTap: _launchWhatsApp,
-                customBorder: const CircleBorder(),
-                child: const SizedBox(
-                  width: 54,
-                  height: 54,
-                  child: Icon(
-                    Icons.chat_bubble_rounded,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+                // 2. HERO VIRTUAL CARD / WALLET (Matches Screenshot 2)
+                _buildHeroVirtualCard(effectiveBalance, auth, wallet, isDark, isDesktop),
+                const SizedBox(height: 18),
 
-  // --- Green WhatsApp Banner ---
-  Widget _buildWhatsAppBanner(bool isDark) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _launchWhatsApp,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF00C853), Color(0xFF059669)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF00C853).withOpacity(0.25),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 22),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // 3. ACTION BUTTONS ROW (Fund Wallet + History)
+                Row(
                   children: [
-                    Text(
-                      'Buy directly on WhatsApp',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                    Expanded(
+                      flex: 3,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF00D2FF), Color(0xFF0052FF)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0052FF).withValues(alpha: 0.35),
+                              blurRadius: 14,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: () => context.push('/wallet/fund'),
+                          icon: const Icon(Icons.add_rounded, size: 18, color: Colors.white),
+                          label: Text(
+                            'Fund Wallet',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Chat with Bilal to buy data, airtime & more — Instantly.',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.92),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF131722) : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF23304B) : const Color(0xFFCBD5E1),
+                            width: 1,
+                          ),
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: () => context.push('/transactions'),
+                          icon: Icon(Icons.history_rounded, size: 18, color: isDark ? Colors.white70 : Colors.black87),
+                          label: Text(
+                            'History',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const Icon(Icons.chevron_right_rounded, color: Colors.white, size: 24),
-            ],
+                const SizedBox(height: 24),
+
+                // 4. METRICS / STATS BAR (4 Cards Row)
+                _buildMetricsStatsBar(wallet, isDark, isDesktop),
+                const SizedBox(height: 32),
+
+                // 5. QUICK ACTIONS SECTION (Matches Screenshot 2)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.bolt_rounded, color: AppColors.electricCyan, size: 20),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Quick Actions',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ],
+                    ),
+                    InkWell(
+                      onTap: () => context.push('/services'),
+                      child: Row(
+                        children: [
+                          Text(
+                            'All Services',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 14,
+                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildQuickActionsGrid(isDark, isDesktop),
+                const SizedBox(height: 36),
+
+                // 6. RECENT TRANSACTIONS LEDGER PREVIEW
+                _buildRecentTransactionsSection(wallet, isDark),
+                const SizedBox(height: 48),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // --- Hero Balance Section (Left Large Amber Card + Right Stacked Cards) ---
-  Widget _buildBalanceSection(double balance, bool isDesktop, bool isDark) {
-    final currencyFormat = NumberFormat('#,##0.00', 'en_US');
-    final formattedBalance = currencyFormat.format(balance);
+  // --- HERO VIRTUAL CARD (MATCHES SCREENSHOT 2) ---
+  Widget _buildHeroVirtualCard(
+    double balance,
+    AuthProvider auth,
+    WalletProvider wallet,
+    bool isDark,
+    bool isDesktop,
+  ) {
+    final formattedBalance = NumberFormat('#,##0.00').format(balance);
+    final rawAcct = wallet.walletSummary?.virtualAccountNumber ??
+        auth.wallet?.virtualAccountNumber ??
+        '5005305816';
 
-    final leftCard = Container(
-      padding: const EdgeInsets.all(24),
+    // Format account into 500  530  5816
+    final spacedAcct = rawAcct.length >= 10
+        ? '${rawAcct.substring(0, 3)}  ${rawAcct.substring(3, 6)}  ${rawAcct.substring(6)}'
+        : rawAcct;
+
+    final bank = wallet.walletSummary?.virtualAccountBank ??
+        auth.wallet?.virtualAccountBank ??
+        'WEMA / PALMPAY';
+    final cardHolder = 'AVOTEK ${(auth.user?.name ?? "VICTOR OLUOKUN ADEMOLA").toUpperCase()}';
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isDesktop ? 26 : 20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF15171F) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF0E131E), const Color(0xFF121B2F)]
+              : [const Color(0xFF0052FF), const Color(0xFF007AEB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         border: Border.all(
-          color: isDark ? AppColors.electricCyan.withOpacity(0.3) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF22304C) : const Color(0xFF3880FF),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.35 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.15),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          // Header row with Eye and Refresh
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'MAIN WALLET BALANCE',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.electricCyan,
-                  letterSpacing: 1.2,
-                ),
+          // Background subtle circular glows
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.03),
               ),
+            ),
+          ),
+          Positioned(
+            right: 60,
+            bottom: -30,
+            child: Container(
+              width: 130,
+              height: 130,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.electricCyan.withValues(alpha: 0.04),
+              ),
+            ),
+          ),
+
+          // Card Content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Brand & Free Deposits Badge
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'avotek',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsets.only(left: 2, top: 4),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.electricCyan,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.success.withValues(alpha: 0.4), width: 0.8),
+                    ),
+                    child: Text(
+                      'FREE DEPOSITS',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                        color: AppColors.success,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Available Balance Row
               Row(
                 children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'AVAILABLE BALANCE',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      color: isDark ? AppColors.metallicLight : Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Text(
+                    _obscureBalance ? '₦ • • • • • •' : '₦$formattedBalance',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: isDesktop ? 38 : 30,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
                   IconButton(
                     icon: Icon(
                       _obscureBalance ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                       size: 20,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      color: Colors.white70,
                     ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     onPressed: () => setState(() => _obscureBalance = !_obscureBalance),
                   ),
-                  const SizedBox(width: 14),
-                  IconButton(
-                    icon: _isRefreshing
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.electricCyan),
-                          )
-                        : Icon(
-                            Icons.refresh_rounded,
-                            size: 20,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: _isRefreshing ? null : _loadData,
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Card Chip & Spaced Account Number
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Gold EMV Chip Simulation
+                  Container(
+                    width: 34,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD4AF37),
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: const Color(0xFFB8860B)),
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: 20,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black26),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.wifi_rounded, size: 18, color: Colors.white70),
+                  const Spacer(),
+                  Text(
+                    bank.toUpperCase(),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white70,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ],
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-          // Big Bold Balance
-          Text(
-            _obscureBalance ? '₦ ••••••' : '₦$formattedBalance',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 38,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Pill Action Buttons (+ Add Money and Withdraw)
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _showAddMoneyDialog,
-                  icon: const Icon(Icons.add_circle_rounded, size: 16),
-                  label: Text(
-                    'Add Money',
+              // Large Spaced Account Number & Copy
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    spacedAcct,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
+                      fontSize: isDesktop ? 22 : 18,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2.5,
+                      color: Colors.white,
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    elevation: 0,
+                  InkWell(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: rawAcct));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Account number copied! Transfer to fund instantly.'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.copy_rounded, size: 13, color: Colors.white),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Copy',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _showWithdrawDialog,
-                  icon: const Icon(Icons.arrow_downward_rounded, size: 16),
-                  label: Text(
-                    'Withdraw',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
-                    side: BorderSide(
-                      color: isDark ? Colors.white.withOpacity(0.15) : const Color(0xFFCBD5E1),
-                      width: 1.2,
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
+              const SizedBox(height: 12),
+              const Divider(color: Colors.white12, height: 1),
+              const SizedBox(height: 10),
+
+              // Cardholder Name
+              Text(
+                cardHolder,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                  color: Colors.white70,
                 ),
               ),
             ],
@@ -837,310 +653,327 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
 
-    final rightCards = Column(
+  // --- 4 STATS CARDS ROW (MATCHES SCREENSHOT 2) ---
+  Widget _buildMetricsStatsBar(WalletProvider wallet, bool isDark, bool isDesktop) {
+    final todaySpend = wallet.transactions
+        .where((t) => t.isDebit && t.createdAt.day == DateTime.now().day)
+        .fold(0.0, (sum, t) => sum + t.amount);
+
+    final totalCount = wallet.transactions.length;
+    final successCount = wallet.transactions.where((t) => t.status == 'completed' || t.status == 'successful').length;
+    final failedCount = wallet.transactions.where((t) => t.status == 'failed').length;
+
+    return Row(
       children: [
-        // 1. Earning balance card
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF161922) : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.card_giftcard_rounded, color: Color(0xFF10B981), size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Earning balance',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '₦0.00',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        Expanded(
+          child: _buildMetricTile(
+            title: "TODAY'S SPEND",
+            value: '₦${todaySpend.toStringAsFixed(0)}',
+            icon: Icons.account_balance_wallet_rounded,
+            iconColor: AppColors.primaryBlue,
+            isDark: isDark,
           ),
         ),
-        const SizedBox(height: 14),
-
-        // 2. Data purchased today card
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF161922) : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildMetricTile(
+            title: 'TRANSACTIONS',
+            value: '$totalCount',
+            icon: Icons.payments_rounded,
+            iconColor: AppColors.electricCyan,
+            isDark: isDark,
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.electricCyan.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.wifi_rounded, color: AppColors.electricCyan, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Data purchased today',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '0GB',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildMetricTile(
+            title: 'SUCCESSFUL',
+            value: '$successCount',
+            icon: Icons.check_circle_rounded,
+            iconColor: AppColors.success,
+            isDark: isDark,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildMetricTile(
+            title: 'FAILED',
+            value: '$failedCount',
+            icon: Icons.cancel_rounded,
+            iconColor: AppColors.error,
+            isDark: isDark,
           ),
         ),
       ],
     );
-
-    if (isDesktop) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(flex: 3, child: leftCard),
-          const SizedBox(width: 18),
-          Expanded(flex: 2, child: rightCards),
-        ],
-      );
-    } else {
-      return Column(
-        children: [
-          leftCard,
-          const SizedBox(height: 14),
-          rightCards,
-        ],
-      );
-    }
   }
 
-  // --- Services Grid (Matching authentic BigiSub & Avotek VTU services) ---
-  Widget _buildServicesGrid(bool isDesktop, bool isDark) {
-    final services = [
-      {'title': 'Buy Data', 'icon': Icons.wifi_rounded, 'color': const Color(0xFF00A3FF), 'route': '/services/data'},
-      {'title': 'Buy Airtime', 'icon': Icons.phone_android_rounded, 'color': const Color(0xFF10B981), 'route': '/services/airtime'},
-      {'title': 'Airtime to Cash', 'icon': Icons.sync_alt_rounded, 'color': const Color(0xFF14B8A6), 'action': () => _showComingSoon('Airtime to Cash')},
-      {'title': 'Electricity', 'icon': Icons.flash_on_rounded, 'color': const Color(0xFFEAB308), 'route': '/services/electricity'},
-      {'title': 'Cable TV', 'icon': Icons.tv_rounded, 'color': const Color(0xFF8B5CF6), 'route': '/services/tv'},
-      {'title': 'Bulk SMS', 'icon': Icons.sms_rounded, 'color': const Color(0xFF6366F1), 'action': () => _showComingSoon('Bulk SMS')},
-      {'title': 'Data Card', 'icon': Icons.nfc_rounded, 'color': const Color(0xFF2563EB), 'action': () => _showComingSoon('Data Card Printing')},
-      {'title': 'Recharge Card', 'icon': Icons.receipt_rounded, 'color': const Color(0xFFF97316), 'action': () => _showComingSoon('Recharge Card Printing')},
-      {'title': 'Send to User', 'icon': Icons.send_rounded, 'color': const Color(0xFF10B981), 'action': _showSendToUserDialog},
-      {'title': 'Withdraw', 'icon': Icons.arrow_downward_rounded, 'color': const Color(0xFF00D2FF), 'action': _showWithdrawDialog},
-      {'title': 'Bonus Transfer', 'icon': Icons.card_giftcard_rounded, 'color': const Color(0xFF0052FF), 'action': () => _showComingSoon('Bonus Transfer')},
-      {'title': 'Fund Wallet', 'icon': Icons.account_balance_wallet_rounded, 'color': const Color(0xFF10B981), 'route': '/wallet/fund'},
-    ];
-
-    final crossAxisCount = isDesktop ? 4 : 2;
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: services.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-        childAspectRatio: isDesktop ? 2.3 : 1.7,
-      ),
-      itemBuilder: (context, index) {
-        final item = services[index];
-        final title = item['title'] as String;
-        final icon = item['icon'] as IconData;
-        final color = item['color'] as Color;
-
-        return _buildServiceCard(
-          title: title,
-          icon: icon,
-          accentColor: color,
-          isDark: isDark,
-          onTap: () {
-            if (item.containsKey('route')) {
-              context.go(item['route'] as String);
-            } else if (item.containsKey('action')) {
-              (item['action'] as VoidCallback)();
-            }
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildServiceCard({
+  Widget _buildMetricTile({
     required String title,
+    required String value,
     required IconData icon,
-    required Color accentColor,
+    required Color iconColor,
     required bool isDark,
-    required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        hoverColor: accentColor.withOpacity(0.08),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF141720) : Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0),
-              width: 1.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E222D) : const Color(0xFFF1F5F9),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: accentColor.withOpacity(0.3), width: 1.2),
-                ),
-                child: Icon(icon, color: accentColor, size: 22),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // --- Referral Invite Banner (Screenshot 2 bottom) ---
-  Widget _buildInviteBanner(bool isDark) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF141720) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(20),
+        color: isDark ? const Color(0xFF131722) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? AppColors.electricCyan.withOpacity(0.25) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+          width: 1,
         ),
       ),
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.electricCyan.withOpacity(0.15),
+              color: iconColor.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.people_alt_rounded, color: AppColors.electricCyan, size: 22),
+            child: Icon(icon, color: iconColor, size: 18),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Invite friends, earn 2% on first deposits',
+                  title,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Share your referral code and earn every time someone signs up.',
+                  value,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          ElevatedButton(
-            onPressed: _showReferralDialog,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              elevation: 0,
-            ),
-            child: Text(
-              'Earn Now',
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
+        ],
+      ),
+    );
+  }
+
+  // --- QUICK ACTIONS 4-GRID (MATCHES SCREENSHOT 2) ---
+  Widget _buildQuickActionsGrid(bool isDark, bool isDesktop) {
+    final actions = [
+      {'title': 'Airtime', 'icon': Icons.phone_android_rounded, 'route': '/services/airtime'},
+      {'title': 'Data', 'icon': Icons.wifi_rounded, 'route': '/services/data'},
+      {'title': 'Cable TV', 'icon': Icons.tv_rounded, 'route': '/services/tv'},
+      {'title': 'Electricity', 'icon': Icons.flash_on_rounded, 'route': '/services/electricity'},
+    ];
+
+    return Row(
+      children: actions.map((item) {
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 5),
+            child: InkWell(
+              onTap: () => context.push(item['route'] as String),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF131722) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryBlue.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.electricCyan.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        item['icon'] as IconData,
+                        color: AppColors.electricCyan,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      item['title'] as String,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ],
-      ),
+        );
+      }).toList(),
+    );
+  }
+
+  // --- RECENT TRANSACTIONS PREVIEW ---
+  Widget _buildRecentTransactionsSection(WalletProvider wallet, bool isDark) {
+    final txs = wallet.transactions.take(5).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recent Activity',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.push('/transactions'),
+              child: Text(
+                'View All',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.electricCyan,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF131722) : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: txs.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.receipt_long_outlined,
+                          size: 40,
+                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'No recent transactions found',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: txs.length,
+                  separatorBuilder: (_, _) => Divider(
+                    color: isDark ? const Color(0xFF1E283D) : const Color(0xFFF1F5F9),
+                    height: 16,
+                  ),
+                  itemBuilder: (context, idx) {
+                    final tx = txs[idx];
+                    final isCredit = tx.isCredit;
+                    return Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: (isCredit ? AppColors.success : AppColors.primaryBlue).withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                            size: 18,
+                            color: isCredit ? AppColors.success : AppColors.primaryBlue,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                tx.category.toUpperCase(),
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                ),
+                              ),
+                              Text(
+                                DateFormat('dd MMM yyyy • hh:mm a').format(tx.createdAt),
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '${isCredit ? '+' : '-'}₦${tx.amount.toStringAsFixed(2)}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            color: isCredit ? AppColors.success : (isDark ? Colors.white : Colors.black87),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }

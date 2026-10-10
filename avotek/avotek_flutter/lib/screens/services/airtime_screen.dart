@@ -110,24 +110,25 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      // 3. Atomically debit wallet
-      final debited = await auth.debitWallet(_amount);
+      // 3. Atomically debit wallet in immutable ledger
+      final debited = await auth.debitWallet(_amount, 'Airtime: $_selectedNetwork ($phone)');
       if (!debited) {
         _showSnackBar('Insufficient wallet balance. Please add money.', AppColors.error);
         setState(() => _isProcessing = false);
         return;
       }
 
-      // 4. Dispatch live aggregator order (BilalSadaSub Gateway API)
-      await vtu.buyAirtime(
+      // 4. Dispatch live aggregator order (Bigisub Gateway API)
+      final result = await vtu.buyAirtime(
         userId: auth.user?.id ?? 1001,
         network: _selectedNetwork,
         phone: phone,
         amount: _amount,
+        userPin: pin,
       );
 
       setState(() => _isProcessing = false);
-      _showSuccessDialog(phone, _amount);
+      _showSuccessDialog(phone, _amount, result.message);
     } catch (e) {
       setState(() => _isProcessing = false);
       _showSnackBar('Order processed: ${e.toString().replaceAll("Exception: ", "")}', const Color(0xFF0284C7));
@@ -167,7 +168,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     );
   }
 
-  void _showSuccessDialog(String phone, double amount) {
+  void _showSuccessDialog(String phone, double amount, [String? customMessage]) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
@@ -190,7 +191,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              '₦${NumberFormat('#,##0.00').format(amount)} $_selectedNetwork airtime sent to $phone.',
+              customMessage ?? '₦${NumberFormat('#,##0.00').format(amount)} $_selectedNetwork airtime sent to $phone.',
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600),
             ),

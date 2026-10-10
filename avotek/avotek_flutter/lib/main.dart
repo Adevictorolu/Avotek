@@ -1,60 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'core/client/client_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/database/app_database.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
+import 'providers/theme_provider.dart';
 import 'providers/vtu_provider.dart';
 import 'providers/wallet_provider.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await ClientProvider.initialize();
 
-  runApp(const AvotekApp());
+  await Supabase.initialize(
+    url: 'https://gcixbqrridzgobkqnlfz.supabase.co',
+    anonKey: 'sb_publishable__KqtFYoV1zOBWx9oQCySBQ_pIbwAEMO',
+  );
+
+  await AppDatabaseService.instance.init();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => WalletProvider()),
+        ChangeNotifierProvider(create: (_) => VtuProvider()),
+      ],
+      child: const AvotekApp(),
+    ),
+  );
 }
 
-class AvotekApp extends StatefulWidget {
+class AvotekApp extends StatelessWidget {
   const AvotekApp({super.key});
 
   @override
-  State<AvotekApp> createState() => _AvotekAppState();
-}
-
-class _AvotekAppState extends State<AvotekApp> {
-  ThemeMode _themeMode =
-      ThemeMode.light; // Default to clean white/light theme as requested
-
-  void _toggleTheme() {
-    setState(() {
-      _themeMode = _themeMode == ThemeMode.dark
-          ? ThemeMode.light
-          : ThemeMode.dark;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider(client: ClientProvider.client),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => WalletProvider(client: ClientProvider.client),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => VtuProvider(client: ClientProvider.client),
-        ),
-      ],
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: 'Avotek — Data, Airtime & Bill Payments',
-        theme: AppTheme.light(),
-        darkTheme: AppTheme.dark(),
-        themeMode: _themeMode,
-        routerConfig: AppRouter.createRouter(onToggleTheme: _toggleTheme),
-      ),
+    final themeProvider = context.watch<ThemeProvider>();
+
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      title: 'Avotek — Data, Airtime & Bill Payments',
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: themeProvider.themeMode,
+      routerConfig: AppRouter.createRouter(onToggleTheme: () => themeProvider.toggleTheme()),
     );
   }
 }

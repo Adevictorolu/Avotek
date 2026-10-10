@@ -7,6 +7,7 @@ import '../../core/database/app_database.dart';
 import '../../core/services/verification_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/avotek_logo.dart';
 import '../../widgets/onboarding_pin_dialog.dart';
@@ -253,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (!mounted) return;
           final wallet = context.read<WalletProvider>();
           if (auth.user?.id != null) {
-            wallet.fetchWallet(auth.user!.id!);
+            wallet.fetchWallet(auth.user!.id);
           }
           context.go('/dashboard');
         }
@@ -567,7 +568,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       final wallet = context.read<WalletProvider>();
       if (auth.user?.id != null) {
-        wallet.fetchWallet(auth.user!.id!);
+        wallet.fetchWallet(auth.user!.id);
       }
       context.go('/dashboard');
     } else {
@@ -1017,6 +1018,27 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                 ),
+              ),
+            ),
+          ),
+
+          // Top right theme toggle button
+          Positioned(
+            top: 16,
+            right: isDesktop ? 40 : 16,
+            child: SafeArea(
+              child: IconButton(
+                icon: Icon(
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Icons.light_mode_outlined
+                      : Icons.dark_mode_outlined,
+                  color: Colors.white,
+                  size: 22,
+                ),
+                tooltip: Theme.of(context).brightness == Brightness.dark
+                    ? 'Switch to Light Mode'
+                    : 'Switch to Dark Mode',
+                onPressed: () => context.read<ThemeProvider>().toggleTheme(),
               ),
             ),
           ),

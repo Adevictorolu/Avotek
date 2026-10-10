@@ -35,6 +35,14 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<VtuProvider>().fetchElectricityProviders();
+    });
+  }
+
+  @override
   void dispose() {
     _meterController.dispose();
     _amountController.dispose();
@@ -65,7 +73,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     setState(() {
       _isVerifying = false;
       if (result.isValid) {
-        _verifiedCustomerName = result.customerName ?? 'VERIFIED CUSTOMER';
+        _verifiedCustomerName = result.customerName;
         _verificationDetails = result.details;
       }
     });
@@ -107,27 +115,29 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
       context,
       title: 'Confirm Electricity Purchase',
       amount: amount,
-      description: '${_discos[_selectedDisco]} • $meter\nCustomer: ${_verifiedCustomerName ?? "Customer"}',
+      description: '${_discos[_selectedDisco] ?? _selectedDisco} • $meter\nCustomer: ${_verifiedCustomerName ?? "Customer"}',
       onPinSubmit: (pin) => auth.verifyPin(pin),
     );
 
     if (confirmed == true && mounted) {
       try {
         final result = await vtu.payElectricity(
-          userId: auth.user!.id!,
+          userId: auth.user!.id,
           disco: _selectedDisco,
           meterNumber: meter,
           meterType: _selectedMeterType,
           amount: amount,
+          customerName: _verifiedCustomerName,
+          phone: auth.user?.phone.isNotEmpty == true ? auth.user!.phone : '08034119920',
         );
 
         wallet.recordDebit(
-          userId: auth.user!.id!,
+          userId: auth.user!.id,
           amount: amount,
           serviceName: 'Electricity Token: $_selectedDisco ($meter) Units: ${result.units ?? "N/A"}',
           reference: result.order.providerReference ?? 'TX-AVO-ELEC-${DateTime.now().millisecondsSinceEpoch}',
         );
-        await wallet.fetchWallet(auth.user!.id!);
+        await wallet.fetchWallet(auth.user!.id);
 
         if (!mounted) return;
         final token = result.token ?? '8192-3849-1928-3849';

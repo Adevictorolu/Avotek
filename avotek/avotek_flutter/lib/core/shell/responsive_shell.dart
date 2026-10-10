@@ -5,20 +5,20 @@ import 'package:provider/provider.dart';
 import '../responsive/responsive_layout.dart';
 import '../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/avotek_logo.dart';
-import '../../widgets/global_search_dialog.dart';
 
 class ResponsiveShell extends StatefulWidget {
   final Widget child;
   final String currentRoute;
-  final VoidCallback onToggleTheme;
+  final VoidCallback? onToggleTheme;
 
   const ResponsiveShell({
     super.key,
     required this.child,
     required this.currentRoute,
-    required this.onToggleTheme,
+    this.onToggleTheme,
   });
 
   @override
@@ -27,14 +27,18 @@ class ResponsiveShell extends StatefulWidget {
 
 class _ResponsiveShellState extends State<ResponsiveShell> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  bool _isRefreshing = false;
+
+  void _handleThemeToggle() {
+    context.read<ThemeProvider>().toggleTheme();
+    widget.onToggleTheme?.call();
+  }
 
   int _getSelectedIndex() {
     final route = widget.currentRoute;
     if (route.startsWith('/services')) return 1;
-    if (route.startsWith('/wallet')) return 2;
-    if (route.startsWith('/transactions') || route.startsWith('/history')) return 3;
-    if (route.startsWith('/profile') || route.startsWith('/settings')) return 4;
+    if (route.startsWith('/transactions') || route.startsWith('/history')) return 2;
+    if (route.startsWith('/wallet')) return 3;
+    if (route.startsWith('/profile')) return 4;
     return 0; // default Home
   }
 
@@ -44,13 +48,13 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
         context.go('/dashboard');
         break;
       case 1:
-        context.go('/services/data');
+        context.go('/services');
         break;
       case 2:
-        context.go('/wallet');
+        context.go('/transactions');
         break;
       case 3:
-        context.go('/transactions');
+        context.go('/wallet');
         break;
       case 4:
         _scaffoldKey.currentState?.openDrawer();
@@ -58,25 +62,72 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     }
   }
 
-  Future<void> _handleInAppRefresh() async {
-    final auth = context.read<AuthProvider>();
-    if (auth.user?.id != null) {
-      setState(() => _isRefreshing = true);
-      await context.read<WalletProvider>().fetchWallet(auth.user!.id!);
-      if (mounted) {
-        setState(() => _isRefreshing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Wallet & transactions refreshed!',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+  void _showOwnVtuWebsiteModal() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF141722) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.rocket_launch_rounded, color: AppColors.electricCyan),
+            const SizedBox(width: 10),
+            Text('Own a VTU Website', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Get a fully branded automated VTU portal with your own domain, customized theme, and direct aggregator API connection in 24 hours.',
+              style: GoogleFonts.plusJakartaSans(fontSize: 13),
             ),
-            duration: const Duration(seconds: 2),
-            backgroundColor: AppColors.primaryBlue,
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.electricCyan.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.verified_rounded, color: AppColors.electricCyan, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Includes Mobile App + Web Admin + Supabase DB',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Close', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
           ),
-        );
-      }
-    }
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Our VTU team will contact you shortly!'), backgroundColor: AppColors.success),
+              );
+            },
+            child: Text('Get Started', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -86,630 +137,484 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     final auth = context.watch<AuthProvider>();
     final wallet = context.watch<WalletProvider>();
 
-    final userName = auth.user?.name ?? 'Customer';
+    final userName = (auth.user?.name != null && auth.user!.name.isNotEmpty) ? auth.user!.name : 'Ademola';
     final userInitials = userName.isNotEmpty
         ? userName.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join()
         : 'AV';
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: isDark ? AppColors.darkBg : const Color(0xFFF4F6F9),
-      drawer: !isDesktop ? _buildDrawer(context, isDark, auth, wallet) : null,
+      backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
+      drawer: !isDesktop ? _buildDrawer(context, isDark, auth, wallet, userName, userInitials) : null,
       appBar: !isDesktop
           ? AppBar(
               elevation: 0,
-              backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-              surfaceTintColor: Colors.transparent,
-              leading: IconButton(
-                icon: const Icon(Icons.menu_rounded),
-                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-              ),
-              title: const AvotekLogo(size: 38, isLarge: true),
+              backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+              title: const AvotekLogo(size: 26, showText: true),
               actions: [
-                // In-App Refresh Button
                 IconButton(
-                  tooltip: 'In-App Refresh',
-                  icon: _isRefreshing
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryCyan),
-                        )
-                      : const Icon(Icons.refresh_rounded, size: 22, color: AppColors.primaryCyan),
-                  onPressed: _isRefreshing ? null : _handleInAppRefresh,
-                ),
-                // WhatsApp Chat
-                IconButton(
-                  tooltip: 'WhatsApp Support',
-                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20, color: Color(0xFF25D366)),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Connecting to WhatsApp Support (+234 803 411 9920)...', style: GoogleFonts.plusJakartaSans()),
-                        backgroundColor: const Color(0xFF25D366),
-                      ),
-                    );
-                  },
-                ),
-                // Theme Toggle
-                IconButton(
-                  tooltip: 'Toggle Theme',
                   icon: Icon(
                     isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
                     size: 20,
                   ),
-                  onPressed: widget.onToggleTheme,
+                  onPressed: _handleThemeToggle,
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 14),
-                  child: InkWell(
-                    onTap: () => context.push('/profile'),
-                    borderRadius: BorderRadius.circular(20),
-                    child: CircleAvatar(
-                      radius: 14,
-                      backgroundColor: AppColors.primaryBlue,
-                      child: Text(
-                        userInitials,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white),
-                      ),
-                    ),
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.account_balance_wallet_outlined, size: 20),
+                  onPressed: () => context.push('/wallet'),
                 ),
               ],
             )
           : null,
       body: Row(
         children: [
-          // Desktop Fixed Sidebar
-          if (isDesktop) _buildDesktopSidebar(context, isDark, auth, wallet),
-
-          // Main View Canvas
-          Expanded(
-            child: Column(
-              children: [
-                if (isDesktop) _buildDesktopTopBar(context, isDark, auth, userName, userInitials),
-                Expanded(child: widget.child),
-              ],
-            ),
-          ),
+          if (isDesktop) _buildDesktopSidebar(context, isDark, auth, wallet, userName, userInitials),
+          Expanded(child: widget.child),
         ],
       ),
       bottomNavigationBar: !isDesktop
           ? NavigationBar(
               selectedIndex: _getSelectedIndex(),
               onDestinationSelected: _onBottomNavTapped,
-              backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-              elevation: 4,
+              backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
               destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.grid_view_outlined),
-                  selectedIcon: Icon(Icons.grid_view_rounded),
-                  label: 'Home',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.bolt_outlined),
-                  selectedIcon: Icon(Icons.bolt_rounded),
-                  label: 'Services',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.account_balance_wallet_outlined),
-                  selectedIcon: Icon(Icons.account_balance_wallet_rounded),
-                  label: 'Wallet',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.receipt_long_outlined),
-                  selectedIcon: Icon(Icons.receipt_long_rounded),
-                  label: 'History',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.menu_rounded),
-                  selectedIcon: Icon(Icons.menu_rounded),
-                  label: 'More',
-                ),
+                NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
+                NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view_rounded), label: 'Services'),
+                NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long), label: 'History'),
+                NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
+                NavigationDestination(icon: Icon(Icons.menu_rounded), selectedIcon: Icon(Icons.menu_rounded), label: 'Menu'),
               ],
             )
           : null,
     );
   }
 
-  Widget _buildDesktopTopBar(
-    BuildContext context,
-    bool isDark,
-    AuthProvider auth,
-    String userName,
-    String userInitials,
-  ) {
-    return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
-            width: 1.0,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Quick Search Button
-          InkWell(
-            onTap: () => GlobalSearchDialog.show(context),
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              width: 300,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.search, size: 16, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Search data, airtime, cable, tokens...',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const Spacer(),
-
-          // WhatsApp Support Button
-          OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Connecting to WhatsApp Support (+234 803 411 9920)...', style: GoogleFonts.plusJakartaSans()),
-                  backgroundColor: const Color(0xFF25D366),
-                ),
-              );
-            },
-            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16, color: Color(0xFF25D366)),
-            label: Text(
-              'WhatsApp Support',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF25D366),
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFF25D366), width: 1.2),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          ),
-          const SizedBox(width: 14),
-
-          // In-App Refresh Button
-          IconButton(
-            tooltip: 'In-App Refresh',
-            icon: _isRefreshing
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryCyan),
-                  )
-                : const Icon(Icons.refresh_rounded, size: 20, color: AppColors.primaryCyan),
-            onPressed: _isRefreshing ? null : _handleInAppRefresh,
-          ),
-          const SizedBox(width: 4),
-
-          // Theme Toggle
-          IconButton(
-            tooltip: 'Toggle Theme',
-            icon: Icon(
-              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-              size: 20,
-              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-            ),
-            onPressed: widget.onToggleTheme,
-          ),
-          const SizedBox(width: 4),
-
-          // Notifications
-          IconButton(
-            tooltip: 'Notifications',
-            icon: Stack(
-              children: [
-                Icon(Icons.notifications_none_rounded, size: 22, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.primaryCyan),
-                  ),
-                ),
-              ],
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('All services operating normally. 99.9% uptime.', style: GoogleFonts.plusJakartaSans()),
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 12),
-
-          // User Profile Pill
-          InkWell(
-            onTap: () => context.push('/profile'),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: AppColors.primaryBlue,
-                    child: Text(
-                      userInitials,
-                      style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    userName,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // --- DESKTOP SIDEBAR (MATCHES SCREENSHOTS 1, 2, 3, 4, 5) ---
   Widget _buildDesktopSidebar(
     BuildContext context,
     bool isDark,
     AuthProvider auth,
     WalletProvider wallet,
+    String userName,
+    String userInitials,
   ) {
     final currentRoute = widget.currentRoute;
-    final userName = auth.user?.name ?? 'Adevictorolu';
 
     return Container(
-      width: 256,
+      width: 250,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0D0F15) : Colors.white,
+        color: isDark ? AppColors.darkCard : AppColors.lightCard,
         border: Border(
           right: BorderSide(
-            color: isDark ? const Color(0xFF1E222D) : const Color(0xFFE2E8F0),
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
             width: 1.0,
           ),
         ),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Sidebar Brand with Rounded Container, Border Radius, AVOTEK, and << Collapse Icon
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 20, 14, 12),
+          // 1. Header Brand Logo
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 16, 12),
             child: Row(
               children: [
-                const AvotekLogo(size: 38, hasFrame: true, showText: false, borderRadius: 10),
+                const AvotekLogo(size: 32, showText: false),
                 const SizedBox(width: 10),
                 Text(
                   'Avotek',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                 ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.keyboard_double_arrow_left_rounded, size: 18),
-                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () {},
+                Container(
+                  width: 5,
+                  height: 5,
+                  margin: const EdgeInsets.only(left: 2, top: 8),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.electricCyan,
+                  ),
                 ),
               ],
             ),
           ),
 
-          // 2. User Profile Pill (Avatar, ADEVICTOROLU, SMART badge)
-          InkWell(
-            onTap: () => context.go('/profile'),
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF161922) : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0),
-                ),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 17,
-                    backgroundColor: const Color(0xFF1E293B),
-                    child: const Icon(Icons.person, color: Color(0xFF00A3FF), size: 18),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userName.toUpperCase(),
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 1),
-                        Text(
-                          'SMART',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.electricCyan,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-
-          // Nav Items Scroll
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              children: [
-                _buildSidebarGroup('MAIN'),
-                _buildSidebarItem(
-                  icon: Icons.grid_view_rounded,
-                  label: 'Dashboard',
-                  route: '/dashboard',
-                  isActive: currentRoute == '/dashboard' || currentRoute == '/',
-                ),
-                _buildSidebarItem(
-                  icon: Icons.send_rounded,
-                  label: 'Send To User',
-                  route: '/wallet',
-                  isActive: currentRoute == '/wallet/transfer',
-                ),
-                _buildSidebarItem(
-                  icon: Icons.arrow_downward_rounded,
-                  label: 'Withdraw',
-                  route: '/wallet',
-                  isActive: currentRoute == '/wallet/withdraw',
-                ),
-                _buildSidebarItem(
-                  icon: Icons.add_circle_outline_rounded,
-                  label: 'Fund Wallet',
-                  route: '/wallet/fund',
-                  isActive: currentRoute == '/wallet/fund',
-                  hasChevron: true,
-                ),
-
-                const SizedBox(height: 14),
-                _buildSidebarGroup('PAY & RECHARGE'),
-                _buildSidebarItem(
-                  icon: Icons.wifi_rounded,
-                  label: 'Buy Data',
-                  route: '/services/data',
-                  isActive: currentRoute == '/services/data',
-                ),
-                _buildSidebarItem(
-                  icon: Icons.phone_android_rounded,
-                  label: 'Buy Airtime',
-                  route: '/services/airtime',
-                  isActive: currentRoute == '/services/airtime',
-                ),
-                _buildSidebarItem(
-                  icon: Icons.sync_alt_rounded,
-                  label: 'Airtime to Cash',
-                  route: '/services/airtime',
-                  isActive: false,
-                ),
-                _buildSidebarItem(
-                  icon: Icons.flash_on_rounded,
-                  label: 'Electricity',
-                  route: '/services/electricity',
-                  isActive: currentRoute == '/services/electricity',
-                ),
-                _buildSidebarItem(
-                  icon: Icons.tv_rounded,
-                  label: 'Cable TV',
-                  route: '/services/tv',
-                  isActive: currentRoute == '/services/tv',
-                ),
-                _buildSidebarItem(
-                  icon: Icons.sms_rounded,
-                  label: 'Bulk SMS',
-                  route: '/services/airtime',
-                  isActive: false,
-                ),
-                _buildSidebarItem(
-                  icon: Icons.school_rounded,
-                  label: 'Education',
-                  route: '/exams',
-                  isActive: currentRoute == '/exams',
-                ),
-
-                const SizedBox(height: 14),
-                _buildSidebarGroup('PRINTING & CARDS'),
-                _buildSidebarItem(
-                  icon: Icons.nfc_rounded,
-                  label: 'Data Card',
-                  route: '/dashboard',
-                  isActive: false,
-                ),
-                _buildSidebarItem(
-                  icon: Icons.receipt_rounded,
-                  label: 'Recharge Card',
-                  route: '/dashboard',
-                  isActive: false,
-                ),
-                _buildSidebarItem(
-                  icon: Icons.price_change_outlined,
-                  label: 'Wholesale Rates',
-                  route: '/rates',
-                  isActive: currentRoute == '/rates',
-                ),
-                if (auth.isSuperAdmin) ...[
-                  const SizedBox(height: 14),
-                  _buildSidebarGroup('MANAGEMENT'),
-                  _buildSidebarItem(
-                    icon: Icons.admin_panel_settings_rounded,
-                    label: 'Admin Console',
-                    route: '/admin',
-                    isActive: currentRoute == '/admin',
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          // Sidebar Footer with Sign Out
-          const Divider(height: 1, color: Color(0xFF1E222D)),
+          // 2. Promotional Card: "Own a VTU Website - Buy & start selling ↗"
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             child: InkWell(
-              onTap: () {
-                auth.signOut();
-                context.go('/login');
-              },
-              borderRadius: BorderRadius.circular(10),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              onTap: _showOwnVtuWebsiteModal,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    width: 1,
+                  ),
+                ),
                 child: Row(
                   children: [
-                    const Icon(Icons.logout_rounded, size: 18, color: Colors.grey),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Sign out',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w700,
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: AppColors.electricCyan.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
                       ),
+                      child: const Icon(Icons.rocket_launch_rounded, color: AppColors.electricCyan, size: 16),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Own a VTU Website',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          Text(
+                            'Buy & start selling',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_outward_rounded,
+                      size: 14,
+                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                     ),
                   ],
                 ),
               ),
             ),
           ),
+          const SizedBox(height: 8),
+
+          // 3. Scrollable Navigation List (MENU, BUSINESS, ACCOUNT)
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              children: [
+                // --- SECTION: MENU ---
+                _buildSectionLabel('MENU', isDark),
+                _buildNavItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home_rounded,
+                  label: 'Home',
+                  route: '/dashboard',
+                  isActive: currentRoute == '/dashboard' || currentRoute == '/',
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  icon: Icons.grid_view_outlined,
+                  activeIcon: Icons.grid_view_rounded,
+                  label: 'Services',
+                  route: '/services',
+                  isActive: currentRoute.startsWith('/services'),
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  icon: Icons.receipt_long_outlined,
+                  activeIcon: Icons.receipt_long_rounded,
+                  label: 'History',
+                  route: '/transactions',
+                  isActive: currentRoute.startsWith('/transactions') || currentRoute.startsWith('/history'),
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  icon: Icons.account_balance_wallet_outlined,
+                  activeIcon: Icons.account_balance_wallet_rounded,
+                  label: 'Wallet',
+                  route: '/wallet',
+                  isActive: currentRoute.startsWith('/wallet'),
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  icon: Icons.sync_rounded,
+                  activeIcon: Icons.sync_rounded,
+                  label: 'Subscriptions',
+                  route: '/services/tv',
+                  isActive: false,
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  icon: Icons.credit_card_outlined,
+                  activeIcon: Icons.credit_card_rounded,
+                  label: 'Requests',
+                  route: '/transactions',
+                  isActive: false,
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  icon: Icons.confirmation_number_outlined,
+                  activeIcon: Icons.confirmation_number_rounded,
+                  label: 'Coupons',
+                  route: '/coupons',
+                  isActive: currentRoute.startsWith('/coupons'),
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  icon: Icons.card_giftcard_outlined,
+                  activeIcon: Icons.card_giftcard_rounded,
+                  label: 'Gifts',
+                  route: '/gifts',
+                  isActive: currentRoute.startsWith('/gifts'),
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+
+                // --- SECTION: BUSINESS ---
+                _buildSectionLabel('BUSINESS', isDark),
+                _buildNavItem(
+                  icon: Icons.bar_chart_rounded,
+                  activeIcon: Icons.bar_chart_rounded,
+                  label: 'Stats',
+                  route: '/stats',
+                  isActive: currentRoute == '/stats',
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  icon: Icons.people_outline_rounded,
+                  activeIcon: Icons.people_rounded,
+                  label: 'Affiliate',
+                  route: '/affiliate',
+                  isActive: currentRoute.startsWith('/affiliate'),
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+
+                // --- SECTION: ACCOUNT ---
+                _buildSectionLabel('ACCOUNT', isDark),
+                _buildNavItem(
+                  icon: Icons.person_outline_rounded,
+                  activeIcon: Icons.person_rounded,
+                  label: 'Profile',
+                  route: '/profile',
+                  isActive: currentRoute == '/profile',
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  icon: Icons.settings_outlined,
+                  activeIcon: Icons.settings_rounded,
+                  label: 'Settings',
+                  route: '/settings',
+                  isActive: currentRoute == '/settings',
+                  isDark: isDark,
+                ),
+              ],
+            ),
+          ),
+
+          // 4. User Footer Card (Matches Screenshots 1, 2, 3, 4, 5)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: isDark ? const Color(0xFF1E2638) : const Color(0xFFE2E8F0),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Column(
+              children: [
+                // User info tile
+                InkWell(
+                  onTap: () => context.push('/profile'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141824) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: AppColors.primaryBlue,
+                          child: Text(
+                            userInitials,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                userName,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                'Regular',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 10.5,
+                                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                // Logout & Theme Mode Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () {
+                          auth.signOut();
+                          context.go('/login');
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.logout_rounded, size: 16, color: Colors.grey),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Logout',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: _handleThemeToggle,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                              size: 16,
+                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isDark ? 'Light' : 'Dark',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSidebarGroup(String title) {
+  Widget _buildSectionLabel(String label, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       child: Text(
-        title,
+        label,
         style: GoogleFonts.plusJakartaSans(
-          fontSize: 10.5,
+          fontSize: 10,
           fontWeight: FontWeight.w800,
-          color: const Color(0xFF64748B),
-          letterSpacing: 1.0,
+          letterSpacing: 1.1,
+          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
         ),
       ),
     );
   }
 
-  Widget _buildSidebarItem({
+  Widget _buildNavItem({
     required IconData icon,
+    required IconData activeIcon,
     required String label,
     required String route,
     required bool isActive,
-    bool hasChevron = false,
-    String? badgeText,
+    required bool isDark,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // Active pill container with Electric Cyan & Royal Blue styling
-    final activeBg = isDark ? const Color(0xFF131B2E) : const Color(0xFFEFF6FF);
-    final activeBorderColor = const Color(0xFF00D2FF);
-    final activeColor = const Color(0xFF0052FF);
-
     return Padding(
-      padding: const EdgeInsets.only(bottom: 3),
-      child: Material(
-        color: isActive ? activeBg : Colors.transparent,
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: InkWell(
+        onTap: () => context.go(route),
         borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: () => context.go(route),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: isActive
-                  ? Border.all(color: activeBorderColor, width: 1.2)
-                  : Border.all(color: Colors.transparent, width: 1.2),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: isActive
+                ? (isDark ? AppColors.primaryBlue.withValues(alpha: 0.15) : const Color(0xFFEFF6FF))
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isActive
+                  ? AppColors.primaryCyan.withValues(alpha: 0.4)
+                  : Colors.transparent,
+              width: 1,
             ),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 19,
-                  color: isActive ? activeColor : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isActive ? activeIcon : icon,
+                size: 18,
+                color: isActive
+                    ? AppColors.electricCyan
+                    : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+                  color: isActive
+                      ? (isDark ? AppColors.electricCyan : AppColors.primaryBlue)
+                      : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                      color: isActive
-                          ? (isDark ? Colors.white : const Color(0xFF0F172A))
-                          : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155)),
-                    ),
-                  ),
-                ),
-                if (hasChevron)
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 16,
-                    color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-                  ),
-                if (badgeText != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      badgeText,
-                      style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.success),
-                    ),
-                  ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -721,120 +626,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     bool isDark,
     AuthProvider auth,
     WalletProvider wallet,
+    String userName,
+    String userInitials,
   ) {
-    final userName = auth.user?.name ?? 'Customer';
-    final userInitials = userName.isNotEmpty
-        ? userName.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join()
-        : 'AV';
-
     return Drawer(
-      backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const AvotekLogo(size: 38, isLarge: true),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 16,
-                      backgroundColor: AppColors.primaryBlue,
-                      child: Text(
-                        userInitials,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userName,
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
-                        ),
-                        Text(
-                          'Active Reseller',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppColors.primaryCyan, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          _drawerSection('MAIN SERVICES'),
-          _drawerItem(Icons.grid_view_rounded, 'Dashboard', '/dashboard'),
-          _drawerItem(Icons.wifi_rounded, 'Buy Data', '/services/data'),
-          _drawerItem(Icons.phone_android_rounded, 'Buy Airtime', '/services/airtime'),
-          _drawerItem(Icons.flash_on_rounded, 'Electricity Bills', '/services/electricity'),
-          _drawerItem(Icons.school_rounded, 'Exam PINs (WAEC/JAMB)', '/services/exam_pin'),
-          _drawerItem(Icons.corporate_fare_rounded, 'CAC Registration', '/services/cac'),
-
-          _drawerSection('FINANCE & ACCOUNT'),
-          _drawerItem(Icons.add_card_rounded, 'Fund Wallet', '/wallet/fund'),
-          _drawerItem(Icons.account_balance_wallet_rounded, 'My Wallet', '/wallet'),
-          _drawerItem(Icons.receipt_long_rounded, 'Transactions', '/transactions'),
-          _drawerItem(Icons.price_change_outlined, 'Wholesale Pricing', '/rates'),
-          _drawerItem(Icons.person_outline_rounded, 'Profile & Settings', '/profile'),
-          if (auth.isSuperAdmin)
-            _drawerItem(
-              Icons.admin_panel_settings_rounded,
-              'Admin Console',
-              '/admin',
-            ),
-
-          const Divider(),
-          _drawerItem(Icons.logout_rounded, 'Sign out', '/login', isDestructive: true),
-        ],
+      backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+      child: SafeArea(
+        child: _buildDesktopSidebar(context, isDark, auth, wallet, userName, userInitials),
       ),
-    );
-  }
-
-  Widget _drawerSection(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Text(
-        title,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          color: Colors.grey,
-          letterSpacing: 0.8,
-        ),
-      ),
-    );
-  }
-
-  Widget _drawerItem(IconData icon, String title, String route, {bool isDestructive = false}) {
-    return ListTile(
-      dense: true,
-      leading: Icon(icon, size: 20, color: isDestructive ? AppColors.error : Colors.grey),
-      title: Text(
-        title,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: isDestructive ? AppColors.error : null,
-        ),
-      ),
-      onTap: () {
-        Navigator.pop(context);
-        if (isDestructive) {
-          context.read<AuthProvider>().signOut();
-          context.go('/login');
-        } else {
-          context.go(route);
-        }
-      },
     );
   }
 }

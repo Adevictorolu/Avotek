@@ -1,27 +1,29 @@
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import '../database/app_database.dart';
-import '../../providers/auth_provider.dart';
-import '../../screens/admin/admin_gateway_screen.dart';
-import '../../screens/admin/admin_screen.dart';
+import '../../screens/affiliate/affiliate_screen.dart';
 import '../../screens/auth/login_screen.dart';
+import '../../screens/coupons/coupons_screen.dart';
+import '../../screens/gifts/gifts_screen.dart';
 import '../../screens/home/dashboard_screen.dart';
 import '../../screens/landing/landing_screen.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
-import '../../screens/profile/student_profile_screen.dart';
+import '../../screens/profile/profile_screen.dart';
 import '../../screens/rates/pricing_screen.dart';
 import '../../screens/services/airtime_screen.dart';
 import '../../screens/services/cable_screen.dart';
 import '../../screens/services/data_screen.dart';
 import '../../screens/services/electricity_screen.dart';
+import '../../screens/services/services_hub_screen.dart';
+import '../../screens/settings/settings_screen.dart';
 import '../../screens/transactions/transactions_screen.dart';
 import '../../screens/wallet/fund_wallet_screen.dart';
-import '../../screens/wallet/student_wallet_screen.dart';
+import '../../screens/wallet/wallet_screen.dart';
 import '../../widgets/avotek_page_transition.dart';
 
 class AppRouter {
-  static GoRouter createRouter({required VoidCallback onToggleTheme}) {
+  static GoRouter createRouter({VoidCallback? onToggleTheme}) {
+    final themeToggle = onToggleTheme ?? () {};
     final bool hasSeenOnboarding = AppDatabaseService.instance.hasSeenOnboarding();
 
     return GoRouter(
@@ -31,7 +33,6 @@ class AppRouter {
         GoRoute(
           path: '/',
           redirect: (context, state) {
-            // Web users view landing homepage; mobile users are directed to onboarding/login
             if (!kIsWeb) {
               final hasSeen = AppDatabaseService.instance.hasSeenOnboarding();
               return hasSeen ? '/login' : '/onboarding';
@@ -41,7 +42,7 @@ class AppRouter {
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,
             state,
-            LandingScreen(onToggleTheme: onToggleTheme),
+            LandingScreen(onToggleTheme: themeToggle),
           ),
         ),
         GoRoute(
@@ -61,11 +62,19 @@ class AppRouter {
           ),
         ),
         GoRoute(
+          path: '/services',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            ServicesHubScreen(onToggleTheme: themeToggle),
+          ),
+        ),
+        GoRoute(
           path: '/transactions',
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,
             state,
-            const TransactionsScreen(),
+            TransactionsScreen(onToggleTheme: themeToggle),
           ),
         ),
         GoRoute(
@@ -73,13 +82,12 @@ class AppRouter {
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,
             state,
-            const TransactionsScreen(),
+            TransactionsScreen(onToggleTheme: themeToggle),
           ),
         ),
         GoRoute(
           path: '/onboarding',
           redirect: (context, state) {
-            // Once seen, never show onboarding again
             if (AppDatabaseService.instance.hasSeenOnboarding()) {
               return '/';
             }
@@ -112,7 +120,7 @@ class AppRouter {
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,
             state,
-            DashboardScreen(onToggleTheme: onToggleTheme),
+            DashboardScreen(onToggleTheme: themeToggle),
           ),
         ),
         GoRoute(
@@ -120,7 +128,47 @@ class AppRouter {
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,
             state,
-            StudentWalletScreen(onToggleTheme: onToggleTheme),
+            WalletScreen(onToggleTheme: themeToggle),
+          ),
+        ),
+        GoRoute(
+          path: '/wallet/fund',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            const FundWalletScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/coupons',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            CouponsScreen(onToggleTheme: themeToggle),
+          ),
+        ),
+        GoRoute(
+          path: '/gifts',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            GiftsScreen(onToggleTheme: themeToggle),
+          ),
+        ),
+        GoRoute(
+          path: '/affiliate',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            AffiliateScreen(onToggleTheme: themeToggle),
+          ),
+        ),
+        GoRoute(
+          path: '/stats',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            AffiliateScreen(onToggleTheme: themeToggle),
           ),
         ),
         GoRoute(
@@ -128,9 +176,18 @@ class AppRouter {
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,
             state,
-            StudentProfileScreen(onToggleTheme: onToggleTheme),
+            ProfileScreen(onToggleTheme: themeToggle),
           ),
         ),
+        GoRoute(
+          path: '/settings',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            SettingsScreen(onToggleTheme: themeToggle),
+          ),
+        ),
+        // Core VTU Services
         GoRoute(
           path: '/services/airtime',
           pageBuilder: (context, state) => buildAvotekTransitionPage(
@@ -161,47 +218,6 @@ class AppRouter {
             context,
             state,
             const CableScreen(),
-          ),
-        ),
-        // CAC and Betting removed from offered services to match BigiSub VTU model
-        GoRoute(
-          path: '/services/cac',
-          redirect: (context, state) => '/dashboard',
-        ),
-        // Betting is removed from offered services
-        GoRoute(
-          path: '/services/betting',
-          redirect: (context, state) => '/dashboard',
-        ),
-        GoRoute(
-          path: '/wallet/fund',
-          pageBuilder: (context, state) => buildAvotekTransitionPage(
-            context,
-            state,
-            const FundWalletScreen(),
-          ),
-        ),
-        GoRoute(
-          path: '/admin-portal',
-          pageBuilder: (context, state) => buildAvotekTransitionPage(
-            context,
-            state,
-            const AdminGatewayScreen(),
-          ),
-        ),
-        GoRoute(
-          path: '/admin',
-          redirect: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            if (!auth.isSuperAdmin) {
-              return '/admin-portal';
-            }
-            return null;
-          },
-          pageBuilder: (context, state) => buildAvotekTransitionPage(
-            context,
-            state,
-            const AdminScreen(),
           ),
         ),
       ],

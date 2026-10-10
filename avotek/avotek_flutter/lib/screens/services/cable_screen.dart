@@ -42,11 +42,51 @@ class _CableScreenState extends State<CableScreen> {
     ],
   };
 
+  List<Map<String, dynamic>> _livePackages = [];
+  bool _isLoadingPackages = false;
+
   @override
   void initState() {
     super.initState();
     _selectedPackage = _packages[_selectedProvider]!.first['code'];
     _packageAmount = _packages[_selectedProvider]!.first['price'];
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadLivePackages());
+  }
+
+  Future<void> _loadLivePackages() async {
+    setState(() => _isLoadingPackages = true);
+    try {
+      final vtu = context.read<VtuProvider>();
+      final pkgs = await vtu.fetchCablePackages(_selectedProvider);
+      if (pkgs.isNotEmpty && mounted) {
+        final formatted = pkgs.map((p) {
+          final amt = (p['amount'] as num?)?.toDouble() ?? 0.0;
+          final code = p['variation_code']?.toString() ?? p['id']?.toString() ?? '';
+          final name = p['product_name']?.toString() ?? code;
+          return {
+            'code': code,
+            'name': name,
+            'price': amt,
+          };
+        }).toList();
+
+        setState(() {
+          _livePackages = formatted;
+          _isLoadingPackages = false;
+          if (formatted.isNotEmpty) {
+            _selectedPackage = formatted.first['code'] as String?;
+            _packageAmount = formatted.first['price'] as double;
+          }
+        });
+        return;
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _isLoadingPackages = false);
+  }
+
+  List<Map<String, dynamic>> _getCurrentPackages() {
+    if (_livePackages.isNotEmpty) return _livePackages;
+    return _packages[_selectedProvider] ?? [];
   }
 
   @override
@@ -74,7 +114,7 @@ class _CableScreenState extends State<CableScreen> {
     setState(() {
       _isVerifying = false;
       if (result.isValid) {
-        _verifiedCustomerName = result.customerName ?? 'VERIFIED SUBSCRIBER';
+        _verifiedCustomerName = result.customerName;
       }
     });
 
@@ -119,20 +159,21 @@ class _CableScreenState extends State<CableScreen> {
     if (confirmed == true && mounted) {
       try {
         final result = await vtu.payCableTV(
-          userId: auth.user!.id!,
+          userId: auth.user!.id,
           provider: _selectedProvider,
           smartcardNumber: card,
           variationCode: _selectedPackage!,
           amount: _packageAmount,
+          customerName: _verifiedCustomerName,
         );
 
         wallet.recordDebit(
-          userId: auth.user!.id!,
+          userId: auth.user!.id,
           amount: _packageAmount,
           serviceName: 'Cable TV: $_selectedProvider ($_selectedPackage) to $card',
           reference: result.order.providerReference ?? 'TX-AVO-CAB-${DateTime.now().millisecondsSinceEpoch}',
         );
-        await wallet.fetchWallet(auth.user!.id!);
+        await wallet.fetchWallet(auth.user!.id);
 
         if (!mounted) return;
         showDialog(
@@ -146,7 +187,7 @@ class _CableScreenState extends State<CableScreen> {
               ],
             ),
             content: Text(
-              '$_selectedProvider package activated for smartcard $card.\nRef: ${result.order.providerReference ?? result.order.id}',
+              '${result.message}\nRef: ${result.order.providerReference ?? result.order.id}',
             ),
             actions: [
               TextButton(
@@ -173,7 +214,7 @@ class _CableScreenState extends State<CableScreen> {
     final vtu = context.watch<VtuProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final currentPackages = _packages[_selectedProvider] ?? [];
+    final currentPackages = _getCurrentPackages();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Cable TV Subscription')),
@@ -199,6 +240,7 @@ class _CableScreenState extends State<CableScreen> {
                               _selectedPackage = _packages[p]?.first['code'];
                               _packageAmount = _packages[p]?.first['price'] ?? 0.0;
                             });
+                            _loadLivePackages();
                           }
                         },
                       ),
@@ -246,9 +288,20 @@ class _CableScreenState extends State<CableScreen> {
                 ),
               ],
               const SizedBox(height: 20),
-              Text(
-                'Select Bouquet / Package',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF334155)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Bouquet / Package',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF334155)),
+                  ),
+                  if (_isLoadingPackages)
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                ],
               ),
               const SizedBox(height: 10),
               ...currentPackages.map((pkg) {
