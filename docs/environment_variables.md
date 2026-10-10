@@ -24,7 +24,9 @@ All platform secrets and configuration values reside on the backend. No secret k
 | `VTPASS_PUBLIC_KEY` | Prod | `your_public_key` | VTpass public key. |
 | `VTPASS_SECRET_KEY` | Prod | `your_secret_key` | VTpass secret key for signature calculation. |
 | `VTPASS_BASE_URL` | No | `https://sandbox.vtpass.com/api` | VTpass gateway endpoint (`https://api-service.vtpass.com/api` in production). |
-| `VTU_BACKEND_URL` | Prod | `https://api.your-domain.example` | Public URL of the authenticated backend proxy; not a secret. |
+| `VTU_BACKEND_URL` | Prod | `https://project-ref.supabase.co/functions/v1/bigisub-proxy` | Public URL of the authenticated Bigisub Edge Function proxy; not a secret. |
+| `BIGISUB_API_TOKEN` | Yes for provider catalog/verification | Stored as a Supabase Edge Function secret | Bigisub API token; never put this value in Flutter, Git, or chat. |
+| `ALLOWED_ORIGINS` | Yes for browser calls | `http://localhost:3000,http://127.0.0.1:3000` | Comma-separated exact web origins allowed to call the Edge Function. |
 | `VTUPRESS_URL` | Prod | `https://yourvtuwebsite.com` | VTUPress base URL if routing via your VTUPress platform. |
 | `VTUPRESS_API_KEY` | Prod | `your_vtupress_api_key` | VTUPress API token/key. |
 | `CK_USER_ID` | Prod | `your_userid` | ClubKonnect user ID for secondary fallback routing. |
@@ -92,17 +94,12 @@ in the Google provider settings, not the local Flutter URL.
 
 ## VTU Provider Credentials
 
-Keep Bigisub credentials and any provider PIN in a trusted backend environment.
-The Flutter client must send only the signed-in Supabase access token to an
-HTTPS backend proxy; it must never send the user's transaction PIN to the VTU
-provider. The Flutter app currently has no configured VTU backend proxy, and this
-repository does not contain the referenced `avotek_server` project. Provider
-requests therefore fail closed until a trusted backend is implemented and
-deployed and configured with `VTU_BACKEND_URL` (or
-`VtuApiService.configure(baseUrl: ...)`). Build with
-`--dart-define=VTU_BACKEND_URL=https://api.your-domain.example`. Rotate any
-provider credential that was previously embedded in a Flutter build or source
-file.
+The repository includes a Supabase Edge Function at
+`avotek/supabase/functions/bigisub-proxy`. Deployment, secret configuration,
+Flutter settings, and current feature limits are covered in
+[`backend_setup.md`](./backend_setup.md). Catalog and verification routes are
+proxied; real purchase routes deliberately return HTTP 503 until server-side
+PIN verification, atomic wallet accounting, and refund reconciliation exist.
 
 ---
 
@@ -112,8 +109,7 @@ file.
    - Store all passwords in Docker secrets, AWS Secrets Manager, or Google Secret Manager.
    - Restrict PostgreSQL port 5432 to internal Docker networks or VPC security groups only.
 
-2. **Serverpod Server Modes:**
-   - In `production`, Serverpod enforces SSL certificates, strict CORS origins, and requires a valid password salt in `config/production.yaml`.
-
-3. **Fallback Simulation:**
-   - When running in `development` mode without third-party credentials, the `MockAggregator` automatically intercepts calls, returning successful test tokens and simulated utility receipts.
+2. **Backend availability:**
+   - Do not assume the absent Serverpod backend, provider failover, customer
+     virtual accounts, mock success responses, or payment webhooks are deployed.
+     Configure and verify each server-side integration before enabling it.

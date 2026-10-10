@@ -41,13 +41,21 @@ CREATE TABLE IF NOT EXISTS public.wallets (
     balance NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     currency TEXT NOT NULL DEFAULT 'NGN',
     virtual_account_number TEXT,
-    virtual_account_bank TEXT DEFAULT 'Wema Bank / PalmPay',
+    virtual_account_bank TEXT,
     virtual_account_name TEXT,
     total_funded NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     total_spent NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.wallets ALTER COLUMN virtual_account_bank DROP DEFAULT;
+UPDATE public.wallets
+SET virtual_account_number = NULL,
+    virtual_account_bank = NULL,
+    virtual_account_name = NULL
+WHERE virtual_account_number ~ '^90[0-9]{8}$'
+  AND virtual_account_bank IN ('Wema Bank / PalmPay', 'Wema Bank / Moniepoint');
 
 -- 3. TRANSACTIONS TABLE (Immutable Financial Ledger)
 CREATE TABLE IF NOT EXISTS public.transactions (
@@ -142,9 +150,9 @@ BEGIN
         NEW.id,
         0.00,
         'NGN',
-        '90' || SUBSTRING(EXTRACT(EPOCH FROM NOW())::text, 5, 8),
-        'Wema Bank / PalmPay',
-        'AVOTEK - ' || clean_name
+        NULL,
+        NULL,
+        NULL
     )
     ON CONFLICT (user_id) DO NOTHING;
 
@@ -165,6 +173,9 @@ ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.vtu_orders ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: Users can view, insert & update their own profile
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can view own profile" ON public.profiles
     FOR SELECT USING (auth.uid() = id);
 
@@ -174,29 +185,31 @@ CREATE POLICY "Users can insert own profile" ON public.profiles
 CREATE POLICY "Users can update own profile" ON public.profiles
     FOR UPDATE USING (auth.uid() = id);
 
--- Wallets: Users can view, insert & update own wallet
+-- Wallets: Users may read only their own wallet; only trusted backend code writes.
+DROP POLICY IF EXISTS "Users can view own wallet" ON public.wallets;
 CREATE POLICY "Users can view own wallet" ON public.wallets
     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own wallet" ON public.wallets
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own wallet" ON public.wallets
-    FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own wallet" ON public.wallets;
+DROP POLICY IF EXISTS "Users can update own wallet" ON public.wallets;
 
 -- Transactions: Users can view own transactions
+DROP POLICY IF EXISTS "Users can view own transactions" ON public.transactions;
 CREATE POLICY "Users can view own transactions" ON public.transactions
     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own transactions" ON public.transactions
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own transactions" ON public.transactions;
 
--- VTU Orders: Users can view and insert own orders
+-- VTU Orders: Users may read only their own orders; only trusted backend code writes.
+DROP POLICY IF EXISTS "Users can view own orders" ON public.vtu_orders;
 CREATE POLICY "Users can view own orders" ON public.vtu_orders
     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own orders" ON public.vtu_orders
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own orders" ON public.vtu_orders;
+
+REVOKE INSERT, UPDATE, DELETE ON public.wallets FROM anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE ON public.transactions FROM anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE ON public.vtu_orders FROM anon, authenticated;
 
 -- Indexes for lightning fast queries
 CREATE INDEX IF NOT EXISTS idx_wallets_user_id ON public.wallets(user_id);

@@ -1,6 +1,6 @@
 # AVOTEK Aggregator Integration & Routing Architecture
 
-The AVOTEK platform does not depend on any single third-party provider. All external telecom, DISCO, and cable networks are encapsulated behind an abstract provider layer with **automatic failover** and **idempotent retry capabilities**.
+This document describes a target architecture, not functionality deployed in this repository. The Flutter checkout does not include the Serverpod backend or provider adapters described below. A Supabase Bigisub catalog/verification proxy scaffold is documented in [backend_setup.md](./backend_setup.md); its purchase routes are intentionally disabled.
 
 ---
 
@@ -29,9 +29,9 @@ abstract class VtuAggregatorInterface {
 
 | Adapter | Role | Status | Description |
 | :--- | :---: | :---: | :--- |
-| **VTpassAdapter** | Primary | Live & Sandbox | Connects to VTpass REST API with Basic Auth & JSON payloads. Maps VTpass response codes (`000` = success). |
-| **ClubKonnectAdapter** | Secondary / Fallback | Live | Connects to ClubKonnect HTTP query interface. Maps ClubKonnect status codes (`100` = success). |
-| **MockAggregator** | Development / Test | Active | Generates high-fidelity simulated 20-digit electricity tokens, exam scratch PINs, and simulated receipts without consuming real money. |
+| **VTpassAdapter** | Primary | Planned | No implementation in this checkout. |
+| **ClubKonnectAdapter** | Secondary / Fallback | Planned | No implementation in this checkout. |
+| **MockAggregator** | Development / Test | Planned | No implementation in this checkout. Never present mock results as real purchases. |
 
 ---
 

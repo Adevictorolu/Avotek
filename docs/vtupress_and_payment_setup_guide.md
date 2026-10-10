@@ -103,7 +103,7 @@ PAYSTACK_PUBLIC_KEY=pk_live_xxxxxxxxxxxxxxxxxxxxxxxx
 PAYSTACK_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxx
 ```
 
-> **Note on Sandbox Mode:** If no third-party keys are supplied, AVOTEK automatically activates `MockAggregator`, supplying simulated tokens, instant approvals, and mock transactions so you can test all features end-to-end without spending real money.
+> **Current repository status:** No VTU backend or `MockAggregator` is implemented in this checkout. Do not treat a client response as a real or simulated provider transaction. The Bigisub catalog/verification proxy and its deployment limitations are documented in [backend_setup.md](./backend_setup.md); purchase routes remain disabled until atomic wallet handling and reconciliation are implemented.
 
 ---
 

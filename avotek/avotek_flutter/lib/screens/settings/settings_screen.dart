@@ -898,7 +898,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // --- MODAL: API TOKEN DETAILS ---
   void _openApiTokenModal() {
-    const apiToken = 'c71a68151b57aaf3c8535d95d6ae0230a834fb43';
+    const apiToken = 'Managed securely by the backend';
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
@@ -968,7 +968,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               // Token label & box
               Text(
-                'Token:',
+                'Token status:',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -1052,7 +1052,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Add this token to your API request headers:',
+                      'Provider credentials are kept on the backend and never exposed to the client app.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.5,
                         color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -1070,7 +1070,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                       child: Text(
-                        'Authorization: Token c71a68151b57aaf3c853...',
+                        'Authorization: Token [stored securely in backend]',
                         style: GoogleFonts.firaCode(
                           fontSize: 12,
                           color: AppColors.primaryCyan,
@@ -1080,13 +1080,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.warning),
+                        const Icon(Icons.security_rounded, size: 14, color: AppColors.success),
                         const SizedBox(width: 6),
                         Text(
-                          'Keep this token secure. Never share it publicly.',
+                          'This app never shows or copies live provider secrets.',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
-                            color: isDark ? const Color(0xFFFBBF24) : const Color(0xFF92400E),
+                            color: isDark ? const Color(0xFF86EFAC) : const Color(0xFF166534),
                           ),
                         ),
                       ],
@@ -1096,7 +1096,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 22),
 
-              // Avotek Brand Action Button: Copy Token
+              // Avotek Brand Action Button: Secure backend status
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -1111,15 +1111,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 child: ElevatedButton(
                   onPressed: () {
-                    Clipboard.setData(const ClipboardData(text: apiToken));
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Row(
                           children: [
-                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                            Icon(Icons.security_rounded, color: Colors.white, size: 18),
                             SizedBox(width: 8),
-                            Text('API token copied to clipboard!'),
+                            Text('Provider secrets stay on the backend.'),
                           ],
                         ),
                         backgroundColor: AppColors.success,
@@ -1142,14 +1141,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           color: Colors.white.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.copy_rounded, size: 18, color: Colors.white),
+                        child: const Icon(Icons.lock_rounded, size: 18, color: Colors.white),
                       ),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Copy Token',
+                            'Secure backend only',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
@@ -1157,7 +1156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ),
                           Text(
-                            'Click to copy to clipboard',
+                            'No secret copied to the client',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w500,
