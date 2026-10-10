@@ -60,17 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleGoogleSignIn() async {
     final auth = context.read<AuthProvider>();
 
-    // Attempt direct native Supabase Google OAuth first if enabled in Supabase dashboard
-    try {
-      final nativeStarted = await auth.loginWithGoogle();
-      if (nativeStarted) return;
-    } catch (e) {
-      debugPrint('Native Supabase Google OAuth notice (falling back to direct Google sign-in): $e');
-    }
-
-    if (!mounted) return;
-
-    final emailCtrl = TextEditingController();
+    final emailCtrl = TextEditingController(text: 'ademolavictor869@gmail.com');
     final nameCtrl = TextEditingController();
 
     final selected = await showDialog<Map<String, String>>(
@@ -101,31 +91,45 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               content: SizedBox(
-                width: 400,
+                width: 420,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: const Color(0xFF131B2E),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFF23304B)),
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.verified_user_outlined, size: 16, color: AppColors.electricCyan),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Avotek OAuth Client: 499643353122',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF94A3B8),
+                          Row(
+                            children: [
+                              const Icon(Icons.verified_user_outlined, size: 16, color: AppColors.electricCyan),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Google OAuth Client: 499643353122',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              overflow: TextOverflow.ellipsis,
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Callback URI: https://gcixbqrridzgobkqnlfz.supabase.co/auth/v1/callback',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF94A3B8),
                             ),
                           ),
                         ],
@@ -1064,10 +1068,10 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         // Standard Avotek Logo with rounded border radius that cuts the edge
         const AvotekBrandAsset(
-          height: 44,
+          height: 52,
           isDark: true,
           hasFrame: true,
-          borderRadius: 14,
+          borderRadius: 16,
         ),
         const SizedBox(height: 44),
 
@@ -1291,7 +1295,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       children: [
         const AvotekBrandAsset(
-          height: 42,
+          height: 48,
           isDark: true,
           hasFrame: true,
           borderRadius: 14,
@@ -1329,23 +1333,18 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Logo Row with rounded framing inside card
+          // Logo Row with authentic framed branding inside card
           Row(
-            children: [
-              const AvotekLogo(size: 28, hasFrame: true, borderRadius: 8),
-              const SizedBox(width: 10),
-              Text(
-                'AVOTEK',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                  color: AppColors.primaryCyan,
-                ),
+            children: const [
+              AvotekBrandAsset(
+                height: 44,
+                isDark: true,
+                hasFrame: true,
+                borderRadius: 14,
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
 
           // Main Header
           Text(

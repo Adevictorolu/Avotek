@@ -135,7 +135,9 @@ class SupabaseService {
   /// Google OAuth Sign In
   Future<bool> signInWithGoogle() async {
     try {
-      final redirectUrl = kIsWeb ? Uri.base.origin : 'io.supabase.avotek://login-callback';
+      final redirectUrl = kIsWeb
+          ? Uri.base.toString().split('#').first.split('?').first
+          : 'io.supabase.avotek://login-callback';
       return await client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: redirectUrl,

@@ -45,14 +45,29 @@ class AvotekLogo extends StatelessWidget {
 
     if (hasFrame) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: effectiveDark ? const Color(0xFF131B2E) : Colors.white,
           borderRadius: BorderRadius.circular(borderRadius),
           border: Border.all(
-            color: effectiveDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
-            width: 1.2,
+            color: effectiveDark
+                ? AppColors.electricCyan.withValues(alpha: 0.45)
+                : AppColors.primaryBlue.withValues(alpha: 0.35),
+            width: 1.6,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: (effectiveDark ? AppColors.electricCyan : AppColors.primaryBlue)
+                  .withValues(alpha: 0.22),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: effectiveDark ? 0.35 : 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(borderRadius > 4 ? borderRadius - 2 : 4),
@@ -120,7 +135,7 @@ class AvotekLogo extends StatelessWidget {
 class AvotekBrandAsset extends StatelessWidget {
   final double height;
   final double? width;
-  final bool isDark;
+  final bool? isDark;
   final bool isLarge;
   final bool hasFrame;
   final double borderRadius;
@@ -129,7 +144,7 @@ class AvotekBrandAsset extends StatelessWidget {
     super.key,
     this.height = 36,
     this.width,
-    required this.isDark,
+    this.isDark,
     this.isLarge = false,
     this.hasFrame = false,
     this.borderRadius = 12,
@@ -137,9 +152,10 @@ class AvotekBrandAsset extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveDark = isDark ?? (Theme.of(context).brightness == Brightness.dark);
     final assetPath = isLarge
-        ? (isDark ? 'assets/images/logo_large.png' : 'assets/images/logo_large_light.png')
-        : (isDark ? 'assets/images/logo.png' : 'assets/images/logo_light.png');
+        ? (effectiveDark ? 'assets/images/logo_large.png' : 'assets/images/logo_large_light.png')
+        : (effectiveDark ? 'assets/images/logo.png' : 'assets/images/logo_light.png');
 
     final imageWidget = Image.asset(
       assetPath,
@@ -149,7 +165,7 @@ class AvotekBrandAsset extends StatelessWidget {
       errorBuilder: (context, error, stackTrace) {
         return AvotekLogo(
           size: height,
-          isDark: isDark,
+          isDark: effectiveDark,
           useAssetImage: false,
           showText: true,
         );
@@ -158,14 +174,29 @@ class AvotekBrandAsset extends StatelessWidget {
 
     if (hasFrame) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF131B2E) : Colors.white,
+          color: effectiveDark ? const Color(0xFF131B2E) : Colors.white,
           borderRadius: BorderRadius.circular(borderRadius),
           border: Border.all(
-            color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
-            width: 1.2,
+            color: effectiveDark
+                ? AppColors.electricCyan.withValues(alpha: 0.5)
+                : AppColors.primaryBlue.withValues(alpha: 0.4),
+            width: 1.8,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: (effectiveDark ? AppColors.electricCyan : AppColors.primaryBlue)
+                  .withValues(alpha: 0.28),
+              blurRadius: 18,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: effectiveDark ? 0.4 : 0.09),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(borderRadius > 4 ? borderRadius - 2 : 4),

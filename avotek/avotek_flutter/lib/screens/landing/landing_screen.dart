@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/avotek_logo.dart';
+import '../../widgets/service_brand_logo.dart';
 import '../../widgets/top_notification.dart';
 
 class LandingScreen extends StatefulWidget {
@@ -141,25 +142,11 @@ class _LandingScreenState extends State<LandingScreen> {
                     // Brand Logo + Name
                     InkWell(
                       onTap: () => context.go('/'),
-                      child: Row(
-                        children: [
-                          const AvotekLogo(
-                            size: 34,
-                            hasFrame: true,
-                            showText: false,
-                            borderRadius: 10,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            'Avotek',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: -0.4,
-                            ),
-                          ),
-                        ],
+                      child: const AvotekBrandAsset(
+                        height: 42,
+                        isDark: true,
+                        hasFrame: true,
+                        borderRadius: 12,
                       ),
                     ),
                     if (isDesktop) ...[
@@ -233,6 +220,7 @@ class _LandingScreenState extends State<LandingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _buildHeroSection(isDesktop),
+                        _buildOfficialPartnersStrip(isDesktop),
                         _buildStatsStrip(),
                         Container(key: _servicesKey, child: _buildServicesSection(isDesktop)),
                         Container(key: _howKey, child: _buildHowItWorksSection(isDesktop)),
@@ -264,15 +252,13 @@ class _LandingScreenState extends State<LandingScreen> {
             Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
-                children: [
-                  const AvotekLogo(
-                    size: 32,
+                children: const [
+                  AvotekBrandAsset(
+                    height: 40,
+                    isDark: true,
                     hasFrame: true,
-                    showText: false,
-                    borderRadius: 8,
+                    borderRadius: 12,
                   ),
-                  const SizedBox(width: 10),
-                  Text('Avotek', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
                 ],
               ),
             ),
@@ -717,6 +703,142 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   // ====================================================================
+  // 1.5 OFFICIAL TELECOM & BILL PAYMENT PARTNERS BANNER
+  // ====================================================================
+  Widget _buildOfficialPartnersStrip(bool isDesktop) {
+    final partners = [
+      {'provider': 'MTN', 'name': 'MTN Nigeria', 'type': 'Telecom'},
+      {'provider': 'AIRTEL', 'name': 'Airtel Nigeria', 'type': 'Telecom'},
+      {'provider': 'GLO', 'name': 'Glo Mobile', 'type': 'Telecom'},
+      {'provider': '9MOBILE', 'name': '9mobile', 'type': 'Telecom'},
+      {'provider': 'DSTV', 'name': 'DStv MultiChoice', 'type': 'Cable TV'},
+      {'provider': 'GOTV', 'name': 'GOtv Max/Jinja', 'type': 'Cable TV'},
+      {'provider': 'STARTIMES', 'name': 'StarTimes TV', 'type': 'Cable TV'},
+      {'provider': 'IKEDC', 'name': 'Ikeja Electric', 'type': 'Electricity'},
+      {'provider': 'EKEDC', 'name': 'Eko Electric', 'type': 'Electricity'},
+      {'provider': 'AEDC', 'name': 'Abuja Electric', 'type': 'Electricity'},
+      {'provider': 'IBEDC', 'name': 'Ibadan Electric', 'type': 'Electricity'},
+      {'provider': 'WAEC', 'name': 'WAEC Scratch Card', 'type': 'Education'},
+      {'provider': 'NECO', 'name': 'NECO Token', 'type': 'Education'},
+      {'provider': 'JAMB', 'name': 'JAMB UTME PIN', 'type': 'Education'},
+    ];
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 18, vertical: 26),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111520),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFF26334D), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.electricCyan.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.electricCyan.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      'OFFICIAL OPERATORS',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                        color: AppColors.electricCyan,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Direct Gateway Integrations',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              if (isDesktop)
+                Text(
+                  'Automated 24/7 delivery & instant refunds',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: partners.map((p) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF161C28),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF23304B)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ServiceBrandLogo(
+                      provider: p['provider']!,
+                      size: 32,
+                      borderRadius: 8,
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          p['provider']!,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          p['type']!,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ====================================================================
   // 2. STATS STRIP (Social Proof & Reliability Metrics)
   // ====================================================================
   Widget _buildStatsStrip() {
@@ -1042,19 +1164,26 @@ class _LandingScreenState extends State<LandingScreen> {
                   onTap: () => setState(() => _selectedRateNetwork = net),
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
                       color: isSel ? AppColors.primaryBlue : const Color(0xFF141720),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: isSel ? AppColors.electricCyan : const Color(0xFF26334D)),
                     ),
-                    child: Text(
-                      net,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: isSel ? Colors.black : Colors.white,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ServiceBrandLogo(provider: net, size: 20, borderRadius: 5),
+                        const SizedBox(width: 8),
+                        Text(
+                          net,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: isSel ? Colors.black : Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -1070,7 +1199,7 @@ class _LandingScreenState extends State<LandingScreen> {
               crossAxisCount: isDesktop ? 4 : 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: isDesktop ? 1.5 : 1.3,
+              childAspectRatio: isDesktop ? 1.45 : 1.25,
             ),
             itemCount: plans.length,
             itemBuilder: (context, i) {
@@ -1086,28 +1215,102 @@ class _LandingScreenState extends State<LandingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(p['plan'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            p['plan'] as String,
+                            style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        ServiceBrandLogo(provider: _selectedRateNetwork, size: 22, borderRadius: 6),
+                      ],
+                    ),
                     const SizedBox(height: 4),
                     Text(p['validity'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF94A3B8))),
                     const Spacer(),
-                    Text('₦${p["price"]}', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.electricCyan)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('₦${p["price"]}', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.electricCyan)),
+                        InkWell(
+                          onTap: () {
+                            final auth = context.read<AuthProvider>();
+                            if (!auth.isAuthenticated) {
+                              TopNotification.showInfo(
+                                context,
+                                'Please sign in or create an account to purchase data plans.',
+                                title: 'Authentication Required',
+                              );
+                              context.push('/login');
+                              return;
+                            }
+                            context.push('/services/data');
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppColors.electricCyan.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.electricCyan.withValues(alpha: 0.4)),
+                            ),
+                            child: Text(
+                              'Buy',
+                              style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.electricCyan),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               );
             },
           ),
           const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => context.push('/rates'),
-            icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-            label: Text('See complete rates table', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13.5)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1E222D),
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFF26334D)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
+          Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            alignment: WrapAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  final auth = context.read<AuthProvider>();
+                  if (!auth.isAuthenticated) {
+                    TopNotification.showInfo(
+                      context,
+                      'Please sign in or create an account to purchase data plans.',
+                      title: 'Authentication Required',
+                    );
+                    context.push('/login');
+                    return;
+                  }
+                  context.push('/services/data');
+                },
+                icon: const Icon(Icons.flash_on_rounded, size: 16),
+                label: Text('Buy $_selectedRateNetwork Data Now', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.push('/rates'),
+                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                label: Text('See complete rates table', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Color(0xFF26334D)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1521,15 +1724,13 @@ class _LandingScreenState extends State<LandingScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            children: [
-                              const AvotekLogo(
-                                size: 28,
+                            children: const [
+                              AvotekBrandAsset(
+                                height: 40,
+                                isDark: true,
                                 hasFrame: true,
-                                showText: false,
-                                borderRadius: 8,
+                                borderRadius: 12,
                               ),
-                              const SizedBox(width: 8),
-                              Text('Avotek', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
                             ],
                           ),
                           const SizedBox(height: 14),
@@ -1576,15 +1777,13 @@ class _LandingScreenState extends State<LandingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      children: [
-                        const AvotekLogo(
-                          size: 28,
+                      children: const [
+                        AvotekBrandAsset(
+                          height: 38,
+                          isDark: true,
                           hasFrame: true,
-                          showText: false,
-                          borderRadius: 8,
+                          borderRadius: 12,
                         ),
-                        const SizedBox(width: 8),
-                        Text('Avotek', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -1632,7 +1831,21 @@ class _LandingScreenState extends State<LandingScreen> {
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: InkWell(
-              onTap: () => context.push(link['route']!),
+              onTap: () {
+                final route = link['route']!;
+                final isPublic = route == '/' || route == '/rates';
+                final auth = context.read<AuthProvider>();
+                if (!isPublic && !auth.isAuthenticated) {
+                  TopNotification.showInfo(
+                    context,
+                    'Please sign in or create an account to access ${link['title']}.',
+                    title: 'Authentication Required',
+                  );
+                  context.push('/login');
+                  return;
+                }
+                context.push(route);
+              },
               child: Text(
                 link['title']!,
                 style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF94A3B8)),

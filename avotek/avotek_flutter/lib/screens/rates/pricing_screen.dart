@@ -3,8 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/avotek_logo.dart';
+import '../../widgets/service_brand_logo.dart';
+import '../../widgets/top_notification.dart';
 
 class PricingScreen extends StatefulWidget {
   const PricingScreen({super.key});
@@ -83,7 +86,14 @@ class _PricingScreenState extends State<PricingScreen> {
         titleSpacing: isDesktop ? 48 : 16,
         elevation: 0,
         backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
-        title: const AvotekLogo(size: 32, showText: true),
+        title: InkWell(
+          onTap: () => context.go('/'),
+          child: const AvotekBrandAsset(
+            height: 38,
+            hasFrame: true,
+            borderRadius: 12,
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(
@@ -95,13 +105,37 @@ class _PricingScreenState extends State<PricingScreen> {
           ),
           const SizedBox(width: 4),
           TextButton.icon(
-            onPressed: () => context.push('/dashboard'),
+            onPressed: () {
+              final auth = context.read<AuthProvider>();
+              if (!auth.isAuthenticated) {
+                TopNotification.showInfo(
+                  context,
+                  'Please sign in to access your dashboard.',
+                  title: 'Sign In Required',
+                );
+                context.push('/login');
+                return;
+              }
+              context.push('/dashboard');
+            },
             icon: const Icon(Icons.dashboard_rounded, size: 16),
             label: const Text('Dashboard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
-            onPressed: () => context.push('/services/data'),
+            onPressed: () {
+              final auth = context.read<AuthProvider>();
+              if (!auth.isAuthenticated) {
+                TopNotification.showInfo(
+                  context,
+                  'Please sign in to purchase data plans.',
+                  title: 'Sign In Required',
+                );
+                context.push('/login');
+                return;
+              }
+              context.push('/services/data');
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryCyan,
               foregroundColor: Colors.black,
@@ -239,6 +273,7 @@ class _PricingScreenState extends State<PricingScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
+                    avatar: ServiceBrandLogo(provider: net, size: 18, borderRadius: 4),
                     label: Text(
                       net,
                       style: TextStyle(
@@ -280,7 +315,19 @@ class _PricingScreenState extends State<PricingScreen> {
                 children: [
                   Expanded(
                     flex: 4,
-                    child: Text(p['plan'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    child: Row(
+                      children: [
+                        ServiceBrandLogo(provider: _selectedNetwork, size: 20, borderRadius: 5),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            p['plan'] as String,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   Expanded(
                     flex: 3,
@@ -304,7 +351,19 @@ class _PricingScreenState extends State<PricingScreen> {
                     child: Align(
                       alignment: Alignment.centerRight,
                       child: InkWell(
-                        onTap: () => context.push('/services/data'),
+                        onTap: () {
+                          final auth = context.read<AuthProvider>();
+                          if (!auth.isAuthenticated) {
+                            TopNotification.showInfo(
+                              context,
+                              'Please sign in or create an account to purchase data plans.',
+                              title: 'Sign In Required',
+                            );
+                            context.push('/login');
+                            return;
+                          }
+                          context.push('/services/data');
+                        },
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -372,7 +431,15 @@ class _PricingScreenState extends State<PricingScreen> {
                 children: [
                   Expanded(
                     flex: 4,
-                    child: Text(r['network'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    child: Row(
+                      children: [
+                        ServiceBrandLogo(provider: r['network'] as String, size: 22, borderRadius: 5),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(r['network'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        ),
+                      ],
+                    ),
                   ),
                   Expanded(
                     flex: 4,
@@ -450,7 +517,15 @@ class _PricingScreenState extends State<PricingScreen> {
                 children: [
                   Expanded(
                     flex: 4,
-                    child: Text(item['item'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    child: Row(
+                      children: [
+                        ServiceBrandLogo(provider: item['item'] as String, size: 22, borderRadius: 5),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(item['item'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        ),
+                      ],
+                    ),
                   ),
                   Expanded(
                     flex: 4,
