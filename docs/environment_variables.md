@@ -68,14 +68,38 @@ accounts reuse their saved PIN and are not asked to create another one.
 Password recovery uses Supabase's reset link and the authenticated
 `/update-password` screen, not a client-generated verification code.
 
+### Local web sign-in and connection-refused errors
+
+For local testing, start the Flutter web server from the repository root with
+`.\run_web.ps1` and select option 2. Keep that terminal running while signing
+in; open `http://localhost:3000` only after Flutter reports that the web server
+is serving. The browser must return to the same origin and port used to launch
+the app. A refused connection on port 3000 means the Flutter web server is not
+running at that address; port 8080 is not the Flutter web app.
+
+Add the local app URLs `http://localhost:3000/**` and
+`http://127.0.0.1:3000/**` to Supabase **Authentication → URL Configuration →
+Redirect URLs**. Add `http://localhost:8000/**` and
+`http://127.0.0.1:8000/**` only if using the alternate VS Code launch profile.
+If VS Code opens the web app on another device, use the `shared host` launch
+profile and allow `http://<your-computer-LAN-IP>:3000/**` (or port 8000) in
+Supabase. Do not use `localhost` on that other device: it refers to the device
+itself. Use a trusted tunnel or deployed HTTPS site for Google OAuth testing
+from a phone; do not expose the local development server directly to the
+internet.
+In Google Cloud, the OAuth redirect URI remains the Supabase callback URL shown
+in the Google provider settings, not the local Flutter URL.
+
 ## VTU Provider Credentials
 
 Keep Bigisub credentials and any provider PIN in a trusted backend environment.
 The Flutter client must send only the signed-in Supabase access token to an
 HTTPS backend proxy; it must never send the user's transaction PIN to the VTU
-provider. The Flutter app currently has no configured VTU backend proxy, so
-provider requests fail closed until one is deployed and configured with
-`VTU_BACKEND_URL` (or `VtuApiService.configure(baseUrl: ...)`). Build with
+provider. The Flutter app currently has no configured VTU backend proxy, and this
+repository does not contain the referenced `avotek_server` project. Provider
+requests therefore fail closed until a trusted backend is implemented and
+deployed and configured with `VTU_BACKEND_URL` (or
+`VtuApiService.configure(baseUrl: ...)`). Build with
 `--dart-define=VTU_BACKEND_URL=https://api.your-domain.example`. Rotate any
 provider credential that was previously embedded in a Flutter build or source
 file.

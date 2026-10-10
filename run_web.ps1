@@ -28,9 +28,8 @@ switch ($choice) {
     }
     "2" {
         Write-Host "`nStarting Local Web Server on port 3000 with Hot Reload..." -ForegroundColor Yellow
-        Write-Host "Open http://localhost:3000 in your browser." -ForegroundColor Gray
-        Write-Host "Press 'r' for Hot Reload, 'R' for Hot Restart, 'q' to Quit.`n" -ForegroundColor Gray
-        Start-Process "http://localhost:3000"
+        Write-Host "Wait for Flutter to report that the web server is serving before opening http://localhost:3000." -ForegroundColor Gray
+        Write-Host "Keep this terminal running during sign-in. Press 'r' for Hot Reload, 'R' for Hot Restart, 'q' to Quit.`n" -ForegroundColor Gray
         flutter run -d web-server --web-port=3000 --web-hostname=127.0.0.1
     }
     "3" {

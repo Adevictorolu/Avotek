@@ -29,6 +29,21 @@
             ]
         },
         {
+            "name": "Avotek Web Server (shared host)",
+            "cwd": "${workspaceFolder}/avotek/avotek_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "-d",
+                "web-server",
+                "--web-hostname",
+                "0.0.0.0",
+                "--web-port",
+                "3000"
+            ]
+        },
+        {
             "name": "Avotek Web Edge (Smooth, Fast & Never Shuts Off)",
             "cwd": "${workspaceFolder}/avotek/avotek_flutter",
             "request": "launch",
@@ -109,13 +124,6 @@
                 "-d",
                 "windows"
             ]
-        },
-        {
-            "name": "Avotek Server (Serverpod Backend)",
-            "cwd": "${workspaceFolder}/avotek/avotek_server",
-            "request": "launch",
-            "type": "dart",
-            "program": "bin/main.dart"
         }
     ]
 }
