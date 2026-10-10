@@ -202,13 +202,19 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
     final auth = context.watch<AuthProvider>();
     final wallet = context.watch<WalletProvider>();
 
-    final username = (auth.user?.referralCode != null && auth.user!.referralCode.isNotEmpty)
-        ? auth.user!.referralCode
+    final avoId = (auth.user?.avoId != null && auth.user!.avoId.isNotEmpty)
+        ? auth.user!.avoId
+        : ((auth.user?.referralCode != null && auth.user!.referralCode.isNotEmpty)
+            ? auth.user!.referralCode
+            : 'AVO-10001');
+
+    final username = (auth.user?.username != null && auth.user!.username!.isNotEmpty)
+        ? auth.user!.username!
         : ((auth.user?.name.isNotEmpty == true)
             ? auth.user!.name.replaceAll(' ', '').toLowerCase()
             : ((auth.user?.email.isNotEmpty == true)
                 ? auth.user!.email.split('@').first
-                : 'user'));
+                : avoId.toLowerCase()));
     final referralLink = 'https://avotek.ng/@$username';
 
     return ResponsiveShell(
@@ -239,7 +245,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     const SizedBox(height: 18),
 
                     // --- HERO CARD: Refer & Earn (Screenshots 1 & 2) ---
-                    _buildReferAndEarnCard(isDark, referralLink),
+                    _buildReferAndEarnCard(isDark, referralLink, avoId: avoId),
                     const SizedBox(height: 20),
 
                     // --- GROW YOUR NETWORK CARD ---
@@ -397,7 +403,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
   // TAB 0: REFERRAL HUB COMPONENTS (Screenshots 1 & 2)
   // -------------------------------------------------------------
 
-  Widget _buildReferAndEarnCard(bool isDark, String referralLink) {
+  Widget _buildReferAndEarnCard(bool isDark, String referralLink, {required String avoId}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(26),
@@ -464,6 +470,88 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             ),
           ),
           const SizedBox(height: 22),
+
+          // YOUR UNIQUE AVOTEK ID BOX
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'YOUR AVOTEK ID (LOGIN & REFERRAL ID)',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryCyan.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.4)),
+                ),
+                child: Text(
+                  'Unique ID',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryCyan,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0B0E18) : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark ? const Color(0xFF222C42) : const Color(0xFFCBD5E1),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.badge_outlined, size: 18, color: AppColors.primaryCyan),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    avoId,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => _copyToClipboard(avoId),
+                  icon: const Icon(Icons.copy_rounded, size: 14),
+                  label: const Text('Copy ID'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDark ? const Color(0xFF1E263C) : Colors.white,
+                    foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(
+                        color: isDark ? const Color(0xFF2C3854) : const Color(0xFFCBD5E1),
+                      ),
+                    ),
+                    textStyle: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
 
           // YOUR LINK INPUT BOX (Matches exact layout in Screenshot 2)
           Text(
@@ -1456,118 +1544,26 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
   // -------------------------------------------------------------
 
   Widget _buildLeaderboardTab(bool isDark) {
-    final topEarners = [
-      {
+    final auth = context.watch<AuthProvider>();
+    final currentUser = auth.user;
+
+    // Only real users that actually exist on the system (mock names completely scrapped)
+    final realEarners = <Map<String, dynamic>>[];
+    if (currentUser != null && _userRifPoints > 0) {
+      realEarners.add({
         'rank': 1,
-        'name': 'THOTH',
-        'initial': 'T',
-        'referrals': '31 referrals',
-        'badge': 'Chairman',
-        'badgeColor': const Color(0xFF78350F),
-        'badgeBg': const Color(0xFFFDE68A),
-        'points': '23,155 PTS',
+        'name': currentUser.name.isNotEmpty ? currentUser.name : (currentUser.username ?? 'Avotek Member'),
+        'initial': (currentUser.name.isNotEmpty ? currentUser.name[0] : 'A').toUpperCase(),
+        'referrals': '${currentUser.referralCode} (${currentUser.avoId})',
+        'badge': _userRifPoints >= 1000 ? 'Chairman' : (_userRifPoints >= 200 ? 'Berekete' : 'Jolly'),
+        'badgeColor': _userRifPoints >= 1000 ? const Color(0xFF78350F) : Colors.white,
+        'badgeBg': _userRifPoints >= 1000 ? const Color(0xFFFDE68A) : const Color(0xFF10B981),
+        'points': '$_userRifPoints PTS',
         'isTopThree': true,
-      },
-      {
-        'rank': 2,
-        'name': 'Abraham Yisa',
-        'initial': 'A',
-        'referrals': '11 referrals',
-        'badge': 'Berekete',
-        'badgeColor': Colors.white,
-        'badgeBg': const Color(0xFF10B981),
-        'points': '567 PTS',
-        'isTopThree': true,
-      },
-      {
-        'rank': 3,
-        'name': 'Adeniran Oluwaseun',
-        'initial': 'A',
-        'referrals': '11 referrals',
-        'badge': 'Berekete',
-        'badgeColor': Colors.white,
-        'badgeBg': const Color(0xFF10B981),
-        'points': '559 PTS',
-        'isTopThree': true,
-      },
-      {
-        'rank': 4,
-        'name': "Mopo Lee fan's",
-        'initial': 'M',
-        'referrals': '8 referrals',
-        'badge': 'Berekete',
-        'badgeColor': Colors.white,
-        'badgeBg': const Color(0xFF10B981),
-        'points': '494 PTS',
-        'isTopThree': false,
-      },
-      {
-        'rank': 5,
-        'name': 'Usama Shuaib',
-        'initial': 'U',
-        'referrals': '12 referrals',
-        'badge': 'Berekete',
-        'badgeColor': Colors.white,
-        'badgeBg': const Color(0xFF10B981),
-        'points': '494 PTS',
-        'isTopThree': false,
-      },
-      {
-        'rank': 6,
-        'name': 'Yau Yahya',
-        'initial': 'Y',
-        'referrals': '14 referrals',
-        'badge': 'Berekete',
-        'badgeColor': Colors.white,
-        'badgeBg': const Color(0xFF10B981),
-        'points': '415 PTS',
-        'isTopThree': false,
-      },
-      {
-        'rank': 7,
-        'name': 'Benjamin Tachin',
-        'initial': 'B',
-        'referrals': '1 referrals',
-        'badge': 'Berekete',
-        'badgeColor': Colors.white,
-        'badgeBg': const Color(0xFF10B981),
-        'points': '407 PTS',
-        'isTopThree': false,
-      },
-      {
-        'rank': 8,
-        'name': 'Eziashi Ifeanyi',
-        'initial': 'E',
-        'referrals': '11 referrals',
-        'badge': 'Berekete',
-        'badgeColor': Colors.white,
-        'badgeBg': const Color(0xFF10B981),
-        'points': '404 PTS',
-        'isTopThree': false,
-      },
-      {
-        'rank': 9,
-        'name': 'Rukayat Yusuf',
-        'initial': 'R',
-        'referrals': '7 referrals',
-        'badge': 'Berekete',
-        'badgeColor': Colors.white,
-        'badgeBg': const Color(0xFF10B981),
-        'points': '373 PTS',
-        'isTopThree': false,
-      },
-      {
-        'rank': 10,
-        'name': 'Jeremiah Jeremiah',
-        'initial': 'J',
-        'referrals': '8 referrals',
-        'badge': 'Berekete',
-        'badgeColor': Colors.white,
-        'badgeBg': const Color(0xFF10B981),
-        'points': '369 PTS',
-        'isTopThree': false,
-      },
-    ];
+      });
+    }
+
+    final userReferralLink = 'https://avotek.ng/@${currentUser?.username ?? currentUser?.avoId ?? "user"}';
 
     return Container(
       width: double.infinity,
@@ -1599,7 +1595,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    "See who's earning the most points",
+                    "Real-time platform leaderboard for active Avotek affiliates",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -1611,131 +1607,187 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           ),
           const SizedBox(height: 24),
 
-          // List of earners
-          ...topEarners.map((earner) {
-            final isTopThree = earner['isTopThree'] as bool;
-            final rank = earner['rank'] as int;
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          if (realEarners.isEmpty) ...[
+            // Clean, genuine empty state when no referrals have earned points yet
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
               decoration: BoxDecoration(
-                color: isTopThree
-                    ? const Color(0xFFFEF08A) // Yellow background matching Screenshot 3
-                    : (isDark ? const Color(0xFF161C2C) : const Color(0xFFF8FAFC)),
+                color: isDark ? const Color(0xFF161C2C) : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isTopThree
-                      ? const Color(0xFFFDE047)
-                      : (isDark ? const Color(0xFF252F47) : const Color(0xFFE2E8F0)),
+                  color: isDark ? const Color(0xFF252F47) : const Color(0xFFE2E8F0),
                 ),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  // Rank icon or number
-                  SizedBox(
-                    width: 28,
-                    child: isTopThree
-                        ? Icon(
-                            rank == 1
-                                ? Icons.military_tech_rounded
-                                : (rank == 2 ? Icons.military_tech_outlined : Icons.emoji_events_outlined),
-                            color: rank == 1
-                                ? const Color(0xFFB45309)
-                                : (rank == 2 ? const Color(0xFF475569) : const Color(0xFF92400E)),
-                            size: 22,
-                          )
-                        : Text(
-                            '$rank',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Avatar circle (dark navy/purple with letter)
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: const Color(0xFF1E2438),
-                    child: Text(
-                      earner['initial'] as String,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-
-                  // Name and referrals
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          earner['name'] as String,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w800,
-                            color: isTopThree
-                                ? const Color(0xFF0F172A)
-                                : (isDark ? Colors.white : const Color(0xFF0F172A)),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          earner['referrals'] as String,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: isTopThree
-                                ? const Color(0xFF475569)
-                                : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Level Badge Pill (Chairman or Berekete)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: earner['badgeBg'] as Color,
-                      borderRadius: BorderRadius.circular(12),
+                      color: const Color(0xFFFFB800).withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
                     ),
+                    child: const Icon(Icons.emoji_events_outlined, color: Color(0xFFFFB800), size: 40),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Leaderboard Open for Champions',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
                     child: Text(
-                      earner['badge'] as String,
+                      'No members have accumulated leaderboard points yet. Share your Avotek ID or referral link to earn points on every data recharge and take the #1 spot!',
+                      textAlign: TextAlign.center,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: earner['badgeColor'] as Color,
+                        fontSize: 12.5,
+                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        height: 1.45,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 18),
-
-                  // Points value
-                  Text(
-                    earner['points'] as String,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w900,
-                      color: isTopThree
-                          ? const Color(0xFF0F172A)
-                          : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () => _copyToClipboard(userReferralLink),
+                    icon: const Icon(Icons.share_rounded, size: 16),
+                    label: const Text('Share My Referral Link'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      textStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ],
               ),
-            );
-          }),
-          const SizedBox(height: 12),
+            ),
+          ] else ...[
+            // List of real earners
+            ...realEarners.map((earner) {
+              final isTopThree = earner['isTopThree'] as bool;
+              final rank = earner['rank'] as int;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                decoration: BoxDecoration(
+                  color: isTopThree
+                      ? const Color(0xFFFEF08A)
+                      : (isDark ? const Color(0xFF161C2C) : const Color(0xFFF8FAFC)),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isTopThree
+                        ? const Color(0xFFFDE047)
+                        : (isDark ? const Color(0xFF252F47) : const Color(0xFFE2E8F0)),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 28,
+                      child: isTopThree
+                          ? Icon(
+                              rank == 1
+                                  ? Icons.military_tech_rounded
+                                  : (rank == 2 ? Icons.military_tech_outlined : Icons.emoji_events_outlined),
+                              color: rank == 1
+                                  ? const Color(0xFFB45309)
+                                  : (rank == 2 ? const Color(0xFF475569) : const Color(0xFF92400E)),
+                              size: 22,
+                            )
+                          : Text(
+                              '$rank',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                    ),
+                    const SizedBox(width: 12),
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: const Color(0xFF1E2438),
+                      child: Text(
+                        earner['initial'] as String,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            earner['name'] as String,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                              color: isTopThree
+                                  ? const Color(0xFF0F172A)
+                                  : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            earner['referrals'] as String,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: isTopThree
+                                  ? const Color(0xFF475569)
+                                  : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: earner['badgeBg'] as Color,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        earner['badge'] as String,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: earner['badgeColor'] as Color,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 18),
+                    Text(
+                      earner['points'] as String,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w900,
+                        color: isTopThree
+                            ? const Color(0xFF0F172A)
+                            : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+          const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: BoxDecoration(
@@ -1751,7 +1803,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Keep earning points and you could be on this leaderboard!',
+                    'Keep earning points and climb the ranks on this leaderboard!',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,

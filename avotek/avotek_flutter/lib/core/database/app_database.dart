@@ -118,6 +118,19 @@ class AppDatabaseService {
     return null;
   }
 
+  UserModel? findUserByIdentifier(String identifier) {
+    final clean = identifier.trim().toLowerCase();
+    for (final u in _cachedUsers.values) {
+      if (u.avoId.toLowerCase() == clean ||
+          (u.username != null && u.username!.toLowerCase() == clean) ||
+          u.email.toLowerCase() == clean ||
+          u.phone == identifier.trim()) {
+        return u;
+      }
+    }
+    return null;
+  }
+
   void clearSession() {
     _cachedUsers.clear();
     try {

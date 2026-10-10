@@ -73,13 +73,20 @@ class AuthProvider extends ChangeNotifier {
             'Avotek Customer';
         final phone = (authUser.userMetadata?['phone'] as String?) ?? '';
 
+        final avoId = (authUser.userMetadata?['avo_id'] as String?) ??
+            'AVO-${(authUser.id.toString().hashCode.abs() % 90000 + 10000)}';
+        final username = (authUser.userMetadata?['username'] as String?) ??
+            (authUser.email?.split('@').first as String?);
+
         _user = UserModel(
           id: authUser.id,
           email: authUser.email ?? '',
           name: name,
           phone: phone,
-          referralCode: 'AVO${authUser.id.toString().substring(0, 6).toUpperCase()}',
+          referralCode: avoId,
           createdAt: DateTime.now(),
+          avoId: avoId,
+          username: username,
         );
       }
 
@@ -147,29 +154,30 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Sign In with Email, Phone, or Username
+  /// Sign In with Email, Avotek ID, Phone, or Username
   Future<bool> login({
     required String identifier,
     required String password,
   }) async {
     final cleanId = identifier.trim();
-    final email = cleanId.contains('@') ? cleanId : '$cleanId@avotek.user';
-    return await signInWithEmail(email: email, password: password);
+    return await signInWithEmail(email: cleanId, password: password);
   }
 
-  /// User Registration
+  /// User Registration (Direct & Instant - No SMS/Phone OTP friction)
   Future<bool> register({
     required String name,
     required String phone,
     required String email,
     required String password,
     String? referralCode,
+    String? username,
   }) async {
     return await signUpWithEmail(
       email: email,
       password: password,
       name: name,
       phone: phone,
+      preferredUsername: username,
     );
   }
 
@@ -207,6 +215,7 @@ class AuthProvider extends ChangeNotifier {
     required String password,
     required String name,
     required String phone,
+    String? preferredUsername,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -218,6 +227,7 @@ class AuthProvider extends ChangeNotifier {
         password: password,
         name: name,
         phone: phone,
+        preferredUsername: preferredUsername,
       );
       _user = user;
       AppDatabaseService.instance.cacheUser(user);

@@ -50,18 +50,26 @@ class SupabaseService {
   // ==========================================
 
   /// Sign Up with Email and Password
+  /// Sign Up with Email and Password
   Future<UserModel> signUpWithEmail({
     required String email,
     required String password,
     required String name,
     required String phone,
+    String? preferredUsername,
   }) async {
+    final cleanEmail = email.trim();
+    final cleanName = name.trim();
+    final cleanPhone = phone.trim();
+    final username = preferredUsername?.trim() ?? cleanEmail.split('@').first;
+
     final response = await client.auth.signUp(
-      email: email.trim(),
+      email: cleanEmail,
       password: password,
       data: {
-        'full_name': name.trim(),
-        'phone': phone.trim(),
+        'full_name': cleanName,
+        'phone': cleanPhone,
+        'username': username,
       },
     );
 
@@ -71,13 +79,17 @@ class SupabaseService {
     }
 
     final now = DateTime.now();
+    final avoId = 'AVO-${(authUser.id.hashCode.abs() % 90000 + 10000)}';
+
     final userModel = UserModel(
       id: authUser.id,
-      email: email.trim(),
-      name: name.trim(),
-      phone: phone.trim(),
-      referralCode: 'AVO${authUser.id.substring(0, 6).toUpperCase()}',
+      email: cleanEmail,
+      name: cleanName,
+      phone: cleanPhone,
+      referralCode: avoId,
       createdAt: now,
+      avoId: avoId,
+      username: username,
     );
 
     _fallbackProfiles[userModel.id] = userModel;
@@ -85,7 +97,7 @@ class SupabaseService {
     // Create or upsert profile in PostgreSQL
     try {
       await _upsertProfile(userModel);
-      await _ensureWalletExists(userModel.id, name.trim());
+      await _ensureWalletExists(userModel.id, cleanName);
     } catch (e) {
       debugPrint('Profile/Wallet upsert warning: $e');
     }
@@ -93,13 +105,51 @@ class SupabaseService {
     return userModel;
   }
 
-  /// Sign In with Email and Password
+  /// Resolve email from Avotek ID, Username, Phone, or Email
+  Future<String> resolveEmailFromIdentifier(String identifier) async {
+    final clean = identifier.trim();
+    if (clean.contains('@')) return clean;
+
+    final cleanUpper = clean.toUpperCase();
+
+    // 1. Check in-memory fallback profiles
+    for (final p in _fallbackProfiles.values) {
+      if (p.avoId.toUpperCase() == cleanUpper ||
+          (p.username != null && p.username!.toLowerCase() == clean.toLowerCase()) ||
+          p.email.split('@').first.toLowerCase() == clean.toLowerCase() ||
+          p.phone == clean) {
+        return p.email;
+      }
+    }
+
+    // 2. Query Supabase profiles table
+    try {
+      final res = await client
+          .from('profiles')
+          .select('email, avo_id, username, phone')
+          .or('avo_id.ilike.$clean,username.ilike.$clean,phone.eq.$clean')
+          .maybeSingle();
+      if (res != null && res['email'] != null && (res['email'] as String).isNotEmpty) {
+        return res['email'] as String;
+      }
+    } catch (e) {
+      debugPrint('Notice resolving identifier in Supabase: $e');
+    }
+
+    // 3. Fallback: treat as synthetic username email
+    return '$clean@avotek.user';
+  }
+
+  /// Sign In with Email, Avotek ID, or Username and Password
   Future<UserModel> signInWithEmail({
     required String email,
     required String password,
   }) async {
+    final cleanEmail = email.trim();
+    final resolvedEmail = await resolveEmailFromIdentifier(cleanEmail);
+
     final response = await client.auth.signInWithPassword(
-      email: email.trim(),
+      email: resolvedEmail,
       password: password,
     );
 
@@ -116,14 +166,19 @@ class SupabaseService {
         authUser.email?.split('@').first ??
         'Avotek User';
     final phone = authUser.userMetadata?['phone'] as String? ?? '';
+    final avoId = 'AVO-${(authUser.id.hashCode.abs() % 90000 + 10000)}';
+    final username = authUser.userMetadata?['username'] as String? ??
+        authUser.email?.split('@').first;
 
     final fallbackUser = UserModel(
       id: authUser.id,
-      email: authUser.email ?? email,
+      email: authUser.email ?? resolvedEmail,
       name: name,
       phone: phone,
-      referralCode: 'AVO${authUser.id.substring(0, 6).toUpperCase()}',
+      referralCode: avoId,
       createdAt: DateTime.tryParse(authUser.createdAt) ?? DateTime.now(),
+      avoId: avoId,
+      username: username,
     );
 
     _fallbackProfiles[fallbackUser.id] = fallbackUser;
@@ -175,7 +230,11 @@ class SupabaseService {
           .maybeSingle();
 
       if (res != null) {
-        final user = UserModel.fromJson(res);
+        var user = UserModel.fromJson(res);
+        if (user.avoId.isEmpty || user.avoId == 'AVO-10001') {
+          final guaranteedAvo = 'AVO-${(userId.hashCode.abs() % 90000 + 10000)}';
+          user = user.copyWith(avoId: guaranteedAvo);
+        }
         _fallbackProfiles[userId] = user;
         return user;
       }
@@ -196,6 +255,8 @@ class SupabaseService {
         'avatar_url': user.avatarUrl,
         'kyc_status': user.kycStatus,
         'referral_code': user.referralCode,
+        'avo_id': user.avoId,
+        'username': user.username,
         'transaction_pin_hash': user.transactionPinHash,
         'created_at': user.createdAt.toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),

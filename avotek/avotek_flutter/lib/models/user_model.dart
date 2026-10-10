@@ -9,6 +9,8 @@ class UserModel {
   final String? referredBy;
   final String? transactionPinHash;
   final DateTime createdAt;
+  final String avoId;
+  final String? username;
 
   const UserModel({
     required this.id,
@@ -21,6 +23,8 @@ class UserModel {
     this.referredBy,
     this.transactionPinHash,
     required this.createdAt,
+    this.avoId = '',
+    this.username,
   });
 
   UserModel copyWith({
@@ -34,6 +38,8 @@ class UserModel {
     String? referredBy,
     String? transactionPinHash,
     DateTime? createdAt,
+    String? avoId,
+    String? username,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -46,6 +52,8 @@ class UserModel {
       referredBy: referredBy ?? this.referredBy,
       transactionPinHash: transactionPinHash ?? this.transactionPinHash,
       createdAt: createdAt ?? this.createdAt,
+      avoId: avoId ?? this.avoId,
+      username: username ?? this.username,
     );
   }
 
@@ -60,18 +68,36 @@ class UserModel {
         'referred_by': referredBy,
         'transaction_pin_hash': transactionPinHash,
         'created_at': createdAt.toIso8601String(),
+        'avo_id': avoId,
+        'username': username,
       };
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-        id: json['id']?.toString() ?? '',
-        email: json['email'] as String? ?? '',
-        name: json['name'] as String? ?? json['full_name'] as String? ?? 'Avotek User',
-        phone: json['phone'] as String? ?? '',
-        avatarUrl: json['avatar_url'] as String?,
-        kycStatus: json['kyc_status'] as String? ?? 'tier1',
-        referralCode: json['referral_code'] as String? ?? '',
-        referredBy: json['referred_by'] as String?,
-        transactionPinHash: json['transaction_pin_hash'] as String?,
-        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-      );
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id']?.toString() ?? '';
+    final rawAvo = json['avo_id'] as String? ?? json['avoId'] as String?;
+    final resolvedAvo = (rawAvo != null && rawAvo.trim().isNotEmpty)
+        ? rawAvo.trim().toUpperCase()
+        : (rawId.isNotEmpty
+            ? 'AVO-${(rawId.hashCode.abs() % 90000 + 10000)}'
+            : 'AVO-10001');
+
+    final rawEmail = json['email'] as String? ?? '';
+    final rawUsername = json['username'] as String? ??
+        (rawEmail.contains('@') ? rawEmail.split('@').first : null);
+
+    return UserModel(
+      id: rawId,
+      email: rawEmail,
+      name: json['name'] as String? ?? json['full_name'] as String? ?? 'Avotek User',
+      phone: json['phone'] as String? ?? '',
+      avatarUrl: json['avatar_url'] as String?,
+      kycStatus: json['kyc_status'] as String? ?? 'tier1',
+      referralCode: json['referral_code'] as String? ?? resolvedAvo,
+      referredBy: json['referred_by'] as String?,
+      transactionPinHash: json['transaction_pin_hash'] as String?,
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+      avoId: resolvedAvo,
+      username: rawUsername,
+    );
+  }
 }
