@@ -59,6 +59,16 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleGoogleSignIn() async {
     final auth = context.read<AuthProvider>();
 
+    // Attempt direct native Supabase Google OAuth first if enabled in Supabase dashboard
+    try {
+      final nativeStarted = await auth.loginWithGoogle();
+      if (nativeStarted) return;
+    } catch (e) {
+      debugPrint('Native Supabase Google OAuth notice (falling back to direct Google sign-in): $e');
+    }
+
+    if (!mounted) return;
+
     final emailCtrl = TextEditingController();
     final nameCtrl = TextEditingController();
 

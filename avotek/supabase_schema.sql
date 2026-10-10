@@ -65,22 +65,40 @@ CREATE TABLE IF NOT EXISTS public.vtu_orders (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. AUTOMATIC TRIGGER: Create Profile & Wallet on Auth Signup
+-- 5. AUTOMATIC TRIGGER: Create Profile & Wallet on Auth Signup (Email & Google OAuth)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 DECLARE
     clean_name TEXT;
     clean_phone TEXT;
+    clean_avatar TEXT;
     clean_ref TEXT;
 BEGIN
-    clean_name := COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1));
+    -- Extract full name from Google metadata or email
+    clean_name := COALESCE(
+        NEW.raw_user_meta_data->>'full_name',
+        NEW.raw_user_meta_data->>'name',
+        split_part(NEW.email, '@', 1)
+    );
     clean_phone := COALESCE(NEW.raw_user_meta_data->>'phone', '');
+    -- Extract avatar picture from Google metadata
+    clean_avatar := COALESCE(
+        NEW.raw_user_meta_data->>'avatar_url',
+        NEW.raw_user_meta_data->>'picture',
+        ''
+    );
     clean_ref := 'AVO' || UPPER(SUBSTRING(NEW.id::text, 1, 6));
 
-    -- Insert into public.profiles
-    INSERT INTO public.profiles (id, email, full_name, phone, referral_code)
-    VALUES (NEW.id, NEW.email, clean_name, clean_phone, clean_ref)
-    ON CONFLICT (id) DO NOTHING;
+    -- Insert or update public.profiles
+    INSERT INTO public.profiles (id, email, full_name, phone, avatar_url, referral_code)
+    VALUES (NEW.id, NEW.email, clean_name, clean_phone, clean_avatar, clean_ref)
+    ON CONFLICT (id) DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        avatar_url = CASE 
+            WHEN profiles.avatar_url IS NULL OR profiles.avatar_url = '' THEN EXCLUDED.avatar_url 
+            ELSE profiles.avatar_url 
+        END,
+        updated_at = NOW();
 
     -- Insert into public.wallets (Single Direct Wallet)
     INSERT INTO public.wallets (
