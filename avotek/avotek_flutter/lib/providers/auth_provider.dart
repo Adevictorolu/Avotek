@@ -65,8 +65,16 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final profile = await SupabaseService.instance.getProfile(authUser.id);
+      final metaPinHash = authUser.userMetadata?['transaction_pin_hash'] as String?;
+
       if (profile != null) {
-        _user = profile;
+        if ((profile.transactionPinHash == null || profile.transactionPinHash!.isEmpty) &&
+            metaPinHash != null &&
+            metaPinHash.isNotEmpty) {
+          _user = profile.copyWith(transactionPinHash: metaPinHash);
+        } else {
+          _user = profile;
+        }
       } else {
         final name = (authUser.userMetadata?['full_name'] as String?) ??
             (authUser.email?.split('@').first as String?) ??
@@ -87,6 +95,7 @@ class AuthProvider extends ChangeNotifier {
           createdAt: DateTime.now(),
           avoId: avoId,
           username: username,
+          transactionPinHash: metaPinHash,
         );
       }
 

@@ -25,83 +25,103 @@ class OnboardingPinDialog extends StatefulWidget {
 }
 
 class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
-  int _currentStep = 0; // 0: Quick Tour, 1: Create PIN
-  final _pinController = TextEditingController();
-  final _confirmPinController = TextEditingController();
+  // 0: Enter PIN (4 digits), 1: Confirm PIN (4 digits)
+  int _step = 0;
+  String _pin = '';
+  String _firstPin = '';
   String? _errorMessage;
   bool _isSubmitting = false;
 
-  @override
-  void dispose() {
-    _pinController.dispose();
-    _confirmPinController.dispose();
-    super.dispose();
+  void _appendDigit(String digit) {
+    if (_isSubmitting) return;
+    if (_pin.length < 4) {
+      setState(() {
+        _pin += digit;
+        _errorMessage = null;
+      });
+
+      if (_pin.length == 4) {
+        _handlePinEntered();
+      }
+    }
   }
 
-  Future<void> _handleSavePin() async {
-    final pin = _pinController.text.trim();
-    final confirmPin = _confirmPinController.text.trim();
-
-    if (pin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(pin)) {
-      setState(() => _errorMessage = 'Transaction PIN must be exactly 4 digits.');
-      return;
+  void _backspace() {
+    if (_isSubmitting) return;
+    if (_pin.isNotEmpty) {
+      setState(() {
+        _pin = _pin.substring(0, _pin.length - 1);
+        _errorMessage = null;
+      });
     }
-    if (pin != confirmPin) {
-      setState(() => _errorMessage = 'The two PIN entries do not match. Please re-enter.');
-      return;
+  }
+
+  void _handlePinEntered() {
+    if (_step == 0) {
+      // Step 0 completed: Save first PIN and proceed to confirmation
+      setState(() {
+        _firstPin = _pin;
+        _pin = '';
+        _step = 1;
+        _errorMessage = null;
+      });
+    } else {
+      // Step 1 completed: Verify match
+      if (_pin == _firstPin) {
+        _submitPin(_pin);
+      } else {
+        setState(() {
+          _errorMessage = 'PINs do not match. Please try again.';
+          _pin = '';
+          _firstPin = '';
+          _step = 0;
+        });
+      }
     }
+  }
 
-    setState(() {
-      _isSubmitting = true;
-      _errorMessage = null;
-    });
-
+  Future<void> _submitPin(String pin) async {
+    setState(() => _isSubmitting = true);
     final auth = context.read<AuthProvider>();
     final success = await auth.setTransactionPin(pin);
 
-    if (mounted) {
-      setState(() => _isSubmitting = false);
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Security PIN successfully set! Your account is now fully active.',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-            ),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        widget.onCompleted();
-      } else {
-        setState(() => _errorMessage = 'Failed to save PIN. Please try again.');
-      }
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (success) {
+      widget.onCompleted();
+    } else {
+      setState(() {
+        _errorMessage = auth.errorMessage ?? 'Failed to save PIN. Try again.';
+        _pin = '';
+        _firstPin = '';
+        _step = 0;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final auth = context.watch<AuthProvider>();
-    final userName = auth.user?.name ?? 'Valued User';
 
     return PopScope(
-      canPop: false, // Must create PIN before accessing account
+      canPop: false,
       child: Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Container(
-          width: 480,
-          padding: const EdgeInsets.all(28),
+          width: 380,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF14171E) : Colors.white,
-            borderRadius: BorderRadius.circular(24),
+            color: isDark ? const Color(0xFF111827) : Colors.white,
+            borderRadius: BorderRadius.circular(28),
             border: Border.all(
               color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.35),
                 blurRadius: 32,
                 offset: const Offset(0, 16),
               ),
@@ -109,225 +129,108 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header with Brand Logo
-              Row(
-                children: [
-                  const AvotekLogo(size: 42, hasFrame: true, borderRadius: 14),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Welcome, $userName!',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _currentStep == 0 ? 'Account Setup & Quick Guide' : 'Set Your 4-Digit Security PIN',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF00D2FF),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              // Subtle Top Brand Icon
+              const Center(
+                child: AvotekBrandAsset(
+                  height: 38,
+                  isDark: true,
+                  hasFrame: true,
+                  borderRadius: 12,
+                ),
               ),
               const SizedBox(height: 20),
-              const Divider(height: 1, color: Color(0xFF26334D)),
-              const SizedBox(height: 20),
 
-              if (_currentStep == 0) ...[
-                // STEP 0: ONBOARDING QUICK GUIDE
-                Text(
-                  'How to use your Avotek Account:',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
+              // Title & Subtitle
+              Text(
+                _step == 0 ? 'Create Transaction PIN' : 'Confirm Your PIN',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
                 ),
-                const SizedBox(height: 14),
-                _buildGuideTile(
-                  icon: Icons.account_balance_wallet_rounded,
-                  iconColor: const Color(0xFF00D2FF),
-                  title: '1. Fund Your Wallet Instantly',
-                  description: 'Transfer directly to your dedicated virtual account number shown on the dashboard. Wallet credits in seconds.',
-                  isDark: isDark,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _step == 0
+                    ? 'Enter a 4-digit security PIN to authorize transactions.'
+                    : 'Re-enter your 4-digit security PIN to confirm.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                 ),
-                const SizedBox(height: 10),
-                _buildGuideTile(
-                  icon: Icons.wifi_rounded,
-                  iconColor: AppColors.primaryCyan,
-                  title: '2. Buy Data & Airtime at Wholesale Rates',
-                  description: 'Select MTN, Glo, Airtel, or 9mobile, choose your plan, and enter your 4-digit PIN for instant top-up.',
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 10),
-                _buildGuideTile(
-                  icon: Icons.chat_bubble_rounded,
-                  iconColor: const Color(0xFF25D366),
-                  title: '3. Buy Directly on WhatsApp',
-                  description: 'Click the green banner to chat with Avotek automated bot on WhatsApp anytime.',
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () => setState(() => _currentStep = 1),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Continue to PIN Creation',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.arrow_forward_rounded, size: 18),
-                    ],
-                  ),
-                ),
-              ] else ...[
-                // STEP 1: CREATE 4-DIGIT PIN
-                Text(
-                  'Create your 4-digit transaction PIN:',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'This PIN protects your wallet and will be required to authorize every transaction.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                  ),
-                ),
-                const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 28),
 
-                // PIN Field
-                Text(
-                  '4-Digit PIN',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: _pinController,
-                  keyboardType: TextInputType.number,
-                  obscureText: true,
-                  maxLength: 4,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 20,
-                    letterSpacing: 8,
-                    fontWeight: FontWeight.w800,
-                  ),
-                  textAlign: TextAlign.center,
-                  decoration: InputDecoration(
-                    counterText: '',
-                    hintText: '••••',
-                    prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF00D2FF)),
-                    filled: true,
-                    fillColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Confirm PIN Field
-                Text(
-                  'Confirm 4-Digit PIN',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: _confirmPinController,
-                  keyboardType: TextInputType.number,
-                  obscureText: true,
-                  maxLength: 4,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 20,
-                    letterSpacing: 8,
-                    fontWeight: FontWeight.w800,
-                  ),
-                  textAlign: TextAlign.center,
-                  decoration: InputDecoration(
-                    counterText: '',
-                    hintText: '••••',
-                    prefixIcon: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF00D2FF)),
-                    filled: true,
-                    fillColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              // 4 PIN Dots Indicator
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(4, (index) {
+                  final isFilled = index < _pin.length;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    margin: const EdgeInsets.symmetric(horizontal: 9),
+                    width: isFilled ? 18 : 16,
+                    height: isFilled ? 18 : 16,
                     decoration: BoxDecoration(
-                      color: AppColors.error.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.error.withOpacity(0.4)),
-                    ),
-                    child: Text(
-                      _errorMessage!,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.error,
+                      shape: BoxShape.circle,
+                      color: isFilled
+                          ? AppColors.primaryCyan
+                          : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                      border: Border.all(
+                        color: isFilled
+                            ? AppColors.primaryCyan
+                            : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                        width: 1.5,
                       ),
+                      boxShadow: isFilled
+                          ? [
+                              BoxShadow(
+                                color: AppColors.primaryCyan.withValues(alpha: 0.5),
+                                blurRadius: 10,
+                                spreadRadius: 1,
+                              ),
+                            ]
+                          : null,
+                    ),
+                  );
+                }),
+              ),
+
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.error,
                     ),
                   ),
-                ],
-
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _isSubmitting ? null : _handleSavePin,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                        )
-                      : Text(
-                          'Save PIN & Access Dashboard',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800),
-                        ),
                 ),
               ],
+
+              const SizedBox(height: 26),
+
+              // Clean Number Keypad
+              if (_isSubmitting)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 36),
+                  child: CircularProgressIndicator(color: AppColors.primaryCyan),
+                )
+              else
+                _buildKeypad(isDark),
             ],
           ),
         ),
@@ -335,60 +238,72 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
     );
   }
 
-  Widget _buildGuideTile({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String description,
-    required bool isDark,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+  Widget _buildKeypad(bool isDark) {
+    const keys = [
+      ['1', '2', '3'],
+      ['4', '5', '6'],
+      ['7', '8', '9'],
+      ['', '0', 'DEL'],
+    ];
+
+    return Column(
+      children: keys.map((row) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: row.map((key) {
+              if (key.isEmpty) {
+                return const SizedBox(width: 72, height: 52);
+              }
+
+              if (key == 'DEL') {
+                return InkWell(
+                  onTap: _backspace,
+                  borderRadius: BorderRadius.circular(16),
+                  child: SizedBox(
+                    width: 72,
+                    height: 52,
+                    child: Center(
+                      child: Icon(
+                        Icons.backspace_outlined,
+                        size: 22,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return InkWell(
+                onTap: () => _appendDigit(key),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  width: 72,
+                  height: 52,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF28354D) : const Color(0xFFE2E8F0),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    key,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                  ),
-                ),
-              ],
-            ),
+              );
+            }).toList(),
           ),
-        ],
-      ),
+        );
+      }).toList(),
     );
   }
 }

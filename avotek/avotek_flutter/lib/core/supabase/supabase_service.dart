@@ -301,13 +301,24 @@ class SupabaseService {
         transactionPinHash: pinHash,
       );
     }
+
+    // 1. Update user metadata on Supabase Auth session so it's instantly retained
+    try {
+      await client.auth.updateUser(
+        UserAttributes(data: {'transaction_pin_hash': pinHash}),
+      );
+    } catch (e) {
+      debugPrint('Notice updating userMetadata for PIN: $e');
+    }
+
+    // 2. Update PostgreSQL profiles table
     try {
       await client.from('profiles').update({
         'transaction_pin_hash': pinHash,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', userId);
     } catch (e) {
-      debugPrint('Notice: Setting transaction PIN in Supabase: $e');
+      debugPrint('Notice: Setting transaction PIN in Supabase table: $e');
     }
   }
 
