@@ -154,9 +154,13 @@ class _PinModalState extends State<PinModal> {
                   shape: BoxShape.circle,
                   color: isFilled
                       ? (isDark ? AppColors.primaryCyan : AppColors.primaryBlue)
-                      : (isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant),
+                      : (isDark
+                            ? AppColors.darkCardVariant
+                            : AppColors.lightCardVariant),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color: isDark
+                        ? AppColors.darkBorder
+                        : AppColors.lightBorder,
                     width: 1.5,
                   ),
                 ),
@@ -224,10 +228,14 @@ class _PinModalState extends State<PinModal> {
                   height: 50,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                    color: isDark
+                        ? AppColors.darkCardVariant
+                        : AppColors.lightCardVariant,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder,
                       width: 1,
                     ),
                   ),

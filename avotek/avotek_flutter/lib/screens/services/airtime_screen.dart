@@ -127,19 +127,6 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     });
 
     try {
-      // 3. Atomically debit wallet in immutable ledger
-      final debited = await auth.debitWallet(_amount, 'Airtime: $_selectedNetwork ($phone)');
-      if (!mounted) return;
-      if (!debited) {
-        setState(() => _isProcessing = false);
-        TopNotification.showError(
-          context,
-          auth.errorMessage ?? 'The wallet could not verify this debit. No transaction was submitted.',
-          title: 'Debit Failed',
-        );
-        return;
-      }
-
       setState(() {
         _processingMessage = 'Confirming your transaction status…';
       });
@@ -150,14 +137,15 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
         network: _selectedNetwork,
         phone: phone,
         amount: _amount,
+        userPin: pin,
       );
 
       if (!mounted) return;
       setState(() => _isProcessing = false);
+      await auth.refreshWallet();
+      if (!mounted) return;
 
       if (!result.success || result.order.status == 'failed') {
-        await auth.refreshWallet();
-        if (!mounted) return;
         TopNotification.showError(
           context,
           result.message,
@@ -169,7 +157,6 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           'Your airtime request is awaiting telecom gateway confirmation.',
           title: 'Transaction Pending',
         );
-        _showSuccessDialog(phone, _amount, 'Transaction is being confirmed by $_selectedNetwork.');
       } else {
         TopNotification.showSuccess(
           context,

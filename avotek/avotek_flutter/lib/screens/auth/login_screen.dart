@@ -1,10 +1,8 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
-import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/wallet_provider.dart';
@@ -30,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Controllers
   final _identifierController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -46,6 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _identifierController.dispose();
+    _usernameController.dispose();
     _fullNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -56,166 +56,79 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleGoogleSignIn() async {
-    final auth = context.read<AuthProvider>();
     setState(() => _isProcessing = true);
-
+    final auth = context.read<AuthProvider>();
     final success = await auth.loginWithGoogle();
     if (!mounted) return;
     setState(() => _isProcessing = false);
-
     if (!success) {
-      _showSnackBar(auth.authError ?? 'Google sign-in could not be started.', AppColors.error);
+      _showSnackBar(
+        auth.errorMessage ?? 'Google sign-in could not be started.',
+        AppColors.error,
+      );
     }
   }
 
-  // --- Real Forgot Password & OTP Reset Dialog ---
   void _showForgotPasswordDialog() {
-    final idCtrl = TextEditingController(text: _identifierController.text.trim());
-
-    bool isSubmitting = false;
-    String? errorMessage;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (dialogCtx, setDialogState) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFF0F172A),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-                side: const BorderSide(color: Color(0xFF23304B), width: 1.5),
-              ),
-              title: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryBlue.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.lock_reset_rounded, color: AppColors.primaryCyan, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Reset Your Password',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              content: SizedBox(
-                width: 440,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (errorMessage != null) ...[
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColors.error.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 18),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  errorMessage!,
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      Text(
-                        'Enter the email address on your account. Supabase will send you a secure password-reset link.',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF94A3B8)),
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: idCtrl,
-                        style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: 'Email address',
-                          hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
-                          prefixIcon: const Icon(Icons.alternate_email_rounded, color: AppColors.primaryCyan),
-                          filled: true,
-                          fillColor: const Color(0xFF131B2E),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF23304B))),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSubmitting
-                      ? null
-                      : () {
-                          Navigator.pop(ctx);
-                          idCtrl.dispose();
-                        },
-                  child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8))),
-                ),
-                ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    onPressed: isSubmitting
-                        ? null
-                        : () async {
-                            final id = idCtrl.text.trim();
-                            if (!id.contains('@')) {
-                              setDialogState(() => errorMessage = 'Please enter a valid email address.');
-                              return;
-                            }
-                            setDialogState(() {
-                              isSubmitting = true;
-                              errorMessage = null;
-                            });
-
-                            final auth = context.read<AuthProvider>();
-                            final sent = await auth.sendPasswordResetEmail(id);
-                            if (!ctx.mounted) return;
-                            if (sent) {
-                              Navigator.pop(ctx);
-                              idCtrl.dispose();
-                              if (mounted) {
-                                _showSnackBar('Password reset link sent. Check your email.', const Color(0xFF10B981));
-                              }
-                            } else {
-                              setDialogState(() {
-                                isSubmitting = false;
-                                errorMessage = auth.errorMessage ?? 'Unable to send the password reset link.';
-                              });
-                            }
-                          },
-                    child: isSubmitting
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text('Send Reset Link', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
-                  ),
-              ],
-            );
-          },
-        );
-      },
+    final emailController = TextEditingController(
+      text: _identifierController.text.contains('@')
+          ? _identifierController.text.trim()
+          : '',
     );
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF111827),
+        title: Text(
+          'Reset your password',
+          style: GoogleFonts.plusJakartaSans(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        content: TextField(
+          controller: emailController,
+          keyboardType: TextInputType.emailAddress,
+          style: GoogleFonts.plusJakartaSans(color: Colors.white),
+          decoration: const InputDecoration(
+            labelText: 'Email address',
+            labelStyle: TextStyle(color: Color(0xFFCBD5E1)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final email = emailController.text.trim();
+              if (email.isEmpty || !email.contains('@')) {
+                _showSnackBar('Enter a valid email address.', AppColors.error);
+                return;
+              }
+              final auth = context.read<AuthProvider>();
+              final sent = await auth.sendPasswordResetEmail(email);
+              if (!mounted || !dialogContext.mounted) return;
+              if (sent) {
+                Navigator.pop(dialogContext);
+                _showSnackBar(
+                  'Password reset link sent. Check your email.',
+                  AppColors.success,
+                );
+              } else {
+                _showSnackBar(
+                  auth.errorMessage ??
+                      'Could not send the password reset link.',
+                  AppColors.error,
+                );
+              }
+            },
+            child: const Text('Send link'),
+          ),
+        ],
+      ),
+    ).whenComplete(emailController.dispose);
   }
 
   // --- Real Sign-in Action ---
@@ -224,7 +137,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text.trim();
 
     if (identifier.isEmpty || password.isEmpty) {
-      _showSnackBar('Please enter your Avotek ID, phone, or email, and your password.', AppColors.error);
+      _showSnackBar(
+        'Please enter your Avotek ID, phone, or email, and your password.',
+        AppColors.error,
+      );
       return;
     }
 
@@ -250,21 +166,32 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       context.go('/dashboard');
     } else {
-      _showSnackBar(auth.authError ?? 'Invalid credentials. Please verify your Avotek ID or password.', AppColors.error);
+      _showSnackBar(
+        auth.authError ??
+            'Invalid credentials. Please verify your Avotek ID or password.',
+        AppColors.error,
+      );
     }
   }
 
   // --- Direct Instant Registration (No Phone OTP Friction) ---
   Future<void> _handleSignUp() async {
     final fullName = _fullNameController.text.trim();
+    final username = _usernameController.text.trim();
     final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
     final referral = _referralController.text.trim();
 
-    if (fullName.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty) {
-      _showSnackBar('Please fill in your full name, phone number, email, and password.', AppColors.error);
+    if (fullName.isEmpty ||
+        email.isEmpty ||
+        phone.isEmpty ||
+        password.isEmpty) {
+      _showSnackBar(
+        'Please fill in your full name, phone number, email, and password.',
+        AppColors.error,
+      );
       return;
     }
 
@@ -274,7 +201,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (password != confirmPassword) {
-      _showSnackBar('Passwords do not match. Please re-enter.', AppColors.error);
+      _showSnackBar(
+        'Passwords do not match. Please re-enter.',
+        AppColors.error,
+      );
       return;
     }
 
@@ -288,6 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
         phone: phone,
         password: password,
         referralCode: referral.isNotEmpty ? referral : null,
+        username: username.isEmpty ? null : username,
       );
 
       if (!mounted) return;
@@ -295,9 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (success) {
         final newUser = auth.user;
-        final avotekId = (newUser != null && newUser.avoId.isNotEmpty)
-            ? newUser.avoId
-            : UserModel.avoIdFor(newUser?.id ?? '');
+        final avotekId = newUser?.avoId ?? '';
 
         // Show registration celebration dialog with permanent Avotek ID
         await showDialog(
@@ -318,7 +247,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: const Color(0xFF10B981).withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 48),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    color: Color(0xFF10B981),
+                    size: 48,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 Text(
@@ -333,15 +266,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Your permanent system identification number is:',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.5,
+                    color: const Color(0xFF94A3B8),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF131B2E),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.primaryCyan, width: 1.5),
+                    border: Border.all(
+                      color: AppColors.primaryCyan,
+                      width: 1.5,
+                    ),
                   ),
                   child: Text(
                     avotekId,
@@ -357,7 +299,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'You can use this Avotek ID ($avotekId), your username, or your email to sign in anytime.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white70, height: 1.4),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: Colors.white70,
+                    height: 1.4,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -367,14 +313,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: () {
                       Navigator.pop(welcomeCtx);
                     },
                     child: Text(
                       'Enter Dashboard',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ),
@@ -395,7 +346,11 @@ class _LoginScreenState extends State<LoginScreen> {
         }
         context.go('/dashboard');
       } else {
-        _showSnackBar(auth.errorMessage ?? 'Registration failed. Email or phone may already exist.', AppColors.error);
+        _showSnackBar(
+          auth.errorMessage ??
+              'Account creation did not complete. Please try again.',
+          AppColors.error,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -524,8 +479,6 @@ class _LoginScreenState extends State<LoginScreen> {
         const AvotekBrandAsset(
           height: 52,
           isDark: true,
-          hasFrame: true,
-          borderRadius: 16,
         ),
         const SizedBox(height: 44),
 
@@ -580,24 +533,48 @@ class _LoginScreenState extends State<LoginScreen> {
                 left: 0,
                 top: 36,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF131B2E),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFF23304B)),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 16),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        blurRadius: 16,
+                      ),
                     ],
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.wifi_rounded, color: AppColors.primaryCyan, size: 20),
+                      const Icon(
+                        Icons.wifi_rounded,
+                        color: AppColors.primaryCyan,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Instant SME Data', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
-                          Text('1GB at ₦245 • 30 Days', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primaryCyan)),
+                          Text(
+                            'Instant SME Data',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            '1GB at ₦245 • 30 Days',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryCyan,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -620,13 +597,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 right: 0,
                 bottom: 24,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF131B2E),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFF23304B)),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 16),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        blurRadius: 16,
+                      ),
                     ],
                   ),
                   child: Row(
@@ -634,17 +617,37 @@ class _LoginScreenState extends State<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                          color: const Color(
+                            0xFF10B981,
+                          ).withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF10B981), size: 16),
+                        child: const Icon(
+                          Icons.account_balance_wallet_rounded,
+                          color: Color(0xFF10B981),
+                          size: 16,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('+₦50,000 Credit', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
-                          Text('Wallet activity preview', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF10B981))),
+                          Text(
+                            '+₦50,000 Credit',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            'PalmPay 8167002789',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF10B981),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -658,7 +661,10 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildMiniPhoneMockup({required double scale, required bool isSelected}) {
+  Widget _buildMiniPhoneMockup({
+    required double scale,
+    required bool isSelected,
+  }) {
     return Transform.scale(
       scale: scale,
       child: Container(
@@ -673,7 +679,9 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? AppColors.primaryBlue.withValues(alpha: 0.25) : Colors.black.withValues(alpha: 0.4),
+              color: isSelected
+                  ? AppColors.primaryBlue.withValues(alpha: 0.25)
+                  : Colors.black.withValues(alpha: 0.4),
               blurRadius: 18,
             ),
           ],
@@ -687,7 +695,10 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Container(
                 width: 28,
                 height: 3,
-                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -696,7 +707,14 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 CircleAvatar(radius: 8, backgroundColor: AppColors.primaryBlue),
                 const SizedBox(width: 6),
-                Container(width: 40, height: 6, decoration: BoxDecoration(color: Colors.white38, borderRadius: BorderRadius.circular(3))),
+                Container(
+                  width: 40,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: Colors.white38,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -711,9 +729,23 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(width: 30, height: 4, decoration: BoxDecoration(color: Colors.white30, borderRadius: BorderRadius.circular(2))),
+                  Container(
+                    width: 30,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white30,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text('₦248,500', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.primaryCyan)),
+                  Text(
+                    '₦248,500',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primaryCyan,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -731,7 +763,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    i == 0 ? Icons.phone_android : (i == 1 ? Icons.wifi : Icons.tv),
+                    i == 0
+                        ? Icons.phone_android
+                        : (i == 1 ? Icons.wifi : Icons.tv),
                     size: 11,
                     color: AppColors.primaryCyan,
                   ),
@@ -751,8 +785,6 @@ class _LoginScreenState extends State<LoginScreen> {
         const AvotekBrandAsset(
           height: 48,
           isDark: true,
-          hasFrame: true,
-          borderRadius: 14,
         ),
         const SizedBox(height: 14),
         Text(
@@ -787,19 +819,6 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Logo Row with authentic framed branding inside card
-          Row(
-            children: const [
-              AvotekBrandAsset(
-                height: 44,
-                isDark: true,
-                hasFrame: true,
-                borderRadius: 14,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
           // Main Header
           Text(
             _isSignUp ? 'Create your account' : 'Sign in to Avotek',
@@ -832,6 +851,12 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 14),
             _buildInputField(
+              controller: _usernameController,
+              hint: 'Username (optional)',
+              icon: Icons.alternate_email_rounded,
+            ),
+            const SizedBox(height: 14),
+            _buildInputField(
               controller: _phoneController,
               hint: 'Phone Number / WhatsApp (e.g. 08034119920)',
               icon: Icons.phone_android_rounded,
@@ -851,8 +876,15 @@ class _LoginScreenState extends State<LoginScreen> {
               icon: Icons.lock_outline_rounded,
               obscureText: _obscurePassword,
               suffixWidget: IconButton(
-                icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: const Color(0xFF64748B)),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  size: 18,
+                  color: const Color(0xFF64748B),
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
             ),
             const SizedBox(height: 14),
@@ -862,8 +894,16 @@ class _LoginScreenState extends State<LoginScreen> {
               icon: Icons.lock_outline_rounded,
               obscureText: _obscureConfirmPassword,
               suffixWidget: IconButton(
-                icon: Icon(_obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: const Color(0xFF64748B)),
-                onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                icon: Icon(
+                  _obscureConfirmPassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  size: 18,
+                  color: const Color(0xFF64748B),
+                ),
+                onPressed: () => setState(
+                  () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -886,11 +926,14 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: _obscurePassword,
               suffixWidget: IconButton(
                 icon: Icon(
-                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  _obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                   size: 18,
                   color: const Color(0xFF64748B),
                 ),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
             ),
             const SizedBox(height: 14),
@@ -908,14 +951,22 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 18,
                         height: 18,
                         decoration: BoxDecoration(
-                          color: _rememberMe ? AppColors.primaryBlue : Colors.transparent,
+                          color: _rememberMe
+                              ? AppColors.primaryBlue
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(5),
                           border: Border.all(
-                            color: _rememberMe ? AppColors.primaryBlue : const Color(0xFF475569),
+                            color: _rememberMe
+                                ? AppColors.primaryBlue
+                                : const Color(0xFF475569),
                           ),
                         ),
                         child: _rememberMe
-                            ? const Icon(Icons.check, size: 13, color: Colors.white)
+                            ? const Icon(
+                                Icons.check,
+                                size: 13,
+                                color: Colors.white,
+                              )
                             : null,
                       ),
                       const SizedBox(width: 8),
@@ -950,19 +1001,26 @@ class _LoginScreenState extends State<LoginScreen> {
           SizedBox(
             height: 50,
             child: ElevatedButton(
-              onPressed: _isProcessing ? null : (_isSignUp ? _handleSignUp : _handleSignIn),
+              onPressed: _isProcessing
+                  ? null
+                  : (_isSignUp ? _handleSignUp : _handleSignIn),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBlue,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 shadowColor: AppColors.primaryBlue.withValues(alpha: 0.4),
               ),
               child: _isProcessing
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.2,
+                      ),
                     )
                   : Text(
                       _isSignUp ? 'Create Account' : 'Sign In',
@@ -979,7 +1037,9 @@ class _LoginScreenState extends State<LoginScreen> {
           // "or continue with" divider
           Row(
             children: [
-              const Expanded(child: Divider(color: Color(0xFF23304B), height: 1)),
+              const Expanded(
+                child: Divider(color: Color(0xFF23304B), height: 1),
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Text(
@@ -991,7 +1051,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-              const Expanded(child: Divider(color: Color(0xFF23304B), height: 1)),
+              const Expanded(
+                child: Divider(color: Color(0xFF23304B), height: 1),
+              ),
             ],
           ),
           const SizedBox(height: 18),
@@ -1014,7 +1076,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.black,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
           ),
@@ -1025,7 +1089,9 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                _isSignUp ? 'Already have an account? ' : "Don't have an account? ",
+                _isSignUp
+                    ? 'Already have an account? '
+                    : "Don't have an account? ",
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -1060,7 +1126,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF202B3D)
+            : const Color(0xFFE2E8F0),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFF23304B), width: 1.2),
       ),
@@ -1071,25 +1139,74 @@ class _LoginScreenState extends State<LoginScreen> {
         style: GoogleFonts.plusJakartaSans(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : const Color(0xFF0F172A),
         ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF64748B),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFB6C2D2)
+                : const Color(0xFF64748B),
           ),
-          prefixIcon: icon != null ? Icon(icon, size: 20, color: AppColors.primaryCyan) : null,
+          prefixIcon: icon != null
+              ? Icon(icon, size: 20, color: AppColors.primaryCyan)
+              : null,
           suffixIcon: suffixWidget,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
       ),
     );
   }
 
   Widget _buildGoogleIcon({double size = 20}) {
-    return Image.asset('assets/images/google_g_logo.png', width: size, height: size, semanticLabel: 'Google');
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _GoogleIconPainter(),
+      ),
+    );
   }
+}
+
+class _GoogleIconPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    final redPaint = Paint()..color = const Color(0xFFEA4335);
+    final bluePaint = Paint()..color = const Color(0xFF4285F4);
+    final yellowPaint = Paint()..color = const Color(0xFFFBBC05);
+    final greenPaint = Paint()..color = const Color(0xFF34A853);
+
+    final center = Offset(w / 2, h / 2);
+    final radius = w / 2;
+
+    // Draw Google 4-color Arc
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    canvas.drawArc(rect, -0.78, 1.57, true, bluePaint);
+    canvas.drawArc(rect, 0.79, 1.57, true, greenPaint);
+    canvas.drawArc(rect, 2.36, 1.57, true, yellowPaint);
+    canvas.drawArc(rect, 3.93, 1.57, true, redPaint);
+
+    // Inner Cutout
+    final innerPaint = Paint()..color = Colors.white;
+    canvas.drawCircle(center, radius * 0.55, innerPaint);
+
+    // Right horizontal bar
+    final barRect = Rect.fromLTRB(w * 0.45, h * 0.4, w * 0.95, h * 0.6);
+    canvas.drawRect(barRect, bluePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

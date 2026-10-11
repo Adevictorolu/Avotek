@@ -1,0 +1,5 @@
+[functions.identifier-login]
+verify_jwt = false
+
+[functions.bigisub]
+verify_jwt = false

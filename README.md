@@ -8,7 +8,7 @@ AVOTEK (`A V O T E K`) is an end-to-end Virtual Top-Up (VTU) and academic utilit
 ## 🎨 Visual Identity & Brand System
 
 Derived from the official AVOTEK visual identity:
-- **Primary Color:** Electric Cyan (`#00A3FF`) & Deep Electric Blue (`#0084D6`)
+- **Primary Color:** Sky Blue (`#0EA5E9`) & Royal Blue (`#2563EB`)
 - **Accent / Metallic Details:** Tech Slate (`#64748B`) & Circuit Silver (`#94A3B8`)
 - **Dark Theme:** Deep Obsidian (`#0A0E17`), Midnight Card (`#111827`), Subtle Border (`#26334D`)
 - **Light Theme:** Slate Pearl (`#F8FAFC`), Pure White (`#FFFFFF`), Border (`#E2E8F0`)

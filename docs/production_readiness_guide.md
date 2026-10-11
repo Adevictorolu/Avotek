@@ -7,31 +7,31 @@ This comprehensive guide details the exact steps required to take the **AVOTEK V
 ## Table of Contents
 1. [Overview & Architectural Topography](#1-overview--architectural-topography)
 2. [Paystack Live Setup (Dedicated NUBAN & Webhooks)](#2-paystack-live-setup-dedicated-nuban--webhooks)
-3. [VTU Aggregator Setup & Float Funding (VTpass & ClubKonnect)](#3-vtu-aggregator-setup--float-funding-vtpass--clubkonnect)
+3. [Bigisub VTU Setup & Float Funding](#3-bigisub-vtu-setup--float-funding)
 4. [WhatsApp Cloud API & Termii SMS Setup](#4-whatsapp-cloud-api--termii-sms-setup)
 5. [CAC Business Registration Operations](#5-cac-business-registration-operations)
 6. [Dynamic Catalog & Pricing Margins](#6-dynamic-catalog--pricing-margins)
 7. [Super Admin Security & Gateway Access](#7-super-admin-security--gateway-access)
 8. [Serverpod Backend & Docker Production Deployment](#8-serverpod-backend--docker-production-deployment)
 9. [Pre-Launch Verification Checklist](#9-pre-launch-verification-checklist)
+10. [Supabase Authentication Setup](#10-supabase-authentication-setup)
 
 ---
 
 ## 1. Overview & Architectural Topography
 
 AVOTEK runs on a high-throughput architecture consisting of:
-- **Client Frontend**: Flutter cross-platform client (Web, Android, iOS) with Montserrat typography, light/dark themes, zero-distortion brand assets, and discreet admin routing.
+- **Client Frontend**: Flutter cross-platform client (Web, Android, iOS) with Plus Jakarta Sans typography, light/dark themes, zero-distortion brand assets, and discreet admin routing.
 - **Serverpod Backend**: Dart-native backend running on ports `8080` (API), `8081` (Insights), and `8082` (Webhooks).
 - **Database & Cache**: PostgreSQL (with JSONB service catalogs) and Redis for rate-limiting and session management.
-- **Upstream Aggregators**: Paystack (payments/virtual accounts), VTpass & ClubKonnect (data, airtime, cable, electricity), Meta WhatsApp Cloud API & Termii (notifications).
+- **Upstream Aggregators**: Paystack (payments/virtual accounts), Bigisub (airtime, data, cable and electricity), Meta WhatsApp Cloud API & Termii (notifications).
 
 ```mermaid
 graph TD
     Client[Flutter Client - Web/Mobile] -->|REST / WebSockets| Serverpod[Serverpod API Port 8080]
     Paystack[Paystack Webhooks] -->|POST /webhook/paystack| WebhookServer[Webhook Port 8082]
     WebhookServer -->|Credit Wallet & Notify| DB[(PostgreSQL)]
-    Serverpod -->|Airtime/Data Dispatch| VTpass[VTpass Live API]
-    Serverpod -->|Failover / Reseller API| ClubKonnect[ClubKonnect Live API]
+    Serverpod -->|Authenticated server proxy| Bigisub[Bigisub API]
     Serverpod -->|Transaction Alerts| WhatsApp[WhatsApp Cloud API]
     Serverpod -->|OTP / SMS Alerts| Termii[Termii SMS Gateway]
 ```
@@ -66,39 +66,22 @@ AVOTEK provides automated wallet funding by assigning each registered customer a
 
 ---
 
-## 3. VTU Aggregator Setup & Float Funding (VTpass & ClubKonnect)
+## 3. Bigisub VTU Setup & Float Funding
 
-VTU operations require maintaining a funded pre-paid balance (**Float Balance**) with upstream aggregators. AVOTEK supports dual-redundancy with automatic failover between **VTpass** and **ClubKonnect**.
+The Flutter client calls the authenticated `bigisub` Supabase Edge Function. That server-side function proxies requests to `https://api.bigisub.ng`; the Bigisub token and transaction PIN must never be included in Flutter, browser storage, client settings, logs, or source control.
 
-### 3.1 VTpass Integration & Funding
-1. Register an enterprise partner account on [VTpass](https://www.vtpass.com).
-2. Complete developer onboarding and obtain:
-   - **API Key**
-   - **Public Key**
-   - **Secret Key**
-3. Fund your VTpass Wallet:
-   - Log in to the VTpass partner dashboard.
-   - Click **Fund Wallet** and transfer funds to your assigned dedicated Wema/Providus account.
-   - Recommended initial float: **₦100,000 – ₦500,000**.
-4. Supported Services on VTpass:
-   - Airtime: MTN, Airtel, Glo, 9mobile.
-   - Data bundles: SME, Corporate Gifting, Direct CG.
-   - Electricity: IKEDC, EKEDC, AEDC, IBEDC, PHED, etc.
-   - Cable TV: DStv, GOtv, StarTimes.
+### 3.1 Configure Bigisub
+1. Sign in to the Bigisub dashboard and verify the API token. **Rotate any token previously pasted into chat, committed, or displayed in the app settings before going live.**
+2. Fund the Bigisub reseller/corporate float and confirm service access for airtime, data, cable, and electricity.
+3. Deploy the `bigisub` Supabase Edge Function and set secrets without putting their values in application source:
+   ```powershell
+   supabase secrets set BIGISUB_API_TOKEN=<rotated-token> BIGISUB_TRANSACTION_PIN=<provider-transaction-pin>
+   supabase functions deploy bigisub
+   ```
+4. Apply `avotek/supabase_schema.sql`; it adds authenticated RPCs that reserve a customer wallet debit before dispatch and refund a confirmed failure.
+5. Exercise each service with a provider-approved low-value/test transaction, verify its Bigisub reference and final status, and confirm the wallet/ledger result before enabling customers.
 
-### 3.2 ClubKonnect Integration & Funding
-1. Register on [ClubKonnect](https://www.clubkonnect.com).
-2. Retrieve your **UserID** and **API Key** from Developer Tools.
-3. Fund your ClubKonnect Wallet via Monnify, bank transfer, or card.
-4. ClubKonnect serves as the primary or failover provider for discounted MTN SME data and bulk airtime discounts.
-
-### 3.3 Failover & Resilience Strategy
-AVOTEK automatically executes the following logic during transactions:
-1. Attempt primary provider (e.g., VTpass).
-2. If the provider returns `503 Service Unavailable`, `Timeout`, or `Insufficient Balance`:
-   - System logs the provider incident.
-   - Instantly falls back to ClubKonnect without interrupting the user.
-3. If both fail, transaction status is marked `FAILED` and user's wallet is immediately refunded.
+The documented API overview identifies the API base URL, `Authorization: Token …` authentication, and services. Detailed endpoint schemas and webhook signing/retry rules were not available from the public page during implementation. The function uses the endpoint paths already present in the former Avotek Bigisub adapter; confirm those routes, request fields, provider status values, and result shapes with Bigisub before production use. Do not configure an unverified webhook endpoint: obtain Bigisub's signing and event contract, then implement signature verification and idempotent processing before accepting callbacks. Until then, reconcile pending purchases using provider status queries and manual/provider dashboard review.
 
 ---
 
@@ -259,7 +242,7 @@ webhook.yourdomain.com {
 
 ## 9. Pre-Launch Verification Checklist
 
-- [ ] **Paystack Webhook Tested**: Successful ping test on port 8082 with live signature.
+- [x] **Paystack Webhook Tested**: Successful ping test on port 8082 with live signature.
 - [ ] **Dedicated NUBAN Generation**: Created test customer DVA and verified auto-credit.
 - [ ] **Float Wallet Funded**: VTpass and ClubKonnect balance verified in Admin Overview.
 - [ ] **Airtime & SME Data Test**: Dispatched live ₦100 airtime and 500MB SME data test.
@@ -268,3 +251,23 @@ webhook.yourdomain.com {
 - [ ] **CAC Order Flow**: Executed test CAC Business Name application and status update.
 - [ ] **Admin Discrete Access**: Verified `/admin` is inaccessible to unauthenticated users.
 - [ ] **Brand Fidelity**: Confirmed original AVOTEK logo renders cleanly on dark and light themes without AI alteration.
+
+## 10. Supabase Authentication Setup
+
+### Google sign-in
+1. In Google Cloud Console, create an OAuth web client and add the Supabase Auth callback URL shown in **Supabase Dashboard > Authentication > Providers > Google** as an authorized redirect URI.
+2. Enable Google in Supabase's Google provider settings and enter the client ID and client secret there. Keep the secret out of the Flutter app and repository.
+3. Set the production website as the Supabase Auth **Site URL** and add `https://<your-production-domain>/login` and `https://<your-production-domain>/reset-password` to **Redirect URLs**.
+4. The mobile app registers the `io.supabase.avotek` URL scheme for OAuth callbacks. Add this scheme to the Supabase redirect allow-list and test a Google sign-in on each target platform.
+
+### Avotek ID, username, and phone sign-in
+1. Apply `avotek/supabase_schema.sql` so profiles have unique `avo_id` and `username` values and new Supabase Auth users receive a profile row.
+2. Deploy the identifier sign-in function from the `avotek` directory with `supabase functions deploy identifier-login`. The function uses Supabase's `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` server-side environment variables.
+3. The function looks up identifiers with the service role but returns only an authenticated session after Supabase verifies the password. Never move the service-role key into the Flutter app.
+
+### Password recovery
+1. Add `https://<your-production-domain>/reset-password` to Supabase Auth **Redirect URLs** for web deployments.
+2. For Android and iOS, allow the `io.supabase.avotek` redirect scheme and confirm the installed build opens the reset screen from a recovery email.
+3. Use Supabase's password-recovery email template and send a test email end-to-end before launch.
+
+Email/password signup may require the user to confirm their email, depending on the Supabase Auth setting. The app intentionally does not create a signed-in local session until Supabase returns an authenticated session.

@@ -207,8 +207,8 @@ class ServiceBrandLogo extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: size * 0.44,
-              height: size * 0.44,
+              width: size * 0.38,
+              height: size * 0.38,
               decoration: const BoxDecoration(
                 color: Color(0xFF8DC63F),
                 shape: BoxShape.circle,
@@ -219,9 +219,19 @@ class ServiceBrandLogo extends StatelessWidget {
                   style: GoogleFonts.rubik(
                     color: Colors.black,
                     fontWeight: FontWeight.w900,
-                    fontSize: size * 0.32,
+                    fontSize: size * 0.28,
                   ),
                 ),
+              ),
+            ),
+            SizedBox(width: size * 0.04),
+            Text(
+              '9mobile',
+              style: GoogleFonts.rubik(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: size * 0.17,
+                letterSpacing: -0.5,
               ),
             ),
           ],

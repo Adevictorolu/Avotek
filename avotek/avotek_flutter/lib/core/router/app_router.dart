@@ -4,12 +4,12 @@ import '../database/app_database.dart';
 import '../supabase/supabase_service.dart';
 import '../../screens/affiliate/affiliate_screen.dart';
 import '../../screens/auth/login_screen.dart';
-import '../../screens/auth/update_password_screen.dart';
 import '../../screens/coupons/coupons_screen.dart';
 import '../../screens/gifts/gifts_screen.dart';
 import '../../screens/home/dashboard_screen.dart';
 import '../../screens/landing/landing_screen.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
+import '../../screens/auth/password_recovery_screen.dart';
 import '../../screens/profile/profile_screen.dart';
 import '../../screens/rates/pricing_screen.dart';
 import '../../screens/services/airtime_screen.dart';
@@ -24,12 +24,12 @@ import '../../screens/wallet/wallet_screen.dart';
 import '../../widgets/avotek_page_transition.dart';
 
 class AppRouter {
-  static GoRouter createRouter({VoidCallback? onToggleTheme, Listenable? authChanges}) {
+  static GoRouter createRouter({VoidCallback? onToggleTheme}) {
     final themeToggle = onToggleTheme ?? () {};
-    final bool hasSeenOnboarding = AppDatabaseService.instance.hasSeenOnboarding();
+    final bool hasSeenOnboarding = AppDatabaseService.instance
+        .hasSeenOnboarding();
 
     return GoRouter(
-      refreshListenable: authChanges,
       initialLocation: (kIsWeb || hasSeenOnboarding) ? '/' : '/onboarding',
       redirect: (context, state) {
         final path = state.matchedLocation;
@@ -38,7 +38,6 @@ class AppRouter {
         // Protected routes that unconditionally require authentication
         const protectedRoutes = [
           '/dashboard',
-          '/update-password',
           '/wallet',
           '/services',
           '/transactions',
@@ -51,13 +50,15 @@ class AppRouter {
           '/stats',
         ];
 
-        final isProtected = protectedRoutes.any((r) => path == r || path.startsWith('$r/'));
+        final isProtected = protectedRoutes.any(
+          (r) => path == r || path.startsWith('$r/'),
+        );
 
         if (isProtected && !hasSession) {
           return '/login';
         }
 
-        if (hasSession && (path == '/' || path == '/login' || path == '/register')) {
+        if (hasSession && (path == '/login' || path == '/register')) {
           return '/dashboard';
         }
 
@@ -150,12 +151,19 @@ class AppRouter {
           ),
         ),
         GoRoute(
-          path: '/update-password',
+          path: '/reset-password',
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,
             state,
-            const UpdatePasswordScreen(),
+            const PasswordRecoveryScreen(),
           ),
+        ),
+        GoRoute(
+          path: '/login-callback',
+          redirect: (context, state) =>
+              SupabaseService.instance.currentAuthUser != null
+              ? '/dashboard'
+              : '/login',
         ),
         GoRoute(
           path: '/dashboard',

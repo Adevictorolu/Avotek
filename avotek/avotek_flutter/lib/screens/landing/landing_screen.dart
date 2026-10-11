@@ -138,6 +138,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 backgroundColor: const Color(0xFF0D0F15).withOpacity(0.96),
                 titleSpacing: isDesktop ? 48 : 16,
                 title: Row(
+                  mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
                   children: [
                     // Brand Logo + Name
                     InkWell(
@@ -145,8 +146,6 @@ class _LandingScreenState extends State<LandingScreen> {
                       child: const AvotekBrandAsset(
                         height: 42,
                         isDark: true,
-                        hasFrame: true,
-                        borderRadius: 12,
                       ),
                     ),
                     if (isDesktop) ...[
@@ -256,8 +255,6 @@ class _LandingScreenState extends State<LandingScreen> {
                   AvotekBrandAsset(
                     height: 40,
                     isDark: true,
-                    hasFrame: true,
-                    borderRadius: 12,
                   ),
                 ],
               ),
@@ -1728,8 +1725,6 @@ class _LandingScreenState extends State<LandingScreen> {
                               AvotekBrandAsset(
                                 height: 40,
                                 isDark: true,
-                                hasFrame: true,
-                                borderRadius: 12,
                               ),
                             ],
                           ),
@@ -1781,8 +1776,6 @@ class _LandingScreenState extends State<LandingScreen> {
                         AvotekBrandAsset(
                           height: 38,
                           isDark: true,
-                          hasFrame: true,
-                          borderRadius: 12,
                         ),
                       ],
                     ),

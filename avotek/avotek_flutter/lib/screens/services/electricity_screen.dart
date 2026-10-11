@@ -90,6 +90,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
       TopNotification.showWarning(context, 'Minimum electricity purchase is ₦500');
       return;
     }
+    if (_verifiedCustomerName == null) {
+      TopNotification.showWarning(context, 'Verify this meter before purchasing.');
+      return;
+    }
 
     final auth = context.read<AuthProvider>();
     final wallet = context.read<WalletProvider>();
@@ -104,30 +108,20 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     }
 
     // 4-digit PIN confirmation
+    String? transactionPin;
     final confirmed = await PinModal.show(
       context,
       title: 'Confirm Electricity Purchase',
       amount: amount,
       description: '${_discos[_selectedDisco] ?? _selectedDisco} • $meter\nCustomer: ${_verifiedCustomerName ?? "Customer"}',
-      onPinSubmit: (pin) => auth.verifyPin(pin),
+      onPinSubmit: (pin) async {
+        transactionPin = pin;
+        return auth.verifyPin(pin);
+      },
     );
 
     if (confirmed == true && mounted) {
       try {
-        final debited = await auth.debitWallet(
-          amount,
-          'Electricity: $_selectedDisco ($meter)',
-        );
-        if (!mounted) return;
-        if (!debited) {
-          TopNotification.showError(
-            context,
-            auth.errorMessage ?? 'The wallet could not verify this debit. No transaction was submitted.',
-            title: 'Debit Failed',
-          );
-          return;
-        }
-
         final result = await vtu.payElectricity(
           userId: auth.user!.id,
           disco: _selectedDisco,
@@ -136,36 +130,26 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
           amount: amount,
           customerName: _verifiedCustomerName,
           phone: (auth.user?.phone != null && auth.user!.phone.isNotEmpty) ? auth.user!.phone : '08000000000',
+          userPin: transactionPin,
         );
+
+        await auth.refreshWallet();
+        await wallet.fetchWallet(auth.user!.id);
 
         if (!mounted) return;
         if (!result.success || result.order.status == 'failed') {
           TopNotification.showError(context, result.message, title: 'Payment Failed');
           return;
         }
-
-        await wallet.fetchWallet(auth.user!.id);
-
-        if (!mounted) return;
         if (result.order.status == 'pending') {
-          TopNotification.showWarning(
-            context,
-            'Your payment is awaiting provider confirmation; the token will appear when available.',
-            title: 'Payment Pending',
-          );
+          TopNotification.showWarning(context, result.message, title: 'Payment Pending');
           return;
         }
-
-        final token = result.token?.trim() ?? '';
-        if (token.isEmpty) {
-          TopNotification.showWarning(
-            context,
-            result.message,
-            title: 'Token Not Returned',
-          );
+        final token = result.token;
+        if (token == null || token.isEmpty) {
+          TopNotification.showWarning(context, result.message, title: 'Payment Completed');
           return;
         }
-
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -248,7 +232,13 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                   return DropdownMenuItem(value: e.key, child: Text(e.value, style: const TextStyle(fontSize: 13)));
                 }).toList(),
                 onChanged: (val) {
-                  if (val != null) setState(() => _selectedDisco = val);
+                  if (val != null) {
+                    setState(() {
+                      _selectedDisco = val;
+                      _verifiedCustomerName = null;
+                      _verificationDetails = null;
+                    });
+                  }
                 },
               ),
               const SizedBox(height: 14),
@@ -265,6 +255,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                         setState(() {
                           _selectedMeterType = set.first;
                           _verifiedCustomerName = null;
+                          _verificationDetails = null;
                         });
                       },
                     ),
@@ -275,6 +266,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
               TextField(
                 controller: _meterController,
                 keyboardType: TextInputType.number,
+                onChanged: (_) => setState(() {
+                  _verifiedCustomerName = null;
+                  _verificationDetails = null;
+                }),
                 decoration: InputDecoration(
                   labelText: 'Meter Number',
                   hintText: 'e.g. 01423456789',

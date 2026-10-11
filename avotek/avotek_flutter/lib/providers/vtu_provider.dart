@@ -3,25 +3,6 @@ import '../core/services/vtu_api_service.dart';
 import '../core/supabase/supabase_service.dart';
 import '../models/vtu_models.dart';
 
-String _providerOrderStatus(dynamic status) {
-  switch (status?.toString().toLowerCase()) {
-    case 'pending':
-    case 'processing':
-    case 'queued':
-      return 'pending';
-    case 'successful':
-    case 'success':
-    case 'completed':
-      return 'successful';
-    case 'failed':
-    case 'failure':
-    case 'error':
-    case 'rejected':
-    default:
-      return 'failed';
-  }
-}
-
 class VtuProvider extends ChangeNotifier {
   List<ServiceCatalog> _catalog = [];
   final List<Beneficiary> _beneficiaries = [];
@@ -278,6 +259,87 @@ class VtuProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<OrderResult> _purchase({
+    required dynamic userId,
+    required String serviceType,
+    required String network,
+    required String recipient,
+    required String plan,
+    required double amount,
+    required Future<Map<String, dynamic>> Function() dispatch,
+  }) async {
+    _isLoading = true;
+    _lastError = null;
+    notifyListeners();
+
+    var status = 'failed';
+    var message = 'The purchase could not be completed.';
+    String? providerReference;
+    String? token;
+    String? units;
+    try {
+      final response = await dispatch();
+      final data = response['data'] is Map<String, dynamic>
+          ? response['data'] as Map<String, dynamic>
+          : <String, dynamic>{};
+      final providerStatus = (response['status'] ?? data['status'] ?? '')
+          .toString()
+          .toLowerCase();
+      status = switch (providerStatus) {
+        'success' || 'successful' || 'completed' => 'successful',
+        'pending' || 'processing' || 'queued' || 'initiated' => 'pending',
+        'failed' || 'failure' || 'error' || 'rejected' => 'failed',
+        _ => response['success'] == true ? 'successful' : 'failed',
+      };
+      if (response['success'] == false) status = 'failed';
+      providerReference =
+          (data['transaction_id'] ??
+                  data['reference'] ??
+                  response['provider_reference'] ??
+                  response['reference'])
+              ?.toString();
+      token = data['token']?.toString();
+      units = data['units']?.toString();
+      message = response['message']?.toString() ?? message;
+    } on BigisubRequestException catch (error) {
+      final isAmbiguous = error.statusCode == 0 || error.statusCode >= 500;
+      final isUnconfigured = error.message?.toLowerCase().contains('not configured') == true;
+      status = isAmbiguous && !isUnconfigured ? 'pending' : 'failed';
+      message = status == 'pending'
+          ? 'The purchase status could not be confirmed. Check your order history before retrying.'
+          : error.toString();
+      _lastError = message;
+    } catch (error) {
+      status = 'pending';
+      message =
+          'The purchase status could not be confirmed. Check your order history before retrying.';
+      _lastError = message;
+      debugPrint('Bigisub purchase outcome is uncertain: $error');
+    }
+
+    final order = await SupabaseService.instance.recordOrder(
+      userId: userId.toString(),
+      serviceType: serviceType,
+      network: network,
+      phone: recipient,
+      plan: plan,
+      amount: amount,
+      status: status,
+      providerReference: providerReference,
+      token: token,
+    );
+    _isLoading = false;
+    notifyListeners();
+
+    return OrderResult(
+      order: order,
+      success: status != 'failed',
+      message: message,
+      token: token,
+      units: units,
+    );
+  }
+
   // ============================================================================
   // LIVE PURCHASES & SUPABASE SYNCHRONIZATION
   // ============================================================================
@@ -288,55 +350,21 @@ class VtuProvider extends ChangeNotifier {
     required String network,
     required String phone,
     required double amount,
-  }) async {
-    _isLoading = true;
-    _lastError = null;
-    notifyListeners();
-
-    String? providerRef;
-    String status = 'failed';
-    String message = 'Airtime purchase accepted.';
-
-    try {
-      // 1. Call live Bigisub API
-      final liveRes = await VtuApiService.instance.purchaseAirtime(
+    String? userPin,
+  }) {
+    return _purchase(
+      userId: userId,
+      serviceType: 'airtime',
+      network: network,
+      recipient: phone,
+      plan: '₦${amount.toStringAsFixed(0)} Airtime',
+      amount: amount,
+      dispatch: () => VtuApiService.instance.purchaseAirtime(
         network: network,
         phone: phone,
         amount: amount,
-      );
-
-      final data = liveRes['data'] as Map<String, dynamic>?;
-      status = _providerOrderStatus(data?['status'] ?? liveRes['status']);
-      if (data != null) {
-        providerRef = data['transaction_id']?.toString() ?? data['reference']?.toString() ?? providerRef;
-      }
-      message = liveRes['message']?.toString() ?? message;
-    } catch (e) {
-      final err = e.toString().replaceAll('Exception: ', '');
-      debugPrint('Live Bigisub airtime error (handled): $err');
-      status = 'failed';
-      message = 'Airtime purchase failed: $err';
-    }
-
-    // 2. Synchronize and record in Supabase
-    final order = await SupabaseService.instance.recordOrder(
-      userId: userId.toString(),
-      serviceType: 'airtime',
-      network: network,
-      phone: phone,
-      plan: '₦${amount.toStringAsFixed(0)} Airtime',
-      amount: amount,
-      status: status,
-      providerReference: providerRef,
-    );
-
-    _isLoading = false;
-    notifyListeners();
-
-    return OrderResult(
-      order: order,
-      success: status != 'failed',
-      message: message,
+        pin: userPin,
+      ),
     );
   }
 
@@ -349,79 +377,45 @@ class VtuProvider extends ChangeNotifier {
     required double amount,
     required double sellPrice,
     int? planId,
+    String? userPin,
   }) async {
-    _isLoading = true;
-    _lastError = null;
-    notifyListeners();
-
-    String? providerRef;
-    String status = 'failed';
-    String message = 'Data purchase accepted.';
 
     // Resolve plan ID
-    int? resolvedPlanId = planId;
+    var resolvedPlanId = planId;
     if (planId == null) {
       final netId = VtuApiService.mapNetworkNameToId(network);
       final cached = _liveDataPlansCache[netId];
-      if (cached != null && cached.isNotEmpty) {
-        // Try finding matching plan by variationCode or amount
-        final match = cached.firstWhere(
-          (p) => (p['amount'] as num?)?.toDouble() == amount || (p['size'] != null && variationCode.contains(p['size'].toString())),
-          orElse: () => cached.first,
-        );
-        final id = match['id'];
-        if (id is num) {
-          resolvedPlanId = id.toInt();
+      Map<String, dynamic>? match;
+      for (final candidate in cached ?? const <Map<String, dynamic>>[]) {
+        final candidateId = (candidate['id'] as num?)?.toInt();
+        final candidateAmount = (candidate['amount'] as num?)?.toDouble();
+        final size = candidate['size']?.toString() ?? '';
+        if (candidateId != null &&
+            (candidateAmount == amount ||
+                (size.isNotEmpty && variationCode.contains(size)))) {
+          match = candidate;
+          break;
         }
       }
+      resolvedPlanId ??= (match?['id'] as num?)?.toInt();
     }
     if (resolvedPlanId == null) {
-      _isLoading = false;
-      _lastError = 'No verified data plan is available. Please refresh the plans and try again.';
-      notifyListeners();
-      throw StateError(_lastError!);
+      throw Exception('Refresh plans and select a valid Bigisub data plan.');
     }
-
-    try {
-      // 1. Call live Bigisub API
-      final liveRes = await VtuApiService.instance.purchaseData(
-        network: network,
-        planId: resolvedPlanId,
-        phone: phone,
-      );
-
-      final data = liveRes['data'] as Map<String, dynamic>?;
-      status = _providerOrderStatus(data?['status'] ?? liveRes['status']);
-      if (data != null) {
-        providerRef = data['transaction_id']?.toString() ?? data['reference']?.toString() ?? providerRef;
-      }
-      message = liveRes['message']?.toString() ?? message;
-    } catch (e) {
-      final err = e.toString().replaceAll('Exception: ', '');
-      debugPrint('Live Bigisub data error (handled): $err');
-      status = 'failed';
-      message = 'Data purchase failed: $err';
-    }
-
-    // 2. Synchronize in Supabase
-    final order = await SupabaseService.instance.recordOrder(
-      userId: userId.toString(),
+    return _purchase(
+      userId: userId,
       serviceType: 'data',
       network: network,
-      phone: phone,
+      recipient: phone,
       plan: variationCode,
       amount: sellPrice,
-      status: status,
-      providerReference: providerRef,
-    );
-
-    _isLoading = false;
-    notifyListeners();
-
-    return OrderResult(
-      order: order,
-      success: status != 'failed',
-      message: message,
+      dispatch: () => VtuApiService.instance.purchaseData(
+        network: network,
+        planId: resolvedPlanId!,
+        phone: phone,
+        sellPrice: sellPrice,
+        pin: userPin,
+      ),
     );
   }
 
@@ -437,30 +431,23 @@ class VtuProvider extends ChangeNotifier {
       );
 
       final data = res['data'] as Map<String, dynamic>?;
-      final customerName = data?['customer_name']?.toString().trim() ?? '';
-      if (customerName.isEmpty) {
-        return VerificationResponse(
-          isValid: false,
-          customerName: '',
-          identifier: smartcardNumber,
-          details: 'The provider did not confirm this smartcard.',
-        );
-      }
-      final bouquet = data?['current_bouquet']?.toString() ?? '';
+      final name = data?['customer_name']?.toString() ?? '';
+      final bouquet = data?['current_bouquet']?.toString() ?? provider;
 
       return VerificationResponse(
-        isValid: true,
-        customerName: customerName,
+        isValid: res['success'] == true ||
+            (res['success'] == null && data != null),
+        customerName: name,
         identifier: smartcardNumber,
-        details: bouquet.isEmpty ? provider : '$bouquet • $provider',
+        details: '$bouquet • $provider',
       );
     } catch (e) {
-      debugPrint('Smartcard verification failed: $e');
+      debugPrint('Smartcard verify fallback: $e');
       return VerificationResponse(
         isValid: false,
         customerName: '',
         identifier: smartcardNumber,
-        details: 'Could not verify this smartcard right now.',
+        details: 'Could not verify this smartcard with Bigisub.',
       );
     }
   }
@@ -474,55 +461,26 @@ class VtuProvider extends ChangeNotifier {
     String? variationCode,
     required double amount,
     String? customerName,
+    String? userPin,
     String? phone,
-  }) async {
-    _isLoading = true;
-    notifyListeners();
-
-    String? providerRef;
-    String status = 'failed';
+  }) {
     final planCode = packageCode ?? variationCode ?? 'Package';
-    String message = 'Cable TV subscription accepted.';
-
-    try {
-      final liveRes = await VtuApiService.instance.purchaseCableTv(
+    return _purchase(
+      userId: userId,
+      serviceType: 'cable',
+      network: provider,
+      recipient: smartcardNumber,
+      plan: planCode,
+      amount: amount,
+      dispatch: () => VtuApiService.instance.purchaseCableTv(
         cableType: provider,
         smartcardNumber: smartcardNumber,
+        variationCode: planCode,
         phone: (phone != null && phone.isNotEmpty) ? phone : '08000000000',
         amount: amount,
         customerName: customerName ?? 'Avotek Subscriber',
-      );
-
-      final data = liveRes['data'] as Map<String, dynamic>?;
-      status = _providerOrderStatus(data?['status'] ?? liveRes['status']);
-      if (data != null) {
-        providerRef = data['transaction_id']?.toString() ?? data['reference']?.toString() ?? providerRef;
-      }
-      message = liveRes['message']?.toString() ?? message;
-    } catch (e) {
-      status = 'failed';
-      message = 'Cable TV purchase failed: ${e.toString().replaceAll('Exception: ', '')}';
-      debugPrint(message);
-    }
-
-    final order = await SupabaseService.instance.recordOrder(
-      userId: userId.toString(),
-      serviceType: 'cable',
-      network: provider,
-      phone: smartcardNumber,
-      plan: planCode,
-      amount: amount,
-      status: status,
-      providerReference: providerRef,
-    );
-
-    _isLoading = false;
-    notifyListeners();
-
-    return OrderResult(
-      order: order,
-      success: status != 'failed',
-      message: message,
+        pin: userPin,
+      ),
     );
   }
 
@@ -540,33 +498,24 @@ class VtuProvider extends ChangeNotifier {
       );
 
       final data = res['data'] as Map<String, dynamic>?;
-      final customerName = data?['customer_name']?.toString().trim() ?? '';
-      if (customerName.isEmpty) {
-        return VerificationResponse(
-          isValid: false,
-          customerName: '',
-          identifier: meterNumber,
-          details: 'The provider did not confirm this meter.',
-        );
-      }
+      final name = data?['customer_name']?.toString() ?? '';
       final address = data?['customer_address']?.toString() ?? '';
       final discoName = data?['disco']?.toString() ?? disco;
 
       return VerificationResponse(
-        isValid: true,
-        customerName: customerName,
+        isValid: res['success'] == true ||
+            (res['success'] == null && data != null),
+        customerName: name,
         identifier: meterNumber,
-        details: address.isEmpty
-            ? '$discoName ($meterType)'
-            : '$discoName ($meterType) • $address',
+        details: '$discoName ($meterType) • $address',
       );
     } catch (e) {
-      debugPrint('Meter verification failed: $e');
+      debugPrint('Meter verify fallback: $e');
       return VerificationResponse(
         isValid: false,
         customerName: '',
         identifier: meterNumber,
-        details: 'Could not verify this meter right now.',
+        details: 'Could not verify this meter with Bigisub.',
       );
     }
   }
@@ -581,18 +530,16 @@ class VtuProvider extends ChangeNotifier {
     String? customerName,
     String? customerAddress,
     String? phone,
-  }) async {
-    _isLoading = true;
-    notifyListeners();
-
-    String? providerRef;
-    String token = '';
-    String units = '';
-    String status = 'failed';
-    String message = 'Electricity purchase accepted.';
-
-    try {
-      final liveRes = await VtuApiService.instance.purchaseElectricity(
+    String? userPin,
+  }) {
+    return _purchase(
+      userId: userId,
+      serviceType: 'electricity',
+      network: disco,
+      recipient: meterNumber,
+      plan: '$disco $meterType',
+      amount: amount,
+      dispatch: () => VtuApiService.instance.purchaseElectricity(
         company: disco,
         meterNumber: meterNumber,
         meterType: meterType,
@@ -600,47 +547,8 @@ class VtuProvider extends ChangeNotifier {
         amount: amount,
         customerName: customerName ?? 'Avotek Customer',
         customerAddress: customerAddress,
-      );
-
-      final data = liveRes['data'] as Map<String, dynamic>?;
-      status = _providerOrderStatus(data?['status'] ?? liveRes['status']);
-      if (data != null) {
-        providerRef = data['transaction_id']?.toString() ?? data['reference']?.toString() ?? providerRef;
-        if (data['token'] != null && data['token'].toString().isNotEmpty) {
-          token = data['token'].toString();
-        }
-        if (data['units'] != null && data['units'].toString().isNotEmpty) {
-          units = data['units'].toString();
-        }
-      }
-      message = liveRes['message']?.toString() ?? 'Electricity purchase accepted.';
-    } catch (e) {
-      status = 'failed';
-      message = 'Electricity purchase failed: ${e.toString().replaceAll('Exception: ', '')}';
-      debugPrint(message);
-    }
-
-    final order = await SupabaseService.instance.recordOrder(
-      userId: userId.toString(),
-      serviceType: 'electricity',
-      network: disco,
-      phone: meterNumber,
-      plan: '$disco $meterType',
-      amount: amount,
-      status: status,
-      providerReference: providerRef,
-      token: token,
-    );
-
-    _isLoading = false;
-    notifyListeners();
-
-    return OrderResult(
-      order: order,
-      success: status != 'failed',
-      token: token,
-      units: units,
-      message: message,
+        pin: userPin,
+      ),
     );
   }
 }

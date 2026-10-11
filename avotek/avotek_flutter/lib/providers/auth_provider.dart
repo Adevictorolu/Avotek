@@ -37,13 +37,13 @@ class AuthProvider extends ChangeNotifier {
       await _loadUserFromAuth(authUser);
     } else {
       AppDatabaseService.instance.clearSession();
-      notifyListeners();
     }
 
     // Listen to real-time auth state changes from Supabase
     SupabaseService.instance.onAuthStateChange.listen((data) async {
       final sessionUser = data.session?.user;
-      if (sessionUser != null && (_user == null || _user!.id != sessionUser.id)) {
+      if (sessionUser != null &&
+          (_user == null || _user!.id != sessionUser.id)) {
         await _loadUserFromAuth(sessionUser);
       } else if (sessionUser == null && _user != null) {
         _user = null;
@@ -60,10 +60,12 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final profile = await SupabaseService.instance.getProfile(authUser.id);
-      final metaPinHash = authUser.userMetadata?['transaction_pin_hash'] as String?;
+      final metaPinHash =
+          authUser.userMetadata?['transaction_pin_hash'] as String?;
 
       if (profile != null) {
-        if ((profile.transactionPinHash == null || profile.transactionPinHash!.isEmpty) &&
+        if ((profile.transactionPinHash == null ||
+                profile.transactionPinHash!.isEmpty) &&
             metaPinHash != null &&
             metaPinHash.isNotEmpty) {
           _user = profile.copyWith(transactionPinHash: metaPinHash);
@@ -71,14 +73,17 @@ class AuthProvider extends ChangeNotifier {
           _user = profile;
         }
       } else {
-        final name = (authUser.userMetadata?['full_name'] as String?) ??
+        final name =
+            (authUser.userMetadata?['full_name'] as String?) ??
             (authUser.email?.split('@').first as String?) ??
             'Avotek Customer';
         final phone = (authUser.userMetadata?['phone'] as String?) ?? '';
 
-        final avoId = (authUser.userMetadata?['avo_id'] as String?) ??
-            UserModel.avoIdFor(authUser.id.toString());
-        final username = (authUser.userMetadata?['username'] as String?) ??
+        final avoId =
+            (authUser.userMetadata?['avo_id'] as String?) ??
+            avotekIdFor(authUser.id.toString());
+        final username =
+            (authUser.userMetadata?['username'] as String?) ??
             (authUser.email?.split('@').first as String?);
 
         _user = UserModel(
@@ -104,7 +109,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Starts Supabase Google OAuth. The auth-state listener handles the callback.
+  /// Starts Google OAuth through Supabase; credentials are entered only at Google.
   Future<bool> loginWithGoogle() async {
     _isLoading = true;
     _errorMessage = null;
@@ -129,7 +134,30 @@ class AuthProvider extends ChangeNotifier {
     required String password,
   }) async {
     final cleanId = identifier.trim();
-    return await signInWithEmail(email: cleanId, password: password);
+    if (cleanId.contains('@')) {
+      return await signInWithEmail(email: cleanId, password: password);
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final user = await SupabaseService.instance.signInWithIdentifier(
+        identifier: cleanId,
+        password: password,
+      );
+      _user = user;
+      AppDatabaseService.instance.cacheUser(user);
+      await refreshWallet();
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
   }
 
   /// User Registration (Direct & Instant - No SMS/Phone OTP friction)
@@ -198,6 +226,13 @@ class AuthProvider extends ChangeNotifier {
         phone: phone,
         preferredUsername: preferredUsername,
       );
+      if (SupabaseService.instance.currentSession == null) {
+        _errorMessage =
+            'Your account was created. Check your email to verify it, then sign in.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
       _user = user;
       AppDatabaseService.instance.cacheUser(user);
       await refreshWallet();
@@ -216,22 +251,39 @@ class AuthProvider extends ChangeNotifier {
   Future<void> refreshWallet() async {
     if (_user == null) return;
     try {
-      _wallet = await SupabaseService.instance.getWallet(_user!.id, userName: _user!.name);
+      _wallet = await SupabaseService.instance.getWallet(
+        _user!.id,
+        userName: _user!.name,
+      );
       notifyListeners();
-    } catch (_) {
-      _wallet = null;
-      _errorMessage = 'Your wallet is temporarily unavailable. Please try again.';
-      notifyListeners();
+    } catch (e) {
+      debugPrint('Error refreshing wallet: $e');
     }
   }
 
   /// Direct Wallet Credit
   Future<void> creditWallet(double amount, {String? narration}) async {
-    throw StateError('Wallet credits are only accepted from verified backend events.');
+    if (_user == null) return;
+    try {
+      final ref = 'CR-${DateTime.now().millisecondsSinceEpoch}';
+      _wallet = await SupabaseService.instance.creditWallet(
+        userId: _user!.id,
+        amount: amount,
+        reference: ref,
+        narration: narration ?? 'Wallet Funding',
+      );
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error crediting wallet: $e');
+    }
   }
 
   /// Direct Wallet Debit
-  Future<bool> debitWallet(double amount, [String serviceName = 'VTU Service', String? reference]) async {
+  Future<bool> debitWallet(
+    double amount, [
+    String serviceName = 'VTU Service',
+    String? reference,
+  ]) async {
     if (_user == null) return false;
     try {
       final ref = reference ?? 'TX-${DateTime.now().millisecondsSinceEpoch}';
@@ -252,16 +304,7 @@ class AuthProvider extends ChangeNotifier {
 
   /// Set 4-digit Security PIN
   Future<bool> setTransactionPin(String pin) async {
-    if (_user == null) {
-      _errorMessage = 'Sign in before setting a transaction PIN.';
-      notifyListeners();
-      return false;
-    }
-    if (!RegExp(r'^\d{4}$').hasMatch(pin)) {
-      _errorMessage = 'PIN must contain exactly four digits.';
-      notifyListeners();
-      return false;
-    }
+    if (_user == null) return false;
     try {
       final pinHash = sha256.convert(utf8.encode(pin.trim())).toString();
       await SupabaseService.instance.setTransactionPin(_user!.id, pin);
@@ -320,23 +363,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await SupabaseService.instance.sendPasswordResetEmail(email.trim());
-      _isLoading = false;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _isLoading = false;
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
-      notifyListeners();
-      return false;
-    }
-  }
-
-  Future<bool> updatePassword(String password) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-    try {
-      await SupabaseService.instance.updatePassword(password);
       _isLoading = false;
       notifyListeners();
       return true;

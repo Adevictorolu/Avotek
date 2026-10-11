@@ -103,7 +103,10 @@ class _CableScreenState extends State<CableScreen> {
       return;
     }
 
-    setState(() => _isVerifying = true);
+    setState(() {
+      _isVerifying = true;
+      _verifiedCustomerName = null;
+    });
     final vtu = context.read<VtuProvider>();
     final result = await vtu.verifySmartcard(
       provider: _selectedProvider,
@@ -128,6 +131,10 @@ class _CableScreenState extends State<CableScreen> {
       TopNotification.showWarning(context, 'Please enter smartcard number');
       return;
     }
+    if (_verifiedCustomerName == null) {
+      TopNotification.showWarning(context, 'Verify this smartcard before purchasing.');
+      return;
+    }
 
     final auth = context.read<AuthProvider>();
     final wallet = context.read<WalletProvider>();
@@ -141,30 +148,20 @@ class _CableScreenState extends State<CableScreen> {
       return;
     }
 
+    String? transactionPin;
     final confirmed = await PinModal.show(
       context,
       title: 'Confirm Cable TV Subscription',
       amount: _packageAmount,
       description: '$_selectedProvider • $card\nSubscriber: ${_verifiedCustomerName ?? "Customer"}',
-      onPinSubmit: (pin) => auth.verifyPin(pin),
+      onPinSubmit: (pin) async {
+        transactionPin = pin;
+        return auth.verifyPin(pin);
+      },
     );
 
     if (confirmed == true && mounted) {
       try {
-        final debited = await auth.debitWallet(
-          _packageAmount,
-          'Cable TV: $_selectedProvider ($_selectedPackage) to $card',
-        );
-        if (!mounted) return;
-        if (!debited) {
-          TopNotification.showError(
-            context,
-            auth.errorMessage ?? 'The wallet could not verify this debit. No transaction was submitted.',
-            title: 'Debit Failed',
-          );
-          return;
-        }
-
         final result = await vtu.payCableTV(
           userId: auth.user!.id,
           provider: _selectedProvider,
@@ -173,26 +170,21 @@ class _CableScreenState extends State<CableScreen> {
           amount: _packageAmount,
           customerName: _verifiedCustomerName,
           phone: auth.user?.phone,
+          userPin: transactionPin,
         );
+
+        await auth.refreshWallet();
+        await wallet.fetchWallet(auth.user!.id);
 
         if (!mounted) return;
         if (!result.success || result.order.status == 'failed') {
           TopNotification.showError(context, result.message, title: 'Subscription Failed');
           return;
         }
-
-        await wallet.fetchWallet(auth.user!.id);
-
-        if (!mounted) return;
         if (result.order.status == 'pending') {
-          TopNotification.showWarning(
-            context,
-            'Your subscription is awaiting provider confirmation.',
-            title: 'Subscription Pending',
-          );
+          TopNotification.showWarning(context, result.message, title: 'Subscription Pending');
           return;
         }
-
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -252,6 +244,7 @@ class _CableScreenState extends State<CableScreen> {
                           if (val) {
                             setState(() {
                               _selectedProvider = p;
+                              _verifiedCustomerName = null;
                               _selectedPackage = _packages[p]?.first['code'];
                               _packageAmount = _packages[p]?.first['price'] ?? 0.0;
                             });
@@ -267,6 +260,7 @@ class _CableScreenState extends State<CableScreen> {
               TextField(
                 controller: _smartcardController,
                 keyboardType: TextInputType.number,
+                onChanged: (_) => setState(() => _verifiedCustomerName = null),
                 decoration: InputDecoration(
                   labelText: 'Smartcard / IUC Number',
                   hintText: 'e.g. 1029384756',

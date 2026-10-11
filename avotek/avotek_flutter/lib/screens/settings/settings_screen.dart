@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -691,12 +690,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // API Token row with "View token" button
+                // Provider credentials are managed server-side.
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'API Token',
+                      'VTU Provider',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -721,7 +720,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                       child: Text(
-                        'View token',
+                        'Details',
                         style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700),
                       ),
                     ),
@@ -898,7 +897,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // --- MODAL: API TOKEN DETAILS ---
   void _openApiTokenModal() {
-    const apiToken = 'c71a68151b57aaf3c8535d95d6ae0230a834fb43';
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
@@ -936,7 +934,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'API Token',
+                        'Bigisub Integration',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
@@ -945,7 +943,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Your API token for partner integrations',
+                        'Provider credentials are stored securely on the server.',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.5,
                           color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -968,7 +966,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               // Token label & box
               Text(
-                'Token:',
+                'Credential handling:',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -986,12 +984,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     color: isDark ? AppColors.darkBorder : const Color(0xFFCBD5E1),
                   ),
                 ),
-                child: SelectableText(
-                  apiToken,
-                  style: GoogleFonts.firaCode(
+                child: Text(
+                  'Bigisub credentials are not stored or exposed in this app.',
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.electricCyan,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF334155),
                   ),
                 ),
               ),
@@ -1052,7 +1050,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Add this token to your API request headers:',
+                      'The app securely sends VTU requests through the server integration.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.5,
                         color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -1070,8 +1068,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                       child: Text(
-                        'Authorization: Token c71a68151b57aaf3c853...',
-                        style: GoogleFonts.firaCode(
+                        'Provider credentials remain server-side.',
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           color: AppColors.primaryCyan,
                         ),
@@ -1083,7 +1081,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.warning),
                         const SizedBox(width: 6),
                         Text(
-                          'Keep this token secure. Never share it publicly.',
+                          'Never place provider credentials in the client app.',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             color: isDark ? const Color(0xFFFBBF24) : const Color(0xFF92400E),
@@ -1096,78 +1094,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 22),
 
-              // Avotek Brand Action Button: Copy Token
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryBlue.withValues(alpha: 0.4),
-                      blurRadius: 20,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: () {
-                    Clipboard.setData(const ClipboardData(text: apiToken));
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Row(
-                          children: [
-                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text('API token copied to clipboard!'),
-                          ],
-                        ),
-                        backgroundColor: AppColors.success,
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.copy_rounded, size: 18, color: Colors.white),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Copy Token',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            'Click to copy to clipboard',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withValues(alpha: 0.85),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Close'),
                 ),
               ),
             ],

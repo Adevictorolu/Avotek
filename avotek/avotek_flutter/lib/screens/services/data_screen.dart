@@ -217,19 +217,6 @@ class _DataScreenState extends State<DataScreen> {
     });
 
     try {
-      // 3. Atomically debit wallet in ledger
-      final debited = await auth.debitWallet(amount, 'Data Bundle: ${_selectedPlan!['plan']} ($phone)');
-      if (!mounted) return;
-      if (!debited) {
-        setState(() => _isProcessing = false);
-        TopNotification.showError(
-          context,
-          auth.errorMessage ?? 'The wallet could not verify this debit. No transaction was submitted.',
-          title: 'Debit Failed',
-        );
-        return;
-      }
-
       setState(() {
         _processingMessage = 'Confirming your transaction status…';
       });
@@ -243,14 +230,15 @@ class _DataScreenState extends State<DataScreen> {
         amount: amount,
         sellPrice: amount,
         planId: _selectedPlan!['id'] as int?,
+        userPin: pin,
       );
 
       if (!mounted) return;
       setState(() => _isProcessing = false);
+      await auth.refreshWallet();
+      if (!mounted) return;
 
       if (!result.success || result.order.status == 'failed') {
-        await auth.refreshWallet();
-        if (!mounted) return;
         TopNotification.showError(
           context,
           result.message,
@@ -262,7 +250,6 @@ class _DataScreenState extends State<DataScreen> {
           'Your data bundle request is awaiting telecom gateway confirmation.',
           title: 'Transaction Pending',
         );
-        _showSuccessDialog(phone, amount, 'Transaction is being confirmed by $_selectedNetwork.');
       } else {
         TopNotification.showSuccess(
           context,
