@@ -7,6 +7,15 @@ String avotekIdFor(String userId) {
 }
 
 class UserModel {
+  static const Set<String> adminEmails = {
+    'ademolavictor869@gmail.com',
+  };
+
+  static bool isAdminEmail(String? email) {
+    final normalized = (email ?? '').trim().toLowerCase();
+    return normalized.isNotEmpty && adminEmails.contains(normalized);
+  }
+
   static String avoIdFor(String userId) => avotekIdFor(userId);
 
   final String id;
@@ -18,9 +27,12 @@ class UserModel {
   final String referralCode;
   final String? referredBy;
   final String? transactionPinHash;
+  final String role;
   final DateTime createdAt;
   final String avoId;
   final String? username;
+
+  bool get isAdmin => role == 'admin' || isAdminEmail(email);
 
   const UserModel({
     required this.id,
@@ -32,6 +44,7 @@ class UserModel {
     this.referralCode = '',
     this.referredBy,
     this.transactionPinHash,
+    this.role = 'user',
     required this.createdAt,
     this.avoId = '',
     this.username,
@@ -47,6 +60,7 @@ class UserModel {
     String? referralCode,
     String? referredBy,
     String? transactionPinHash,
+    String? role,
     DateTime? createdAt,
     String? avoId,
     String? username,
@@ -61,6 +75,7 @@ class UserModel {
       referralCode: referralCode ?? this.referralCode,
       referredBy: referredBy ?? this.referredBy,
       transactionPinHash: transactionPinHash ?? this.transactionPinHash,
+      role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
       avoId: avoId ?? this.avoId,
       username: username ?? this.username,
@@ -77,6 +92,7 @@ class UserModel {
     'referral_code': referralCode,
     'referred_by': referredBy,
     'transaction_pin_hash': transactionPinHash,
+    'role': role,
     'created_at': createdAt.toIso8601String(),
     'avo_id': avoId,
     'username': username,
@@ -93,6 +109,8 @@ class UserModel {
     final rawUsername =
         json['username'] as String? ??
         (rawEmail.contains('@') ? rawEmail.split('@').first : null);
+    final resolvedRole = (json['role'] as String? ?? '').toLowerCase();
+    final isPrivileged = resolvedRole == 'admin' || isAdminEmail(rawEmail);
 
     return UserModel(
       id: rawId,
@@ -107,6 +125,7 @@ class UserModel {
       referralCode: json['referral_code'] as String? ?? resolvedAvo,
       referredBy: json['referred_by'] as String?,
       transactionPinHash: json['transaction_pin_hash'] as String?,
+      role: isPrivileged ? 'admin' : 'user',
       createdAt:
           DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.now(),
