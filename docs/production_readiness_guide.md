@@ -22,25 +22,25 @@ This comprehensive guide details the exact steps required to take the **AVOTEK V
 
 AVOTEK runs on a high-throughput architecture consisting of:
 - **Client Frontend**: Flutter cross-platform client (Web, Android, iOS) with Plus Jakarta Sans typography, light/dark themes, zero-distortion brand assets, and discreet admin routing.
-- **Serverpod Backend**: Dart-native backend running on ports `8080` (API), `8081` (Insights), and `8082` (Webhooks).
-- **Database & Cache**: PostgreSQL (with JSONB service catalogs) and Redis for rate-limiting and session management.
-- **Upstream Aggregators**: Paystack (payments/virtual accounts), Bigisub (airtime, data, cable and electricity), Meta WhatsApp Cloud API & Termii (notifications).
+- **Authentication & database**: Supabase Auth, PostgreSQL, and Edge Functions.
+- **VTU provider**: Bigisub is called through the authenticated `bigisub` Edge Function.
+
+> **Live status:** wallet top-ups, dedicated virtual accounts, Paystack webhooks, WhatsApp messages, and Termii messages are not implemented or configured in this repository. Do not advertise live payments until the checklist in [`GO_LIVE_NEXT_STEPS.md`](./GO_LIVE_NEXT_STEPS.md) is complete. Wallet funding intentionally remains unavailable rather than showing fabricated bank details.
 
 ```mermaid
 graph TD
-    Client[Flutter Client - Web/Mobile] -->|REST / WebSockets| Serverpod[Serverpod API Port 8080]
-    Paystack[Paystack Webhooks] -->|POST /webhook/paystack| WebhookServer[Webhook Port 8082]
-    WebhookServer -->|Credit Wallet & Notify| DB[(PostgreSQL)]
-    Serverpod -->|Authenticated server proxy| Bigisub[Bigisub API]
-    Serverpod -->|Transaction Alerts| WhatsApp[WhatsApp Cloud API]
-    Serverpod -->|OTP / SMS Alerts| Termii[Termii SMS Gateway]
+    Client[Flutter Client - Web/Mobile] -->|Auth & data| Supabase[Supabase Auth / PostgreSQL]
+    Client -->|Authenticated request| Edge[Supabase Edge Functions]
+    Edge -->|VTU requests| Bigisub[Bigisub API]
+    FuturePay[Future payment webhook] -. not implemented .-> Supabase
+    FutureNotify[Future WhatsApp / SMS] -. not implemented .-> Client
 ```
 
 ---
 
 ## 2. Paystack Live Setup (Dedicated NUBAN & Webhooks)
 
-AVOTEK provides automated wallet funding by assigning each registered customer a **Dedicated Virtual Account (DVA)** (Wema Bank, Titan Trust Bank, or Sterling Bank). Any bank transfer to this account instantly credits the customer's in-app wallet via webhook.
+**Not live or implemented.** The repository does not currently create Paystack transactions or Dedicated Virtual Accounts, receive Paystack webhooks, or credit customer balances from verified payments. Do not display a made-up transfer account or accept a screenshot/manual transfer as proof of payment. The steps below are prerequisites for a future integration, not existing capabilities.
 
 ### 2.1 Obtain Live API Keys
 1. Log into your [Paystack Dashboard](https://dashboard.paystack.com).
@@ -52,17 +52,12 @@ AVOTEK provides automated wallet funding by assigning each registered customer a
    - **Live Public Key**: `pk_live_xxxxxxxxxxxxxxxxxxxxxxxx`
 
 ### 2.2 Configure Webhooks
-1. In **Settings > API Keys & Webhooks**, locate **Live Webhook URL**.
-2. Enter your production endpoint:
-   ```text
-   https://api.yourdomain.com:8082/webhook/paystack
-   ```
-   *(or if running behind Nginx/Caddy proxy: `https://api.yourdomain.com/webhook/paystack` routed to port 8082)*
-3. Paystack signs every webhook with your secret key via HMAC SHA512. AVOTEK's backend verifies the `x-paystack-signature` header before processing events like `charge.success` and `dedicated_account.assign.success`.
+1. Do not enter a webhook URL until a production HTTPS webhook endpoint has been implemented and deployed.
+2. Paystack signs webhooks using HMAC SHA512. A future implementation must verify `x-paystack-signature`, validate the event, and credit funds idempotently before treating any deposit as successful. No such handler is currently deployed by this repository.
 
 ### 2.3 Activating Dedicated NUBANs
 1. Ensure your Paystack account has **Dedicated Virtual Accounts** enabled under **Preferences**.
-2. When a user completes KYC (BVN/NIN), AVOTEK issues an API request to `https://api.paystack.co/dedicated_account` to reserve an automated account number.
+2. A future server-side integration must create and persist a provider-assigned account only after Paystack confirms it. The current app does not request or issue dedicated virtual accounts.
 
 ---
 
@@ -88,7 +83,7 @@ The documented API overview identifies the API base URL, `Authorization: Token �
 ## 4. WhatsApp Cloud API & Termii SMS Setup
 
 ### 4.1 Meta WhatsApp Cloud API Setup
-AVOTEK sends real-time receipts, low-balance warnings, and OTPs directly to users' WhatsApp.
+WhatsApp delivery is **not integrated** in the current app. The account and templates below are prerequisites for a future server-side integration; do not promise receipts, warnings, or OTP delivery until the implementation has been deployed and tested.
 
 1. Navigate to the [Meta for Developers Portal](https://developers.facebook.com).
 2. Create a Business App and add the **WhatsApp** product.
@@ -108,7 +103,7 @@ For users without active internet or WhatsApp:
 2. Submit your **Sender ID** application (e.g., `AVOTEK`) with your CAC certificate for telecommunications approval.
 3. Retrieve your **Termii API Key** from Settings.
 4. Fund your Termii SMS wallet balance.
-5. In AVOTEK, SMS routing is utilized for account verification OTPs and urgent transactional alerts.
+5. Implement and test server-side SMS routing before promising OTPs or transactional alerts; the current app has no Termii integration.
 
 ---
 
@@ -124,24 +119,22 @@ AVOTEK includes a comprehensive in-app **Corporate Affairs Commission (CAC)** se
 | **Incorporated Trustee (NGO / Church / Association)** | ₦120,000 | 14 - 21 Business Days | CAC Certificate, Constitution, Newspaper Publication Proof |
 
 ### 5.2 Admin Processing Workflow
-1. When a user submits an application via `/services/cac`:
-   - Application details (proposed business names, business object, proprietor/director KYC, address) are validated and saved.
-   - Cost is debited from customer wallet and placed in escrow.
-2. The AVOTEK Operations Team:
+1. This describes a future operational workflow; verify that the service, server-side validation, and escrow are implemented before accepting CAC orders.
+2. If implemented and secured, the operations team would:
    - Logs into the **Super Admin Operations Suite**.
    - Inspects the application under the CAC Management queue.
    - Executes name reservation and filing on the official [CAC CRP Portal](https://pre.cac.gov.ng).
    - Updates status from `PENDING` -> `PROCESSING` -> `APPROVED`.
    - Uploads the signed PDF Certificate and Status Report.
-3. The customer receives an automated WhatsApp and in-app notification to download their certificate.
+3. WhatsApp notices are not currently implemented.
 
 ---
 
 ## 6. Dynamic Catalog & Pricing Margins
 
-The Super Admin can dynamically configure pricing without deploying code changes:
+The admin pricing screens are not a production authorization boundary. Do not rely on client-side pricing or expose admin actions until access is enforced by authenticated server-side roles.
 
-1. Access the **Super Admin Portal** -> **Pricing & Margins** tab.
+1. Only after server-side admin authorization has been implemented, access the **Pricing & Margins** tab.
 2. Select category: `Data`, `Airtime`, `Electricity`, `Cable TV`, or `CAC`.
 3. To adjust existing margin:
    - Click any catalog item to change cost price vs. selling price.
@@ -149,30 +142,21 @@ The Super Admin can dynamically configure pricing without deploying code changes
 4. To add a brand-new service:
    - Tap **Add Catalog Item**.
    - Input Service ID (e.g., `CAC-EXP`, `STARLINK-SUB`), Service Name, Base Provider Cost (₦), AVOTEK Selling Price (₦), and Service Category.
-   - Tap **Publish Service to Catalog**. Changes reflect instantly in client UI.
+   - Publish a catalog item only after its pricing and provider fulfillment are enforced server-side.
 
 ---
 
 ## 7. Super Admin Security & Gateway Access
 
-AVOTEK utilizes a discrete, zero-exposure security architecture for the Admin portal:
+The current admin gateway must not be treated as secure for production:
 
 ### 7.1 Security Guarantees
 - **No Public Footprint**: External users, guests, and normal customers see zero administrative buttons, navigation items, or links in the UI.
 - **Guarded Routes**: Attempting to navigate directly to `/admin` routes through `auth.isSuperAdmin` validation. Unauthorized access immediately redirects to `/admin-portal` requiring key authentication.
 - **Session Locking**: Super Admin status can be manually locked at any time from the top bar, clearing privilege tokens from memory.
 
-### 7.2 Accessing the Super Admin Suite
-1. Navigate directly to:
-   ```text
-   /admin-portal
-   ```
-2. Enter the Master Passkey:
-   ```text
-   avotek-admin-2026
-   ```
-   *(To change this passkey in production, update `lib/screens/admin/admin_gateway_screen.dart` and backend `config/passwords.yaml`)*
-3. Upon entry, the full **AVOTEK Operations Suite** unlocks, granting access to:
+### 7.2 Production requirement
+Never use a client-side shared passkey. Before exposing the admin suite, enforce authenticated server-side roles, remove any hard-coded passkeys, and independently review the authorization boundary. Once that work is deployed, verify access to:
    - Financial Overview & Wallet Floats
    - Dynamic Pricing & Margin Control
    - Transaction Audit Logs & Status Overrides
@@ -242,9 +226,9 @@ webhook.yourdomain.com {
 
 ## 9. Pre-Launch Verification Checklist
 
-- [x] **Paystack Webhook Tested**: Successful ping test on port 8082 with live signature.
+- [ ] **Paystack Webhook Tested**: Not implemented or tested.
 - [ ] **Dedicated NUBAN Generation**: Created test customer DVA and verified auto-credit.
-- [ ] **Float Wallet Funded**: VTpass and ClubKonnect balance verified in Admin Overview.
+- [ ] **Bigisub Float Funded**: Fund the Bigisub reseller balance and verify it in the provider dashboard.
 - [ ] **Airtime & SME Data Test**: Dispatched live ₦100 airtime and 500MB SME data test.
 - [ ] **WhatsApp Notification**: Verified receipt delivery on real WhatsApp device.
 - [ ] **Termii SMS Routing**: Verified 6-digit OTP delivery via registered sender ID.
@@ -257,8 +241,8 @@ webhook.yourdomain.com {
 ### Google sign-in
 1. In Google Cloud Console, create an OAuth web client and add the Supabase Auth callback URL shown in **Supabase Dashboard > Authentication > Providers > Google** as an authorized redirect URI.
 2. Enable Google in Supabase's Google provider settings and enter the client ID and client secret there. Keep the secret out of the Flutter app and repository.
-3. Set the production website as the Supabase Auth **Site URL** and add `https://<your-production-domain>/login` and `https://<your-production-domain>/reset-password` to **Redirect URLs**.
-4. The mobile app registers the `io.supabase.avotek` URL scheme for OAuth callbacks. Add this scheme to the Supabase redirect allow-list and test a Google sign-in on each target platform.
+3. Set the production website (for example, `https://your-domain.example`) as Supabase Auth **Site URL**. Add `https://your-domain.example/login-callback`, `https://your-domain.example/reset-password`, and required preview URLs to **Redirect URLs**. Do not leave Site URL set to `http://localhost:...`; auth links now request a callback based on the browser's current origin.
+4. The mobile app registers the `io.supabase.avotek` URL scheme. Add the exact callbacks `io.supabase.avotek:///login-callback` and `io.supabase.avotek:///reset-password` to the Supabase redirect allow-list and test a Google sign-in on each target platform.
 
 ### Avotek ID, username, and phone sign-in
 1. Apply `avotek/supabase_schema.sql` so profiles have unique `avo_id` and `username` values and new Supabase Auth users receive a profile row.
@@ -267,7 +251,7 @@ webhook.yourdomain.com {
 
 ### Password recovery
 1. Add `https://<your-production-domain>/reset-password` to Supabase Auth **Redirect URLs** for web deployments.
-2. For Android and iOS, allow the `io.supabase.avotek` redirect scheme and confirm the installed build opens the reset screen from a recovery email.
+2. For Android and iOS, allow `io.supabase.avotek:///reset-password` and confirm the installed build opens the reset route from an email.
 3. Use Supabase's password-recovery email template and send a test email end-to-end before launch.
 
 Email/password signup may require the user to confirm their email, depending on the Supabase Auth setting. The app intentionally does not create a signed-in local session until Supabase returns an authenticated session.

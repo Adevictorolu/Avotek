@@ -25,12 +25,35 @@ ALTER TABLE public.profiles
 
 UPDATE public.profiles
 SET avo_id = 'AVO-' || UPPER(LEFT(REPLACE(id::TEXT, '-', ''), 16))
-WHERE avo_id IS NULL OR BTRIM(avo_id) = '';
+WHERE avo_id IS NULL OR BTRIM(avo_id) = '' OR UPPER(avo_id) = 'AVO-10001';
 
 UPDATE public.profiles
 SET username = LOWER(SPLIT_PART(email, '@', 1)) || '_' ||
     LOWER(LEFT(REPLACE(id::TEXT, '-', ''), 8))
 WHERE username IS NULL OR BTRIM(username) = '';
+
+WITH duplicate_ids AS (
+    SELECT id
+    FROM public.profiles
+    GROUP BY UPPER(avo_id)
+    HAVING COUNT(*) > 1
+)
+UPDATE public.profiles AS profile
+SET avo_id = 'AVO-' || UPPER(REPLACE(profile.id::TEXT, '-', ''))
+FROM duplicate_ids
+WHERE profile.id = duplicate_ids.id;
+
+WITH duplicate_usernames AS (
+    SELECT id
+    FROM public.profiles
+    GROUP BY LOWER(username)
+    HAVING COUNT(*) > 1
+)
+UPDATE public.profiles AS profile
+SET username = LOWER(profile.username) || '_' ||
+    LOWER(REPLACE(profile.id::TEXT, '-', ''))
+FROM duplicate_usernames
+WHERE profile.id = duplicate_usernames.id;
 
 CREATE UNIQUE INDEX IF NOT EXISTS profiles_avo_id_unique
     ON public.profiles (UPPER(avo_id))
@@ -89,13 +112,24 @@ CREATE TABLE IF NOT EXISTS public.wallets (
     balance NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     currency TEXT NOT NULL DEFAULT 'NGN',
     virtual_account_number TEXT,
-    virtual_account_bank TEXT DEFAULT 'Wema Bank / PalmPay',
+    virtual_account_bank TEXT,
     virtual_account_name TEXT,
     total_funded NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     total_spent NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.wallets
+    ALTER COLUMN virtual_account_bank DROP DEFAULT;
+
+UPDATE public.wallets
+SET virtual_account_number = NULL,
+    virtual_account_bank = NULL,
+    virtual_account_name = NULL
+WHERE virtual_account_number ~ '^90[0-9]{8}$'
+  AND virtual_account_bank = 'Wema Bank / PalmPay'
+  AND virtual_account_name LIKE 'AVOTEK - %';
 
 -- 3. TRANSACTIONS TABLE (Immutable Financial Ledger)
 CREATE TABLE IF NOT EXISTS public.transactions (
@@ -136,6 +170,8 @@ DECLARE
     clean_phone TEXT;
     clean_avatar TEXT;
     clean_ref TEXT;
+    clean_avo_id TEXT;
+    clean_username TEXT;
 BEGIN
     -- Extract full name from Google metadata or email
     clean_name := COALESCE(
@@ -151,12 +187,29 @@ BEGIN
         ''
     );
     clean_ref := 'AVO' || UPPER(SUBSTRING(NEW.id::text, 1, 6));
+    clean_avo_id := 'AVO-' || UPPER(LEFT(REPLACE(NEW.id::text, '-', ''), 16));
+    clean_username := COALESCE(
+        NULLIF(REGEXP_REPLACE(
+            LOWER(BTRIM(NEW.raw_user_meta_data->>'username')),
+            '[^a-z0-9._-]', '', 'g'
+        ), ''),
+        REGEXP_REPLACE(LOWER(SPLIT_PART(NEW.email, '@', 1)),
+            '[^a-z0-9._-]', '', 'g') || '_' ||
+            LOWER(LEFT(REPLACE(NEW.id::text, '-', ''), 8))
+    );
 
     -- Insert or update public.profiles
-    INSERT INTO public.profiles (id, email, full_name, phone, avatar_url, referral_code)
-    VALUES (NEW.id, NEW.email, clean_name, clean_phone, clean_avatar, clean_ref)
+    INSERT INTO public.profiles (
+        id, email, full_name, phone, avatar_url, referral_code, avo_id, username
+    )
+    VALUES (
+        NEW.id, NEW.email, clean_name, clean_phone, clean_avatar, clean_ref,
+        clean_avo_id, clean_username
+    )
     ON CONFLICT (id) DO UPDATE SET
         full_name = EXCLUDED.full_name,
+        avo_id = COALESCE(NULLIF(profiles.avo_id, ''), EXCLUDED.avo_id),
+        username = COALESCE(NULLIF(profiles.username, ''), EXCLUDED.username),
         avatar_url = CASE 
             WHEN profiles.avatar_url IS NULL OR profiles.avatar_url = '' THEN EXCLUDED.avatar_url 
             ELSE profiles.avatar_url 
@@ -164,22 +217,8 @@ BEGIN
         updated_at = NOW();
 
     -- Insert into public.wallets (Single Direct Wallet)
-    INSERT INTO public.wallets (
-        user_id,
-        balance,
-        currency,
-        virtual_account_number,
-        virtual_account_bank,
-        virtual_account_name
-    )
-    VALUES (
-        NEW.id,
-        0.00,
-        'NGN',
-        '90' || SUBSTRING(EXTRACT(EPOCH FROM NOW())::text, 5, 8),
-        'Wema Bank / PalmPay',
-        'AVOTEK - ' || clean_name
-    )
+    INSERT INTO public.wallets (user_id, balance, currency)
+    VALUES (NEW.id, 0.00, 'NGN')
     ON CONFLICT (user_id) DO NOTHING;
 
     RETURN NEW;
@@ -208,22 +247,23 @@ CREATE POLICY "Users can insert own profile" ON public.profiles
 CREATE POLICY "Users can update own profile" ON public.profiles
     FOR UPDATE USING (auth.uid() = id);
 
--- Wallets: Users can view, insert & update own wallet
+-- Wallet balances are readable by their owner and writable only by trusted
+-- database functions or server-side payment providers.
 CREATE POLICY "Users can view own wallet" ON public.wallets
     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own wallet" ON public.wallets
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own wallet" ON public.wallets
-    FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own wallet" ON public.wallets;
+DROP POLICY IF EXISTS "Users can update own wallet" ON public.wallets;
+REVOKE INSERT, UPDATE, DELETE ON public.wallets FROM anon, authenticated;
+GRANT SELECT ON public.wallets TO authenticated;
 
 -- Transactions: Users can view own transactions
 CREATE POLICY "Users can view own transactions" ON public.transactions
     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own transactions" ON public.transactions
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own transactions" ON public.transactions;
+REVOKE INSERT, UPDATE, DELETE ON public.transactions FROM anon, authenticated;
+GRANT SELECT ON public.transactions TO authenticated;
 
 -- VTU Orders: Users can view and insert own orders
 CREATE POLICY "Users can view own orders" ON public.vtu_orders

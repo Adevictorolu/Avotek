@@ -29,14 +29,20 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _handleThemeToggle() {
-    context.read<ThemeProvider>().toggleTheme();
-    widget.onToggleTheme?.call();
+    final onToggleTheme = widget.onToggleTheme;
+    if (onToggleTheme != null) {
+      onToggleTheme();
+    } else {
+      context.read<ThemeProvider>().toggleTheme();
+    }
   }
 
   int _getSelectedIndex() {
     final route = widget.currentRoute;
     if (route.startsWith('/services')) return 1;
-    if (route.startsWith('/transactions') || route.startsWith('/history')) return 2;
+    if (route.startsWith('/transactions') || route.startsWith('/history')) {
+      return 2;
+    }
     if (route.startsWith('/wallet')) return 3;
     if (route.startsWith('/profile')) return 4;
     return 0; // default Home
@@ -71,9 +77,18 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.rocket_launch_rounded, color: AppColors.electricCyan),
+            const Icon(
+              Icons.rocket_launch_rounded,
+              color: AppColors.electricCyan,
+            ),
             const SizedBox(width: 10),
-            Text('Own a VTU Website', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18)),
+            Text(
+              'Own a VTU Website',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+              ),
+            ),
           ],
         ),
         content: Column(
@@ -90,16 +105,25 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
               decoration: BoxDecoration(
                 color: AppColors.primaryBlue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.electricCyan.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.electricCyan.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.verified_rounded, color: AppColors.electricCyan, size: 20),
+                  const Icon(
+                    Icons.verified_rounded,
+                    color: AppColors.electricCyan,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Includes Mobile App + Web Admin + Supabase DB',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -110,7 +134,10 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Close', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+            child: Text(
+              'Close',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -120,10 +147,16 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
             onPressed: () {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Our VTU team will contact you shortly!'), backgroundColor: AppColors.success),
+                const SnackBar(
+                  content: Text('Our VTU team will contact you shortly!'),
+                  backgroundColor: AppColors.success,
+                ),
               );
             },
-            child: Text('Get Started', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+            child: Text(
+              'Get Started',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),
@@ -140,31 +173,45 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     final userName = (auth.user?.name != null && auth.user!.name.isNotEmpty)
         ? auth.user!.name
         : ((auth.user?.email != null && auth.user!.email.isNotEmpty)
-            ? auth.user!.email.split('@').first
-            : 'User');
+              ? auth.user!.email.split('@').first
+              : 'User');
     final userInitials = userName.isNotEmpty
-        ? userName.split(' ').where((n) => n.isNotEmpty).map((n) => n[0].toUpperCase()).take(2).join()
+        ? userName
+              .split(' ')
+              .where((n) => n.isNotEmpty)
+              .map((n) => n[0].toUpperCase())
+              .take(2)
+              .join()
         : 'U';
 
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
-      drawer: !isDesktop ? _buildDrawer(context, isDark, auth, wallet, userName, userInitials) : null,
+      drawer: !isDesktop
+          ? _buildDrawer(context, isDark, auth, wallet, userName, userInitials)
+          : null,
       appBar: !isDesktop
           ? AppBar(
               elevation: 0,
-              backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+              backgroundColor: isDark
+                  ? AppColors.darkCard
+                  : AppColors.lightCard,
               title: const AvotekLogo(size: 26, showText: true),
               actions: [
                 IconButton(
                   icon: Icon(
-                    isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                    isDark
+                        ? Icons.light_mode_outlined
+                        : Icons.dark_mode_outlined,
                     size: 20,
                   ),
                   onPressed: _handleThemeToggle,
                 ),
                 IconButton(
-                  icon: const Icon(Icons.account_balance_wallet_outlined, size: 20),
+                  icon: const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 20,
+                  ),
                   onPressed: () => context.push('/wallet'),
                 ),
               ],
@@ -172,7 +219,15 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
           : null,
       body: Row(
         children: [
-          if (isDesktop) _buildDesktopSidebar(context, isDark, auth, wallet, userName, userInitials),
+          if (isDesktop)
+            _buildDesktopSidebar(
+              context,
+              isDark,
+              auth,
+              wallet,
+              userName,
+              userInitials,
+            ),
           Expanded(child: widget.child),
         ],
       ),
@@ -180,13 +235,35 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
           ? NavigationBar(
               selectedIndex: _getSelectedIndex(),
               onDestinationSelected: _onBottomNavTapped,
-              backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+              backgroundColor: isDark
+                  ? AppColors.darkCard
+                  : AppColors.lightCard,
               destinations: const [
-                NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-                NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view_rounded), label: 'Services'),
-                NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long), label: 'History'),
-                NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
-                NavigationDestination(icon: Icon(Icons.menu_rounded), selectedIcon: Icon(Icons.menu_rounded), label: 'Menu'),
+                NavigationDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.grid_view_outlined),
+                  selectedIcon: Icon(Icons.grid_view_rounded),
+                  label: 'Services',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.receipt_long_outlined),
+                  selectedIcon: Icon(Icons.receipt_long),
+                  label: 'History',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.account_balance_wallet_outlined),
+                  selectedIcon: Icon(Icons.account_balance_wallet),
+                  label: 'Wallet',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.menu_rounded),
+                  selectedIcon: Icon(Icons.menu_rounded),
+                  label: 'Menu',
+                ),
               ],
             )
           : null,
@@ -254,12 +331,19 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
               onTap: _showOwnVtuWebsiteModal,
               borderRadius: BorderRadius.circular(14),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                  color: isDark
+                      ? AppColors.darkCardVariant
+                      : AppColors.lightCardVariant,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color: isDark
+                        ? AppColors.darkBorder
+                        : AppColors.lightBorder,
                     width: 1,
                   ),
                 ),
@@ -271,7 +355,11 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                         color: AppColors.electricCyan.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.rocket_launch_rounded, color: AppColors.electricCyan, size: 16),
+                      child: const Icon(
+                        Icons.rocket_launch_rounded,
+                        color: AppColors.electricCyan,
+                        size: 16,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -283,7 +371,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w800,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
                             ),
                           ),
                           Text(
@@ -291,7 +381,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
-                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                              color: isDark
+                                  ? AppColors.metallicLight
+                                  : AppColors.slateGrey,
                             ),
                           ),
                         ],
@@ -300,7 +392,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     Icon(
                       Icons.arrow_outward_rounded,
                       size: 14,
-                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                      color: isDark
+                          ? AppColors.metallicLight
+                          : AppColors.slateGrey,
                     ),
                   ],
                 ),
@@ -337,7 +431,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   activeIcon: Icons.receipt_long_rounded,
                   label: 'History',
                   route: '/transactions',
-                  isActive: currentRoute.startsWith('/transactions') || currentRoute.startsWith('/history'),
+                  isActive:
+                      currentRoute.startsWith('/transactions') ||
+                      currentRoute.startsWith('/history'),
                   isDark: isDark,
                 ),
                 _buildNavItem(
@@ -430,7 +526,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
             decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(
-                  color: isDark ? const Color(0xFF1E2638) : const Color(0xFFE2E8F0),
+                  color: isDark
+                      ? const Color(0xFF1E2638)
+                      : const Color(0xFFE2E8F0),
                   width: 1,
                 ),
               ),
@@ -442,9 +540,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   onTap: () => context.push('/profile'),
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141824) : const Color(0xFFF1F5F9),
+                      color: isDark
+                          ? const Color(0xFF141824)
+                          : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -471,7 +574,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w800,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -480,7 +585,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                                 'Regular',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10.5,
-                                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                  color: isDark
+                                      ? AppColors.metallicLight
+                                      : AppColors.slateGrey,
                                 ),
                               ),
                             ],
@@ -503,10 +610,17 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                         },
                         borderRadius: BorderRadius.circular(8),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 6,
+                            horizontal: 8,
+                          ),
                           child: Row(
                             children: [
-                              const Icon(Icons.logout_rounded, size: 16, color: Colors.grey),
+                              const Icon(
+                                Icons.logout_rounded,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 'Logout',
@@ -525,13 +639,20 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                       onTap: _handleThemeToggle,
                       borderRadius: BorderRadius.circular(8),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 6,
+                          horizontal: 8,
+                        ),
                         child: Row(
                           children: [
                             Icon(
-                              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                              isDark
+                                  ? Icons.light_mode_outlined
+                                  : Icons.dark_mode_outlined,
                               size: 16,
-                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                              color: isDark
+                                  ? AppColors.metallicLight
+                                  : AppColors.slateGrey,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -539,7 +660,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                color: isDark
+                                    ? AppColors.metallicLight
+                                    : AppColors.slateGrey,
                               ),
                             ),
                           ],
@@ -588,7 +711,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: isActive
-                ? (isDark ? AppColors.primaryBlue.withValues(alpha: 0.15) : const Color(0xFFEFF6FF))
+                ? (isDark
+                      ? AppColors.primaryBlue.withValues(alpha: 0.15)
+                      : const Color(0xFFEFF6FF))
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
@@ -614,8 +739,12 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   fontSize: 13,
                   fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
                   color: isActive
-                      ? (isDark ? AppColors.electricCyan : AppColors.primaryBlue)
-                      : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
+                      ? (isDark
+                            ? AppColors.electricCyan
+                            : AppColors.primaryBlue)
+                      : (isDark
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF475569)),
                 ),
               ),
             ],
@@ -636,7 +765,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     return Drawer(
       backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
       child: SafeArea(
-        child: _buildDesktopSidebar(context, isDark, auth, wallet, userName, userInitials),
+        child: _buildDesktopSidebar(
+          context,
+          isDark,
+          auth,
+          wallet,
+          userName,
+          userInitials,
+        ),
       ),
     );
   }

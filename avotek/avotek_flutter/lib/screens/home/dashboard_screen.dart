@@ -60,7 +60,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _loadError = 'Your account details are temporarily unavailable. Please try again.');
+        setState(
+          () => _loadError =
+              'Your account details are temporarily unavailable. Please try again.',
+        );
       }
     } finally {
       if (mounted) {
@@ -82,7 +85,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             const Icon(Icons.star_rounded, color: AppColors.electricCyan),
             const SizedBox(width: 8),
-            Text('Upgrade to VIP Agent', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18)),
+            Text(
+              'Upgrade to VIP Agent',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+              ),
+            ),
           ],
         ),
         content: Text(
@@ -92,7 +101,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Maybe Later', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            child: Text(
+              'Maybe Later',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -102,10 +114,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Agent upgrade request submitted!'), backgroundColor: AppColors.success),
+                const SnackBar(
+                  content: Text('Agent upgrade request submitted!'),
+                  backgroundColor: AppColors.success,
+                ),
               );
             },
-            child: Text('Upgrade Now', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+            child: Text(
+              'Upgrade Now',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),
@@ -142,17 +160,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.cloud_off_rounded, size: 54, color: AppColors.error),
+                const Icon(
+                  Icons.cloud_off_rounded,
+                  size: 54,
+                  color: AppColors.error,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Could not load account details',
-                  style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   _loadError!,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppColors.slateGrey),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: AppColors.slateGrey,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
@@ -162,7 +190,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                   icon: const Icon(Icons.refresh_rounded, size: 18),
                   label: const Text('Retry Loading Account'),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ],
             ),
@@ -211,7 +242,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B),
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -221,7 +254,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             fontSize: isDesktop ? 26 : 22,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.5,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                       ],
@@ -233,25 +268,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           onTap: _showUpgradeDialog,
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 7,
+                            ),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF1A1F2C) : const Color(0xFFEFF6FF),
+                              color: isDark
+                                  ? const Color(0xFF1A1F2C)
+                                  : const Color(0xFFEFF6FF),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: isDark ? const Color(0xFF2E384D) : const Color(0xFFBFDBFE),
+                                color: isDark
+                                    ? const Color(0xFF2E384D)
+                                    : const Color(0xFFBFDBFE),
                                 width: 1,
                               ),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.star_border_rounded, size: 14, color: AppColors.electricCyan),
+                                const Icon(
+                                  Icons.star_border_rounded,
+                                  size: 14,
+                                  color: AppColors.electricCyan,
+                                ),
                                 const SizedBox(width: 5),
                                 Text(
                                   'Upgrade',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
-                                    color: isDark ? Colors.white : AppColors.primaryBlue,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.primaryBlue,
                                   ),
                                 ),
                               ],
@@ -262,25 +310,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                         // Regular User Badge Pill
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 7,
+                          ),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF131722) : const Color(0xFFF1F5F9),
+                            color: isDark
+                                ? const Color(0xFF131722)
+                                : const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+                              color: isDark
+                                  ? const Color(0xFF23304B)
+                                  : const Color(0xFFE2E8F0),
                               width: 1,
                             ),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.metallicLight),
+                              const Icon(
+                                Icons.person_outline_rounded,
+                                size: 14,
+                                color: AppColors.metallicLight,
+                              ),
                               const SizedBox(width: 5),
                               Text(
                                 'Regular',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                  color: isDark
+                                      ? AppColors.metallicLight
+                                      : AppColors.slateGrey,
                                 ),
                               ),
                             ],
@@ -292,9 +353,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         IconButton(
                           tooltip: 'Toggle Theme',
                           icon: Icon(
-                            isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                            isDark
+                                ? Icons.light_mode_outlined
+                                : Icons.dark_mode_outlined,
                             size: 20,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            color: isDark
+                                ? AppColors.metallicLight
+                                : AppColors.slateGrey,
                           ),
                           onPressed: widget.onToggleTheme,
                         ),
@@ -305,7 +370,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 22),
 
                 // 2. HERO VIRTUAL CARD / WALLET (Matches Screenshot 2)
-                _buildHeroVirtualCard(effectiveBalance, auth, wallet, isDark, isDesktop),
+                _buildHeroVirtualCard(
+                  effectiveBalance,
+                  auth,
+                  wallet,
+                  isDark,
+                  isDesktop,
+                ),
                 const SizedBox(height: 18),
 
                 // 3. ACTION BUTTONS ROW (Fund Wallet + History)
@@ -323,7 +394,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0052FF).withValues(alpha: 0.35),
+                              color: const Color(
+                                0xFF0052FF,
+                              ).withValues(alpha: 0.35),
                               blurRadius: 14,
                               offset: const Offset(0, 5),
                             ),
@@ -331,7 +404,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         child: ElevatedButton.icon(
                           onPressed: () => context.push('/wallet/fund'),
-                          icon: const Icon(Icons.add_rounded, size: 18, color: Colors.white),
+                          icon: const Icon(
+                            Icons.add_rounded,
+                            size: 18,
+                            color: Colors.white,
+                          ),
                           label: Text(
                             'Fund Wallet',
                             style: GoogleFonts.plusJakartaSans(
@@ -346,7 +423,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             shadowColor: Colors.transparent,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                         ),
                       ),
@@ -356,29 +435,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       flex: 2,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF131722) : Colors.white,
+                          color: isDark
+                              ? const Color(0xFF131722)
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isDark ? const Color(0xFF23304B) : const Color(0xFFCBD5E1),
+                            color: isDark
+                                ? const Color(0xFF23304B)
+                                : const Color(0xFFCBD5E1),
                             width: 1,
                           ),
                         ),
                         child: ElevatedButton.icon(
                           onPressed: () => context.push('/transactions'),
-                          icon: Icon(Icons.history_rounded, size: 18, color: isDark ? Colors.white70 : Colors.black87),
+                          icon: Icon(
+                            Icons.history_rounded,
+                            size: 18,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
                           label: Text(
                             'History',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                         ),
                       ),
@@ -397,14 +488,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.bolt_rounded, color: AppColors.electricCyan, size: 20),
+                        const Icon(
+                          Icons.bolt_rounded,
+                          color: AppColors.electricCyan,
+                          size: 20,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Quick Actions',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                       ],
@@ -418,14 +515,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                              color: isDark
+                                  ? AppColors.metallicLight
+                                  : AppColors.slateGrey,
                             ),
                           ),
                           const SizedBox(width: 4),
                           Icon(
                             Icons.arrow_forward_rounded,
                             size: 14,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            color: isDark
+                                ? AppColors.metallicLight
+                                : AppColors.slateGrey,
                           ),
                         ],
                       ),
@@ -455,17 +556,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     bool isDark,
     bool isDesktop,
   ) {
-    final rawAcct = wallet.walletSummary?.virtualAccountNumber ??
+    final rawAcct =
+        wallet.walletSummary?.virtualAccountNumber ??
         auth.wallet?.virtualAccountNumber ??
         '';
-    if (rawAcct.isEmpty) return const SizedBox.shrink();
-
     // Format account into 816  700  2789
     final spacedAcct = rawAcct.length >= 10
         ? '${rawAcct.substring(0, 3)}  ${rawAcct.substring(3, 6)}  ${rawAcct.substring(6)}'
         : rawAcct;
 
-    final bank = wallet.walletSummary?.virtualAccountBank ??
+    final bank =
+        wallet.walletSummary?.virtualAccountBank ??
         auth.wallet?.virtualAccountBank ??
         '';
     final formattedBalance = NumberFormat('#,##0.00', 'en_US').format(balance);
@@ -557,14 +658,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.success.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.success.withValues(alpha: 0.4), width: 0.8),
+                      border: Border.all(
+                        color: AppColors.success.withValues(alpha: 0.4),
+                        width: 0.8,
+                      ),
                     ),
                     child: Text(
-                      'FREE DEPOSITS',
+                      'AVOTEK WALLET',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
@@ -576,6 +683,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               const SizedBox(height: 16),
+
+              if (auth.user?.avoId.isNotEmpty == true) ...[
+                Text(
+                  'AVOTEK ID  ${auth.user!.avoId}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.7,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
 
               // Available Balance Row
               Row(
@@ -615,120 +735,138 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(width: 10),
                   IconButton(
                     icon: Icon(
-                      _obscureBalance ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      _obscureBalance
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
                       size: 20,
                       color: Colors.white70,
                     ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
-                    onPressed: () => setState(() => _obscureBalance = !_obscureBalance),
+                    onPressed: () =>
+                        setState(() => _obscureBalance = !_obscureBalance),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
 
-              // Card Chip & Spaced Account Number
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Gold EMV Chip Simulation
-                  Container(
-                    width: 34,
-                    height: 26,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD4AF37),
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(color: const Color(0xFFB8860B)),
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 20,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.black26),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.wifi_rounded, size: 18, color: Colors.white70),
-                  const Spacer(),
-                  Text(
-                    bank.toUpperCase(),
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white70,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Large Spaced Account Number & Copy
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    spacedAcct,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: isDesktop ? 22 : 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2.5,
-                      color: Colors.white,
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: rawAcct));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Account number copied! Transfer to fund instantly.'),
-                          backgroundColor: AppColors.success,
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              if (rawAcct.isNotEmpty) ...[
+                // Card Chip & Spaced Account Number
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Gold EMV Chip Simulation
+                    Container(
+                      width: 34,
+                      height: 26,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
+                        color: const Color(0xFFD4AF37),
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(color: const Color(0xFFB8860B)),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.copy_rounded, size: 13, color: Colors.white),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Copy',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
+                      child: Center(
+                        child: Container(
+                          width: 20,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black26),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.wifi_rounded,
+                      size: 18,
+                      color: Colors.white70,
+                    ),
+                    const Spacer(),
+                    Text(
+                      bank.toUpperCase(),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white70,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Large Spaced Account Number & Copy
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      spacedAcct,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: isDesktop ? 22 : 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2.5,
+                        color: Colors.white,
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: rawAcct));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Account number copied! Transfer to fund instantly.',
+                            ),
+                            backgroundColor: AppColors.success,
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.copy_rounded,
+                              size: 13,
                               color: Colors.white,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Text(
+                              'Copy',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(color: Colors.white12, height: 1),
-              const SizedBox(height: 10),
-
-              // Cardholder Name
-              Text(
-                cardHolder,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.0,
-                  color: Colors.white70,
+                  ],
                 ),
-              ),
+                const SizedBox(height: 12),
+                const Divider(color: Colors.white12, height: 1),
+                const SizedBox(height: 10),
+
+                // Cardholder Name
+                Text(
+                  cardHolder,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.0,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -737,14 +875,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // --- 4 STATS CARDS ROW (MATCHES SCREENSHOT 2) ---
-  Widget _buildMetricsStatsBar(WalletProvider wallet, bool isDark, bool isDesktop) {
+  Widget _buildMetricsStatsBar(
+    WalletProvider wallet,
+    bool isDark,
+    bool isDesktop,
+  ) {
     final todaySpend = wallet.transactions
         .where((t) => t.isDebit && t.createdAt.day == DateTime.now().day)
         .fold(0.0, (sum, t) => sum + t.amount);
 
     final totalCount = wallet.transactions.length;
-    final successCount = wallet.transactions.where((t) => t.status == 'completed' || t.status == 'successful').length;
-    final failedCount = wallet.transactions.where((t) => t.status == 'failed').length;
+    final successCount = wallet.transactions
+        .where((t) => t.status == 'completed' || t.status == 'successful')
+        .length;
+    final failedCount = wallet.transactions
+        .where((t) => t.status == 'failed')
+        .length;
 
     return Row(
       children: [
@@ -830,7 +976,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     fontSize: 9.5,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.4,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -857,10 +1005,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // --- QUICK ACTIONS 4-GRID (MATCHES SCREENSHOT 2) ---
   Widget _buildQuickActionsGrid(bool isDark, bool isDesktop) {
     final actions = [
-      {'title': 'Airtime', 'icon': Icons.phone_android_rounded, 'route': '/services/airtime'},
+      {
+        'title': 'Airtime',
+        'icon': Icons.phone_android_rounded,
+        'route': '/services/airtime',
+      },
       {'title': 'Data', 'icon': Icons.wifi_rounded, 'route': '/services/data'},
       {'title': 'Cable TV', 'icon': Icons.tv_rounded, 'route': '/services/tv'},
-      {'title': 'Electricity', 'icon': Icons.flash_on_rounded, 'route': '/services/electricity'},
+      {
+        'title': 'Electricity',
+        'icon': Icons.flash_on_rounded,
+        'route': '/services/electricity',
+      },
     ];
 
     return Row(
@@ -872,17 +1028,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: () => context.push(item['route'] as String),
               borderRadius: BorderRadius.circular(16),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 20,
+                  horizontal: 8,
+                ),
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF131722) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+                    color: isDark
+                        ? const Color(0xFF23304B)
+                        : const Color(0xFFE2E8F0),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.2 : 0.03,
+                      ),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -977,7 +1140,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Icon(
                           Icons.receipt_long_outlined,
                           size: 40,
-                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          color: isDark
+                              ? AppColors.metallicLight
+                              : AppColors.slateGrey,
                         ),
                         const SizedBox(height: 10),
                         Text(
@@ -985,7 +1150,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            color: isDark
+                                ? AppColors.metallicLight
+                                : AppColors.slateGrey,
                           ),
                         ),
                       ],
@@ -997,7 +1164,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: txs.length,
                   separatorBuilder: (_, _) => Divider(
-                    color: isDark ? const Color(0xFF1E283D) : const Color(0xFFF1F5F9),
+                    color: isDark
+                        ? const Color(0xFF1E283D)
+                        : const Color(0xFFF1F5F9),
                     height: 16,
                   ),
                   itemBuilder: (context, idx) {
@@ -1009,13 +1178,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: (isCredit ? AppColors.success : AppColors.primaryBlue).withValues(alpha: 0.15),
+                            color:
+                                (isCredit
+                                        ? AppColors.success
+                                        : AppColors.primaryBlue)
+                                    .withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                            isCredit
+                                ? Icons.arrow_downward_rounded
+                                : Icons.arrow_upward_rounded,
                             size: 18,
-                            color: isCredit ? AppColors.success : AppColors.primaryBlue,
+                            color: isCredit
+                                ? AppColors.success
+                                : AppColors.primaryBlue,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -1028,14 +1205,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
                                 ),
                               ),
                               Text(
-                                DateFormat('dd MMM yyyy • hh:mm a').format(tx.createdAt),
+                                DateFormat(
+                                  'dd MMM yyyy • hh:mm a',
+                                ).format(tx.createdAt),
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11,
-                                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                  color: isDark
+                                      ? AppColors.metallicLight
+                                      : AppColors.slateGrey,
                                 ),
                               ),
                             ],
@@ -1046,7 +1229,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w800,
-                            color: isCredit ? AppColors.success : (isDark ? Colors.white : Colors.black87),
+                            color: isCredit
+                                ? AppColors.success
+                                : (isDark ? Colors.white : Colors.black87),
                           ),
                         ),
                       ],

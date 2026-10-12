@@ -261,47 +261,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Direct Wallet Credit
-  Future<void> creditWallet(double amount, {String? narration}) async {
-    if (_user == null) return;
-    try {
-      final ref = 'CR-${DateTime.now().millisecondsSinceEpoch}';
-      _wallet = await SupabaseService.instance.creditWallet(
-        userId: _user!.id,
-        amount: amount,
-        reference: ref,
-        narration: narration ?? 'Wallet Funding',
-      );
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error crediting wallet: $e');
-    }
-  }
-
-  /// Direct Wallet Debit
-  Future<bool> debitWallet(
-    double amount, [
-    String serviceName = 'VTU Service',
-    String? reference,
-  ]) async {
-    if (_user == null) return false;
-    try {
-      final ref = reference ?? 'TX-${DateTime.now().millisecondsSinceEpoch}';
-      _wallet = await SupabaseService.instance.debitWallet(
-        userId: _user!.id,
-        amount: amount,
-        reference: ref,
-        serviceName: serviceName,
-      );
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
-      notifyListeners();
-      return false;
-    }
-  }
-
   /// Set 4-digit Security PIN
   Future<bool> setTransactionPin(String pin) async {
     if (_user == null) return false;

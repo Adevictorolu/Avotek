@@ -372,46 +372,49 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 980;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B101D), // Dark Navy Blue as requested
+      backgroundColor: isDark ? const Color(0xFF0B101D) : AppColors.lightBg,
       body: Stack(
         children: [
           // Background ambient royal blue gradient glow
-          Positioned(
-            top: -100,
-            left: -100,
-            child: Container(
-              width: 500,
-              height: 500,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.primaryBlue.withValues(alpha: 0.12),
-                    Colors.transparent,
-                  ],
+          if (isDark)
+            Positioned(
+              top: -100,
+              left: -100,
+              child: Container(
+                width: 500,
+                height: 500,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.primaryBlue.withValues(alpha: 0.12),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            bottom: -150,
-            right: -100,
-            child: Container(
-              width: 600,
-              height: 600,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.primaryCyan.withValues(alpha: 0.08),
-                    Colors.transparent,
-                  ],
+          if (isDark)
+            Positioned(
+              bottom: -150,
+              right: -100,
+              child: Container(
+                width: 600,
+                height: 600,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.primaryCyan.withValues(alpha: 0.08),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
 
           SafeArea(
             child: Center(
@@ -452,13 +455,11 @@ class _LoginScreenState extends State<LoginScreen> {
             child: SafeArea(
               child: IconButton(
                 icon: Icon(
-                  Theme.of(context).brightness == Brightness.dark
-                      ? Icons.light_mode_outlined
-                      : Icons.dark_mode_outlined,
-                  color: Colors.white,
+                  isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                  color: isDark ? Colors.white : AppColors.slateGrey,
                   size: 22,
                 ),
-                tooltip: Theme.of(context).brightness == Brightness.dark
+                tooltip: isDark
                     ? 'Switch to Light Mode'
                     : 'Switch to Dark Mode',
                 onPressed: () => context.read<ThemeProvider>().toggleTheme(),
@@ -472,13 +473,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // --- Left Hero Section: Avotek Royal Navy & Cyan Branding ---
   Widget _buildLeftHeroSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Standard Avotek Logo with rounded border radius that cuts the edge
-        const AvotekBrandAsset(
+        AvotekBrandAsset(
           height: 52,
-          isDark: true,
+          isDark: isDark,
         ),
         const SizedBox(height: 44),
 
@@ -490,18 +492,15 @@ class _LoginScreenState extends State<LoginScreen> {
               fontWeight: FontWeight.w900,
               height: 1.15,
               letterSpacing: -1.2,
-              color: Colors.white,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
-            children: const [
+            children: [
               TextSpan(text: 'Leveraging technology,\n'),
               TextSpan(text: 'in one '),
               TextSpan(
                 text: 'smart',
                 style: TextStyle(
-                  color: AppColors.primaryCyan,
-                  shadows: [
-                    Shadow(color: AppColors.primaryBlue, blurRadius: 28),
-                  ],
+                  color: isDark ? AppColors.primaryCyan : AppColors.primaryBlue,
                 ),
               ),
               TextSpan(text: ' app.'),
@@ -517,7 +516,7 @@ class _LoginScreenState extends State<LoginScreen> {
             fontSize: 15,
             height: 1.5,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF94A3B8),
+            color: isDark ? const Color(0xFF94A3B8) : AppColors.slateGrey,
           ),
         ),
         const SizedBox(height: 36),
@@ -590,69 +589,6 @@ class _LoginScreenState extends State<LoginScreen> {
               Positioned(
                 left: 215,
                 child: _buildMiniPhoneMockup(scale: 1.05, isSelected: true),
-              ),
-
-              // Floating Chip Right: Wallet Deposit
-              Positioned(
-                right: 0,
-                bottom: 24,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF131B2E),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFF23304B)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.4),
-                        blurRadius: 16,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF10B981,
-                          ).withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.account_balance_wallet_rounded,
-                          color: Color(0xFF10B981),
-                          size: 16,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '+₦50,000 Credit',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            'PalmPay 8167002789',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF10B981),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ],
           ),
@@ -780,11 +716,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildMobileHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
-        const AvotekBrandAsset(
+        AvotekBrandAsset(
           height: 48,
-          isDark: true,
+          isDark: isDark,
         ),
         const SizedBox(height: 14),
         Text(
@@ -793,7 +730,7 @@ class _LoginScreenState extends State<LoginScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
           ),
         ),
       ],
@@ -802,17 +739,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // --- Right Blue/Ash Glassmorphic Auth Card ---
   Widget _buildAuthCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
       decoration: BoxDecoration(
-        color: const Color(0xFF111827), // Deep slate card surface
+        color: isDark ? const Color(0xFF111827) : Colors.white,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFF23304B), width: 1.5),
+        border: Border.all(
+          color: isDark ? const Color(0xFF23304B) : AppColors.lightBorder,
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 36,
-            offset: const Offset(0, 16),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+            blurRadius: isDark ? 28 : 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -826,7 +767,7 @@ class _LoginScreenState extends State<LoginScreen> {
               fontSize: 26,
               fontWeight: FontWeight.w900,
               letterSpacing: -0.5,
-              color: Colors.white,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
           const SizedBox(height: 6),
@@ -837,7 +778,7 @@ class _LoginScreenState extends State<LoginScreen> {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF94A3B8),
+              color: isDark ? const Color(0xFF94A3B8) : AppColors.slateGrey,
             ),
           ),
           const SizedBox(height: 24),
@@ -975,7 +916,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFFCBD5E1),
+                          color: isDark
+                              ? const Color(0xFFCBD5E1)
+                              : AppColors.slateGrey,
                         ),
                       ),
                     ],
@@ -1124,13 +1067,15 @@ class _LoginScreenState extends State<LoginScreen> {
     Widget? suffixWidget,
     TextInputType keyboardType = TextInputType.text,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF202B3D)
-            : const Color(0xFFE2E8F0),
+        color: isDark ? const Color(0xFF202B3D) : AppColors.lightCardVariant,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF23304B), width: 1.2),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          width: 1.2,
+        ),
       ),
       child: TextField(
         controller: controller,
@@ -1139,18 +1084,14 @@ class _LoginScreenState extends State<LoginScreen> {
         style: GoogleFonts.plusJakartaSans(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : const Color(0xFF0F172A),
+          color: isDark ? Colors.white : const Color(0xFF0F172A),
         ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFFB6C2D2)
-                : const Color(0xFF64748B),
+            color: isDark ? const Color(0xFFB6C2D2) : const Color(0xFF64748B),
           ),
           prefixIcon: icon != null
               ? Icon(icon, size: 20, color: AppColors.primaryCyan)

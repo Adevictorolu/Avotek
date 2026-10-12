@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import '../database/app_database.dart';
@@ -24,13 +26,19 @@ import '../../screens/wallet/wallet_screen.dart';
 import '../../widgets/avotek_page_transition.dart';
 
 class AppRouter {
+  static _AuthStateRefreshNotifier? _authRefreshNotifier;
+
   static GoRouter createRouter({VoidCallback? onToggleTheme}) {
     final themeToggle = onToggleTheme ?? () {};
+    _authRefreshNotifier?.dispose();
+    final authRefreshNotifier = _AuthStateRefreshNotifier();
+    _authRefreshNotifier = authRefreshNotifier;
     final bool hasSeenOnboarding = AppDatabaseService.instance
         .hasSeenOnboarding();
 
     return GoRouter(
       initialLocation: (kIsWeb || hasSeenOnboarding) ? '/' : '/onboarding',
+      refreshListenable: authRefreshNotifier,
       redirect: (context, state) {
         final path = state.matchedLocation;
         final hasSession = SupabaseService.instance.currentAuthUser != null;
@@ -272,5 +280,26 @@ class AppRouter {
         ),
       ],
     );
+  }
+
+  static void dispose() {
+    _authRefreshNotifier?.dispose();
+    _authRefreshNotifier = null;
+  }
+}
+
+class _AuthStateRefreshNotifier extends ChangeNotifier {
+  _AuthStateRefreshNotifier() {
+    _subscription = SupabaseService.instance.onAuthStateChange.listen((_) {
+      notifyListeners();
+    });
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
   }
 }

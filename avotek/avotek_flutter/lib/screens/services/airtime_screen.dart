@@ -32,10 +32,30 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
   String _processingMessage = 'Processing your request securely…';
 
   final List<Map<String, dynamic>> _networks = [
-    {'name': 'MTN', 'code': 'MTN', 'color': const Color(0xFFFFCC00), 'iconColor': Colors.black},
-    {'name': 'GLO', 'code': 'GLO', 'color': const Color(0xFF00A859), 'iconColor': Colors.white},
-    {'name': 'AIRTEL', 'code': 'AIRTEL', 'color': const Color(0xFFE60000), 'iconColor': Colors.white},
-    {'name': '9MOBILE', 'code': '9MOBILE', 'color': const Color(0xFF005B38), 'iconColor': Colors.white},
+    {
+      'name': 'MTN',
+      'code': 'MTN',
+      'color': const Color(0xFFFFCC00),
+      'iconColor': Colors.black,
+    },
+    {
+      'name': 'GLO',
+      'code': 'GLO',
+      'color': const Color(0xFF00A859),
+      'iconColor': Colors.white,
+    },
+    {
+      'name': 'AIRTEL',
+      'code': 'AIRTEL',
+      'color': const Color(0xFFE60000),
+      'iconColor': Colors.white,
+    },
+    {
+      'name': '9MOBILE',
+      'code': '9MOBILE',
+      'color': const Color(0xFF005B38),
+      'iconColor': Colors.white,
+    },
   ];
 
   final List<double> _presetAmounts = [100, 200, 500, 1000, 2000, 5000];
@@ -77,19 +97,35 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     final pin = _pinController.text.trim();
 
     if (_amount < 50) {
-      TopNotification.showError(context, 'Minimum airtime amount is ₦50.', title: 'Invalid Amount');
+      TopNotification.showError(
+        context,
+        'Minimum airtime amount is ₦50.',
+        title: 'Invalid Amount',
+      );
       return;
     }
     if (_amount > 50000) {
-      TopNotification.showError(context, 'Maximum airtime amount is ₦50,000.', title: 'Amount Exceeded');
+      TopNotification.showError(
+        context,
+        'Maximum airtime amount is ₦50,000.',
+        title: 'Amount Exceeded',
+      );
       return;
     }
     if (phone.length < 10) {
-      TopNotification.showError(context, 'Please enter a valid 11-digit phone number.', title: 'Invalid Phone');
+      TopNotification.showError(
+        context,
+        'Please enter a valid 11-digit phone number.',
+        title: 'Invalid Phone',
+      );
       return;
     }
     if (pin.length != 4) {
-      TopNotification.showError(context, 'Please enter your 4-digit transaction PIN.', title: 'PIN Required');
+      TopNotification.showError(
+        context,
+        'Please enter your 4-digit transaction PIN.',
+        title: 'PIN Required',
+      );
       return;
     }
 
@@ -185,9 +221,18 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(Icons.account_balance_wallet_outlined, color: AppColors.electricCyan),
+            Icon(
+              Icons.account_balance_wallet_outlined,
+              color: AppColors.electricCyan,
+            ),
             const SizedBox(width: 10),
-            Text('Insufficient Balance', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 17)),
+            Text(
+              'Insufficient Balance',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                fontSize: 17,
+              ),
+            ),
           ],
         ),
         content: Text(
@@ -195,9 +240,15 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           style: GoogleFonts.plusJakartaSans(fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               Navigator.pop(ctx);
               context.go('/wallet/fund');
@@ -209,7 +260,11 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     );
   }
 
-  void _showSuccessDialog(String phone, double amount, [String? customMessage]) {
+  void _showSuccessDialog(
+    String phone,
+    double amount, [
+    String? customMessage,
+  ]) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
@@ -220,11 +275,24 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
-              child: const Icon(Icons.check_rounded, color: Colors.white, size: 28),
+              decoration: const BoxDecoration(
+                color: Color(0xFF10B981),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
             ),
             const SizedBox(height: 12),
-            Text('Airtime Delivered!', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, fontSize: 18)),
+            Text(
+              'Airtime Delivered!',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+              ),
+            ),
           ],
         ),
         content: Column(
@@ -232,20 +300,31 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              customMessage ?? '₦${NumberFormat('#,##0.00').format(amount)} $_selectedNetwork airtime sent to $phone.',
+              customMessage ??
+                  '₦${NumberFormat('#,##0.00').format(amount)} $_selectedNetwork airtime sent to $phone.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 12),
             Text(
               'Topup Type: $_selectedTopupType',
-              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF00D2FF)),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF00D2FF),
+              ),
             ),
           ],
         ),
         actions: [
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               Navigator.pop(ctx);
               _pinController.clear();
@@ -259,7 +338,6 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
@@ -270,7 +348,6 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
 
     return ResponsiveShell(
       currentRoute: '/services/airtime',
-      onToggleTheme: () {},
       child: Stack(
         children: [
           SingleChildScrollView(
@@ -304,7 +381,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B),
                           ),
                         ),
                       ),
@@ -312,7 +391,12 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         child: Text(
                           '•',
-                          style: TextStyle(color: isDark ? const Color(0xFF64748B) : Colors.grey, fontSize: 12),
+                          style: TextStyle(
+                            color: isDark
+                                ? const Color(0xFF64748B)
+                                : Colors.grey,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                       Text(
@@ -320,7 +404,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                          color: isDark
+                              ? const Color(0xFFE2E8F0)
+                              : const Color(0xFF334155),
                         ),
                       ),
                     ],
@@ -334,13 +420,24 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                       children: [
                         Expanded(flex: 3, child: _buildLeftForm(isDark)),
                         const SizedBox(width: 24),
-                        Expanded(flex: 2, child: _buildRightSummary(walletBalance, formattedPrice, isDark)),
+                        Expanded(
+                          flex: 2,
+                          child: _buildRightSummary(
+                            walletBalance,
+                            formattedPrice,
+                            isDark,
+                          ),
+                        ),
                       ],
                     )
                   else
                     Column(
                       children: [
-                        _buildRightSummary(walletBalance, formattedPrice, isDark),
+                        _buildRightSummary(
+                          walletBalance,
+                          formattedPrice,
+                          isDark,
+                        ),
                         const SizedBox(height: 20),
                         _buildLeftForm(isDark),
                       ],
@@ -361,7 +458,12 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Avotek 24/7 Live Support', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+                      content: Text(
+                        'Avotek 24/7 Live Support',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       backgroundColor: AppColors.primaryBlue,
                     ),
                   );
@@ -382,7 +484,11 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                     ],
                   ),
                   child: const Center(
-                    child: Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 24),
+                    child: Icon(
+                      Icons.chat_bubble_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),
@@ -411,7 +517,8 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           children: _networks.map((net) {
             final isSelected = _selectedNetwork == net['code'];
             return InkWell(
-              onTap: () => setState(() => _selectedNetwork = net['code'] as String),
+              onTap: () =>
+                  setState(() => _selectedNetwork = net['code'] as String),
               borderRadius: BorderRadius.circular(16),
               child: Container(
                 width: 96,
@@ -420,11 +527,20 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                   color: isDark ? const Color(0xFF141720) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF00D2FF) : (isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
+                    color: isSelected
+                        ? const Color(0xFF00D2FF)
+                        : (isDark
+                              ? const Color(0xFF26334D)
+                              : const Color(0xFFE2E8F0)),
                     width: isSelected ? 2.0 : 1.0,
                   ),
                   boxShadow: isSelected
-                      ? [BoxShadow(color: const Color(0xFF00D2FF).withOpacity(0.2), blurRadius: 8)]
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF00D2FF).withOpacity(0.2),
+                            blurRadius: 8,
+                          ),
+                        ]
                       : null,
                 ),
                 child: Column(
@@ -471,7 +587,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF141720) : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1),
+            ),
           ),
           child: Row(
             children: [
@@ -528,7 +646,10 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
               onTap: () => _selectPresetAmount(amt),
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.electricCyan.withOpacity(0.2)
@@ -537,7 +658,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                   border: Border.all(
                     color: isSelected
                         ? AppColors.electricCyan
-                        : (isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
+                        : (isDark
+                              ? const Color(0xFF26334D)
+                              : const Color(0xFFE2E8F0)),
                     width: isSelected ? 1.5 : 1.0,
                   ),
                 ),
@@ -566,7 +689,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF141720) : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1),
+            ),
           ),
           child: TextField(
             controller: _phoneController,
@@ -596,7 +721,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF141720) : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1),
+            ),
           ),
           child: Row(
             children: [
@@ -626,7 +753,11 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                   ),
                 ),
               ),
-              const Icon(Icons.lock_outline_rounded, color: Color(0xFF64748B), size: 18),
+              const Icon(
+                Icons.lock_outline_rounded,
+                color: Color(0xFF64748B),
+                size: 18,
+              ),
             ],
           ),
         ),
@@ -648,24 +779,33 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           child: ElevatedButton(
             onPressed: (_amount <= 0 || _isProcessing) ? null : _handlePurchase,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _amount > 0 ? AppColors.primaryBlue : const Color(0xFF262930),
+              backgroundColor: _amount > 0
+                  ? AppColors.primaryBlue
+                  : const Color(0xFF262930),
               foregroundColor: _amount > 0 ? Colors.white : Colors.white54,
               disabledBackgroundColor: const Color(0xFF262930),
               disabledForegroundColor: const Color(0xFF64748B),
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
             child: _isProcessing
                 ? const SizedBox(
                     width: 22,
                     height: 22,
-                    child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2.5),
+                    child: CircularProgressIndicator(
+                      color: Colors.black,
+                      strokeWidth: 2.5,
+                    ),
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        _amount <= 0 ? 'Enter An Amount To Continue' : 'Buy Airtime Now',
+                        _amount <= 0
+                            ? 'Enter An Amount To Continue'
+                            : 'Buy Airtime Now',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -704,7 +844,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12.5,
             fontWeight: FontWeight.w800,
-            color: isSelected ? Colors.white : (isDark ? Colors.white : Colors.black87),
+            color: isSelected
+                ? Colors.white
+                : (isDark ? Colors.white : Colors.black87),
           ),
         ),
       ),
@@ -712,7 +854,11 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
   }
 
   // --- Right Summary: Wallet Balance + Order Summary + Reversal Notice ---
-  Widget _buildRightSummary(double walletBalance, String formattedPrice, bool isDark) {
+  Widget _buildRightSummary(
+    double walletBalance,
+    String formattedPrice,
+    bool isDark,
+  ) {
     return Column(
       children: [
         // 1. Glowing Brand Wallet Balance Card
@@ -759,12 +905,20 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
               ElevatedButton.icon(
                 onPressed: () => context.go('/wallet/fund'),
                 icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
-                label: Text('Add Money', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 12)),
+                label: Text(
+                  'Add Money',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white.withOpacity(0.25),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
@@ -779,7 +933,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF141720) : Colors.white,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -798,14 +954,25 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
               const SizedBox(height: 10),
               _buildSummaryRow('Type', _selectedTopupType, isDark),
               const SizedBox(height: 10),
-              _buildSummaryRow('Phone', _phoneController.text.isNotEmpty ? _phoneController.text : '—', isDark),
+              _buildSummaryRow(
+                'Phone',
+                _phoneController.text.isNotEmpty ? _phoneController.text : '—',
+                isDark,
+              ),
               const SizedBox(height: 14),
               const Divider(color: Color(0xFF26334D), height: 1),
               const SizedBox(height: 14),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('You pay', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
+                  Text(
+                    'You pay',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
                   Text(
                     _amount > 0 ? '₦$formattedPrice' : '—',
                     style: GoogleFonts.plusJakartaSans(
@@ -828,12 +995,20 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF161922) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0)),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.06)
+                  : const Color(0xFFE2E8F0),
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline_rounded, color: AppColors.electricCyan, size: 18),
+              Icon(
+                Icons.info_outline_rounded,
+                color: AppColors.electricCyan,
+                size: 18,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -841,7 +1016,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w500,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
                   ),
                 ),
               ),

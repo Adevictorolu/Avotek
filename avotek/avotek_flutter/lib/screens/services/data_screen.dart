@@ -30,10 +30,30 @@ class _DataScreenState extends State<DataScreen> {
   String _processingMessage = 'Processing your request securely…';
 
   final List<Map<String, dynamic>> _networks = [
-    {'name': 'MTN', 'code': 'MTN', 'color': Color(0xFFFFCC00), 'iconColor': Colors.black},
-    {'name': 'GLO', 'code': 'GLO', 'color': Color(0xFF00A859), 'iconColor': Colors.white},
-    {'name': 'AIRTEL', 'code': 'AIRTEL', 'color': Color(0xFFE60000), 'iconColor': Colors.white},
-    {'name': '9MOBILE', 'code': '9MOBILE', 'color': Color(0xFF005B38), 'iconColor': Colors.white},
+    {
+      'name': 'MTN',
+      'code': 'MTN',
+      'color': Color(0xFFFFCC00),
+      'iconColor': Colors.black,
+    },
+    {
+      'name': 'GLO',
+      'code': 'GLO',
+      'color': Color(0xFF00A859),
+      'iconColor': Colors.white,
+    },
+    {
+      'name': 'AIRTEL',
+      'code': 'AIRTEL',
+      'color': Color(0xFFE60000),
+      'iconColor': Colors.white,
+    },
+    {
+      'name': '9MOBILE',
+      'code': '9MOBILE',
+      'color': Color(0xFF005B38),
+      'iconColor': Colors.white,
+    },
   ];
 
   final List<String> _categories = ['SME', 'Gifting', 'Corporate'];
@@ -48,7 +68,11 @@ class _DataScreenState extends State<DataScreen> {
       {'plan': '10GB SME (30 Days)', 'price': 2600.0, 'code': 'MTN-10GB'},
     ],
     'GLO': [
-      {'plan': '500MB Corporate (30 Days)', 'price': 145.0, 'code': 'GLO-500MB'},
+      {
+        'plan': '500MB Corporate (30 Days)',
+        'price': 145.0,
+        'code': 'GLO-500MB',
+      },
       {'plan': '1GB Corporate (30 Days)', 'price': 255.0, 'code': 'GLO-1GB'},
       {'plan': '2GB Corporate (30 Days)', 'price': 510.0, 'code': 'GLO-2GB'},
       {'plan': '5GB Corporate (30 Days)', 'price': 1275.0, 'code': 'GLO-5GB'},
@@ -94,7 +118,8 @@ class _DataScreenState extends State<DataScreen> {
           final vol = p['plan_volume'] ?? '';
           final type = p['plantype'] ?? '';
           final val = p['validity'] ?? '';
-          final amt = (p['amount'] as num?)?.toDouble() ??
+          final amt =
+              (p['amount'] as num?)?.toDouble() ??
               (p['plan_amount'] as num?)?.toDouble() ??
               0.0;
           final id = (p['id'] as num?)?.toInt() ?? 0;
@@ -170,15 +195,27 @@ class _DataScreenState extends State<DataScreen> {
     final pin = _pinController.text.trim();
 
     if (phone.length < 10) {
-      TopNotification.showError(context, 'Please enter a valid 11-digit phone number.', title: 'Invalid Phone');
+      TopNotification.showError(
+        context,
+        'Please enter a valid 11-digit phone number.',
+        title: 'Invalid Phone',
+      );
       return;
     }
     if (_selectedPlan == null) {
-      TopNotification.showError(context, 'Please select a data plan bundle.', title: 'Bundle Required');
+      TopNotification.showError(
+        context,
+        'Please select a data plan bundle.',
+        title: 'Bundle Required',
+      );
       return;
     }
     if (pin.length != 4) {
-      TopNotification.showError(context, 'Please enter your 4-digit transaction PIN.', title: 'PIN Required');
+      TopNotification.showError(
+        context,
+        'Please enter your 4-digit transaction PIN.',
+        title: 'PIN Required',
+      );
       return;
     }
 
@@ -278,9 +315,18 @@ class _DataScreenState extends State<DataScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(Icons.account_balance_wallet_outlined, color: AppColors.electricCyan),
+            Icon(
+              Icons.account_balance_wallet_outlined,
+              color: AppColors.electricCyan,
+            ),
             const SizedBox(width: 10),
-            Text('Insufficient Balance', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 17)),
+            Text(
+              'Insufficient Balance',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                fontSize: 17,
+              ),
+            ),
           ],
         ),
         content: Text(
@@ -288,9 +334,15 @@ class _DataScreenState extends State<DataScreen> {
           style: GoogleFonts.plusJakartaSans(fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               Navigator.pop(ctx);
               context.go('/wallet/fund');
@@ -313,11 +365,24 @@ class _DataScreenState extends State<DataScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
-              child: const Icon(Icons.check_rounded, color: Colors.white, size: 28),
+              decoration: const BoxDecoration(
+                color: Color(0xFF10B981),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
             ),
             const SizedBox(height: 12),
-            Text('Data Delivered!', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, fontSize: 18)),
+            Text(
+              'Data Delivered!',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+              ),
+            ),
           ],
         ),
         content: Column(
@@ -325,20 +390,31 @@ class _DataScreenState extends State<DataScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              customMsg ?? '${_selectedPlan!["plan"]} delivered instantly to $phone.',
+              customMsg ??
+                  '${_selectedPlan!["plan"]} delivered instantly to $phone.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 12),
             Text(
               'Debited: ₦${amount.toStringAsFixed(2)}',
-              style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF00D2FF)),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF00D2FF),
+              ),
             ),
           ],
         ),
         actions: [
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               Navigator.pop(ctx);
               _pinController.clear();
@@ -350,7 +426,6 @@ class _DataScreenState extends State<DataScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
@@ -358,12 +433,16 @@ class _DataScreenState extends State<DataScreen> {
     final auth = context.watch<AuthProvider>();
     final walletBalance = auth.wallet?.balance ?? 0.0;
 
-    final currentPlanPrice = _selectedPlan != null ? (_selectedPlan!['price'] as num).toDouble() : 0.0;
-    final formattedPrice = NumberFormat('#,##0.00', 'en_US').format(currentPlanPrice);
+    final currentPlanPrice = _selectedPlan != null
+        ? (_selectedPlan!['price'] as num).toDouble()
+        : 0.0;
+    final formattedPrice = NumberFormat(
+      '#,##0.00',
+      'en_US',
+    ).format(currentPlanPrice);
 
     return ResponsiveShell(
       currentRoute: '/services/data',
-      onToggleTheme: () {},
       child: Stack(
         children: [
           SingleChildScrollView(
@@ -392,7 +471,9 @@ class _DataScreenState extends State<DataScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF64748B),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -404,13 +485,24 @@ class _DataScreenState extends State<DataScreen> {
                       children: [
                         Expanded(flex: 3, child: _buildLeftForm(isDark)),
                         const SizedBox(width: 24),
-                        Expanded(flex: 2, child: _buildRightSummary(walletBalance, formattedPrice, isDark)),
+                        Expanded(
+                          flex: 2,
+                          child: _buildRightSummary(
+                            walletBalance,
+                            formattedPrice,
+                            isDark,
+                          ),
+                        ),
                       ],
                     )
                   else
                     Column(
                       children: [
-                        _buildRightSummary(walletBalance, formattedPrice, isDark),
+                        _buildRightSummary(
+                          walletBalance,
+                          formattedPrice,
+                          isDark,
+                        ),
                         const SizedBox(height: 20),
                         _buildLeftForm(isDark),
                       ],
@@ -453,11 +545,20 @@ class _DataScreenState extends State<DataScreen> {
                   color: isDark ? const Color(0xFF141720) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF00D2FF) : (isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
+                    color: isSelected
+                        ? const Color(0xFF00D2FF)
+                        : (isDark
+                              ? const Color(0xFF26334D)
+                              : const Color(0xFFE2E8F0)),
                     width: isSelected ? 2.0 : 1.0,
                   ),
                   boxShadow: isSelected
-                      ? [BoxShadow(color: const Color(0xFF00D2FF).withOpacity(0.2), blurRadius: 8)]
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF00D2FF).withOpacity(0.2),
+                            blurRadius: 8,
+                          ),
+                        ]
                       : null,
                 ),
                 child: Column(
@@ -491,11 +592,23 @@ class _DataScreenState extends State<DataScreen> {
           children: _categories.map((cat) {
             final isSelected = _selectedCategory == cat;
             return ChoiceChip(
-              label: Text(cat, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 12)),
+              label: Text(
+                cat,
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
               selected: isSelected,
               selectedColor: const Color(0xFF0052FF),
-              backgroundColor: isDark ? const Color(0xFF161922) : const Color(0xFFF1F5F9),
-              labelStyle: TextStyle(color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87)),
+              backgroundColor: isDark
+                  ? const Color(0xFF161922)
+                  : const Color(0xFFF1F5F9),
+              labelStyle: TextStyle(
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? Colors.white70 : Colors.black87),
+              ),
               onSelected: (val) => _onCategorySelected(cat),
             );
           }).toList(),
@@ -511,7 +624,10 @@ class _DataScreenState extends State<DataScreen> {
               const SizedBox(
                 width: 14,
                 height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00D2FF)),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFF00D2FF),
+                ),
               ),
           ],
         ),
@@ -521,7 +637,9 @@ class _DataScreenState extends State<DataScreen> {
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF141720) : Colors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1),
+            ),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<Map<String, dynamic>>(
@@ -540,13 +658,20 @@ class _DataScreenState extends State<DataScreen> {
                       Expanded(
                         child: Text(
                           plan['plan'] as String,
-                          style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Text(
                         '₦${price.toStringAsFixed(2)}',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF00D2FF)),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF00D2FF),
+                        ),
                       ),
                     ],
                   ),
@@ -564,7 +689,10 @@ class _DataScreenState extends State<DataScreen> {
         TextField(
           controller: _phoneController,
           keyboardType: TextInputType.phone,
-          style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700),
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
           decoration: InputDecoration(
             labelText: 'Phone number',
             hintText: '0803 123 4567',
@@ -580,14 +708,22 @@ class _DataScreenState extends State<DataScreen> {
           keyboardType: TextInputType.number,
           obscureText: true,
           maxLength: 4,
-          style: GoogleFonts.plusJakartaSans(fontSize: 18, letterSpacing: 6, fontWeight: FontWeight.w800),
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            letterSpacing: 6,
+            fontWeight: FontWeight.w800,
+          ),
           decoration: InputDecoration(
             counterText: '',
             labelText: 'Transaction PIN',
             hintText: '••••',
             filled: true,
             fillColor: isDark ? const Color(0xFF141720) : Colors.white,
-            prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF00D2FF), size: 20),
+            prefixIcon: const Icon(
+              Icons.lock_outline_rounded,
+              color: Color(0xFF00D2FF),
+              size: 20,
+            ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
         ),
@@ -601,13 +737,25 @@ class _DataScreenState extends State<DataScreen> {
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             minimumSize: const Size(double.infinity, 50),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
           child: _isProcessing
-              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.black,
+                  ),
+                )
               : Text(
                   'Enter An Amount To Continue >',
-                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, fontSize: 14),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
                 ),
         ),
       ],
@@ -615,7 +763,11 @@ class _DataScreenState extends State<DataScreen> {
   }
 
   // --- Right Summary: Golden Balance Card + Order Summary + Notice ---
-  Widget _buildRightSummary(double walletBalance, String formattedPrice, bool isDark) {
+  Widget _buildRightSummary(
+    double walletBalance,
+    String formattedPrice,
+    bool isDark,
+  ) {
     return Column(
       children: [
         // 1. Glowing Brand Wallet Balance Card
@@ -662,12 +814,20 @@ class _DataScreenState extends State<DataScreen> {
               ElevatedButton.icon(
                 onPressed: () => context.go('/wallet/fund'),
                 icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
-                label: Text('Add Money', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 12)),
+                label: Text(
+                  'Add Money',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white.withOpacity(0.25),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
@@ -682,7 +842,9 @@ class _DataScreenState extends State<DataScreen> {
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF141720) : Colors.white,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
+            border: Border.all(
+              color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -703,14 +865,25 @@ class _DataScreenState extends State<DataScreen> {
               const SizedBox(height: 10),
               _buildSummaryRow('Bundle', _selectedPlan?['plan'] ?? '-', isDark),
               const SizedBox(height: 10),
-              _buildSummaryRow('Phone', _phoneController.text.isNotEmpty ? _phoneController.text : '-', isDark),
+              _buildSummaryRow(
+                'Phone',
+                _phoneController.text.isNotEmpty ? _phoneController.text : '-',
+                isDark,
+              ),
               const SizedBox(height: 14),
               const Divider(color: Color(0xFF26334D), height: 1),
               const SizedBox(height: 14),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('You pay', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
+                  Text(
+                    'You pay',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
                   Text(
                     '₦$formattedPrice',
                     style: GoogleFonts.plusJakartaSans(
@@ -733,12 +906,20 @@ class _DataScreenState extends State<DataScreen> {
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF161922) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0)),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.06)
+                  : const Color(0xFFE2E8F0),
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline_rounded, color: AppColors.electricCyan, size: 18),
+              Icon(
+                Icons.info_outline_rounded,
+                color: AppColors.electricCyan,
+                size: 18,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -746,7 +927,9 @@ class _DataScreenState extends State<DataScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w500,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
                   ),
                 ),
               ),

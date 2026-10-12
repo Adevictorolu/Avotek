@@ -63,6 +63,7 @@ class SupabaseService {
     final response = await client.auth.signUp(
       email: cleanEmail,
       password: password,
+      emailRedirectTo: _authRedirectUrl('/login-callback'),
       data: {
         'full_name': cleanName,
         'phone': cleanPhone,
@@ -94,7 +95,7 @@ class SupabaseService {
     // Create or upsert profile in PostgreSQL
     try {
       await _upsertProfile(userModel);
-      await _ensureWalletExists(userModel.id, cleanName);
+      await _ensureWalletExists(userModel.id);
     } catch (e) {
       debugPrint('Profile/Wallet upsert warning: $e');
     }
@@ -178,19 +179,16 @@ class SupabaseService {
 
     _fallbackProfiles[fallbackUser.id] = fallbackUser;
     await _upsertProfile(fallbackUser);
-    await _ensureWalletExists(fallbackUser.id, name);
+    await _ensureWalletExists(fallbackUser.id);
     return fallbackUser;
   }
 
   /// Google OAuth Sign In
   Future<bool> signInWithGoogle() async {
     try {
-      final redirectUrl = kIsWeb
-          ? '${Uri.base.origin}/login'
-          : 'io.supabase.avotek://login-callback';
       return await client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: redirectUrl,
+        redirectTo: _authRedirectUrl('/login-callback'),
       );
     } catch (e) {
       debugPrint('Google Sign-in error: $e');
@@ -209,13 +207,15 @@ class SupabaseService {
 
   /// Send a Supabase password-recovery email that returns to the reset screen.
   Future<void> sendPasswordResetEmail(String email) async {
-    final redirectTo = kIsWeb
-        ? '${Uri.base.origin}/reset-password'
-        : 'io.supabase.avotek:///reset-password';
     await client.auth.resetPasswordForEmail(
       email.trim(),
-      redirectTo: redirectTo,
+      redirectTo: _authRedirectUrl('/reset-password'),
     );
+  }
+
+  String _authRedirectUrl(String path) {
+    if (kIsWeb) return Uri.base.resolve(path).toString();
+    return 'io.supabase.avotek://$path';
   }
 
   Future<void> updatePassword(String password) async {
@@ -339,26 +339,16 @@ class SupabaseService {
   // WALLET MANAGEMENT (Single Direct Wallet)
   // ==========================================
 
-  Future<WalletModel> _ensureWalletExists(
-    String userId,
-    String userName,
-  ) async {
+  Future<WalletModel> _ensureWalletExists(String userId) async {
     if (_fallbackWallets.containsKey(userId)) {
       return _fallbackWallets[userId]!;
     }
-
-    final cleanName = userName.isEmpty ? 'Avotek Customer' : userName;
-    final virtualAcct =
-        '90${DateTime.now().millisecondsSinceEpoch.toString().substring(5, 13)}';
 
     final initialWallet = WalletModel(
       id: userId,
       userId: userId,
       balance: 0.0,
       currency: 'NGN',
-      virtualAccountNumber: virtualAcct,
-      virtualAccountBank: 'Wema Bank / PalmPay',
-      virtualAccountName: 'AVOTEK - $cleanName',
       totalFunded: 0.0,
       totalSpent: 0.0,
       updatedAt: DateTime.now(),
@@ -403,141 +393,7 @@ class SupabaseService {
       debugPrint('Notice: Fetching wallet from Supabase: $e');
     }
 
-    return await _ensureWalletExists(userId, userName ?? 'User');
-  }
-
-  /// Direct Wallet Credit
-  Future<WalletModel> creditWallet({
-    required String userId,
-    required double amount,
-    required String reference,
-    String? narration,
-  }) async {
-    final currentWallet = await getWallet(userId);
-    final newBalance = currentWallet.balance + amount;
-    final newTotalFunded = currentWallet.totalFunded + amount;
-
-    final updatedWallet = currentWallet.copyWith(
-      balance: newBalance,
-      totalFunded: newTotalFunded,
-      updatedAt: DateTime.now(),
-    );
-
-    _fallbackWallets[userId] = updatedWallet;
-
-    final tx = TransactionModel(
-      id: DateTime.now().millisecondsSinceEpoch,
-      userId: userId,
-      type: 'credit',
-      category: 'wallet_fund',
-      amount: amount,
-      balanceBefore: currentWallet.balance,
-      balanceAfter: newBalance,
-      reference: reference,
-      narration: narration ?? 'Wallet Funding',
-      status: 'completed',
-      createdAt: DateTime.now(),
-    );
-
-    _fallbackTransactions.putIfAbsent(userId, () => []).insert(0, tx);
-
-    try {
-      await client
-          .from('wallets')
-          .update({
-            'balance': newBalance,
-            'total_funded': newTotalFunded,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('user_id', userId);
-
-      // Record in immutable transaction ledger
-      await client.from('transactions').insert({
-        'user_id': userId,
-        'type': 'credit',
-        'category': 'wallet_fund',
-        'amount': amount,
-        'balance_before': currentWallet.balance,
-        'balance_after': newBalance,
-        'reference': reference,
-        'narration': narration ?? 'Wallet Funding',
-        'status': 'completed',
-        'created_at': DateTime.now().toIso8601String(),
-      });
-    } catch (e) {
-      debugPrint('Notice: Recording credit in Supabase PostgreSQL: $e');
-    }
-
-    return updatedWallet;
-  }
-
-  /// Direct Wallet Debit
-  Future<WalletModel> debitWallet({
-    required String userId,
-    required double amount,
-    required String reference,
-    required String serviceName,
-    String? narration,
-  }) async {
-    final currentWallet = await getWallet(userId);
-    if (currentWallet.balance < amount) {
-      throw Exception('Insufficient balance. Please fund your wallet.');
-    }
-
-    final newBalance = currentWallet.balance - amount;
-    final newTotalSpent = currentWallet.totalSpent + amount;
-
-    final updatedWallet = currentWallet.copyWith(
-      balance: newBalance,
-      totalSpent: newTotalSpent,
-      updatedAt: DateTime.now(),
-    );
-
-    _fallbackWallets[userId] = updatedWallet;
-
-    final tx = TransactionModel(
-      id: DateTime.now().millisecondsSinceEpoch,
-      userId: userId,
-      type: 'debit',
-      category: serviceName.toLowerCase(),
-      amount: amount,
-      balanceBefore: currentWallet.balance,
-      balanceAfter: newBalance,
-      reference: reference,
-      narration: narration ?? '$serviceName Purchase',
-      status: 'completed',
-      createdAt: DateTime.now(),
-    );
-
-    _fallbackTransactions.putIfAbsent(userId, () => []).insert(0, tx);
-
-    try {
-      await client
-          .from('wallets')
-          .update({
-            'balance': newBalance,
-            'total_spent': newTotalSpent,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('user_id', userId);
-
-      await client.from('transactions').insert({
-        'user_id': userId,
-        'type': 'debit',
-        'category': serviceName.toLowerCase(),
-        'amount': amount,
-        'balance_before': currentWallet.balance,
-        'balance_after': newBalance,
-        'reference': reference,
-        'narration': narration ?? '$serviceName Purchase',
-        'status': 'completed',
-        'created_at': DateTime.now().toIso8601String(),
-      });
-    } catch (e) {
-      debugPrint('Notice: Recording debit in Supabase PostgreSQL: $e');
-    }
-
-    return updatedWallet;
+    return await _ensureWalletExists(userId);
   }
 
   // ==========================================

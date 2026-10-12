@@ -43,6 +43,7 @@ class _AvotekAppState extends State<AvotekApp> {
   @override
   void dispose() {
     _router.dispose();
+    AppRouter.dispose();
     super.dispose();
   }
 
