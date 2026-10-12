@@ -2,8 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../database/app_database.dart';
 import '../supabase/supabase_service.dart';
+import '../../models/user_model.dart';
+import '../../providers/auth_provider.dart';
+import '../../screens/admin/admin_dashboard_screen.dart';
 import '../../screens/affiliate/affiliate_screen.dart';
 import '../../screens/auth/auth_callback_screen.dart';
 import '../../screens/auth/login_screen.dart';
@@ -43,9 +47,16 @@ class AppRouter {
       redirect: (context, state) {
         final path = state.matchedLocation;
         final hasSession = SupabaseService.instance.currentAuthUser != null;
+        final auth = context.read<AuthProvider>();
+        final currentUser = auth.user;
+        final currentUserEmail =
+            currentUser?.email ?? SupabaseService.instance.currentAuthUser?.email;
+        final isAdmin =
+            currentUser?.isAdmin ?? UserModel.isAdminEmail(currentUserEmail);
 
         // Protected routes that unconditionally require authentication
         const protectedRoutes = [
+          '/admin',
           '/dashboard',
           '/wallet',
           '/services',
@@ -67,12 +78,20 @@ class AppRouter {
           return '/login';
         }
 
+        if (path == '/admin' && (!hasSession || !isAdmin)) {
+          return hasSession ? '/dashboard' : '/login';
+        }
+
         if (hasSession && (path == '/login' || path == '/register')) {
-          return '/dashboard';
+          return isAdmin ? '/admin' : '/dashboard';
         }
 
         if (hasSession && path == '/') {
-          return '/dashboard';
+          return isAdmin ? '/admin' : '/dashboard';
+        }
+
+        if (hasSession && path == '/dashboard' && isAdmin) {
+          return '/admin';
         }
 
         return null;
@@ -185,6 +204,14 @@ class AppRouter {
             context,
             state,
             DashboardScreen(onToggleTheme: themeToggle),
+          ),
+        ),
+        GoRoute(
+          path: '/admin',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            const AdminDashboardScreen(),
           ),
         ),
         GoRoute(

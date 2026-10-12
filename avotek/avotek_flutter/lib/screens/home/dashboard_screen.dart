@@ -308,45 +308,83 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(width: 8),
 
-                        // Regular User Badge Pill
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 7,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF131722)
-                                : const Color(0xFFF1F5F9),
+                        // Role Badge Pill
+                        if (auth.user?.isAdmin ?? false)
+                          InkWell(
+                            onTap: () => context.go('/admin'),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF23304B)
-                                  : const Color(0xFFE2E8F0),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.person_outline_rounded,
-                                size: 14,
-                                color: AppColors.metallicLight,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 7,
                               ),
-                              const SizedBox(width: 5),
-                              Text(
-                                'Regular',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? AppColors.metallicLight
-                                      : AppColors.slateGrey,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryBlue.withOpacity(isDark ? 0.18 : 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppColors.primaryBlue.withOpacity(0.4),
+                                  width: 1,
                                 ),
                               ),
-                            ],
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.admin_panel_settings_rounded,
+                                    size: 14,
+                                    color: AppColors.primaryBlue,
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    'Admin',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primaryBlue,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF131722)
+                                  : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFF23304B)
+                                    : const Color(0xFFE2E8F0),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.person_outline_rounded,
+                                  size: 14,
+                                  color: AppColors.metallicLight,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Regular',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? AppColors.metallicLight
+                                        : AppColors.slateGrey,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
                         const SizedBox(width: 8),
 
                         // Theme Toggle Icon
