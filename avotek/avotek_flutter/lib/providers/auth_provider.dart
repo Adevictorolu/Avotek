@@ -319,6 +319,28 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> updatePassword(String password) async {
+    if (password.length < 6) {
+      _errorMessage = 'Password must be at least 6 characters.';
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await SupabaseService.instance.updatePassword(password);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Verify 4-digit Security PIN
   Future<bool> verifyTransactionPin(String pin) async {
     if (_user == null) return false;

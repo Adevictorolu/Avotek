@@ -135,50 +135,6 @@ function validatePayload(action: string, payload: JsonMap): void {
   }
 }
 
-if (action === "cable.purchase") {
-  try {
-    const cable = String(payload.cable_type ?? "");
-    const plansResponse = await fetch(
-      `${apiBaseUrl}/api/v2/vtu/cable/plans/?cable_name=${encodeURIComponent(cable)}`,
-      {
-        headers: { Authorization: `Token ${token}` },
-        signal: AbortSignal.timeout(12000),
-      },
-    );
-    const plansBody: unknown = await plansResponse.json();
-    const plans = isRecord(plansBody) && Array.isArray(plansBody.data)
-      ? plansBody.data
-      : [];
-    const selectedPlan = plans.find((plan) =>
-      isRecord(plan) &&
-      String(plan.variation_code ?? plan.id ?? "") === String(payload.variation_code)
-    );
-    const providerPrice = isRecord(selectedPlan)
-      ? Number(selectedPlan.amount)
-      : Number.NaN;
-    if (!plansResponse.ok || !Number.isFinite(providerPrice) || providerPrice <= 0) {
-      return jsonResponse({
-        success: false,
-        status: "failed",
-        message: "The selected cable package is unavailable from Bigisub. Refresh packages and try again.",
-      });
-    }
-    if (Number(payload.amount) < providerPrice) {
-      return jsonResponse({
-        success: false,
-        status: "failed",
-        message: "The selected cable package price is below Bigisub's current price. Refresh packages and try again.",
-      });
-    }
-  } catch {
-    return jsonResponse({
-      success: false,
-      status: "failed",
-      message: "Could not verify the current cable package price with Bigisub.",
-    });
-  }
-}
-
 async function sha256Hex(value: string): Promise<string> {
   const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -267,6 +223,50 @@ Deno.serve(async (request) => {
         success: false,
         status: "failed",
         message: "Could not verify the current data plan price with Bigisub.",
+      });
+    }
+  }
+
+  if (action === "cable.purchase") {
+    try {
+      const cable = String(payload.cable_type ?? "");
+      const plansResponse = await fetch(
+        `${apiBaseUrl}/api/v2/vtu/cable/plans/?cable_name=${encodeURIComponent(cable)}`,
+        {
+          headers: { Authorization: `Token ${token}` },
+          signal: AbortSignal.timeout(12000),
+        },
+      );
+      const plansBody: unknown = await plansResponse.json();
+      const plans = isRecord(plansBody) && Array.isArray(plansBody.data)
+        ? plansBody.data
+        : [];
+      const selectedPlan = plans.find((plan) =>
+        isRecord(plan) &&
+        String(plan.variation_code ?? plan.id ?? "") === String(payload.variation_code)
+      );
+      const providerPrice = isRecord(selectedPlan)
+        ? Number(selectedPlan.amount)
+        : Number.NaN;
+      if (!plansResponse.ok || !Number.isFinite(providerPrice) || providerPrice <= 0) {
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: "The selected cable package is unavailable from Bigisub. Refresh packages and try again.",
+        });
+      }
+      if (Number(payload.amount) < providerPrice) {
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: "The selected cable package price is below Bigisub's current price. Refresh packages and try again.",
+        });
+      }
+    } catch {
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: "Could not verify the current cable package price with Bigisub.",
       });
     }
   }

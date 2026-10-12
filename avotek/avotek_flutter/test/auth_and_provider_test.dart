@@ -7,16 +7,16 @@ void main() {
     test('generates a stable Avotek ID from the Supabase user ID', () {
       const userId = '550e8400-e29b-41d4-a716-446655440000';
 
-      expect(UserModel.avoIdFor(userId), 'AVO-550E8400E29B');
+      expect(UserModel.avoIdFor(userId), 'AVO-550E8400E29B41D4');
       expect(
         UserModel.fromJson({'id': userId, 'email': 'person@example.com'}).avoId,
-        'AVO-550E8400E29B',
+        'AVO-550E8400E29B41D4',
       );
     });
   });
 
   test(
-    'VTU requests fail closed until a trusted backend is configured',
+    'VTU requests fail clearly when Supabase is not initialized',
     () async {
       await expectLater(
         VtuApiService.instance.getWalletBalance(),

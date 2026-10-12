@@ -7,6 +7,8 @@ String avotekIdFor(String userId) {
 }
 
 class UserModel {
+  static String avoIdFor(String userId) => avotekIdFor(userId);
+
   final String id;
   final String email;
   final String name;

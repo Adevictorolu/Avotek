@@ -40,11 +40,13 @@ class VtuApiService {
         'bigisub',
         body: body,
       );
+    } on AssertionError {
+      throw StateError(
+        'Supabase must be initialized before calling the VTU service.',
+      );
     } on FunctionException catch (error) {
       final details = error.details;
-      final message = details is Map
-          ? details['message']?.toString()
-          : null;
+      final message = details is Map ? details['message']?.toString() : null;
       throw BigisubRequestException(error.status, message);
     }
 
