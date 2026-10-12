@@ -75,24 +75,35 @@ class _LoginScreenState extends State<LoginScreen> {
           ? _identifierController.text.trim()
           : '',
     );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF111827),
+        scrollable: true,
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 24,
+        ),
+        backgroundColor: isDark ? const Color(0xFF111827) : Colors.white,
         title: Text(
           'Reset your password',
           style: GoogleFonts.plusJakartaSans(
-            color: Colors.white,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
             fontWeight: FontWeight.w800,
           ),
         ),
         content: TextField(
           controller: emailController,
           keyboardType: TextInputType.emailAddress,
-          style: GoogleFonts.plusJakartaSans(color: Colors.white),
-          decoration: const InputDecoration(
+          textInputAction: TextInputAction.done,
+          style: GoogleFonts.plusJakartaSans(
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          ),
+          decoration: InputDecoration(
             labelText: 'Email address',
-            labelStyle: TextStyle(color: Color(0xFFCBD5E1)),
+            labelStyle: TextStyle(
+              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+            ),
           ),
         ),
         actions: [

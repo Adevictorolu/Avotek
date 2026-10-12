@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../database/app_database.dart';
 import '../supabase/supabase_service.dart';
 import '../../screens/affiliate/affiliate_screen.dart';
+import '../../screens/auth/auth_callback_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/coupons/coupons_screen.dart';
 import '../../screens/gifts/gifts_screen.dart';
@@ -67,6 +68,10 @@ class AppRouter {
         }
 
         if (hasSession && (path == '/login' || path == '/register')) {
+          return '/dashboard';
+        }
+
+        if (hasSession && path == '/') {
           return '/dashboard';
         }
 
@@ -168,10 +173,11 @@ class AppRouter {
         ),
         GoRoute(
           path: '/login-callback',
-          redirect: (context, state) =>
-              SupabaseService.instance.currentAuthUser != null
-              ? '/dashboard'
-              : '/login',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            const AuthCallbackScreen(),
+          ),
         ),
         GoRoute(
           path: '/dashboard',

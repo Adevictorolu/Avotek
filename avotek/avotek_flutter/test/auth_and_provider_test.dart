@@ -1,4 +1,5 @@
 import 'package:avotek_flutter/core/services/vtu_api_service.dart';
+import 'package:avotek_flutter/core/supabase/supabase_service.dart';
 import 'package:avotek_flutter/models/user_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,6 +14,18 @@ void main() {
         'AVO-550E8400E29B41D4',
       );
     });
+  });
+
+  test('keeps the GitHub Pages project path in auth callback URLs', () {
+    final redirect = buildWebAuthRedirectUrl(
+      Uri.parse('https://adevictorolu.github.io/Avotek/?code=oauth#/login'),
+      '/login-callback',
+    );
+
+    expect(
+      redirect,
+      'https://adevictorolu.github.io/Avotek/#/login-callback',
+    );
   });
 
   test(

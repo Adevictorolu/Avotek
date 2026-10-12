@@ -7,6 +7,18 @@ import '../../models/wallet_model.dart';
 import '../../models/transaction_model.dart';
 import '../../models/vtu_models.dart';
 
+@visibleForTesting
+String buildWebAuthRedirectUrl(Uri currentUri, String route) {
+  return Uri(
+    scheme: currentUri.scheme,
+    userInfo: currentUri.userInfo,
+    host: currentUri.host,
+    port: currentUri.hasPort ? currentUri.port : null,
+    path: currentUri.path,
+    fragment: route,
+  ).toString();
+}
+
 class SupabaseService {
   static const String supabaseUrl = 'https://gcixbqrridzgobkqnlfz.supabase.co';
   static const String supabaseAnonKey =
@@ -214,7 +226,9 @@ class SupabaseService {
   }
 
   String _authRedirectUrl(String path) {
-    if (kIsWeb) return Uri.base.resolve(path).toString();
+    if (kIsWeb) {
+      return buildWebAuthRedirectUrl(Uri.base, path);
+    }
     return 'io.supabase.avotek://$path';
   }
 

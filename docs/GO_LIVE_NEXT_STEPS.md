@@ -12,21 +12,26 @@ The attached `ERR_CONNECTION_REFUSED` page means the browser was sent to a
 when Supabase Auth still has a local development URL as its Site URL or when a
 confirmation link was generated with a localhost redirect.
 
-1. Deploy the web app to its production domain (for example,
-   `https://your-domain.example`) and use that domain to start signup/sign-in.
-   A `localhost` URL only works while the local Flutter web server is running.
+1. The GitHub Pages deployment for this repository is hosted at
+   `https://adevictorolu.github.io/Avotek/`. Use that project URL, not the
+   account root `https://adevictorolu.github.io/`, which has no Pages site.
+   A `localhost` URL only works while the local web server is running.
 2. In Supabase Dashboard, open **Authentication → URL Configuration**:
-   - Set **Site URL** to the production domain, not `localhost`.
-   - Add `https://your-domain.example/login-callback` and
-     `https://your-domain.example/reset-password` to **Redirect URLs**.
+   - Set **Site URL** to `https://adevictorolu.github.io/Avotek/`.
+   - Add these exact hash-route URLs to **Redirect URLs**:
+     `https://adevictorolu.github.io/Avotek/#/login-callback` and
+     `https://adevictorolu.github.io/Avotek/#/reset-password`.
    - Add the exact local development origin only if local testing is needed.
 3. In **Authentication → Providers → Google**, enable Google and set its
    provider credentials. In Google Cloud, allow the Supabase callback URL
    displayed by Supabase; this is different from the app's `login-callback`.
-4. The app now sends email signup, Google OAuth, and password-reset redirects to
-   the current browser origin. After deploying this change, test a new signup,
-   the confirmation email, Google sign-in, password reset, and email/password
-   sign-in on the production domain. On mobile, allow the exact callback URLs
+4. The app keeps the GitHub Pages project path when it generates email signup,
+   Google OAuth, and password-reset redirects. The OAuth callback waits for
+   Supabase to establish a session before navigating to the protected dashboard.
+   After deploying this change, test a new signup, confirmation email, Google
+   sign-in, password reset, and email/password sign-in on the production URL.
+   Authenticated visits to the site root go to the dashboard; signing out goes
+   to the sign-in screen. On mobile, allow the exact callback URLs
    `io.supabase.avotek:///login-callback` and
    `io.supabase.avotek:///reset-password`.
 5. If the browser still opens localhost, inspect the email's actual link and
@@ -112,6 +117,7 @@ claiming that receipts or alerts are sent. Keep access tokens on the server.
 3. Confirm production database RLS, Edge Function secrets, and function logs.
    Never use a client-side admin passkey or a manually entered wallet credit
    as proof that a payment integration works.
-4. Verify the deployed Vercel build opens on its HTTPS domain and does not
-   redirect to localhost. A successful GitHub push is not proof that Vercel
-   or Supabase has deployed the changes.
+4. Verify the deployed GitHub Pages build opens at
+   `https://adevictorolu.github.io/Avotek/` and does not redirect to localhost.
+   A successful GitHub push is not proof that Supabase configuration or secrets
+   have been applied.
