@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
@@ -11,346 +12,387 @@ import '../../providers/theme_provider.dart';
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
+  static const _projectUrl =
+      'https://supabase.com/dashboard/project/gcixbqrridzgobkqnlfz';
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final adminEmail = user?.email ?? 'ademolavictor869@gmail.com';
-    final isAdminUser = user?.isAdmin ?? true;
+    if (user == null && auth.isLoading) {
+      return _shell(
+        context,
+        const Center(child: CircularProgressIndicator()),
+      );
+    }
 
-    if (!isAdminUser) {
-      return ResponsiveShell(
-        currentRoute: '/admin',
-        onToggleTheme: () => context.read<ThemeProvider>().toggleTheme(),
-        child: const Center(
-          child: Text('Access denied'),
+    if (user == null || !user.isAdmin) {
+      return _shell(
+        context,
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.lock_outline_rounded,
+                  size: 44,
+                  color: AppColors.error,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Admin access required',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => context.go('/dashboard'),
+                  child: const Text('Return to dashboard'),
+                ),
+              ],
+            ),
+          ),
         ),
       );
     }
 
-    final cards = [
-      _MetricCard(
-        title: 'Wallet inflow',
-        value: '₦2.4M',
-        subtitle: 'Last 30 days',
-        accent: AppColors.primaryBlue,
-      ),
-      _MetricCard(
-        title: 'Successful VTU orders',
-        value: '1,284',
-        subtitle: 'Live flow',
-        accent: AppColors.success,
-      ),
-      _MetricCard(
-        title: 'Pending providers',
-        value: '3',
-        subtitle: 'Needs config',
-        accent: AppColors.warning,
-      ),
-      _MetricCard(
-        title: 'Open support tickets',
-        value: '12',
-        subtitle: 'Needs follow-up',
-        accent: AppColors.error,
-      ),
-    ];
-
-    final actions = [
-      _ActionTile(
-        icon: Icons.api_rounded,
-        title: 'Provider API setup',
-        subtitle: 'Add or rotate Bigisub and payment credentials.',
-        onTap: () => _showToast(context, 'Provider API configuration panel ready'),
-      ),
-      _ActionTile(
-        icon: Icons.price_change_rounded,
-        title: 'Service pricing',
-        subtitle: 'Update Airtime, bundles, cable, and utility pricing.',
-        onTap: () => _showToast(context, 'Pricing manager ready to connect'),
-      ),
-      _ActionTile(
-        icon: Icons.verified_user_rounded,
-        title: 'User verification',
-        subtitle: 'Review KYC and identity checks for all accounts.',
-        onTap: () => _showToast(context, 'Verification queue ready'),
-      ),
-      _ActionTile(
-        icon: Icons.settings_rounded,
-        title: 'Platform settings',
-        subtitle: 'Branding, wallet limits, and system defaults.',
-        onTap: () => _showToast(context, 'Settings manager ready'),
-      ),
-    ];
-
-    return ResponsiveShell(
-      currentRoute: '/admin',
-      onToggleTheme: () => context.read<ThemeProvider>().toggleTheme(),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 22, 20, 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
+    return _shell(
+      context,
+      SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalPadding = constraints.maxWidth < 600 ? 16.0 : 28.0;
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                20,
+                horizontalPadding,
+                36,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1120),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _buildHeader(context, user.email, isDark),
+                      const SizedBox(height: 20),
+                      _buildSecurityNotice(isDark),
+                      const SizedBox(height: 26),
                       Text(
-                        'Administration',
+                        'Manage Avotek',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 28,
+                          fontSize: 22,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 14),
+                      _buildTools(context, constraints.maxWidth, isDark),
+                      const SizedBox(height: 26),
                       Text(
-                        'System oversight and live operational controls',
+                        'Server configuration',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          color: isDark ? Colors.white70 : AppColors.slateGrey,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
+                      const SizedBox(height: 14),
+                      _buildServerTools(context, constraints.maxWidth, isDark),
                     ],
                   ),
-                  FilledButton.icon(
-                    onPressed: () => context.go('/dashboard'),
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    label: const Text('Back to dashboard'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 22),
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1B2434) : Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: isDark ? Colors.white12 : const Color(0xFFE5E7EB),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primaryBlue, AppColors.electricCyan],
-                        ),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: const Icon(Icons.admin_panel_settings_rounded, color: Colors.white),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Admin access active',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            adminEmail,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              color: isDark ? Colors.white70 : AppColors.slateGrey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.shield_rounded,
-                      color: AppColors.success,
-                      size: 28,
-                    ),
-                  ],
                 ),
               ),
-              const SizedBox(height: 22),
-              GridView.builder(
-                itemCount: cards.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 1.5,
-                ),
-                itemBuilder: (context, index) => cards[index],
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Operational tools',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 16),
-              GridView.builder(
-                itemCount: actions.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 1.85,
-                ),
-                itemBuilder: (context, index) => actions[index],
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
-  void _showToast(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.primaryBlue,
-      ),
+  Widget _shell(BuildContext context, Widget child) {
+    return ResponsiveShell(
+      currentRoute: '/admin',
+      onToggleTheme: () => context.read<ThemeProvider>().toggleTheme(),
+      child: child,
     );
   }
-}
 
-class _MetricCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String subtitle;
-  final Color accent;
-
-  const _MetricCard({
-    required this.title,
-    required this.value,
-    required this.subtitle,
-    required this.accent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1B2434) : Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: isDark ? Colors.white12 : const Color(0xFFE5E7EB),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: accent,
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 13,
-              color: isDark ? Colors.white70 : AppColors.slateGrey,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 12,
-              color: isDark ? Colors.white60 : AppColors.slateGrey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _ActionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1B2434) : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isDark ? Colors.white12 : const Color(0xFFE5E7EB),
-          ),
-        ),
-        child: Column(
+  Widget _buildHeader(BuildContext context, String email, bool isDark) {
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      runSpacing: 14,
+      spacing: 12,
+      children: [
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: AppColors.primaryBlue.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.primaryBlue),
-            ),
-            const SizedBox(height: 14),
             Text(
-              title,
+              'Admin panel',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 5),
             Text(
-              subtitle,
+              email,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 color: isDark ? Colors.white70 : AppColors.slateGrey,
               ),
             ),
           ],
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            IconButton(
+              tooltip: isDark
+                  ? 'Switch to light theme'
+                  : 'Switch to dark theme',
+              onPressed: () => context.read<ThemeProvider>().toggleTheme(),
+              icon: Icon(
+                isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: () async {
+                await context.read<AuthProvider>().logout();
+                if (context.mounted) context.go('/login');
+              },
+              icon: const Icon(Icons.logout_rounded, size: 18),
+              label: const Text('Sign out'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSecurityNotice(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1B2434) : const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? Colors.white12 : const Color(0xFFBFDBFE),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.security_rounded, color: AppColors.primaryBlue),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Provider credentials and privileged data must be managed on the '
+              'secured Supabase backend. Avotek never stores API secrets in '
+              'this browser. These links require a Supabase project account; '
+              'the Avotek admin email alone does not grant Supabase project '
+              'permissions.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                height: 1.5,
+                color: isDark ? Colors.white : AppColors.slateGrey,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTools(BuildContext context, double width, bool isDark) {
+    final tools = [
+      _AdminTool(
+        icon: Icons.miscellaneous_services_rounded,
+        title: 'Services',
+        description: 'Open Avotek’s airtime, data, and bill-payment services.',
+        onTap: () => context.go('/services'),
+      ),
+      _AdminTool(
+        icon: Icons.receipt_long_rounded,
+        title: 'Transactions',
+        description:
+            'Review the transaction history available to this account.',
+        onTap: () => context.go('/transactions'),
+      ),
+      _AdminTool(
+        icon: Icons.person_outline_rounded,
+        title: 'Account profile',
+        description: 'View and update the signed-in administrator profile.',
+        onTap: () => context.go('/profile'),
+      ),
+      _AdminTool(
+        icon: Icons.settings_outlined,
+        title: 'Account settings',
+        description: 'Open the account’s security and preference settings.',
+        onTap: () => context.go('/settings'),
+      ),
+    ];
+    return _toolGrid(tools, width, isDark);
+  }
+
+  Widget _buildServerTools(
+    BuildContext context,
+    double width,
+    bool isDark,
+  ) {
+    final tools = [
+      _AdminTool(
+        icon: Icons.key_rounded,
+        title: 'Provider API secrets',
+        description:
+            'Configure BIGISUB_API_TOKEN and payment-provider secrets in '
+            'Supabase Edge Function settings.',
+        onTap: () => _openExternal(
+          context,
+          Uri.parse('$_projectUrl/settings/functions'),
+        ),
+      ),
+      _AdminTool(
+        icon: Icons.storage_rounded,
+        title: 'Database and policies',
+        description:
+            'Open the Supabase project to manage database configuration and '
+            'access policies.',
+        onTap: () => _openExternal(context, Uri.parse('$_projectUrl/editor')),
+      ),
+      _AdminTool(
+        icon: Icons.manage_accounts_outlined,
+        title: 'Supabase authentication',
+        description:
+            'Manage authentication users and provider settings in the '
+            'Supabase project.',
+        onTap: () =>
+            _openExternal(context, Uri.parse('$_projectUrl/auth/users')),
+      ),
+    ];
+    return _toolGrid(tools, width, isDark);
+  }
+
+  Widget _toolGrid(List<_AdminTool> tools, double width, bool isDark) {
+    final count = width >= 900
+        ? 3
+        : width >= 620
+        ? 2
+        : 1;
+    return GridView.builder(
+      itemCount: tools.length,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: count,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        mainAxisExtent: 154,
+      ),
+      itemBuilder: (context, index) => _AdminToolCard(
+        tool: tools[index],
+        isDark: isDark,
+      ),
+    );
+  }
+
+  Future<void> _openExternal(BuildContext context, Uri uri) async {
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the Supabase dashboard.')),
+      );
+    }
+  }
+}
+
+class _AdminTool {
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback onTap;
+
+  const _AdminTool({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
+}
+
+class _AdminToolCard extends StatelessWidget {
+  final _AdminTool tool;
+  final bool isDark;
+
+  const _AdminToolCard({required this.tool, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: isDark ? const Color(0xFF1B2434) : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: isDark ? Colors.white12 : const Color(0xFFE5E7EB),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: tool.onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(tool.icon, color: AppColors.primaryBlue, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tool.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Expanded(
+                      child: Text(
+                        tool.description,
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          height: 1.4,
+                          color: isDark ? Colors.white70 : AppColors.slateGrey,
+                        ),
+                      ),
+                    ),
+                    const Align(
+                      alignment: Alignment.centerRight,
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 18,
+                        color: AppColors.primaryBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

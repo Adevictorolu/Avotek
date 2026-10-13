@@ -1,3 +1,4 @@
+import 'package:avotek_flutter/core/router/app_router.dart';
 import 'package:avotek_flutter/core/services/vtu_api_service.dart';
 import 'package:avotek_flutter/core/supabase/supabase_service.dart';
 import 'package:avotek_flutter/models/user_model.dart';
@@ -12,6 +13,37 @@ void main() {
       expect(
         UserModel.fromJson({'id': userId, 'email': 'person@example.com'}).avoId,
         'AVO-550E8400E29B41D4',
+      );
+    });
+
+    test(
+      'recognizes the configured administrator email case-insensitively',
+      () {
+        final admin = UserModel.fromJson({
+          'id': 'admin-user-id',
+          'email': '  AdemolaVictor869@Gmail.com ',
+        });
+        final regularUser = UserModel.fromJson({
+          'id': 'regular-user-id',
+          'email': 'person@example.com',
+          'role': 'admin',
+        });
+
+        expect(admin.isAdmin, isTrue);
+        expect(admin.role, 'admin');
+        expect(regularUser.isAdmin, isFalse);
+        expect(regularUser.role, 'user');
+      },
+    );
+
+    test('routes the designated administrator directly to the admin panel', () {
+      expect(
+        authenticatedHomeForEmail('ademolavictor869@gmail.com'),
+        '/admin',
+      );
+      expect(
+        authenticatedHomeForEmail('person@example.com'),
+        '/dashboard',
       );
     });
   });

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/router/app_router.dart';
 import '../../core/supabase/supabase_service.dart';
 
 class AuthCallbackScreen extends StatefulWidget {
@@ -40,7 +41,12 @@ class _AuthCallbackScreenState extends State<AuthCallbackScreen> {
     if (!mounted) return;
     _timeout?.cancel();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.go('/dashboard');
+      if (!mounted) return;
+
+      final email = SupabaseService.instance.currentAuthUser?.email ??
+          SupabaseService.instance.currentSession?.user.email;
+      final destination = authenticatedHomeForEmail(email);
+      context.go(destination);
     });
   }
 

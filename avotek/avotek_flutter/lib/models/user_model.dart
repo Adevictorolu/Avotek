@@ -32,7 +32,7 @@ class UserModel {
   final String avoId;
   final String? username;
 
-  bool get isAdmin => role == 'admin' || isAdminEmail(email);
+  bool get isAdmin => isAdminEmail(email);
 
   const UserModel({
     required this.id,
@@ -109,8 +109,7 @@ class UserModel {
     final rawUsername =
         json['username'] as String? ??
         (rawEmail.contains('@') ? rawEmail.split('@').first : null);
-    final resolvedRole = (json['role'] as String? ?? '').toLowerCase();
-    final isPrivileged = resolvedRole == 'admin' || isAdminEmail(rawEmail);
+    final isPrivileged = isAdminEmail(rawEmail);
 
     return UserModel(
       id: rawId,
