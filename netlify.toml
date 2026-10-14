@@ -1,0 +1,16 @@
+[build]
+  base = "."
+  command = "bash scripts/netlify-build.sh"
+  publish = "avotek/avotek_flutter/build/web"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
