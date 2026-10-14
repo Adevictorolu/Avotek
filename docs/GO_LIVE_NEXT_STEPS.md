@@ -140,6 +140,14 @@ voucher issuance/redemption. Betting has been removed from the service menu;
 unintegrated services are shown as coming soon instead of reporting fake
 success.
 
+**Production deployment check (14 October 2026):** an OPTIONS preflight to
+`https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/bigisub` returned HTTP
+404 with `NOT_FOUND` / “Requested function was not found.” The browser's CORS
+error is therefore a symptom of the missing production function, not evidence
+that a purchase reached Bigisub. Deploy the reviewed function to the intended
+Supabase project, configure rotated secrets, then repeat the preflight and
+authenticated low-value tests before enabling purchases.
+
 Before enabling customers to transact:
 
 1. **Rotate the Bigisub token that was pasted into chat.** Store the rotated
