@@ -131,6 +131,13 @@ flutter run
 
 ---
 
+## Netlify Web Deployment
+
+The repository includes a root Netlify configuration that installs the pinned
+Flutter SDK and publishes the compiled web application automatically. See
+[the Netlify deployment guide](docs/netlify_deployment.md) for deployment,
+HTTP smoke checks, authentication callbacks, and backend readiness requirements.
+
 ## ⚡ Live Operations Checklist
 
 To transition from Mock development to live operations:
