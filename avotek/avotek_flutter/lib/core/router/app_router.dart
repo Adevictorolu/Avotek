@@ -30,7 +30,6 @@ import '../../screens/wallet/fund_wallet_screen.dart';
 import '../../screens/wallet/wallet_screen.dart';
 import '../../widgets/avotek_page_transition.dart';
 
-@visibleForTesting
 String authenticatedHomeForEmail(String? email) =>
     UserModel.isAdminEmail(email) ? '/admin' : '/dashboard';
 
