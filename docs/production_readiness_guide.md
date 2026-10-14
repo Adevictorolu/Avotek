@@ -23,55 +23,72 @@ This comprehensive guide details the exact steps required to take the **AVOTEK V
 AVOTEK runs on a high-throughput architecture consisting of:
 - **Client Frontend**: Flutter cross-platform client (Web, Android, iOS) with Plus Jakarta Sans typography, light/dark themes, zero-distortion brand assets, and discreet admin routing.
 - **Authentication & database**: Supabase Auth, PostgreSQL, and Edge Functions.
-- **VTU provider**: Bigisub is called through the authenticated `bigisub` Edge Function.
+- **VTU provider**: The upstream VTU provider is called through the authenticated `vtu-provider` Edge Function.
 
-> **Live status:** wallet top-ups, dedicated virtual accounts, Paystack webhooks, WhatsApp messages, and Termii messages are not implemented or configured in this repository. Do not advertise live payments until the checklist in [`GO_LIVE_NEXT_STEPS.md`](./GO_LIVE_NEXT_STEPS.md) is complete. Wallet funding intentionally remains unavailable rather than showing fabricated bank details.
+> **Live status:** Paystack checkout, server verification, signed webhook handling, and idempotent wallet-credit code are implemented, but are **not live until the database migration and Edge Function have been deployed and tested with the correct Paystack credentials**. Dedicated virtual accounts, WhatsApp messages, and Termii messages are not implemented. Do not advertise live payments until the checklist in [`GO_LIVE_NEXT_STEPS.md`](./GO_LIVE_NEXT_STEPS.md) is complete. The app does not fabricate bank details.
 
 ```mermaid
 graph TD
     Client[Flutter Client - Web/Mobile] -->|Auth & data| Supabase[Supabase Auth / PostgreSQL]
     Client -->|Authenticated request| Edge[Supabase Edge Functions]
     Edge -->|VTU requests| Bigisub[Bigisub API]
-    FuturePay[Future payment webhook] -. not implemented .-> Supabase
+    Client -->|Initialize / verify| PaystackFn[paystack-payments Edge Function]
+    Paystack -->|Signed webhook| PaystackFn
+    PaystackFn -->|Verify and credit once| Supabase
     FutureNotify[Future WhatsApp / SMS] -. not implemented .-> Client
 ```
 
 ---
 
-## 2. Paystack Live Setup (Dedicated NUBAN & Webhooks)
+## 2. Paystack Checkout and Webhook Setup
 
-**Not live or implemented.** The repository does not currently create Paystack transactions or Dedicated Virtual Accounts, receive Paystack webhooks, or credit customer balances from verified payments. Do not display a made-up transfer account or accept a screenshot/manual transfer as proof of payment. The steps below are prerequisites for a future integration, not existing capabilities.
+Paystack checkout initialization, server-side verification, and signed webhook
+handling are implemented in `paystack-payments`. Wallet crediting remains
+disabled in production until the database migration and function are deployed,
+Paystack secrets and URLs are configured, and the Test-mode checks in
+[`GO_LIVE_NEXT_STEPS.md`](./GO_LIVE_NEXT_STEPS.md) pass. Dedicated Virtual
+Accounts are not implemented. Do not accept screenshots or manual transfers as
+proof of payment.
 
-### 2.1 Obtain Live API Keys
+### 2.1 Configure Paystack keys safely
 1. Log into your [Paystack Dashboard](https://dashboard.paystack.com).
-2. Complete your business compliance (Tier 2/Tier 3 CAC documentation).
-3. Toggle from **Test Mode** to **Live Mode** in the top-left navigation.
-4. Navigate to **Settings > API Keys & Webhooks**.
-5. Copy your:
-   - **Live Secret Key**: `sk_live_xxxxxxxxxxxxxxxxxxxxxxxx`
-   - **Live Public Key**: `pk_live_xxxxxxxxxxxxxxxxxxxxxxxx`
+2. Start in **Test Mode**. Add the Test Secret Key to Supabase Edge Function
+   Secrets as `PAYSTACK_SECRET_KEY`. Never put it in Flutter, Git, logs, or
+   chat. The app does not need the Paystack public key for server-created
+   checkout sessions.
+3. Configure `PAYSTACK_CALLBACK_URL` and deploy `paystack-payments` as
+   documented in [`GO_LIVE_NEXT_STEPS.md`](./GO_LIVE_NEXT_STEPS.md).
 
 ### 2.2 Configure Webhooks
-1. Do not enter a webhook URL until a production HTTPS webhook endpoint has been implemented and deployed.
-2. Paystack signs webhooks using HMAC SHA512. A future implementation must verify `x-paystack-signature`, validate the event, and credit funds idempotently before treating any deposit as successful. No such handler is currently deployed by this repository.
+1. Set the Paystack Test Webhook URL to
+   `https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/paystack-payments`
+   after the function has been deployed.
+2. Paystack signs webhooks using HMAC SHA512. The function checks
+   `x-paystack-signature` and verifies a successful payment with Paystack
+   before an idempotent database credit. A configured dashboard URL alone
+   does not prove deployment or successful delivery.
 
 ### 2.3 Activating Dedicated NUBANs
-1. Ensure your Paystack account has **Dedicated Virtual Accounts** enabled under **Preferences**.
-2. A future server-side integration must create and persist a provider-assigned account only after Paystack confirms it. The current app does not request or issue dedicated virtual accounts.
+Dedicated Virtual Account provisioning is not implemented. Do not show an
+account number or invite bank transfers until a server-side provisioning and
+verified deposit flow has been built and tested.
 
 ---
 
 ## 3. Bigisub VTU Setup & Float Funding
 
-The Flutter client calls the authenticated `bigisub` Supabase Edge Function. That server-side function proxies requests to `https://api.bigisub.ng`; the Bigisub token and transaction PIN must never be included in Flutter, browser storage, client settings, logs, or source control.
+The Flutter client calls the authenticated `vtu-provider` Supabase Edge
+Function. That server-side function proxies requests to
+`https://api.bigisub.ng`; provider credentials must never be included in
+Flutter, browser storage, client settings, logs, or source control.
 
 ### 3.1 Configure Bigisub
 1. Sign in to the Bigisub dashboard and verify the API token. **Rotate any token previously pasted into chat, committed, or displayed in the app settings before going live.**
 2. Fund the Bigisub reseller/corporate float and confirm service access for airtime, data, cable, and electricity.
-3. Deploy the `bigisub` Supabase Edge Function and set secrets without putting their values in application source:
+3. Deploy the `vtu-provider` Supabase Edge Function and set secrets without putting their values in application source:
    ```powershell
    supabase secrets set BIGISUB_API_TOKEN=<rotated-token> BIGISUB_TRANSACTION_PIN=<provider-transaction-pin>
-   supabase functions deploy bigisub
+   supabase functions deploy vtu-provider
    ```
 4. Apply `avotek/supabase_schema.sql`; it adds authenticated RPCs that reserve a customer wallet debit before dispatch and refund a confirmed failure.
 5. Exercise each service with a provider-approved low-value/test transaction, verify its Bigisub reference and final status, and confirm the wallet/ledger result before enabling customers.
@@ -226,7 +243,7 @@ webhook.yourdomain.com {
 
 ## 9. Pre-Launch Verification Checklist
 
-- [ ] **Paystack Webhook Tested**: Not implemented or tested.
+- [ ] **Paystack Webhook Tested**: Code is implemented; deploy and test signed delivery, verification, duplicate delivery, and idempotent credit in Test mode before Live.
 - [ ] **Dedicated NUBAN Generation**: Created test customer DVA and verified auto-credit.
 - [ ] **Bigisub Float Funded**: Fund the Bigisub reseller balance and verify it in the provider dashboard.
 - [ ] **Airtime & SME Data Test**: Dispatched live ₦100 airtime and 500MB SME data test.

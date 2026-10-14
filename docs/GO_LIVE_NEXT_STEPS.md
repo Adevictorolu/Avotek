@@ -74,6 +74,7 @@ clients permission to update wallet balances directly.
    ```powershell
    supabase functions deploy identifier-login
    supabase functions deploy vtu-provider
+   supabase functions deploy paystack-payments
    ```
 
 ### Function names currently used by the app
@@ -82,6 +83,7 @@ clients permission to update wallet balances directly.
 | --- | --- |
 | `identifier-login` | Resolves the app's identifier-based sign-in flow. |
 | `vtu-provider` | Authenticated server adapter for wallet balance, airtime, data plans and purchase, cable plans/verification/purchase, electricity provider lookup/verification/payment, and transaction requery. |
+| `paystack-payments` | Authenticated checkout initialization and verification, plus Paystack signature-verified webhook delivery for wallet funding. |
 
 The adapter currently accepts these action names: `wallet.balance`,
 `airtime.purchase`, `data.plans`, `data.purchase`, `cable.plans`,
@@ -99,33 +101,76 @@ never put them in Flutter or the repository.
    name was not found. Do not claim the purchase flows are live until a
    deployment and authenticated end-to-end tests succeed.
 
-6. Education PINs, ISP, bulk SMS, airtime PIN generation, wallet funding, and
-   payment-gateway operations do not have verified contracts implemented in
-   this adapter. Obtain endpoint paths, required fields, response examples,
-   error/status meanings, and test credentials from the provider before
-   adding those services. Do not infer the contracts from the category list.
+6. Education PINs, ISP, bulk SMS, and airtime PIN generation do not have
+   verified contracts implemented in the VTU adapter. Obtain endpoint paths,
+   required fields, response examples, error/status meanings, and test
+   credentials from the provider before adding those services. Do not infer
+   the contracts from the category list.
 7. With a funded provider float, test one low-value transaction for each
    available service. Check provider references/status, customer wallet,
    ledger, confirmed-failure refunds, and duplicate/retry behavior. Do not
    release a transaction whose status is ambiguous; reconcile it with Bigisub.
 
-## 4. Payments and wallet top-ups are still future work
+## 4. Paystack wallet funding setup
 
-Paystack checkout, dedicated virtual-account creation, webhook signature
-verification, webhook idempotency, and verified wallet crediting are **not
-implemented** in this repository. Wallet funding must remain disabled until
-all of the following are done:
+The repository now contains a Paystack checkout flow, authenticated server
+verification, signed webhook handling, and an atomic/idempotent wallet credit
+RPC. This code is **not live until the migration, function deployment, and
+Paystack dashboard setup below are complete and tested**.
 
-- Select/confirm the payment provider and complete its merchant onboarding.
-- Implement server-side payment initialization and a signed, idempotent
-  provider webhook, plus atomic database crediting and reconciliation.
-- Store provider secrets only in Supabase secrets and deploy the functions.
-- Test successful, failed, duplicate, delayed, and tampered webhook events in
-  the provider's test environment, then complete a controlled live transaction.
-- Only then enable a real provider-assigned funding method in the app.
+1. Apply migrations to the linked Supabase project:
 
-The app no longer generates pretend bank account numbers. Never ask customers
-to transfer to an account displayed by an older deployed build.
+   ```powershell
+   supabase db push
+   ```
+
+   This includes
+   `avotek/supabase/migrations/20261014180000_add_paystack_wallet_funding.sql`.
+   Verify the migration succeeded before deploying the function.
+2. In Supabase **Edge Functions → Secrets**, configure:
+   - `PAYSTACK_SECRET_KEY`: use the Paystack **Test Secret Key** while testing.
+   - `PAYSTACK_CALLBACK_URL`: `https://adevictorolu.github.io/Avotek/#/wallet/fund`
+   - The existing Supabase environment variables `SUPABASE_URL`,
+     `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` must be available to
+     the function runtime. Never put service-role or Paystack secret keys in
+     Flutter or Git. Supabase intentionally hides saved secret values; a secrets
+     listing can confirm names exist, not reveal their contents. To replace a
+     value, set it again in the dashboard.
+3. Deploy the function:
+
+   ```powershell
+   supabase functions deploy paystack-payments
+   ```
+
+4. In Paystack **Test** settings, set the callback URL to the same Avotek
+   wallet URL. Set the **Webhook URL** to:
+
+   `https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/paystack-payments`
+
+   The webhook URL is an HTTPS endpoint, not a short code. Paystack signs
+   webhook requests in `x-paystack-signature` using the Paystack secret key;
+   this function verifies that signature and then independently verifies
+   successful transactions with Paystack. Do not treat a `WHK_...` value as
+   the webhook URL or put it in app code. If that value is a credential rather
+   than a dashboard identifier, rotate it in Paystack.
+   Leave Paystack IP whitelisting disabled unless you have confirmed a stable
+   outbound IP for the Supabase function runtime; the customer's IP is not the
+   server IP used for Paystack API requests.
+5. Test in Test mode using Paystack's test payment details. Confirm the
+   checkout returns to the app, the server verifies the reference and exact
+   amount/currency, the wallet and ledger update once, and duplicate webhooks
+   do not add another credit. Also test failed, abandoned, delayed, and
+   signature-invalid callbacks. A return to the app alone never credits funds.
+6. For Live mode, use a separate production Supabase project where possible.
+   Set its `PAYSTACK_SECRET_KEY` to the Live Secret Key in Supabase Secrets,
+   apply the reviewed migration, deploy `paystack-payments`, and point the Live
+   Paystack webhook/callback settings at the production function and app URLs.
+   Verify with a controlled low-value real payment before enabling public
+   wallet funding. Never paste either secret key into chat or commit it.
+
+Wallet funding in the app redirects to Paystack checkout. The app no longer
+displays or relies on unverified virtual bank account details. Paystack wallet
+funding does not itself deploy or validate the separate VTU provider function.
 
 ## 5. WhatsApp notifications are not live
 
@@ -156,15 +201,16 @@ login page. The public page does not provide the exact request fields and
 response semantics for every product. Do not guess an endpoint or mark a
 service live based on the category list alone.
 
-The current app has an Edge Function adapter for airtime, data plans and
+The app has Edge Function adapters for Paystack wallet funding (checkout,
+server verification and signed webhook) and for airtime, data plans and
 purchases, cable plans/verification/purchases, electricity providers,
 verification/purchases, and transaction requery. These still need deployment,
-the production database functions and secrets, and low-value live validation.
-The current adapter does not provide airtime PIN generation, result-checker
-PINs, bulk SMS, ISP subscriptions, betting, transactional email, or gift
-voucher issuance/redemption. Betting has been removed from the service menu;
-unintegrated services are shown as coming soon instead of reporting fake
-success.
+the production database functions and secrets, and end-to-end validation in
+the intended project. The VTU adapter does not provide airtime PIN generation,
+result-checker PINs, bulk SMS, ISP subscriptions, betting, transactional
+email, or gift voucher issuance/redemption. Betting has been removed from the
+service menu; unintegrated services are shown as coming soon instead of
+reporting fake success.
 
 **Production deployment check (14 October 2026):** an OPTIONS preflight to
 `https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/bigisub` returned HTTP
@@ -179,9 +225,9 @@ Before enabling customers to transact:
 1. **Rotate the Bigisub token that was pasted into chat.** Store the rotated
    token and provider transaction PIN only as Supabase Edge Function secrets.
    Never put either value in Flutter, Git, logs, or support messages.
-2. Apply and verify the Supabase migrations and deploy `vtu-provider` and
-   `identifier-login`. Confirm the current production functions read their
-   secrets and authorize the signed-in user.
+2. Apply and verify the Supabase migrations and deploy `vtu-provider`,
+   `paystack-payments`, and `identifier-login`. Confirm the functions read
+   their server secrets and authorize signed-in users where required.
 3. Confirm Bigisub's exact endpoint, field names, price rules, PIN-generation
    quantity contract, and status/refund meanings from the authenticated
    provider documentation. The customer phone number must not be sent for
@@ -190,21 +236,23 @@ Before enabling customers to transact:
    wallet reservation and refund idempotency, and reconciliation using a
    funded test account. Keep ambiguous results pending; do not retry them as a
    new purchase.
-5. Select and configure a transactional email provider plus server-side
+5. Complete the Paystack Test-mode scenarios in section 4 before entering Live
+   credentials or accepting customer wallet funding.
+6. Select and configure a transactional email provider plus server-side
    purchase events before enabling email receipts. The current Email/Push
    preference switches are intentionally disabled because no delivery backend
    is configured. SMS transaction notifications have been removed.
-6. Implement and test server-backed gifts, coupon redemption, referral
+7. Implement and test server-backed gifts, coupon redemption, referral
    commissions/AVO Token rewards, account KYC, and push notifications before
    presenting them as completed features. The short Avotek ID format also
    needs a collision-safe database migration and identifier-login update;
    existing IDs must not be changed by a client-only formatter.
-7. Provide and verify the official support WhatsApp number before enabling a
+8. Provide and verify the official support WhatsApp number before enabling a
    WhatsApp link. The current help panel can answer basic FAQs and launch an
    email to support; it does not claim to be an AI agent.
-8. Use the GitHub Pages URL for referral registration links until a custom
+9. Use the GitHub Pages URL for referral registration links until a custom
    `avotek.com` domain is owned, configured, and deployed. The Bigisub
    dashboard URL cannot be inspected without a provider login.
-9. Review the in-app Terms of Service and Privacy Policy drafts with the
+10. Review the in-app Terms of Service and Privacy Policy drafts with the
    correct legal business identity, governing jurisdiction, privacy contact,
    data retention, and provider list before publication.
