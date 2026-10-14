@@ -66,6 +66,7 @@ class SupabaseService {
     required String name,
     required String phone,
     String? preferredUsername,
+    String? referralCode,
   }) async {
     final cleanEmail = email.trim();
     final cleanName = name.trim();
@@ -80,6 +81,8 @@ class SupabaseService {
         'full_name': cleanName,
         'phone': cleanPhone,
         'username': username,
+        if (referralCode != null && referralCode.trim().isNotEmpty)
+          'referred_by': referralCode.trim().toUpperCase(),
       },
     );
 
@@ -97,6 +100,9 @@ class SupabaseService {
       name: cleanName,
       phone: cleanPhone,
       referralCode: avoId,
+      referredBy: referralCode?.trim().isNotEmpty == true
+          ? referralCode!.trim().toUpperCase()
+          : null,
       createdAt: now,
       avoId: avoId,
       username: username,
@@ -166,7 +172,18 @@ class SupabaseService {
     String fallbackEmail,
   ) async {
     final profile = await getProfile(authUser.id);
-    if (profile != null) return profile;
+    if (profile != null) {
+      final referralCode = authUser.userMetadata?['referred_by'] as String?;
+      if (profile.referredBy == null &&
+          referralCode?.trim().isNotEmpty == true) {
+        final updatedProfile = profile.copyWith(
+          referredBy: referralCode!.trim().toUpperCase(),
+        );
+        await _upsertProfile(updatedProfile);
+        return updatedProfile;
+      }
+      return profile;
+    }
 
     final name =
         authUser.userMetadata?['full_name'] as String? ??
@@ -184,6 +201,7 @@ class SupabaseService {
       name: name,
       phone: phone,
       referralCode: avoId,
+      referredBy: authUser.userMetadata?['referred_by'] as String?,
       createdAt: DateTime.tryParse(authUser.createdAt) ?? DateTime.now(),
       avoId: avoId,
       username: username,
@@ -279,6 +297,7 @@ class SupabaseService {
         'avatar_url': user.avatarUrl,
         'kyc_status': user.kycStatus,
         'referral_code': user.referralCode,
+        'referred_by': user.referredBy,
         'avo_id': user.avoId,
         'username': user.username,
         'transaction_pin_hash': user.transactionPinHash,

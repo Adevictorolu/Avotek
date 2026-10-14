@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/top_notification.dart';
@@ -20,9 +21,9 @@ class AffiliateScreen extends StatefulWidget {
 }
 
 class _AffiliateScreenState extends State<AffiliateScreen> {
-  int _activeTab = 0; // 0: Referral Hub, 1: RIFToken, 2: Leaderboard
+  int _activeTab = 0; // 0: Referral Hub, 1: AVO Token, 2: Leaderboard
   bool _copied = false;
-  final int _userRifPoints = 0;
+  final int _userAvoPoints = 0;
 
   void _copyToClipboard(String link) {
     Clipboard.setData(ClipboardData(text: link));
@@ -46,10 +47,30 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
         url = Uri.parse('https://twitter.com/intent/tweet?text=$text');
         break;
       case 'facebook':
-        url = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(link)}');
+        url = Uri.parse(
+          'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(link)}',
+        );
+        break;
+      case 'telegram':
+        url = Uri.https('t.me', '/share/url', {
+          'url': link,
+          'text': 'Join Avotek for airtime, data, and bill payments.',
+        });
+        break;
+      case 'reddit':
+        url = Uri.https('www.reddit.com', '/submit', {
+          'url': link,
+          'title': 'Join Avotek',
+        });
+        break;
+      case 'pinterest':
+        url = Uri.https('www.pinterest.com', '/pin/create/button/', {
+          'url': link,
+          'description': 'Join Avotek for airtime, data, and bill payments.',
+        });
         break;
       case 'more':
-        _copyToClipboard(link);
+        _showMoreShareOptions(link);
         return;
     }
 
@@ -60,6 +81,35 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
     }
   }
 
+  void _showMoreShareOptions(String link) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const platforms = [
+      ('Telegram', 'telegram', Icons.send_rounded),
+      ('Reddit', 'reddit', Icons.forum_outlined),
+      ('Pinterest', 'pinterest', Icons.push_pin_outlined),
+    ];
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final platform in platforms)
+              ListTile(
+                leading: Icon(platform.$3),
+                title: Text(platform.$1),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _shareOnPlatform(platform.$2, link);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _openRedeemPointsModal() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
@@ -67,13 +117,15 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Row(
             children: [
               const Icon(Icons.toll_rounded, color: AppColors.electricCyan),
               const SizedBox(width: 10),
               Text(
-                'Redeem RIFToken Points',
+                'Redeem AVO Token Points',
                 style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w800,
                   fontSize: 18,
@@ -87,7 +139,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Convert your earned points directly to cash in your Avotek wallet balance.',
+                'AVO Token points cannot be redeemed yet. Referral tracking and reward payouts are not connected to a backend.',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -97,10 +149,14 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                  color: isDark
+                      ? AppColors.darkCardVariant
+                      : AppColors.lightCardVariant,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color: isDark
+                        ? AppColors.darkBorder
+                        : AppColors.lightBorder,
                   ),
                 ),
                 child: Row(
@@ -112,11 +168,13 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
                     Text(
-                      '$_userRifPoints pts (₦$_userRifPoints.00)',
+                      '$_userAvoPoints pts',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
@@ -140,10 +198,13 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('Close', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+              child: Text(
+                'Close',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              ),
             ),
             ElevatedButton(
-              onPressed: _userRifPoints >= 200
+              onPressed: _userAvoPoints >= 200
                   ? () {
                       Navigator.pop(ctx);
                       TopNotification.showWarning(
@@ -162,7 +223,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBlue,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: Text(
                 'Redeem Now',
@@ -183,18 +246,12 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
 
     final avoId = (auth.user?.avoId != null && auth.user!.avoId.isNotEmpty)
         ? auth.user!.avoId
-        : ((auth.user?.referralCode != null && auth.user!.referralCode.isNotEmpty)
-            ? auth.user!.referralCode
-            : 'AVO-10001');
+        : ((auth.user?.referralCode != null &&
+                  auth.user!.referralCode.isNotEmpty)
+              ? auth.user!.referralCode
+              : 'AVO-10001');
 
-    final username = (auth.user?.username != null && auth.user!.username!.isNotEmpty)
-        ? auth.user!.username!
-        : ((auth.user?.name.isNotEmpty == true)
-            ? auth.user!.name.replaceAll(' ', '').toLowerCase()
-            : ((auth.user?.email.isNotEmpty == true)
-                ? auth.user!.email.split('@').first
-                : avoId.toLowerCase()));
-    final referralLink = 'https://avotek.ng/@$username';
+    final referralLink = avotekReferralLinkFor(Uri.base, avoId);
 
     return ResponsiveShell(
       currentRoute: '/affiliate',
@@ -210,7 +267,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 12),
-                  // --- TOP TABS: Referral Hub | RIFToken | Leaderboard (Matches Screenshots) ---
+                  // --- TOP TABS: Referral Hub | AVO Token | Leaderboard ---
                   _buildTopTabs(isDark),
                   const SizedBox(height: 24),
 
@@ -242,15 +299,15 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     // --- YOUR REFERRALS LIST CARD ---
                     _buildYourReferralsCard(isDark),
                   ] else if (_activeTab == 1) ...[
-                    // --- TAB 1: RIFTOKEN PROGRESS (Matches Screenshots 4 & 5) ---
+                    // --- TAB 1: AVO TOKEN PROGRESS ---
                     _buildSectionHeader(
                       icon: Icons.bookmark_outline_rounded,
-                      title: 'RIFTOKEN PROGRESS',
+                      title: 'AVO TOKEN PROGRESS',
                       isDark: isDark,
                     ),
                     const SizedBox(height: 18),
 
-                    // 1. How RIFToken Works Card
+                    // 1. How AVO Token Works Card
                     _buildHowRifTokenWorksCard(isDark),
                     const SizedBox(height: 20),
 
@@ -283,7 +340,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
     );
   }
 
-  // 1. TOP TABS: Referral Hub | RIFToken | Leaderboard
+  // 1. TOP TABS: Referral Hub | AVO Token | Leaderboard
   Widget _buildTopTabs(bool isDark) {
     return Container(
       decoration: BoxDecoration(
@@ -294,9 +351,24 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildTabButton(0, 'Referral Hub', Icons.people_outline_rounded, isDark),
-          _buildTabButton(1, 'RIFToken', Icons.bookmark_outline_rounded, isDark),
-          _buildTabButton(2, 'Leaderboard', Icons.emoji_events_outlined, isDark),
+          _buildTabButton(
+            0,
+            'Referral Hub',
+            Icons.people_outline_rounded,
+            isDark,
+          ),
+          _buildTabButton(
+            1,
+            'AVO Token',
+            Icons.bookmark_outline_rounded,
+            isDark,
+          ),
+          _buildTabButton(
+            2,
+            'Leaderboard',
+            Icons.emoji_events_outlined,
+            isDark,
+          ),
         ],
       ),
     );
@@ -311,9 +383,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primaryBlue
-              : Colors.transparent,
+          color: isSelected ? AppColors.primaryBlue : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           boxShadow: isSelected
               ? [
@@ -382,7 +452,11 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
   // TAB 0: REFERRAL HUB COMPONENTS (Screenshots 1 & 2)
   // -------------------------------------------------------------
 
-  Widget _buildReferAndEarnCard(bool isDark, String referralLink, {required String avoId}) {
+  Widget _buildReferAndEarnCard(
+    bool isDark,
+    String referralLink, {
+    required String avoId,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(26),
@@ -414,7 +488,11 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.card_giftcard_rounded, size: 14, color: AppColors.electricCyan),
+                const Icon(
+                  Icons.card_giftcard_rounded,
+                  size: 14,
+                  color: AppColors.electricCyan,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'Referral Program',
@@ -464,11 +542,16 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryCyan.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.4)),
+                  border: Border.all(
+                    color: AppColors.primaryCyan.withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Text(
                   'Unique ID',
@@ -488,12 +571,18 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               color: isDark ? const Color(0xFF0B0E18) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? const Color(0xFF222C42) : const Color(0xFFCBD5E1),
+                color: isDark
+                    ? const Color(0xFF222C42)
+                    : const Color(0xFFCBD5E1),
               ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.badge_outlined, size: 18, color: AppColors.primaryCyan),
+                const Icon(
+                  Icons.badge_outlined,
+                  size: 18,
+                  color: AppColors.primaryCyan,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -511,14 +600,23 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   icon: const Icon(Icons.copy_rounded, size: 14),
                   label: const Text('Copy ID'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? const Color(0xFF1E263C) : Colors.white,
-                    foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+                    backgroundColor: isDark
+                        ? const Color(0xFF1E263C)
+                        : Colors.white,
+                    foregroundColor: isDark
+                        ? Colors.white
+                        : const Color(0xFF0F172A),
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                       side: BorderSide(
-                        color: isDark ? const Color(0xFF2C3854) : const Color(0xFFCBD5E1),
+                        color: isDark
+                            ? const Color(0xFF2C3854)
+                            : const Color(0xFFCBD5E1),
                       ),
                     ),
                     textStyle: GoogleFonts.plusJakartaSans(
@@ -549,7 +647,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               color: isDark ? const Color(0xFF0B0E18) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? const Color(0xFF222C42) : const Color(0xFFCBD5E1),
+                color: isDark
+                    ? const Color(0xFF222C42)
+                    : const Color(0xFFCBD5E1),
               ),
             ),
             child: Row(
@@ -568,14 +668,22 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
                   onPressed: () => _copyToClipboard(referralLink),
-                  icon: Icon(_copied ? Icons.check : Icons.copy_rounded, size: 15),
+                  icon: Icon(
+                    _copied ? Icons.check : Icons.copy_rounded,
+                    size: 15,
+                  ),
                   label: Text(_copied ? 'Copied' : 'Copy'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBlue,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     textStyle: GoogleFonts.plusJakartaSans(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w800,
@@ -659,7 +767,11 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 13, color: isDark ? Colors.white70 : const Color(0xFF334155)),
+            Icon(
+              icon,
+              size: 13,
+              color: isDark ? Colors.white70 : const Color(0xFF334155),
+            ),
             const SizedBox(width: 6),
             Text(
               label,
@@ -706,7 +818,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                 ),
               ],
@@ -721,7 +835,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               textStyle: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
@@ -762,32 +878,68 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               if (isNarrow) {
                 return Column(
                   children: [
-                    _buildStepItem(1, 'Share your link', 'Send your unique referral link to friends, family, or social media', isDark),
+                    _buildStepItem(
+                      1,
+                      'Share your link',
+                      'Send your unique referral link to friends, family, or social media',
+                      isDark,
+                    ),
                     const SizedBox(height: 14),
-                    _buildStepItem(2, 'Friend signs up', 'They register on Avotek.ng using your link', isDark),
+                    _buildStepItem(
+                      2,
+                      'Friend signs up',
+                      'They register on Avotek.ng using your link',
+                      isDark,
+                    ),
                     const SizedBox(height: 14),
-                    _buildStepItem(3, 'You earn', 'Earn lifetime commission plus RIFToken points from their purchases', isDark),
+                    _buildStepItem(
+                      3,
+                      'Rewards',
+                      'Referral rewards will appear here after verified referral tracking is enabled.',
+                      isDark,
+                    ),
                   ],
                 );
               }
               return Row(
                 children: [
                   Expanded(
-                    child: _buildStepItem(1, 'Share your link', 'Send your unique referral link to friends, family, or social media', isDark),
+                    child: _buildStepItem(
+                      1,
+                      'Share your link',
+                      'Send your unique referral link to friends, family, or social media',
+                      isDark,
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Icon(Icons.chevron_right_rounded, color: isDark ? Colors.white30 : Colors.black26),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      color: isDark ? Colors.white30 : Colors.black26,
+                    ),
                   ),
                   Expanded(
-                    child: _buildStepItem(2, 'Friend signs up', 'They register on Avotek.ng using your link', isDark),
+                    child: _buildStepItem(
+                      2,
+                      'Friend signs up',
+                      'They register on Avotek.ng using your link',
+                      isDark,
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Icon(Icons.chevron_right_rounded, color: isDark ? Colors.white30 : Colors.black26),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      color: isDark ? Colors.white30 : Colors.black26,
+                    ),
                   ),
                   Expanded(
-                    child: _buildStepItem(3, 'You earn', 'Earn lifetime commission plus RIFToken points from their purchases', isDark),
+                    child: _buildStepItem(
+                      3,
+                      'Rewards',
+                      'Referral rewards will appear here after verified referral tracking is enabled.',
+                      isDark,
+                    ),
                   ),
                 ],
               );
@@ -798,7 +950,12 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
     );
   }
 
-  Widget _buildStepItem(int stepNumber, String title, String description, bool isDark) {
+  Widget _buildStepItem(
+    int stepNumber,
+    String title,
+    String description,
+    bool isDark,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -884,22 +1041,26 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
         if (isNarrow) {
           return Column(
             children: cards
-                .map((c) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: c,
-                    ))
+                .map(
+                  (c) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: c,
+                  ),
+                )
                 .toList(),
           );
         }
 
         return Row(
           children: cards
-              .map((c) => Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: c,
-                    ),
-                  ))
+              .map(
+                (c) => Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: c,
+                  ),
+                ),
+              )
               .toList(),
         );
       },
@@ -984,9 +1145,14 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF20293D) : const Color(0xFFE2E8F0),
+                  color: isDark
+                      ? const Color(0xFF20293D)
+                      : const Color(0xFFE2E8F0),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -1007,35 +1173,32 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               color: isDark ? const Color(0xFF1D2130) : const Color(0xFFFEF3C7),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? const Color(0xFF3B2E1E) : const Color(0xFFFDE68A),
+                color: isDark
+                    ? const Color(0xFF3B2E1E)
+                    : const Color(0xFFFDE68A),
               ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.info_outline_rounded, color: Color(0xFFF59E0B), size: 18),
+                const Icon(
+                  Icons.info_outline_rounded,
+                  color: Color(0xFFF59E0B),
+                  size: 18,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: RichText(
                     text: TextSpan(
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
-                        color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                        color: isDark
+                            ? const Color(0xFFFDE68A)
+                            : const Color(0xFF92400E),
                         height: 1.4,
                       ),
-                      children: const [
-                        TextSpan(text: 'Referral points become '),
-                        TextSpan(
-                          text: 'withdrawable',
-                          style: TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                        TextSpan(text: ' once your referral completes KYC verification and spends a minimum of '),
-                        TextSpan(
-                          text: '₦1,000',
-                          style: TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                        TextSpan(text: ' on the platform.'),
-                      ],
+                      text:
+                          'Referral invitations can be shared now. Verified referral counts, KYC qualification, and rewards will appear here after tracking is connected.',
                     ),
                   ),
                 ),
@@ -1065,7 +1228,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   'Share your referral link to start building your network!',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                 ),
               ],
@@ -1078,7 +1243,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
   }
 
   // -------------------------------------------------------------
-  // TAB 1: RIFTOKEN PROGRESS COMPONENTS (Screenshots 4 & 5)
+  // TAB 1: AVO TOKEN PROGRESS COMPONENTS
   // -------------------------------------------------------------
 
   Widget _buildHowRifTokenWorksCard(bool isDark) {
@@ -1101,7 +1266,11 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               color: AppColors.electricCyan.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.layers_rounded, color: AppColors.electricCyan, size: 22),
+            child: const Icon(
+              Icons.layers_rounded,
+              color: AppColors.electricCyan,
+              size: 22,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -1109,7 +1278,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'How RIFToken Works',
+                  'How AVO Token Works',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
@@ -1118,12 +1287,14 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Your referrals earn you points when they make purchases on Avotek. Every data purchase by a referred user gives you 1 RIFToken point. Accumulate points to level up and unlock cash rewards of up to ₦6,000.',
+                  'AVO Token rewards are not active yet. Points will not be earned or redeemed until the referral rewards are connected to a verified backend.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
                     height: 1.45,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                 ),
               ],
@@ -1162,12 +1333,17 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFEF08A),
                         borderRadius: BorderRadius.circular(20),
@@ -1175,7 +1351,11 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star_rounded, size: 14, color: Color(0xFFB45309)),
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 14,
+                            color: Color(0xFFB45309),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Jolly',
@@ -1201,12 +1381,14 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '$_userRifPoints pts',
+                      '$_userAvoPoints pts',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -1226,12 +1408,14 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '$_userRifPoints pts',
+                      '$_userAvoPoints pts',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -1271,10 +1455,14 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
-              value: (_userRifPoints / 201).clamp(0.0, 1.0),
+              value: (_userAvoPoints / 201).clamp(0.0, 1.0),
               minHeight: 6,
-              backgroundColor: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.electricCyan),
+              backgroundColor: isDark
+                  ? AppColors.darkCardVariant
+                  : AppColors.lightCardVariant,
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.electricCyan,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -1319,7 +1507,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 textStyle: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
@@ -1338,36 +1528,36 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
         'title': 'Jolly',
         'isCurrent': true,
         'badge': 'You',
-        'range': '0 – 200 pts',
+        'range': 'Rewards are not active',
         'bonus': null,
       },
       {
         'title': 'Berekete',
         'isCurrent': false,
         'badge': null,
-        'range': '201 – 1,000 pts',
+        'range': 'Rewards are not active',
         'bonus': null,
       },
       {
         'title': 'Odogwu',
         'isCurrent': false,
         'badge': null,
-        'range': '1,001 – 5,000 pts',
-        'bonus': '+₦1,000 bonus',
+        'range': 'Rewards are not active',
+        'bonus': null,
       },
       {
         'title': 'Baller',
         'isCurrent': false,
         'badge': null,
-        'range': '5,001 – 10,000 pts',
-        'bonus': '+₦2,000 bonus',
+        'range': 'Rewards are not active',
+        'bonus': null,
       },
       {
         'title': 'Chairman',
         'isCurrent': false,
         'badge': null,
-        'range': '10,001 – 20,000 pts',
-        'bonus': '+₦3,000 bonus',
+        'range': 'Rewards are not active',
+        'bonus': null,
       },
     ];
 
@@ -1411,10 +1601,17 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                         width: 22,
                         height: 22,
                         decoration: BoxDecoration(
-                          color: isCurrent ? const Color(0xFFFFB800) : (isDark ? const Color(0xFF1E2638) : const Color(0xFFE2E8F0)),
+                          color: isCurrent
+                              ? const Color(0xFFFFB800)
+                              : (isDark
+                                    ? const Color(0xFF1E2638)
+                                    : const Color(0xFFE2E8F0)),
                           shape: BoxShape.circle,
                           border: isCurrent
-                              ? Border.all(color: const Color(0xFFFFD54F), width: 3)
+                              ? Border.all(
+                                  color: const Color(0xFFFFD54F),
+                                  width: 3,
+                                )
                               : null,
                         ),
                         child: !isCurrent
@@ -1429,7 +1626,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                         Expanded(
                           child: Container(
                             width: 2,
-                            color: isDark ? const Color(0xFF1E2638) : const Color(0xFFE2E8F0),
+                            color: isDark
+                                ? const Color(0xFF1E2638)
+                                : const Color(0xFFE2E8F0),
                             margin: const EdgeInsets.symmetric(vertical: 4),
                           ),
                         ),
@@ -1451,13 +1650,18 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
                                 ),
                               ),
                               if (step['badge'] != null) ...[
                                 const SizedBox(width: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.primaryBlue,
                                     borderRadius: BorderRadius.circular(8),
@@ -1480,7 +1684,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                              color: isDark
+                                  ? AppColors.metallicLight
+                                  : AppColors.slateGrey,
                             ),
                           ),
                           if (step['bonus'] != null) ...[
@@ -1528,21 +1734,33 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
 
     // Only real users that actually exist on the system (mock names completely scrapped)
     final realEarners = <Map<String, dynamic>>[];
-    if (currentUser != null && _userRifPoints > 0) {
+    if (currentUser != null && _userAvoPoints > 0) {
       realEarners.add({
         'rank': 1,
-        'name': currentUser.name.isNotEmpty ? currentUser.name : (currentUser.username ?? 'Avotek Member'),
-        'initial': (currentUser.name.isNotEmpty ? currentUser.name[0] : 'A').toUpperCase(),
+        'name': currentUser.name.isNotEmpty
+            ? currentUser.name
+            : (currentUser.username ?? 'Avotek Member'),
+        'initial': (currentUser.name.isNotEmpty ? currentUser.name[0] : 'A')
+            .toUpperCase(),
         'referrals': '${currentUser.referralCode} (${currentUser.avoId})',
-        'badge': _userRifPoints >= 1000 ? 'Chairman' : (_userRifPoints >= 200 ? 'Berekete' : 'Jolly'),
-        'badgeColor': _userRifPoints >= 1000 ? const Color(0xFF78350F) : Colors.white,
-        'badgeBg': _userRifPoints >= 1000 ? const Color(0xFFFDE68A) : const Color(0xFF10B981),
-        'points': '$_userRifPoints PTS',
+        'badge': _userAvoPoints >= 1000
+            ? 'Chairman'
+            : (_userAvoPoints >= 200 ? 'Berekete' : 'Jolly'),
+        'badgeColor': _userAvoPoints >= 1000
+            ? const Color(0xFF78350F)
+            : Colors.white,
+        'badgeBg': _userAvoPoints >= 1000
+            ? const Color(0xFFFDE68A)
+            : const Color(0xFF10B981),
+        'points': '$_userAvoPoints PTS',
         'isTopThree': true,
       });
     }
 
-    final userReferralLink = 'https://avotek.ng/@${currentUser?.username ?? currentUser?.avoId ?? "user"}';
+    final userReferralLink = avotekReferralLinkFor(
+      Uri.base,
+      currentUser?.avoId ?? 'AVO-10001',
+    );
 
     return Container(
       width: double.infinity,
@@ -1559,7 +1777,11 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFB800), size: 24),
+              const Icon(
+                Icons.emoji_events_rounded,
+                color: Color(0xFFFFB800),
+                size: 24,
+              ),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1577,7 +1799,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     "Real-time platform leaderboard for active Avotek affiliates",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                      color: isDark
+                          ? AppColors.metallicLight
+                          : AppColors.slateGrey,
                     ),
                   ),
                 ],
@@ -1592,10 +1816,14 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF161C2C) : const Color(0xFFF8FAFC),
+                color: isDark
+                    ? const Color(0xFF161C2C)
+                    : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isDark ? const Color(0xFF252F47) : const Color(0xFFE2E8F0),
+                  color: isDark
+                      ? const Color(0xFF252F47)
+                      : const Color(0xFFE2E8F0),
                 ),
               ),
               child: Column(
@@ -1606,7 +1834,11 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                       color: const Color(0xFFFFB800).withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.emoji_events_outlined, color: Color(0xFFFFB800), size: 40),
+                    child: const Icon(
+                      Icons.emoji_events_outlined,
+                      color: Color(0xFFFFB800),
+                      size: 40,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -1625,7 +1857,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                       textAlign: TextAlign.center,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                         height: 1.45,
                       ),
                     ),
@@ -1638,8 +1872,13 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 22,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       textStyle: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
@@ -1657,16 +1896,23 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: isTopThree
                       ? const Color(0xFFFEF08A)
-                      : (isDark ? const Color(0xFF161C2C) : const Color(0xFFF8FAFC)),
+                      : (isDark
+                            ? const Color(0xFF161C2C)
+                            : const Color(0xFFF8FAFC)),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isTopThree
                         ? const Color(0xFFFDE047)
-                        : (isDark ? const Color(0xFF252F47) : const Color(0xFFE2E8F0)),
+                        : (isDark
+                              ? const Color(0xFF252F47)
+                              : const Color(0xFFE2E8F0)),
                   ),
                 ),
                 child: Row(
@@ -1677,10 +1923,14 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                           ? Icon(
                               rank == 1
                                   ? Icons.military_tech_rounded
-                                  : (rank == 2 ? Icons.military_tech_outlined : Icons.emoji_events_outlined),
+                                  : (rank == 2
+                                        ? Icons.military_tech_outlined
+                                        : Icons.emoji_events_outlined),
                               color: rank == 1
                                   ? const Color(0xFFB45309)
-                                  : (rank == 2 ? const Color(0xFF475569) : const Color(0xFF92400E)),
+                                  : (rank == 2
+                                        ? const Color(0xFF475569)
+                                        : const Color(0xFF92400E)),
                               size: 22,
                             )
                           : Text(
@@ -1688,7 +1938,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -1718,7 +1970,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                               fontWeight: FontWeight.w800,
                               color: isTopThree
                                   ? const Color(0xFF0F172A)
-                                  : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                                  : (isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A)),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -1729,14 +1983,19 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                               fontWeight: FontWeight.w500,
                               color: isTopThree
                                   ? const Color(0xFF475569)
-                                  : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                                  : (isDark
+                                        ? AppColors.metallicLight
+                                        : AppColors.slateGrey),
                             ),
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: earner['badgeBg'] as Color,
                         borderRadius: BorderRadius.circular(12),
@@ -1773,12 +2032,18 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               color: isDark ? const Color(0xFF161C2C) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? const Color(0xFF252F47) : const Color(0xFFE2E8F0),
+                color: isDark
+                    ? const Color(0xFF252F47)
+                    : const Color(0xFFE2E8F0),
               ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.rocket_launch_outlined, color: AppColors.electricCyan, size: 18),
+                const Icon(
+                  Icons.rocket_launch_outlined,
+                  color: AppColors.electricCyan,
+                  size: 18,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(

@@ -12,8 +12,13 @@ import '../../widgets/top_notification.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool initialSignUp;
+  final String? initialReferralCode;
 
-  const LoginScreen({super.key, this.initialSignUp = false});
+  const LoginScreen({
+    super.key,
+    this.initialSignUp = false,
+    this.initialReferralCode,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -40,6 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _isSignUp = widget.initialSignUp;
+    _referralController.text = widget.initialReferralCode ?? '';
   }
 
   @override

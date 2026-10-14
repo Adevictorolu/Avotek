@@ -137,12 +137,18 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
       duration: const Duration(milliseconds: 320),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, -1.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic));
+    _slideAnimation =
+        Tween<Offset>(
+          begin: const Offset(0, -1.2),
+          end: Offset.zero,
+        ).animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+        );
 
-    _fadeAnimation = CurvedAnimation(parent: _animController, curve: Curves.easeIn);
+    _fadeAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeIn,
+    );
 
     _animController.forward();
 
@@ -218,7 +224,9 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                   onDismissed: (_) => widget.onDismiss(),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                      color: isDark
+                          ? const Color(0xF20F172A)
+                          : const Color(0xF2FFFFFF),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: accent.withValues(alpha: 0.35),
@@ -226,7 +234,9 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.12),
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.4 : 0.12,
+                          ),
                           blurRadius: 24,
                           offset: const Offset(0, 10),
                         ),
@@ -237,7 +247,10 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                         ),
                       ],
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -259,21 +272,26 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (widget.title != null && widget.title!.isNotEmpty)
+                              if (widget.title != null &&
+                                  widget.title!.isNotEmpty)
                                 Text(
                                   widget.title!,
                                   style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13.5,
+                                    fontSize: 14.5,
                                     fontWeight: FontWeight.w800,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A),
                                   ),
                                 ),
                               Text(
                                 widget.message,
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? const Color(0xFF94A3B8)
+                                      : const Color(0xFF475569),
                                   height: 1.3,
                                 ),
                               ),
@@ -296,8 +314,12 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                                   return CircularProgressIndicator(
                                     value: value,
                                     strokeWidth: 2.2,
-                                    backgroundColor: accent.withValues(alpha: 0.15),
-                                    valueColor: AlwaysStoppedAnimation<Color>(accent),
+                                    backgroundColor: accent.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      accent,
+                                    ),
                                   );
                                 },
                               ),
@@ -311,7 +333,9 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                                 child: Icon(
                                   Icons.close_rounded,
                                   size: 16,
-                                  color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                                  color: isDark
+                                      ? Colors.white70
+                                      : const Color(0xFF64748B),
                                 ),
                               ),
                             ),

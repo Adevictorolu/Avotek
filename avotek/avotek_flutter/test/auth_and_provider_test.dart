@@ -2,6 +2,7 @@ import 'package:avotek_flutter/core/router/app_router.dart';
 import 'package:avotek_flutter/core/services/vtu_api_service.dart';
 import 'package:avotek_flutter/core/supabase/supabase_service.dart';
 import 'package:avotek_flutter/models/user_model.dart';
+import 'package:avotek_flutter/providers/auth_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -13,6 +14,31 @@ void main() {
       expect(
         UserModel.fromJson({'id': userId, 'email': 'person@example.com'}).avoId,
         'AVO-550E8400E29B41D4',
+      );
+    });
+
+    test('builds referral links for the deployed GitHub Pages subpath', () {
+      expect(
+        avotekReferralLinkFor(
+          Uri.parse('https://adevictorolu.github.io/Avotek/#/affiliate'),
+          'AVO-ABC123',
+        ),
+        'https://adevictorolu.github.io/Avotek/#/register?ref=AVO-ABC123',
+      );
+    });
+
+    test('maps common Supabase authentication errors to clear messages', () {
+      expect(
+        friendlyAuthError(Exception('Invalid login credentials')),
+        'The email, username, Avotek ID, or password is incorrect.',
+      );
+      expect(
+        friendlyAuthError(Exception('User already registered')),
+        'An account with this email already exists. Sign in or reset your password.',
+      );
+      expect(
+        friendlyAuthError(Exception('Email not confirmed')),
+        'Verify your email address using the link we sent before signing in.',
       );
     });
 

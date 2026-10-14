@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/router/app_router.dart';
 import '../../core/supabase/supabase_service.dart';
+import '../../widgets/avotek_loading_indicator.dart';
 
 class AuthCallbackScreen extends StatefulWidget {
   const AuthCallbackScreen({super.key});
@@ -43,7 +44,8 @@ class _AuthCallbackScreenState extends State<AuthCallbackScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
 
-      final email = SupabaseService.instance.currentAuthUser?.email ??
+      final email =
+          SupabaseService.instance.currentAuthUser?.email ??
           SupabaseService.instance.currentSession?.user.email;
       final destination = authenticatedHomeForEmail(email);
       context.go(destination);
@@ -75,7 +77,10 @@ class _AuthCallbackScreenState extends State<AuthCallbackScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (!_hasError) ...[
-                  const CircularProgressIndicator(),
+                  const AvotekLoadingIndicator(
+                    logoSize: 34,
+                    strokeWidth: 3,
+                  ),
                   const SizedBox(height: 20),
                   Text(
                     'Signing you in…',

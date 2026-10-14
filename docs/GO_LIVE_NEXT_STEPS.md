@@ -121,3 +121,56 @@ claiming that receipts or alerts are sent. Keep access tokens on the server.
    `https://adevictorolu.github.io/Avotek/` and does not redirect to localhost.
    A successful GitHub push is not proof that Supabase configuration or secrets
    have been applied.
+
+## 7. Current service coverage and remaining launch work
+
+The public Bigisub documentation page describes the available product
+categories, but the supplied Bigisub dashboard settings URL redirects to its
+login page. The public page does not provide the exact request fields and
+response semantics for every product. Do not guess an endpoint or mark a
+service live based on the category list alone.
+
+The current app has an Edge Function adapter for airtime, data plans and
+purchases, cable plans/verification/purchases, electricity providers,
+verification/purchases, and transaction requery. These still need deployment,
+the production database functions and secrets, and low-value live validation.
+The current adapter does not provide airtime PIN generation, result-checker
+PINs, bulk SMS, ISP subscriptions, betting, transactional email, or gift
+voucher issuance/redemption. Betting has been removed from the service menu;
+unintegrated services are shown as coming soon instead of reporting fake
+success.
+
+Before enabling customers to transact:
+
+1. **Rotate the Bigisub token that was pasted into chat.** Store the rotated
+   token and provider transaction PIN only as Supabase Edge Function secrets.
+   Never put either value in Flutter, Git, logs, or support messages.
+2. Apply and verify the Supabase migrations and deploy `bigisub` and
+   `identifier-login`. Confirm the current production functions read their
+   secrets and authorize the signed-in user.
+3. Confirm Bigisub's exact endpoint, field names, price rules, PIN-generation
+   quantity contract, and status/refund meanings from the authenticated
+   provider documentation. The customer phone number must not be sent for
+   airtime PIN generation unless Bigisub's contract requires it.
+4. Test provider balance, each supported service, pending/requery behavior,
+   wallet reservation and refund idempotency, and reconciliation using a
+   funded test account. Keep ambiguous results pending; do not retry them as a
+   new purchase.
+5. Select and configure a transactional email provider plus server-side
+   purchase events before enabling email receipts. The current Email/Push
+   preference switches are intentionally disabled because no delivery backend
+   is configured. SMS transaction notifications have been removed.
+6. Implement and test server-backed gifts, coupon redemption, referral
+   commissions/AVO Token rewards, account KYC, and push notifications before
+   presenting them as completed features. The short Avotek ID format also
+   needs a collision-safe database migration and identifier-login update;
+   existing IDs must not be changed by a client-only formatter.
+7. Provide and verify the official support WhatsApp number before enabling a
+   WhatsApp link. The current help panel can answer basic FAQs and launch an
+   email to support; it does not claim to be an AI agent.
+8. Use the GitHub Pages URL for referral registration links until a custom
+   `avotek.com` domain is owned, configured, and deployed. The Bigisub
+   dashboard URL cannot be inspected without a provider login.
+9. Review the in-app Terms of Service and Privacy Policy drafts with the
+   correct legal business identity, governing jurisdiction, privacy contact,
+   data retention, and provider list before publication.

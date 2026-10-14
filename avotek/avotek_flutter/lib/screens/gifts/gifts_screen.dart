@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -37,17 +36,21 @@ class GiftsScreen extends StatefulWidget {
 }
 
 class _GiftsScreenState extends State<GiftsScreen> {
-  String _activeFilter = 'All'; // 'All', 'Active', 'Redeemed', 'Expired', 'Cancelled'
+  String _activeFilter =
+      'All'; // 'All', 'Active', 'Redeemed', 'Expired', 'Cancelled'
   final List<GiftVoucher> _gifts = [];
 
-  final _currencyFormat = NumberFormat.currency(locale: 'en_NG', symbol: '₦', decimalDigits: 2);
+  final _currencyFormat = NumberFormat.currency(
+    locale: 'en_NG',
+    symbol: '₦',
+    decimalDigits: 2,
+  );
 
   void _openCreateGiftModal() {
     final amountCtrl = TextEditingController(text: '1000');
     final recipientCtrl = TextEditingController();
     final noteCtrl = TextEditingController();
-    final randomSuffix = (Random().nextInt(90000) + 10000).toString();
-    final generatedCode = 'AVO-GIFT-$randomSuffix';
+    const generatedCode = 'Not issued';
 
     showDialog(
       context: context,
@@ -57,7 +60,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
           builder: (dialogCtx, setDialogState) {
             return AlertDialog(
               backgroundColor: isDark ? const Color(0xFF141928) : Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
               title: Row(
                 children: [
                   Container(
@@ -66,7 +71,11 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       color: const Color(0xFF10B981).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.card_giftcard_rounded, color: Color(0xFF10B981), size: 20),
+                    child: const Icon(
+                      Icons.card_giftcard_rounded,
+                      color: Color(0xFF10B981),
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Text(
@@ -90,28 +99,41 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         'Gift code will be funded directly from your Avotek wallet balance.',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.5,
-                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          color: isDark
+                              ? AppColors.metallicLight
+                              : AppColors.slateGrey,
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       // Generated Code Preview
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF0B0E18) : const Color(0xFFF1F5F9),
+                          color: isDark
+                              ? const Color(0xFF0B0E18)
+                              : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF26334D)
+                                : const Color(0xFFCBD5E1),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'VOUCHER CODE:',
+                              'CODE STATUS:',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                color: isDark
+                                    ? AppColors.metallicLight
+                                    : AppColors.slateGrey,
                               ),
                             ),
                             Text(
@@ -133,21 +155,31 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF334155),
                         ),
                       ),
                       const SizedBox(height: 6),
                       TextField(
                         controller: amountCtrl,
                         keyboardType: TextInputType.number,
-                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w700,
+                        ),
                         decoration: InputDecoration(
                           prefixText: '₦ ',
                           filled: true,
-                          fillColor: isDark ? const Color(0xFF1B2236) : const Color(0xFFF8FAFC),
+                          fillColor: isDark
+                              ? const Color(0xFF1B2236)
+                              : const Color(0xFFF8FAFC),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+                            borderSide: BorderSide(
+                              color: isDark
+                                  ? const Color(0xFF26334D)
+                                  : const Color(0xFFCBD5E1),
+                            ),
                           ),
                         ),
                       ),
@@ -158,8 +190,16 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         spacing: 8,
                         children: [500, 1000, 2000, 5000].map((amt) {
                           return ActionChip(
-                            label: Text('₦$amt', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700)),
-                            backgroundColor: isDark ? const Color(0xFF222C42) : const Color(0xFFE2E8F0),
+                            label: Text(
+                              '₦$amt',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            backgroundColor: isDark
+                                ? const Color(0xFF222C42)
+                                : const Color(0xFFE2E8F0),
                             onPressed: () {
                               setDialogState(() {
                                 amountCtrl.text = amt.toString();
@@ -176,7 +216,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF334155),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -186,10 +228,16 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         decoration: InputDecoration(
                           hintText: 'e.g. 08123456789 or friend@gmail.com',
                           filled: true,
-                          fillColor: isDark ? const Color(0xFF1B2236) : const Color(0xFFF8FAFC),
+                          fillColor: isDark
+                              ? const Color(0xFF1B2236)
+                              : const Color(0xFFF8FAFC),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+                            borderSide: BorderSide(
+                              color: isDark
+                                  ? const Color(0xFF26334D)
+                                  : const Color(0xFFCBD5E1),
+                            ),
                           ),
                         ),
                       ),
@@ -201,7 +249,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF334155),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -210,12 +260,19 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         maxLines: 2,
                         style: GoogleFonts.plusJakartaSans(),
                         decoration: InputDecoration(
-                          hintText: 'Happy Birthday! Use this for airtime/data.',
+                          hintText:
+                              'Happy Birthday! Use this for airtime/data.',
                           filled: true,
-                          fillColor: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                          fillColor: isDark
+                              ? AppColors.darkCardVariant
+                              : AppColors.lightCardVariant,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                            borderSide: BorderSide(
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder,
+                            ),
                           ),
                         ),
                       ),
@@ -226,7 +283,12 @@ class _GiftsScreenState extends State<GiftsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: Text('Cancel', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -241,12 +303,19 @@ class _GiftsScreenState extends State<GiftsScreen> {
                     backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: Text(
                     'Create Voucher',
-                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
@@ -348,7 +417,10 @@ class _GiftsScreenState extends State<GiftsScreen> {
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.22),
                       borderRadius: BorderRadius.circular(12),
@@ -356,7 +428,11 @@ class _GiftsScreenState extends State<GiftsScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 16),
+                        const Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Back',
@@ -408,7 +484,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
               elevation: 4,
               shadowColor: const Color(0xFF10B981).withValues(alpha: 0.4),
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               textStyle: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
@@ -506,8 +584,13 @@ class _GiftsScreenState extends State<GiftsScreen> {
                 backgroundColor: AppColors.success,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: Text(
                 'Create Your First Gift',
@@ -549,7 +632,11 @@ class _GiftsScreenState extends State<GiftsScreen> {
                   color: AppColors.success.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.card_giftcard_rounded, color: AppColors.success, size: 24),
+                child: const Icon(
+                  Icons.card_giftcard_rounded,
+                  color: AppColors.success,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -563,7 +650,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                           style: GoogleFonts.firaCode(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -572,7 +661,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                           onPressed: () {
                             Clipboard.setData(ClipboardData(text: gift.code));
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Voucher code copied!')),
+                              const SnackBar(
+                                content: Text('Voucher code copied!'),
+                              ),
                             );
                           },
                           constraints: const BoxConstraints(),
@@ -585,7 +676,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       'Recipient: ${gift.recipient} • Created ${DateFormat('MMM dd, yyyy').format(gift.createdAt)}',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
                   ],
@@ -604,7 +697,10 @@ class _GiftsScreenState extends State<GiftsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),

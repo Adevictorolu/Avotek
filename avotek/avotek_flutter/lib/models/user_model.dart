@@ -6,6 +6,20 @@ String avotekIdFor(String userId) {
   return 'AVO-$suffix';
 }
 
+String avotekReferralLinkFor(Uri baseUri, String referralCode) {
+  final base = baseUri.host == 'localhost' || baseUri.host == '127.0.0.1'
+      ? Uri.parse('https://adevictorolu.github.io/Avotek/')
+      : baseUri;
+  return Uri(
+    scheme: base.scheme,
+    userInfo: base.userInfo,
+    host: base.host,
+    port: base.hasPort ? base.port : null,
+    path: base.path,
+    fragment: '/register?ref=${Uri.encodeComponent(referralCode.trim())}',
+  ).toString();
+}
+
 class UserModel {
   static const Set<String> adminEmails = {
     'ademolavictor869@gmail.com',

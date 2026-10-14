@@ -6,6 +6,42 @@ import '../core/supabase/supabase_service.dart';
 import '../models/user_model.dart';
 import '../models/wallet_model.dart';
 
+@visibleForTesting
+String friendlyAuthError(Object error) {
+  final message = error.toString().replaceFirst('Exception: ', '').trim();
+  final normalized = message.toLowerCase();
+
+  if (normalized.contains('invalid login credentials') ||
+      normalized == 'invalid credentials.') {
+    return 'The email, username, Avotek ID, or password is incorrect.';
+  }
+  if (normalized.contains('user already registered') ||
+      normalized.contains('already been registered') ||
+      normalized.contains('email address is already in use')) {
+    return 'An account with this email already exists. Sign in or reset your password.';
+  }
+  if (normalized.contains('email not confirmed') ||
+      normalized.contains('email_not_confirmed')) {
+    return 'Verify your email address using the link we sent before signing in.';
+  }
+  if (normalized.contains('weak_password') ||
+      normalized.contains('password should be at least')) {
+    return 'Choose a stronger password with at least 6 characters.';
+  }
+  if (normalized.contains('too many requests') ||
+      normalized.contains('rate limit')) {
+    return 'Too many attempts. Wait a few minutes and try again.';
+  }
+  if (normalized.contains('socketexception') ||
+      normalized.contains('failed host lookup') ||
+      normalized.contains('network is unreachable')) {
+    return 'Could not reach Avotek. Check your internet connection and retry.';
+  }
+  return message.isEmpty
+      ? 'Authentication could not be completed. Please try again.'
+      : message;
+}
+
 class AuthProvider extends ChangeNotifier {
   UserModel? _user;
   WalletModel? _wallet;
@@ -122,7 +158,7 @@ class AuthProvider extends ChangeNotifier {
       return success;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Google sign-in error: $e';
+      _errorMessage = friendlyAuthError(e);
       notifyListeners();
       return false;
     }
@@ -154,7 +190,7 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _errorMessage = friendlyAuthError(e);
       notifyListeners();
       return false;
     }
@@ -175,6 +211,7 @@ class AuthProvider extends ChangeNotifier {
       name: name,
       phone: phone,
       preferredUsername: username,
+      referralCode: referralCode,
     );
   }
 
@@ -200,7 +237,7 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _errorMessage = friendlyAuthError(e);
       notifyListeners();
       return false;
     }
@@ -213,6 +250,7 @@ class AuthProvider extends ChangeNotifier {
     required String name,
     required String phone,
     String? preferredUsername,
+    String? referralCode,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -225,6 +263,7 @@ class AuthProvider extends ChangeNotifier {
         name: name,
         phone: phone,
         preferredUsername: preferredUsername,
+        referralCode: referralCode,
       );
       if (SupabaseService.instance.currentSession == null) {
         _errorMessage =
@@ -241,7 +280,7 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _errorMessage = friendlyAuthError(e);
       notifyListeners();
       return false;
     }
@@ -272,7 +311,8 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to set PIN: $e';
+      _errorMessage =
+          'Could not save your transaction PIN: ${friendlyAuthError(e)}';
       notifyListeners();
       return false;
     }
@@ -292,7 +332,7 @@ class AuthProvider extends ChangeNotifier {
       await SupabaseService.instance.updatePassword(password);
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _errorMessage = friendlyAuthError(e);
       return false;
     } finally {
       _isLoading = false;
@@ -349,7 +389,7 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _errorMessage = friendlyAuthError(e);
       notifyListeners();
       return false;
     }

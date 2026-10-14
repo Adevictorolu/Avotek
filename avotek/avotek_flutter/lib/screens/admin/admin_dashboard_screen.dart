@@ -8,6 +8,7 @@ import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../widgets/avotek_loading_indicator.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -24,7 +25,9 @@ class AdminDashboardScreen extends StatelessWidget {
     if (user == null && auth.isLoading) {
       return _shell(
         context,
-        const Center(child: CircularProgressIndicator()),
+        const Center(
+          child: AvotekLoadingIndicator(logoSize: 34, strokeWidth: 3),
+        ),
       );
     }
 

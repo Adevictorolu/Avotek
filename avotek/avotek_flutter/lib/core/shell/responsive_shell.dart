@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../responsive/responsive_layout.dart';
 import '../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
@@ -231,6 +232,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
           Expanded(child: widget.child),
         ],
       ),
+      floatingActionButton: FloatingActionButton.small(
+        heroTag: 'avotek_support_assistant',
+        tooltip: 'Avotek help',
+        backgroundColor: AppColors.primaryBlue,
+        foregroundColor: Colors.white,
+        onPressed: _openSupportAssistant,
+        child: const Icon(Icons.support_agent_rounded),
+      ),
       bottomNavigationBar: !isDesktop
           ? NavigationBar(
               selectedIndex: _getSelectedIndex(),
@@ -270,6 +279,132 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     );
   }
 
+  void _openSupportAssistant() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final faqs = <(String, String)>[
+      (
+        'My transaction is pending',
+        'Check Transactions before trying again. Do not repeat a pending purchase; '
+            'contact support with its reference if the status does not update.',
+      ),
+      (
+        'How do I reset my password?',
+        'Sign out if needed, open Sign in, and use “Forgot password” with the '
+            'email address on your account.',
+      ),
+      (
+        'How do I fund my wallet?',
+        'Only use a funding method shown as available inside Avotek. Never send '
+            'money to an account number from an old screenshot or message.',
+      ),
+      (
+        'How can I contact a person?',
+        'Email support@avotek.ng and include your account email and transaction '
+            'reference. Do not send your password, transaction PIN, or API token.',
+      ),
+    ];
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black26,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Avotek help',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Quick answers',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...faqs.map(
+                (faq) => ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  childrenPadding: const EdgeInsets.only(bottom: 12),
+                  title: Text(
+                    faq.$1,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        faq.$2,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          height: 1.45,
+                          color: isDark
+                              ? AppColors.metallicLight
+                              : AppColors.slateGrey,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.email_outlined),
+                  label: const Text('Email support'),
+                  onPressed: () async {
+                    final uri = Uri(
+                      scheme: 'mailto',
+                      path: 'support@avotek.ng',
+                      queryParameters: {'subject': 'Avotek support request'},
+                    );
+                    final opened = await launchUrl(uri);
+                    if (!opened && sheetContext.mounted) {
+                      ScaffoldMessenger.of(sheetContext).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'No email app is available on this device.',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // --- DESKTOP SIDEBAR (MATCHES SCREENSHOTS 1, 2, 3, 4, 5) ---
   Widget _buildDesktopSidebar(
     BuildContext context,
@@ -298,29 +433,11 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
           // 1. Header Brand Logo
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 16, 12),
-            child: Row(
-              children: [
-                const AvotekLogo(size: 32, showText: false),
-                const SizedBox(width: 10),
-                Text(
-                  'Avotek',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                ),
-                Container(
-                  width: 5,
-                  height: 5,
-                  margin: const EdgeInsets.only(left: 2, top: 8),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.electricCyan,
-                  ),
-                ),
-              ],
+            child: const AvotekLogo(
+              size: 38,
+              showText: true,
+              hasFrame: true,
+              borderRadius: 14,
             ),
           ),
 

@@ -18,9 +18,162 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _pushNotifications = true;
-  bool _emailNotifications = true;
-  bool _smsNotifications = false;
+  void _showLegalDocument(
+    String title,
+    List<(String, String)> sections,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        scrollable: true,
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 24,
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+        ),
+        content: SizedBox(
+          width: 620,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkCardVariant
+                      : AppColors.lightCardVariant,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Draft for review before public launch. Confirm the legal '
+                  'business identity, contact details, and final provider '
+                  'arrangements before relying on this document.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              for (final section in sections) ...[
+                Text(
+                  section.$1,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  section.$2,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    height: 1.5,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTermsOfService() {
+    _showLegalDocument('Terms of Service', const [
+      (
+        'Using Avotek',
+        'Avotek provides access to airtime, data, cable, electricity, and '
+            'other services only where the relevant provider integration is '
+            'available. Some items may be marked coming soon and cannot be '
+            'purchased yet.',
+      ),
+      (
+        'Your account',
+        'Provide accurate account details and keep your password and '
+            'transaction PIN private. You are responsible for activity '
+            'authorized through your account. Contact support promptly if '
+            'you suspect unauthorized access.',
+      ),
+      (
+        'Orders and provider status',
+        'Check the recipient number, plan, smartcard, or meter details before '
+            'confirming an order. Provider processing may be delayed. Do not '
+            'submit a second purchase for an order that is still pending; '
+            'check its transaction status first.',
+      ),
+      (
+        'Wallet and refunds',
+        'A wallet balance is changed only by a confirmed, authorized '
+            'transaction. A receipt, screenshot, or button press is not proof '
+            'of payment. Refunds depend on the verified provider and ledger '
+            'outcome; contact support with the transaction reference for '
+            'unresolved cases.',
+      ),
+      (
+        'Availability and support',
+        'Third-party providers may change prices, plans, availability, or '
+            'processing times. Avotek may pause a service while a provider '
+            'issue is investigated. Contact support@avotek.ng for assistance.',
+      ),
+    ]);
+  }
+
+  void _showPrivacyPolicy() {
+    _showLegalDocument('Privacy Policy', const [
+      (
+        'Information used',
+        'Avotek uses account details such as your name, email, phone number, '
+            'username and Avotek ID, together with account security, wallet, '
+            'and transaction records. Service requests may include the '
+            'recipient phone number, meter number, or smartcard number you '
+            'submit.',
+      ),
+      (
+        'Why it is used',
+        'Information is used to create and secure your account, process and '
+            'reconcile requested services, maintain transaction records, '
+            'prevent abuse, and respond to support requests.',
+      ),
+      (
+        'Service providers',
+        'Information needed to fulfill an order is sent to the relevant '
+            'service provider. Account and application data are processed by '
+            'the configured Supabase project. Do not enter information that '
+            'is not required for the service you selected.',
+      ),
+      (
+        'Security and retention',
+        'Passwords and provider API tokens must not be shared in support '
+            'requests. We retain account and transaction information for as '
+            'long as needed to operate the service, resolve disputes, and '
+            'meet applicable legal obligations.',
+      ),
+      (
+        'Your choices',
+        'For access, correction, or deletion requests, contact '
+            'support@avotek.ng from your account email. Some transaction '
+            'records may need to be retained where required for security, '
+            'accounting, or legal reasons.',
+      ),
+    ]);
+  }
 
   // --- MODAL: CHANGE / RESET TRANSACTION PIN (Matches Screenshots 1, 2, 5) ---
   void _openChangePinDialog() {
@@ -41,7 +194,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           builder: (dialogCtx, setDialogState) {
             return Dialog(
               backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 24,
+              ),
               child: Container(
                 width: 480,
                 padding: const EdgeInsets.all(26),
@@ -49,7 +205,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: isDark ? AppColors.darkCard : Colors.white,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color: isDark
+                        ? AppColors.darkBorder
+                        : AppColors.lightBorder,
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -72,7 +230,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             color: isDark ? Colors.white70 : Colors.black54,
                             onPressed: () => Navigator.pop(ctx),
                             style: IconButton.styleFrom(
-                              backgroundColor: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                              backgroundColor: isDark
+                                  ? AppColors.darkCardVariant
+                                  : AppColors.lightCardVariant,
                               padding: const EdgeInsets.all(6),
                             ),
                           ),
@@ -87,12 +247,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           shape: BoxShape.circle,
                           color: AppColors.primaryCyan.withValues(alpha: 0.12),
                           border: Border.all(
-                            color: AppColors.primaryCyan.withValues(alpha: 0.35),
+                            color: AppColors.primaryCyan.withValues(
+                              alpha: 0.35,
+                            ),
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.electricCyan.withValues(alpha: 0.2),
+                              color: AppColors.electricCyan.withValues(
+                                alpha: 0.2,
+                              ),
                               blurRadius: 16,
                             ),
                           ],
@@ -109,11 +273,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                       // Title & Subtitle (Dynamic based on tab)
                       Text(
-                        activePinTab == 0 ? 'Change Transaction PIN' : 'Reset Transaction PIN',
+                        activePinTab == 0
+                            ? 'Change Transaction PIN'
+                            : 'Reset Transaction PIN',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 21,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -123,7 +291,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             : 'Request OTP to reset your forgotten PIN',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
-                          color: isDark ? const Color(0xFFA5B0CD) : AppColors.slateGrey,
+                          color: isDark
+                              ? const Color(0xFFA5B0CD)
+                              : AppColors.slateGrey,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -132,7 +302,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       // Segmented Control Tabs (Change PIN | Reset PIN)
                       Container(
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                          color: isDark
+                              ? AppColors.darkCardVariant
+                              : AppColors.lightCardVariant,
                           borderRadius: BorderRadius.circular(14),
                         ),
                         padding: const EdgeInsets.all(4),
@@ -140,10 +312,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           children: [
                             Expanded(
                               child: InkWell(
-                                onTap: () => setDialogState(() => activePinTab = 0),
+                                onTap: () =>
+                                    setDialogState(() => activePinTab = 0),
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: activePinTab == 0
                                         ? AppColors.primaryBlue
@@ -152,7 +327,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     boxShadow: activePinTab == 0
                                         ? [
                                             BoxShadow(
-                                              color: AppColors.primaryBlue.withValues(alpha: 0.35),
+                                              color: AppColors.primaryBlue
+                                                  .withValues(alpha: 0.35),
                                               blurRadius: 10,
                                             ),
                                           ]
@@ -166,7 +342,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         fontWeight: FontWeight.w800,
                                         color: activePinTab == 0
                                             ? Colors.white
-                                            : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                                            : (isDark
+                                                  ? AppColors.metallicLight
+                                                  : AppColors.slateGrey),
                                       ),
                                     ),
                                   ),
@@ -175,10 +353,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             Expanded(
                               child: InkWell(
-                                onTap: () => setDialogState(() => activePinTab = 1),
+                                onTap: () =>
+                                    setDialogState(() => activePinTab = 1),
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: activePinTab == 1
                                         ? AppColors.primaryBlue
@@ -187,7 +368,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     boxShadow: activePinTab == 1
                                         ? [
                                             BoxShadow(
-                                              color: AppColors.primaryBlue.withValues(alpha: 0.35),
+                                              color: AppColors.primaryBlue
+                                                  .withValues(alpha: 0.35),
                                               blurRadius: 10,
                                             ),
                                           ]
@@ -201,7 +383,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         fontWeight: FontWeight.w800,
                                         color: activePinTab == 1
                                             ? Colors.white
-                                            : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
+                                            : (isDark
+                                                  ? AppColors.metallicLight
+                                                  : AppColors.slateGrey),
                                       ),
                                     ),
                                   ),
@@ -216,24 +400,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       // Info callout under tabs
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 11,
+                        ),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCardVariant : const Color(0xFFEFF6FF),
+                          color: isDark
+                              ? AppColors.darkCardVariant
+                              : const Color(0xFFEFF6FF),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: isDark ? AppColors.darkBorder : const Color(0xFFBFDBFE),
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : const Color(0xFFBFDBFE),
                           ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.info_outline_rounded, size: 16, color: AppColors.primaryCyan),
+                            const Icon(
+                              Icons.info_outline_rounded,
+                              size: 16,
+                              color: AppColors.primaryCyan,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: RichText(
                                 text: TextSpan(
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
-                                    color: isDark ? AppColors.metallicLight : const Color(0xFF0369A1),
+                                    color: isDark
+                                        ? AppColors.metallicLight
+                                        : const Color(0xFF0369A1),
                                   ),
                                   children: [
                                     const TextSpan(text: "Use "),
@@ -241,10 +438,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       text: "Reset PIN",
                                       style: GoogleFonts.plusJakartaSans(
                                         fontWeight: FontWeight.w800,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDark
+                                            ? Colors.white
+                                            : const Color(0xFF0F172A),
                                       ),
                                     ),
-                                    const TextSpan(text: " if you've forgotten your old PIN"),
+                                    const TextSpan(
+                                      text: " if you've forgotten your old PIN",
+                                    ),
                                   ],
                                 ),
                               ),
@@ -261,7 +462,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           hint: 'Enter current PIN',
                           controller: currentPinCtrl,
                           obscure: obscureCurrent,
-                          onToggleObscure: () => setDialogState(() => obscureCurrent = !obscureCurrent),
+                          onToggleObscure: () => setDialogState(
+                            () => obscureCurrent = !obscureCurrent,
+                          ),
                           isDark: isDark,
                         ),
                         const SizedBox(height: 14),
@@ -270,7 +473,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           hint: 'Enter 4-digit PIN',
                           controller: newPinCtrl,
                           obscure: obscureNew,
-                          onToggleObscure: () => setDialogState(() => obscureNew = !obscureNew),
+                          onToggleObscure: () =>
+                              setDialogState(() => obscureNew = !obscureNew),
                           isDark: isDark,
                         ),
                         const SizedBox(height: 14),
@@ -279,7 +483,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           hint: 'Re-enter PIN',
                           controller: confirmPinCtrl,
                           obscure: obscureConfirm,
-                          onToggleObscure: () => setDialogState(() => obscureConfirm = !obscureConfirm),
+                          onToggleObscure: () => setDialogState(
+                            () => obscureConfirm = !obscureConfirm,
+                          ),
                           isDark: isDark,
                         ),
                         const SizedBox(height: 16),
@@ -287,27 +493,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         // Security callout note
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkCardVariant : const Color(0xFFEFF6FF),
+                            color: isDark
+                                ? AppColors.darkCardVariant
+                                : const Color(0xFFEFF6FF),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: isDark ? AppColors.darkBorder : const Color(0xFFBFDBFE),
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : const Color(0xFFBFDBFE),
                             ),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              const Icon(Icons.info_outline_rounded, size: 16, color: AppColors.primaryCyan),
+                              const Icon(
+                                Icons.info_outline_rounded,
+                                size: 16,
+                                color: AppColors.primaryCyan,
+                              ),
                               const SizedBox(width: 8),
-                              const Icon(Icons.lock_rounded, size: 14, color: AppColors.electricCyan),
+                              const Icon(
+                                Icons.lock_rounded,
+                                size: 14,
+                                color: AppColors.electricCyan,
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
                                   "Keep your PIN secure! You'll need it to authorize all transactions.",
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11.5,
-                                    color: isDark ? AppColors.metallicLight : const Color(0xFF0369A1),
+                                    color: isDark
+                                        ? AppColors.metallicLight
+                                        : const Color(0xFF0369A1),
                                   ),
                                 ),
                               ),
@@ -323,7 +546,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primaryBlue.withValues(alpha: 0.4),
+                                color: AppColors.primaryBlue.withValues(
+                                  alpha: 0.4,
+                                ),
                                 blurRadius: 20,
                                 offset: const Offset(0, 5),
                               ),
@@ -333,20 +558,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             onPressed: () {
                               if (newPinCtrl.text.length != 4) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('PIN must be 4 digits.'), backgroundColor: AppColors.error),
+                                  const SnackBar(
+                                    content: Text('PIN must be 4 digits.'),
+                                    backgroundColor: AppColors.error,
+                                  ),
                                 );
                                 return;
                               }
                               if (newPinCtrl.text != confirmPinCtrl.text) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('New PINs do not match.'), backgroundColor: AppColors.error),
+                                  const SnackBar(
+                                    content: Text('New PINs do not match.'),
+                                    backgroundColor: AppColors.error,
+                                  ),
                                 );
                                 return;
                               }
                               Navigator.pop(ctx);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Transaction PIN updated successfully!'),
+                                  content: Text(
+                                    'Transaction PIN updated successfully!',
+                                  ),
                                   backgroundColor: AppColors.success,
                                 ),
                               );
@@ -356,7 +589,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               foregroundColor: Colors.white,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -380,16 +615,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkCardVariant : const Color(0xFFEFF6FF),
+                            color: isDark
+                                ? AppColors.darkCardVariant
+                                : const Color(0xFFEFF6FF),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isDark ? AppColors.darkBorder : const Color(0xFFBFDBFE),
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : const Color(0xFFBFDBFE),
                             ),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.info_outline_rounded, size: 16, color: AppColors.primaryCyan),
+                              const Icon(
+                                Icons.info_outline_rounded,
+                                size: 16,
+                                color: AppColors.primaryCyan,
+                              ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
@@ -397,7 +640,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12.5,
                                     height: 1.45,
-                                    color: isDark ? AppColors.metallicLight : const Color(0xFF0369A1),
+                                    color: isDark
+                                        ? AppColors.metallicLight
+                                        : const Color(0xFF0369A1),
                                   ),
                                 ),
                               ),
@@ -413,7 +658,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primaryBlue.withValues(alpha: 0.4),
+                                color: AppColors.primaryBlue.withValues(
+                                  alpha: 0.4,
+                                ),
                                 blurRadius: 20,
                                 offset: const Offset(0, 5),
                               ),
@@ -424,7 +671,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Navigator.pop(ctx);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('OTP sent to your registered email address.'),
+                                  content: Text(
+                                    'OTP sent to your registered email address.',
+                                  ),
                                   backgroundColor: AppColors.success,
                                 ),
                               );
@@ -434,7 +683,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               foregroundColor: Colors.white,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -447,7 +698,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                const Icon(Icons.mail_outline_rounded, size: 18),
+                                const Icon(
+                                  Icons.mail_outline_rounded,
+                                  size: 18,
+                                ),
                               ],
                             ),
                           ),
@@ -525,7 +779,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: isDark ? AppColors.darkCard : const Color(0xFFE2E8F0),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : const Color(0xFFCBD5E1),
+                    color: isDark
+                        ? AppColors.darkBorder
+                        : const Color(0xFFCBD5E1),
                   ),
                 ),
                 child: InkWell(
@@ -533,7 +789,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   borderRadius: BorderRadius.circular(8),
                   child: Center(
                     child: Icon(
-                      obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       size: 16,
                       color: isDark ? AppColors.metallicLight : Colors.black54,
                     ),
@@ -596,7 +854,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       color: isDark ? Colors.white70 : Colors.black54,
                       onPressed: () => Navigator.pop(ctx),
                       style: IconButton.styleFrom(
-                        backgroundColor: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                        backgroundColor: isDark
+                            ? AppColors.darkCardVariant
+                            : AppColors.lightCardVariant,
                         padding: const EdgeInsets.all(6),
                       ),
                     ),
@@ -611,10 +871,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+                          color: isDark
+                              ? AppColors.darkCardVariant
+                              : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : AppColors.lightBorder,
                           ),
                         ),
                         child: Column(
@@ -622,14 +886,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.arrow_outward_rounded, size: 16, color: AppColors.electricCyan),
+                                const Icon(
+                                  Icons.arrow_outward_rounded,
+                                  size: 16,
+                                  color: AppColors.electricCyan,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Quickstart',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A),
                                   ),
                                 ),
                               ],
@@ -639,7 +909,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               'Follow this quick guide to get you setup to start using our api',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11.5,
-                                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                color: isDark
+                                    ? AppColors.metallicLight
+                                    : AppColors.slateGrey,
                               ),
                             ),
                           ],
@@ -651,10 +923,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+                          color: isDark
+                              ? AppColors.darkCardVariant
+                              : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : AppColors.lightBorder,
                           ),
                         ),
                         child: Column(
@@ -662,14 +938,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.lock_outline_rounded, size: 16, color: AppColors.primaryCyan),
+                                const Icon(
+                                  Icons.lock_outline_rounded,
+                                  size: 16,
+                                  color: AppColors.primaryCyan,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Authenticate',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A),
                                   ),
                                 ),
                               ],
@@ -679,7 +961,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               'Get Authenticated To Use The API Services',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11.5,
-                                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                color: isDark
+                                    ? AppColors.metallicLight
+                                    : AppColors.slateGrey,
                               ),
                             ),
                           ],
@@ -708,20 +992,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _openApiTokenModal();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
-                        foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+                        backgroundColor: isDark
+                            ? AppColors.darkCardVariant
+                            : const Color(0xFFF1F5F9),
+                        foregroundColor: isDark
+                            ? Colors.white
+                            : const Color(0xFF0F172A),
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 9,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                           side: BorderSide(
-                            color: isDark ? AppColors.darkBorder : const Color(0xFFCBD5E1),
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : const Color(0xFFCBD5E1),
                           ),
                         ),
                       ),
                       child: Text(
                         'Details',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ],
@@ -733,10 +1029,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+                    color: isDark
+                        ? AppColors.darkCardVariant
+                        : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder,
                     ),
                   ),
                   child: Column(
@@ -747,25 +1047,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.shield_outlined, size: 16, color: AppColors.slateGrey),
+                              const Icon(
+                                Icons.shield_outlined,
+                                size: 16,
+                                color: AppColors.slateGrey,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 'IP Whitelist',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
                                 ),
                               ),
                             ],
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: isDark ? AppColors.darkCard : const Color(0xFFE2E8F0),
+                              color: isDark
+                                  ? AppColors.darkCard
+                                  : const Color(0xFFE2E8F0),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: isDark ? AppColors.darkBorder : const Color(0xFFCBD5E1),
+                                color: isDark
+                                    ? AppColors.darkBorder
+                                    : const Color(0xFFCBD5E1),
                               ),
                             ),
                             child: Text(
@@ -773,7 +1086,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                color: isDark
+                                    ? Colors.white70
+                                    : const Color(0xFF475569),
                               ),
                             ),
                           ),
@@ -784,7 +1099,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         'Restrict your API token to specific IP addresses. When active, only requests from whitelisted IPs can use your token.',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
-                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          color: isDark
+                              ? AppColors.metallicLight
+                              : AppColors.slateGrey,
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -794,22 +1111,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCard : const Color(0xFFFEF3C7),
+                          color: isDark
+                              ? AppColors.darkCard
+                              : const Color(0xFFFEF3C7),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: isDark ? AppColors.darkBorder : const Color(0xFFFDE68A),
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : const Color(0xFFFDE68A),
                           ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.warning),
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              size: 16,
+                              color: AppColors.warning,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'No IP restriction - any IP can use your API token',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.5,
-                                  color: isDark ? const Color(0xFFFBBF24) : const Color(0xFF92400E),
+                                  color: isDark
+                                      ? const Color(0xFFFBBF24)
+                                      : const Color(0xFF92400E),
                                 ),
                               ),
                             ),
@@ -823,26 +1150,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: [
                           Expanded(
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
                               decoration: BoxDecoration(
-                                color: isDark ? AppColors.darkCard : Colors.white,
+                                color: isDark
+                                    ? AppColors.darkCard
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: isDark ? AppColors.darkBorder : const Color(0xFFCBD5E1),
+                                  color: isDark
+                                      ? AppColors.darkBorder
+                                      : const Color(0xFFCBD5E1),
                                 ),
                               ),
                               child: TextField(
                                 controller: ipCtrl,
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
                                 ),
                                 decoration: InputDecoration(
                                   border: InputBorder.none,
                                   hintText: 'e.g. 41.190.2.50',
                                   hintStyle: GoogleFonts.plusJakartaSans(
                                     fontSize: 12.5,
-                                    color: isDark ? Colors.white30 : Colors.black26,
+                                    color: isDark
+                                        ? Colors.white30
+                                        : Colors.black26,
                                   ),
                                 ),
                               ),
@@ -854,7 +1191,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               if (ipCtrl.text.trim().isNotEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('IP ${ipCtrl.text.trim()} added to whitelist!'),
+                                    content: Text(
+                                      'IP ${ipCtrl.text.trim()} added to whitelist!',
+                                    ),
                                     backgroundColor: AppColors.success,
                                   ),
                                 );
@@ -865,8 +1204,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               backgroundColor: AppColors.primaryBlue,
                               foregroundColor: Colors.white,
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -938,7 +1282,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -946,7 +1292,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         'Provider credentials are stored securely on the server.',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.5,
-                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          color: isDark
+                              ? AppColors.metallicLight
+                              : AppColors.slateGrey,
                         ),
                       ),
                     ],
@@ -956,7 +1304,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     color: isDark ? Colors.white70 : Colors.black54,
                     onPressed: () => Navigator.pop(ctx),
                     style: IconButton.styleFrom(
-                      backgroundColor: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                      backgroundColor: isDark
+                          ? AppColors.darkCardVariant
+                          : AppColors.lightCardVariant,
                       padding: const EdgeInsets.all(6),
                     ),
                   ),
@@ -976,12 +1326,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 6),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+                  color: isDark
+                      ? AppColors.darkCardVariant
+                      : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : const Color(0xFFCBD5E1),
+                    color: isDark
+                        ? AppColors.darkBorder
+                        : const Color(0xFFCBD5E1),
                   ),
                 ),
                 child: Text(
@@ -998,9 +1355,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               // Created date row
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
+                  color: isDark
+                      ? AppColors.darkCardVariant
+                      : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -1010,7 +1372,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       'Created:',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.5,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
                     Text(
@@ -1031,10 +1395,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
+                  color: isDark
+                      ? AppColors.darkCardVariant
+                      : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color: isDark
+                        ? AppColors.darkBorder
+                        : AppColors.lightBorder,
                   ),
                 ),
                 child: Column(
@@ -1053,18 +1421,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       'The app securely sends VTU requests through the server integration.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.5,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
                     const SizedBox(height: 10),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark ? AppColors.darkCard : Colors.white,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Text(
@@ -1078,13 +1453,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.warning),
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          size: 14,
+                          color: AppColors.warning,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Never place provider credentials in the client app.',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
-                            color: isDark ? const Color(0xFFFBBF24) : const Color(0xFF92400E),
+                            color: isDark
+                                ? const Color(0xFFFBBF24)
+                                : const Color(0xFF92400E),
                           ),
                         ),
                       ],
@@ -1120,11 +1501,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           backgroundColor: isDark ? AppColors.darkCard : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            side: BorderSide(
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            ),
           ),
           title: Row(
             children: [
-              const Icon(Icons.lock_rounded, color: AppColors.primaryCyan, size: 22),
+              const Icon(
+                Icons.lock_rounded,
+                color: AppColors.primaryCyan,
+                size: 22,
+              ),
               const SizedBox(width: 10),
               Text(
                 'Change Password',
@@ -1148,7 +1535,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               TextField(
                 controller: confirmPassCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Confirm New Password'),
+                decoration: const InputDecoration(
+                  labelText: 'Confirm New Password',
+                ),
               ),
             ],
           ),
@@ -1159,7 +1548,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 newPassCtrl.dispose();
                 confirmPassCtrl.dispose();
               },
-              child: Text('Cancel', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -1170,7 +1562,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 final password = newPassCtrl.text;
                 if (password.length < 6 || password != confirmPassCtrl.text) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Enter a matching password with at least 6 characters.')),
+                    const SnackBar(
+                      content: Text(
+                        'Enter a matching password with at least 6 characters.',
+                      ),
+                    ),
                   );
                   return;
                 }
@@ -1183,15 +1579,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   newPassCtrl.dispose();
                   confirmPassCtrl.dispose();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Password updated successfully!'), backgroundColor: AppColors.success),
+                    const SnackBar(
+                      content: Text('Password updated successfully!'),
+                      backgroundColor: AppColors.success,
+                    ),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(auth.errorMessage ?? 'Password update failed.')),
+                    SnackBar(
+                      content: Text(
+                        auth.errorMessage ?? 'Password update failed.',
+                      ),
+                    ),
                   );
                 }
               },
-              child: Text('Save Password', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+              child: Text(
+                'Save Password',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+              ),
             ),
           ],
         );
@@ -1242,7 +1648,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -1251,7 +1659,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           'Your information is safe with us',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            color: isDark
+                                ? AppColors.metallicLight
+                                : AppColors.slateGrey,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -1263,7 +1673,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     color: isDark ? Colors.white70 : Colors.black54,
                     onPressed: () => Navigator.pop(ctx),
                     style: IconButton.styleFrom(
-                      backgroundColor: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                      backgroundColor: isDark
+                          ? AppColors.darkCardVariant
+                          : AppColors.lightCardVariant,
                       padding: const EdgeInsets.all(6),
                     ),
                   ),
@@ -1276,10 +1688,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+                  color: isDark
+                      ? AppColors.darkCardVariant
+                      : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+                    color: isDark
+                        ? AppColors.darkBorder
+                        : const Color(0xFFE2E8F0),
                   ),
                 ),
                 child: Column(
@@ -1292,7 +1708,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                         Text(
@@ -1300,7 +1718,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                       ],
@@ -1316,7 +1736,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         borderRadius: BorderRadius.circular(2),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.electricCyan.withValues(alpha: 0.4),
+                            color: AppColors.electricCyan.withValues(
+                              alpha: 0.4,
+                            ),
                             blurRadius: 6,
                           ),
                         ],
@@ -1382,7 +1804,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.5,
                     height: 1.45,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -1394,22 +1818,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardVariant : const Color(0xFFEFF6FF),
+                  color: isDark
+                      ? AppColors.darkCardVariant
+                      : const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : const Color(0xFFBFDBFE),
+                    color: isDark
+                        ? AppColors.darkBorder
+                        : const Color(0xFFBFDBFE),
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline_rounded, size: 16, color: AppColors.primaryCyan),
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      size: 16,
+                      color: AppColors.primaryCyan,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'You can close this modal and continue using the app. Your verification status will update automatically.',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11.5,
-                          color: isDark ? AppColors.metallicLight : const Color(0xFF0369A1),
+                          color: isDark
+                              ? AppColors.metallicLight
+                              : const Color(0xFF0369A1),
                         ),
                       ),
                     ),
@@ -1460,7 +1894,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (dialogCtx, setDialogState) => Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
           child: Container(
             width: 620,
             padding: const EdgeInsets.all(26),
@@ -1505,7 +1942,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                       IconButton(
@@ -1513,7 +1952,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         color: isDark ? Colors.white70 : Colors.black54,
                         onPressed: () => Navigator.pop(ctx),
                         style: IconButton.styleFrom(
-                          backgroundColor: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                          backgroundColor: isDark
+                              ? AppColors.darkCardVariant
+                              : AppColors.lightCardVariant,
                           padding: const EdgeInsets.all(6),
                         ),
                       ),
@@ -1526,7 +1967,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     // Crown Hero Card
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 22,
+                        horizontal: 20,
+                      ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: isDark
@@ -1537,7 +1981,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
                         ),
                       ),
                       child: Column(
@@ -1550,7 +1996,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               color: AppColors.primaryBlue,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primaryBlue.withValues(alpha: 0.4),
+                                  color: AppColors.primaryBlue.withValues(
+                                    alpha: 0.4,
+                                  ),
                                   blurRadius: 20,
                                 ),
                               ],
@@ -1568,7 +2016,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             'Unlock premium pricing, bulk orders, and exclusive features',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12.5,
-                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                              color: isDark
+                                  ? AppColors.metallicLight
+                                  : AppColors.slateGrey,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -1624,14 +2074,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     // Corporate Benefits Header
                     Row(
                       children: [
-                        const Icon(Icons.bolt_rounded, size: 18, color: AppColors.electricCyan),
+                        const Icon(
+                          Icons.bolt_rounded,
+                          size: 18,
+                          color: AppColors.electricCyan,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Corporate Benefits',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                       ],
@@ -1647,16 +2103,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkCardVariant : const Color(0xFFEFF6FF),
+                        color: isDark
+                            ? AppColors.darkCardVariant
+                            : const Color(0xFFEFF6FF),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isDark ? AppColors.darkBorder : const Color(0xFFBFDBFE),
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : const Color(0xFFBFDBFE),
                         ),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.description_outlined, size: 18, color: AppColors.primaryCyan),
+                          const Icon(
+                            Icons.description_outlined,
+                            size: 18,
+                            color: AppColors.primaryCyan,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: RichText(
@@ -1664,18 +2128,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.5,
                                   height: 1.45,
-                                  color: isDark ? AppColors.metallicLight : const Color(0xFF0369A1),
+                                  color: isDark
+                                      ? AppColors.metallicLight
+                                      : const Color(0xFF0369A1),
                                 ),
                                 children: [
                                   TextSpan(
                                     text: 'Business path ',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontWeight: FontWeight.w800,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark
+                                          ? Colors.white
+                                          : const Color(0xFF0F172A),
                                     ),
                                   ),
                                   const TextSpan(
-                                    text: 'requires ₦3,000 for CAC validation with our partners (actual cost is ₦5,000 - Avotek covers ₦2,000). The fee covers ONE review - every new review is chargeable.',
+                                    text:
+                                        'requires ₦3,000 for CAC validation with our partners (actual cost is ₦5,000 - Avotek covers ₦2,000). The fee covers ONE review - every new review is chargeable.',
                                   ),
                                 ],
                               ),
@@ -1706,7 +2175,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -1732,7 +2203,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Individual Corporate Upgrade requested! Processing activation...'),
+                            content: Text(
+                              'Individual Corporate Upgrade requested! Processing activation...',
+                            ),
                             backgroundColor: AppColors.success,
                           ),
                         );
@@ -1742,10 +2215,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+                          color: isDark
+                              ? AppColors.darkCardVariant
+                              : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isDark ? AppColors.darkBorder : const Color(0xFFCBD5E1),
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : const Color(0xFFCBD5E1),
                           ),
                         ),
                         child: Column(
@@ -1756,22 +2233,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primaryBlue.withValues(alpha: 0.15),
+                                    color: AppColors.primaryBlue.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: const Icon(Icons.person_rounded, color: AppColors.electricCyan, size: 20),
+                                  child: const Icon(
+                                    Icons.person_rounded,
+                                    color: AppColors.electricCyan,
+                                    size: 20,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Individual Upgrade',
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w800,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          color: isDark
+                                              ? Colors.white
+                                              : const Color(0xFF0F172A),
                                         ),
                                       ),
                                       const SizedBox(height: 2),
@@ -1779,13 +2265,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         'Pay a one-time fee and get instant corporate access',
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 11.5,
-                                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                          color: isDark
+                                              ? AppColors.metallicLight
+                                              : AppColors.slateGrey,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const Icon(Icons.arrow_forward_rounded, color: Colors.grey, size: 18),
+                                const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  color: Colors.grey,
+                                  size: 18,
+                                ),
                               ],
                             ),
                             const SizedBox(height: 14),
@@ -1806,7 +2298,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   'Instant activation',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
-                                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                    color: isDark
+                                        ? AppColors.metallicLight
+                                        : AppColors.slateGrey,
                                   ),
                                 ),
                               ],
@@ -1816,20 +2310,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             // Cyan feature badges box
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
-                                color: isDark ? AppColors.darkCard : const Color(0xFFEFF6FF),
+                                color: isDark
+                                    ? AppColors.darkCard
+                                    : const Color(0xFFEFF6FF),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: isDark ? AppColors.darkBorder : const Color(0xFFBFDBFE),
+                                  color: isDark
+                                      ? AppColors.darkBorder
+                                      : const Color(0xFFBFDBFE),
                                 ),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('✔ Instant Access', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryCyan)),
-                                  Text('✔ No Documents', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryCyan)),
-                                  Text('✔ No Approval Wait', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryCyan)),
+                                  Text(
+                                    '✔ Instant Access',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primaryCyan,
+                                    ),
+                                  ),
+                                  Text(
+                                    '✔ No Documents',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primaryCyan,
+                                    ),
+                                  ),
+                                  Text(
+                                    '✔ No Approval Wait',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primaryCyan,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -1845,7 +2368,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Business Upgrade requested! CAC verification initiated...'),
+                            content: Text(
+                              'Business Upgrade requested! CAC verification initiated...',
+                            ),
                             backgroundColor: AppColors.success,
                           ),
                         );
@@ -1855,7 +2380,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+                          color: isDark
+                              ? AppColors.darkCardVariant
+                              : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: AppColors.success,
@@ -1870,22 +2397,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: AppColors.success.withValues(alpha: 0.15),
+                                    color: AppColors.success.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: const Icon(Icons.apartment_rounded, color: AppColors.success, size: 20),
+                                  child: const Icon(
+                                    Icons.apartment_rounded,
+                                    color: AppColors.success,
+                                    size: 20,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Business Upgrade',
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w800,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          color: isDark
+                                              ? Colors.white
+                                              : const Color(0xFF0F172A),
                                         ),
                                       ),
                                       const SizedBox(height: 2),
@@ -1893,13 +2429,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         'Pay ₦3,000 validation fee + upload CAC documents for corporate upgrade',
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 11.5,
-                                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                          color: isDark
+                                              ? AppColors.metallicLight
+                                              : AppColors.slateGrey,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const Icon(Icons.arrow_forward_rounded, color: Colors.grey, size: 18),
+                                const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  color: Colors.grey,
+                                  size: 18,
+                                ),
                               ],
                             ),
                             const SizedBox(height: 14),
@@ -1920,7 +2462,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   'CAC validation + 24h review',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
-                                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                    color: isDark
+                                        ? AppColors.metallicLight
+                                        : AppColors.slateGrey,
                                   ),
                                 ),
                               ],
@@ -1930,20 +2474,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             // Green feature badges box
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
-                                color: isDark ? AppColors.darkCard : const Color(0xFFECFDF5),
+                                color: isDark
+                                    ? AppColors.darkCard
+                                    : const Color(0xFFECFDF5),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: isDark ? AppColors.darkBorder : const Color(0xFFA7F3D0),
+                                  color: isDark
+                                      ? AppColors.darkBorder
+                                      : const Color(0xFFA7F3D0),
                                 ),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('✔ ₦5K validation (Avotek covers ₦2K)', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success)),
-                                  Text('✔ Upload CAC', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success)),
-                                  Text('✔ 24h Review', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success)),
+                                  Text(
+                                    '✔ ₦5K validation (Avotek covers ₦2K)',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                  Text(
+                                    '✔ Upload CAC',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                  Text(
+                                    '✔ 24h Review',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -1959,12 +2532,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: OutlinedButton(
                         onPressed: () => setDialogState(() => activeView = 0),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: isDark ? Colors.white70 : const Color(0xFF334155),
+                          foregroundColor: isDark
+                              ? Colors.white70
+                              : const Color(0xFF334155),
                           side: BorderSide(
-                            color: isDark ? AppColors.darkBorder : const Color(0xFFCBD5E1),
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : const Color(0xFFCBD5E1),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -2032,7 +2611,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: valueColor ?? (isDark ? Colors.white : const Color(0xFF0F172A)),
+                color:
+                    valueColor ??
+                    (isDark ? Colors.white : const Color(0xFF0F172A)),
               ),
             ),
             if (subtitle != null) ...[
@@ -2053,15 +2634,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildBenefitsGrid(bool isDark) {
     final benefits = [
-      ('Lower Service Charges', 'Corporate discount on all services', Icons.attach_money_rounded),
-      ('Bulk Order', 'Bulk data, airtime, and utility orders', Icons.inventory_2_outlined),
-      ('Auto-Refund', 'AI-assisted auto refund & response', Icons.smart_toy_outlined),
-      ('ID & Number Search', 'Transaction search by ID or number', Icons.search_rounded),
+      (
+        'Lower Service Charges',
+        'Corporate discount on all services',
+        Icons.attach_money_rounded,
+      ),
+      (
+        'Bulk Order',
+        'Bulk data, airtime, and utility orders',
+        Icons.inventory_2_outlined,
+      ),
+      (
+        'Auto-Refund',
+        'AI-assisted auto refund & response',
+        Icons.smart_toy_outlined,
+      ),
+      (
+        'ID & Number Search',
+        'Transaction search by ID or number',
+        Icons.search_rounded,
+      ),
       ('Priority Support', '24/7 dedicated support', Icons.bolt_rounded),
-      ('Sophisticated Dashboard', 'Advanced analytics & reporting', Icons.bar_chart_rounded),
-      ('SMS Notifications', 'Transaction alerts (coming soon)', Icons.mail_outline_rounded),
-      ('Beta Features', 'Early access to new features', Icons.rocket_launch_outlined),
-      ('Trade Guild', 'Trade guide and capital pooling access', Icons.public_rounded),
+      (
+        'Sophisticated Dashboard',
+        'Advanced analytics & reporting',
+        Icons.bar_chart_rounded,
+      ),
+      (
+        'Beta Features',
+        'Early access to new features',
+        Icons.rocket_launch_outlined,
+      ),
       ('Cheaper Data', 'Buy as low as ₦225/GB', Icons.trending_up_rounded),
     ];
 
@@ -2122,7 +2725,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             decoration: BoxDecoration(
               color: AppColors.primaryBlue.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.primaryBlue.withValues(alpha: 0.3)),
+              border: Border.all(
+                color: AppColors.primaryBlue.withValues(alpha: 0.3),
+              ),
             ),
             child: Icon(icon, size: 15, color: AppColors.electricCyan),
           ),
@@ -2144,7 +2749,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   desc,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10.5,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                 ),
               ],
@@ -2167,11 +2774,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           backgroundColor: isDark ? AppColors.darkCard : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            side: BorderSide(
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            ),
           ),
           title: Text(
             'Edit Profile Details',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18),
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -2190,7 +2802,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('Cancel', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -2205,10 +2820,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile updated successfully!'), backgroundColor: AppColors.success),
+                  const SnackBar(
+                    content: Text('Profile updated successfully!'),
+                    backgroundColor: AppColors.success,
+                  ),
                 );
               },
-              child: Text('Save', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+              child: Text(
+                'Save',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+              ),
             ),
           ],
         );
@@ -2251,7 +2872,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                      color: isDark
+                          ? AppColors.metallicLight
+                          : AppColors.slateGrey,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -2269,7 +2892,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         title: 'Account Status (KYC)',
                         subtitle: 'Your account is fully verified',
                         trailing: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.success.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
@@ -2293,7 +2919,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconBg: AppColors.primaryCyan.withValues(alpha: 0.15),
                         title: 'Edit Profile',
                         subtitle: 'Update your personal information',
-                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.grey,
+                        ),
                         onTap: () => _openEditProfileModal(auth),
                         isDark: isDark,
                       ),
@@ -2304,7 +2933,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconBg: AppColors.electricCyan.withValues(alpha: 0.15),
                         title: 'Affiliate Programme',
                         subtitle: 'Earn lifetime commission on referrals',
-                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.grey,
+                        ),
                         onTap: () => context.go('/affiliate'),
                         isDark: isDark,
                       ),
@@ -2315,7 +2947,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconBg: AppColors.primaryBlue.withValues(alpha: 0.15),
                         title: 'API Documentation',
                         subtitle: 'Developer tools and API access',
-                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.grey,
+                        ),
                         onTap: _openApiDocumentationModal,
                         isDark: isDark,
                       ),
@@ -2326,7 +2961,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconBg: AppColors.primaryBlue.withValues(alpha: 0.15),
                         title: 'Upgrade Membership Plan',
                         subtitle: 'Unlock corporate benefits and pricing',
-                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.grey,
+                        ),
                         onTap: _openUpgradeToCorporateModal,
                         isDark: isDark,
                       ),
@@ -2346,7 +2984,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconBg: AppColors.primaryCyan.withValues(alpha: 0.15),
                         title: 'Change Transaction PIN',
                         subtitle: 'Update or reset your 4-digit PIN',
-                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.grey,
+                        ),
                         onTap: _openChangePinDialog,
                         isDark: isDark,
                       ),
@@ -2357,7 +2998,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconBg: AppColors.primaryBlue.withValues(alpha: 0.15),
                         title: 'Change Password',
                         subtitle: 'Update your account login password',
-                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.grey,
+                        ),
                         onTap: _openChangePasswordDialog,
                         isDark: isDark,
                       ),
@@ -2372,7 +3016,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Appearance',
                     children: [
                       _buildToggleTile(
-                        icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                        icon: isDark
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_rounded,
                         title: 'Dark Mode',
                         badge: isDark ? 'OBSIDIAN DARK' : 'SLATE LIGHT',
                         value: isDark,
@@ -2394,45 +3040,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                         child: Text(
-                          'AUTO-RENEWAL ALERTS',
+                          'TRANSACTION UPDATES',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.0,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            color: isDark
+                                ? AppColors.metallicLight
+                                : AppColors.slateGrey,
                           ),
                         ),
                       ),
-                      // Row 1: Push FREE
                       _buildToggleTile(
                         icon: Icons.phone_android_rounded,
-                        title: 'Push',
-                        badge: 'FREE',
-                        value: _pushNotifications,
-                        onChanged: (val) => setState(() => _pushNotifications = val),
+                        title: 'Push notifications',
+                        badge: 'NOT SET UP',
+                        warningNote:
+                            'Push delivery is not configured for this deployment.',
+                        value: false,
+                        enabled: false,
+                        onChanged: (_) {},
                         isDark: isDark,
                       ),
                       _buildDivider(isDark),
-                      // Row 2: Email FREE
                       _buildToggleTile(
                         icon: Icons.mail_outline_rounded,
-                        title: 'Email',
-                        badge: 'FREE',
-                        value: _emailNotifications,
-                        onChanged: (val) => setState(() => _emailNotifications = val),
+                        title: 'Email transaction alerts',
+                        badge: 'NOT SET UP',
+                        warningNote:
+                            'A transactional email provider and server-side event delivery are required.',
+                        value: false,
+                        enabled: false,
+                        onChanged: (_) {},
                         isDark: isDark,
                       ),
                       _buildDivider(isDark),
-                      // Row 3: SMS ₦/msg (Requires ₦20+ wallet balance)
-                      _buildToggleTile(
-                        icon: Icons.chat_bubble_outline_rounded,
-                        title: 'SMS',
-                        badge: '₦/msg',
-                        value: _smsNotifications,
-                        warningNote: 'Requires ₦20+ wallet balance',
-                        onChanged: (val) => setState(() => _smsNotifications = val),
-                        isDark: isDark,
-                      ),
                       const SizedBox(height: 8),
                     ],
                   ),
@@ -2452,17 +3094,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         title: 'App Version',
                         subtitle: null,
                         trailing: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                            color: isDark
+                                ? AppColors.darkCardVariant
+                                : AppColors.lightCardVariant,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            'v11.1.0',
+                            'v1.0.0',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                         ),
@@ -2477,12 +3126,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconBg: Colors.transparent,
                         title: 'Terms of Service',
                         subtitle: null,
-                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Opening Avotek Terms of Service')),
-                          );
-                        },
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.grey,
+                        ),
+                        onTap: _showTermsOfService,
                         isDark: isDark,
                       ),
                       _buildDivider(isDark),
@@ -2493,12 +3141,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconBg: Colors.transparent,
                         title: 'Privacy Policy',
                         subtitle: null,
-                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Opening Avotek Privacy Policy')),
-                          );
-                        },
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.grey,
+                        ),
+                        onTap: _showPrivacyPolicy,
                         isDark: isDark,
                       ),
                     ],
@@ -2516,8 +3163,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.error,
                         iconBg: AppColors.error.withValues(alpha: 0.12),
                         title: 'Sign Out',
-                        subtitle: 'Safely terminate active session on this device',
-                        trailing: const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.error, size: 14),
+                        subtitle:
+                            'Safely terminate active session on this device',
+                        trailing: const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: AppColors.error,
+                          size: 14,
+                        ),
                         onTap: () async {
                           final auth = context.read<AuthProvider>();
                           await auth.signOut();
@@ -2536,11 +3188,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Text(
                       'Avotek.ng © 2022-2026 By Avotek Technologies',
                       style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.white38 : Colors.black38,
-                          ),
-                        ),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white38 : Colors.black38,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 48),
                 ],
@@ -2597,7 +3249,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           Divider(
             height: 1,
-            color: isDark ? AppColors.darkBorder.withValues(alpha: 0.5) : AppColors.lightBorder,
+            color: isDark
+                ? AppColors.darkBorder.withValues(alpha: 0.5)
+                : AppColors.lightBorder,
           ),
           ...children,
         ],
@@ -2648,7 +3302,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       subtitle,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.5,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
                   ],
@@ -2670,6 +3326,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required bool value,
     required ValueChanged<bool> onChanged,
     required bool isDark,
+    bool enabled = true,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -2678,7 +3335,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: isDark ? Colors.white70 : Colors.black87),
+              Icon(
+                icon,
+                size: 18,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
               const SizedBox(width: 10),
               Text(
                 title,
@@ -2692,7 +3353,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                  color: isDark
+                      ? AppColors.darkCardVariant
+                      : AppColors.lightCardVariant,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -2707,11 +3370,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Spacer(),
               Switch(
                 value: value,
-                onChanged: onChanged,
+                onChanged: enabled ? onChanged : null,
                 activeThumbColor: Colors.white,
                 activeTrackColor: AppColors.primaryBlue,
                 inactiveThumbColor: Colors.grey.shade400,
-                inactiveTrackColor: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                inactiveTrackColor: isDark
+                    ? AppColors.darkCardVariant
+                    : AppColors.lightCardVariant,
               ),
             ],
           ),
@@ -2719,13 +3384,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.warning_amber_rounded, size: 12, color: AppColors.warning),
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  size: 12,
+                  color: AppColors.warning,
+                ),
                 const SizedBox(width: 4),
-                Text(
-                  warningNote,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10.5,
-                    color: isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
+                Expanded(
+                  child: Text(
+                    warningNote,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10.5,
+                      color: isDark
+                          ? const Color(0xFFFDE68A)
+                          : const Color(0xFFB45309),
+                    ),
                   ),
                 ),
               ],
@@ -2739,7 +3412,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildDivider(bool isDark) {
     return Divider(
       height: 1,
-      color: isDark ? AppColors.darkBorder.withValues(alpha: 0.5) : AppColors.lightBorder,
+      color: isDark
+          ? AppColors.darkBorder.withValues(alpha: 0.5)
+          : AppColors.lightBorder,
     );
   }
 }

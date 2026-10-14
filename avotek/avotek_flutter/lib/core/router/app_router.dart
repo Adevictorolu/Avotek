@@ -54,7 +54,8 @@ class AppRouter {
         final auth = context.read<AuthProvider>();
         final currentUser = auth.user;
         final currentUserEmail =
-            currentUser?.email ?? SupabaseService.instance.currentAuthUser?.email;
+            currentUser?.email ??
+            SupabaseService.instance.currentAuthUser?.email;
         final isAdmin =
             currentUser?.isAdmin ?? UserModel.isAdminEmail(currentUserEmail);
 
@@ -187,7 +188,10 @@ class AppRouter {
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,
             state,
-            const LoginScreen(initialSignUp: true),
+            LoginScreen(
+              initialSignUp: true,
+              initialReferralCode: state.uri.queryParameters['ref'],
+            ),
           ),
         ),
         GoRoute(

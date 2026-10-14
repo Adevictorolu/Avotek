@@ -19,15 +19,12 @@ class LandingScreen extends StatefulWidget {
 }
 
 class _LandingScreenState extends State<LandingScreen> {
-  String _selectedRateNetwork = 'MTN';
   final ScrollController _scrollController = ScrollController();
 
   // GlobalKeys for accurate smooth scrolling
   final GlobalKey _servicesKey = GlobalKey();
   final GlobalKey _howKey = GlobalKey();
-  final GlobalKey _ratesKey = GlobalKey();
   final GlobalKey _whyKey = GlobalKey();
-  final GlobalKey _faqKey = GlobalKey();
 
   // Solid service hues matching design tokens
   static const Color sAirtime = Color(0xFF7C3AED); // Solid Violet
@@ -37,69 +34,6 @@ class _LandingScreenState extends State<LandingScreen> {
   static const Color sPrint = Color(0xFF9333EA); // Vibrant Purple
   static const Color sWallet = Color(0xFF059669); // Emerald Green
   static const Color sRefer = Color(0xFFCA8A04); // Amber Gold
-
-  final List<Map<String, dynamic>> _faqs = [
-    {
-      'q': 'How long does an order take?',
-      'a': 'Delivery times depend on provider availability. Your order status is shown after the provider confirms the transaction.',
-      'isOpen': true,
-    },
-    {
-      'q': 'What happens when an order fails?',
-      'a': 'Failed transactions are reconciled according to the payment and VTU provider status. Contact support if a transaction remains pending or a refund is delayed.',
-      'isOpen': false,
-    },
-    {
-      'q': 'How do I fund my wallet?',
-      'a': 'Wallet funding will be available when a verified payment provider is configured for your account. Never transfer to an account not assigned to you inside Avotek.',
-      'isOpen': false,
-    },
-    {
-      'q': 'Is there a minimum balance or subscription fee to start?',
-      'a': 'No. There are zero monthly charges, zero maintenance fees, and no minimum balance. You can fund as little as ₦100 and buy or resell immediately.',
-      'isOpen': false,
-    },
-    {
-      'q': 'Can I resell VTU services to my own customers?',
-      'a': 'Yes! Avotek provides wholesale reseller prices. You buy at reseller rates, set your own selling price for your customers, and keep 100% of your profit margin. Every order generates an instant receipt you can share.',
-      'isOpen': false,
-    },
-    {
-      'q': 'Do I need a laptop or computer?',
-      'a': 'No. Avotek is fully responsive and optimized for any smartphone browser and Android/iOS devices. You can manage everything directly from your pocket.',
-      'isOpen': false,
-    },
-  ];
-
-  final Map<String, List<Map<String, dynamic>>> _ratePlans = {
-    'MTN': [
-      {'plan': '500MB SME', 'validity': '30 days', 'price': 140},
-      {'plan': '1GB SME', 'validity': '30 days', 'price': 260},
-      {'plan': '2GB SME', 'validity': '30 days', 'price': 520},
-      {'plan': '5GB SME', 'validity': '30 days', 'price': 1300},
-      {'plan': '10GB SME', 'validity': '30 days', 'price': 2600},
-    ],
-    'Glo': [
-      {'plan': '500MB Corp', 'validity': '30 days', 'price': 145},
-      {'plan': '1GB Corp', 'validity': '30 days', 'price': 255},
-      {'plan': '2GB Corp', 'validity': '30 days', 'price': 510},
-      {'plan': '5GB Corp', 'validity': '30 days', 'price': 1275},
-      {'plan': '10GB Corp', 'validity': '30 days', 'price': 2550},
-    ],
-    'Airtel': [
-      {'plan': '500MB CG', 'validity': '30 days', 'price': 150},
-      {'plan': '1GB CG', 'validity': '30 days', 'price': 265},
-      {'plan': '2GB CG', 'validity': '30 days', 'price': 530},
-      {'plan': '5GB CG', 'validity': '30 days', 'price': 1325},
-      {'plan': '10GB CG', 'validity': '30 days', 'price': 2650},
-    ],
-    '9mobile': [
-      {'plan': '1GB Data', 'validity': '30 days', 'price': 240},
-      {'plan': '2GB Data', 'validity': '30 days', 'price': 480},
-      {'plan': '3GB Data', 'validity': '30 days', 'price': 720},
-      {'plan': '5GB Data', 'validity': '30 days', 'price': 1200},
-    ],
-  };
 
   @override
   void dispose() {
@@ -138,7 +72,9 @@ class _LandingScreenState extends State<LandingScreen> {
                 backgroundColor: const Color(0xFF0D0F15).withOpacity(0.96),
                 titleSpacing: isDesktop ? 48 : 16,
                 title: Row(
-                  mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
+                  mainAxisAlignment: isDesktop
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.center,
                   children: [
                     // Brand Logo + Name
                     InkWell(
@@ -151,10 +87,8 @@ class _LandingScreenState extends State<LandingScreen> {
                     if (isDesktop) ...[
                       const SizedBox(width: 48),
                       _navLink('Services', () => _scrollToKey(_servicesKey)),
-                      _navLink('Rates', () => context.push('/rates')),
                       _navLink('How it works', () => _scrollToKey(_howKey)),
                       _navLink('Why us', () => _scrollToKey(_whyKey)),
-                      _navLink('FAQ', () => _scrollToKey(_faqKey)),
                     ],
                   ],
                 ),
@@ -162,21 +96,35 @@ class _LandingScreenState extends State<LandingScreen> {
                   if (isDesktop) ...[
                     IconButton(
                       icon: Icon(
-                        isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                        isDark
+                            ? Icons.light_mode_outlined
+                            : Icons.dark_mode_outlined,
                         color: Colors.white,
                         size: 20,
                       ),
-                      tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
-                      onPressed: () => context.read<ThemeProvider>().toggleTheme(),
+                      tooltip: isDark
+                          ? 'Switch to Light Mode'
+                          : 'Switch to Dark Mode',
+                      onPressed: () =>
+                          context.read<ThemeProvider>().toggleTheme(),
                     ),
                     const SizedBox(width: 4),
                     TextButton(
                       onPressed: () => context.push('/login'),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
                       ),
-                      child: Text('Sign in', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                      child: Text(
+                        'Sign in',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.5,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
@@ -185,25 +133,42 @@ class _LandingScreenState extends State<LandingScreen> {
                         backgroundColor: AppColors.primaryBlue,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                       ),
-                      child: Text('Create account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                      child: Text(
+                        'Create account',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13.5,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 48),
                   ] else ...[
                     IconButton(
                       icon: Icon(
-                        isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                        isDark
+                            ? Icons.light_mode_outlined
+                            : Icons.dark_mode_outlined,
                         color: Colors.white,
                         size: 20,
                       ),
-                      tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
-                      onPressed: () => context.read<ThemeProvider>().toggleTheme(),
+                      tooltip: isDark
+                          ? 'Switch to Light Mode'
+                          : 'Switch to Dark Mode',
+                      onPressed: () =>
+                          context.read<ThemeProvider>().toggleTheme(),
                     ),
                     IconButton(
                       icon: const Icon(Icons.menu_rounded, color: Colors.white),
-                      onPressed: () => Scaffold.of(scaffoldContext).openEndDrawer(),
+                      onPressed: () =>
+                          Scaffold.of(scaffoldContext).openEndDrawer(),
                     ),
                     const SizedBox(width: 8),
                   ],
@@ -221,13 +186,19 @@ class _LandingScreenState extends State<LandingScreen> {
                         _buildHeroSection(isDesktop),
                         _buildOfficialPartnersStrip(isDesktop),
                         _buildStatsStrip(),
-                        Container(key: _servicesKey, child: _buildServicesSection(isDesktop)),
-                        Container(key: _howKey, child: _buildHowItWorksSection(isDesktop)),
-                        Container(key: _ratesKey, child: _buildRatesSection(isDesktop)),
-                        Container(key: _whyKey, child: _buildWhyUsSection(isDesktop)),
-                        _buildTestimonialsSection(isDesktop),
+                        Container(
+                          key: _servicesKey,
+                          child: _buildServicesSection(isDesktop),
+                        ),
+                        Container(
+                          key: _howKey,
+                          child: _buildHowItWorksSection(isDesktop),
+                        ),
+                        Container(
+                          key: _whyKey,
+                          child: _buildWhyUsSection(isDesktop),
+                        ),
                         _buildMobilePocketBand(isDesktop),
-                        Container(key: _faqKey, child: _buildFaqSection(isDesktop)),
                         _buildFinalCtaSection(isDesktop),
                         _buildFooter(isDesktop),
                       ],
@@ -264,10 +235,6 @@ class _LandingScreenState extends State<LandingScreen> {
               Navigator.pop(context);
               _scrollToKey(_servicesKey);
             }),
-            _drawerItem('Rates', () {
-              Navigator.pop(context);
-              context.push('/rates');
-            }),
             _drawerItem('How it works', () {
               Navigator.pop(context);
               _scrollToKey(_howKey);
@@ -276,14 +243,13 @@ class _LandingScreenState extends State<LandingScreen> {
               Navigator.pop(context);
               _scrollToKey(_whyKey);
             }),
-            _drawerItem('FAQ', () {
-              Navigator.pop(context);
-              _scrollToKey(_faqKey);
-            }),
-            _drawerItem(isDark ? 'Switch to Light Mode ☀️' : 'Switch to Dark Mode 🌙', () {
-              Navigator.pop(context);
-              context.read<ThemeProvider>().toggleTheme();
-            }),
+            _drawerItem(
+              isDark ? 'Switch to Light Mode ☀️' : 'Switch to Dark Mode 🌙',
+              () {
+                Navigator.pop(context);
+                context.read<ThemeProvider>().toggleTheme();
+              },
+            ),
             const Spacer(),
             Padding(
               padding: const EdgeInsets.all(20),
@@ -300,9 +266,16 @@ class _LandingScreenState extends State<LandingScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
                         side: const BorderSide(color: Color(0xFF26334D)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: Text('Sign in', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+                      child: Text(
+                        'Sign in',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -317,9 +290,16 @@ class _LandingScreenState extends State<LandingScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: Text('Create account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+                      child: Text(
+                        'Create account',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -333,8 +313,19 @@ class _LandingScreenState extends State<LandingScreen> {
 
   Widget _drawerItem(String title, VoidCallback onTap) {
     return ListTile(
-      title: Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
-      trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 18),
+      title: Text(
+        title,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        color: Colors.grey,
+        size: 18,
+      ),
       onTap: onTap,
     );
   }
@@ -436,13 +427,24 @@ class _LandingScreenState extends State<LandingScreen> {
             ElevatedButton.icon(
               onPressed: () => context.push('/register'),
               icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-              label: Text('Create free account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14)),
+              label: Text(
+                'Create free account',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBlue,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 shadowColor: AppColors.primaryBlue.withOpacity(0.4),
               ),
             ),
@@ -451,10 +453,21 @@ class _LandingScreenState extends State<LandingScreen> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
                 side: const BorderSide(color: Color(0xFF26334D), width: 1.5),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
-              child: Text('See our rates', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
+              child: Text(
+                'See our rates',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
             ),
           ],
         ),
@@ -467,11 +480,17 @@ class _LandingScreenState extends State<LandingScreen> {
             const SizedBox(width: 14),
             RichText(
               text: TextSpan(
-                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF94A3B8)),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  color: const Color(0xFF94A3B8),
+                ),
                 children: const [
                   TextSpan(
                     text: '18,400+ people ',
-                    style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
                   ),
                   TextSpan(text: 'buy & resell here every week'),
                 ],
@@ -484,7 +503,12 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   Widget _buildAvatarGroup() {
-    final colors = [AppColors.electricCyan, const Color(0xFF10B981), AppColors.primaryBlue, Colors.purple];
+    final colors = [
+      AppColors.electricCyan,
+      const Color(0xFF10B981),
+      AppColors.primaryBlue,
+      Colors.purple,
+    ];
     final initials = ['AO', 'SB', 'TA', 'NE'];
     return SizedBox(
       height: 32,
@@ -498,7 +522,11 @@ class _LandingScreenState extends State<LandingScreen> {
               backgroundColor: colors[i],
               child: Text(
                 initials[i],
-                style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
               ),
             ),
           );
@@ -533,7 +561,10 @@ class _LandingScreenState extends State<LandingScreen> {
               width: 54,
               height: 4,
               margin: const EdgeInsets.only(bottom: 14),
-              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ),
           // User Greeting inside phone
@@ -543,14 +574,34 @@ class _LandingScreenState extends State<LandingScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Good afternoon', style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF94A3B8))),
-                  Text('Ada O.', style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
+                  Text(
+                    'Good afternoon',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      color: const Color(0xFF94A3B8),
+                    ),
+                  ),
+                  Text(
+                    'Ada O.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
                 ],
               ),
               CircleAvatar(
                 radius: 16,
                 backgroundColor: AppColors.electricCyan.withOpacity(0.2),
-                child: Text('AO', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.electricCyan)),
+                child: Text(
+                  'AO',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.electricCyan,
+                  ),
+                ),
               ),
             ],
           ),
@@ -571,9 +622,23 @@ class _LandingScreenState extends State<LandingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Wallet balance', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white70)),
+                Text(
+                  'Wallet balance',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white70,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text('₦248,500.00', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
+                Text(
+                  '₦248,500.00',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
               ],
             ),
           ),
@@ -584,20 +649,68 @@ class _LandingScreenState extends State<LandingScreen> {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _buildPhoneServiceIcon(Icons.phone_android_rounded, 'Airtime', sAirtime, '/services/airtime'),
-              _buildPhoneServiceIcon(Icons.wifi_rounded, 'Data', sData, '/services/data'),
-              _buildPhoneServiceIcon(Icons.tv_rounded, 'Cable', sCable, '/services/tv'),
-              _buildPhoneServiceIcon(Icons.flash_on_rounded, 'Power', sPower, '/services/electricity'),
-              _buildPhoneServiceIcon(Icons.sync_alt_rounded, 'Convert', const Color(0xFF14B8A6), '/services'),
-              _buildPhoneServiceIcon(Icons.sms_rounded, 'SMS', const Color(0xFF6366F1), '/services'),
-              _buildPhoneServiceIcon(Icons.account_balance_wallet_rounded, 'Fund', sWallet, '/wallet/fund'),
-              _buildPhoneServiceIcon(Icons.send_rounded, 'Send', sRefer, '/affiliate'),
+              _buildPhoneServiceIcon(
+                Icons.phone_android_rounded,
+                'Airtime',
+                sAirtime,
+                '/services/airtime',
+              ),
+              _buildPhoneServiceIcon(
+                Icons.wifi_rounded,
+                'Data',
+                sData,
+                '/services/data',
+              ),
+              _buildPhoneServiceIcon(
+                Icons.tv_rounded,
+                'Cable',
+                sCable,
+                '/services/tv',
+              ),
+              _buildPhoneServiceIcon(
+                Icons.flash_on_rounded,
+                'Power',
+                sPower,
+                '/services/electricity',
+              ),
+              _buildPhoneServiceIcon(
+                Icons.sync_alt_rounded,
+                'Convert',
+                const Color(0xFF14B8A6),
+                '/services',
+              ),
+              _buildPhoneServiceIcon(
+                Icons.sms_rounded,
+                'SMS',
+                const Color(0xFF6366F1),
+                '/services',
+              ),
+              _buildPhoneServiceIcon(
+                Icons.account_balance_wallet_rounded,
+                'Fund',
+                sWallet,
+                '/wallet/fund',
+              ),
+              _buildPhoneServiceIcon(
+                Icons.send_rounded,
+                'Send',
+                sRefer,
+                '/affiliate',
+              ),
             ],
           ),
           const SizedBox(height: 18),
 
           // Live Activity Items
-          Text('RECENT ACTIVITY', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: const Color(0xFF64748B), letterSpacing: 0.8)),
+          Text(
+            'RECENT ACTIVITY',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF64748B),
+              letterSpacing: 0.8,
+            ),
+          ),
           const SizedBox(height: 8),
           _buildPhoneTxItem(
             icon: Icons.wifi_rounded,
@@ -621,7 +734,12 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  Widget _buildPhoneServiceIcon(IconData icon, String label, Color color, [String? route]) {
+  Widget _buildPhoneServiceIcon(
+    IconData icon,
+    String label,
+    Color color, [
+    String? route,
+  ]) {
     return InkWell(
       onTap: () {
         final auth = context.read<AuthProvider>();
@@ -648,7 +766,14 @@ class _LandingScreenState extends State<LandingScreen> {
               child: Icon(icon, color: Colors.white, size: 18),
             ),
             const SizedBox(height: 4),
-            Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.white70)),
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                color: Colors.white70,
+              ),
+            ),
           ],
         ),
       ),
@@ -673,7 +798,10 @@ class _LandingScreenState extends State<LandingScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(color: color.withOpacity(0.2), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
             child: Icon(icon, color: color, size: 14),
           ),
           const SizedBox(width: 10),
@@ -681,8 +809,21 @@ class _LandingScreenState extends State<LandingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
-                Text(subtitle, style: GoogleFonts.plusJakartaSans(fontSize: 9.5, color: Colors.grey)),
+                Text(
+                  title,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 9.5,
+                    color: Colors.grey,
+                  ),
+                ),
               ],
             ),
           ),
@@ -721,8 +862,14 @@ class _LandingScreenState extends State<LandingScreen> {
     ];
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 16),
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 18, vertical: 26),
+      margin: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 48 : 20,
+        vertical: 16,
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 32 : 18,
+        vertical: 26,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFF111520),
         borderRadius: BorderRadius.circular(24),
@@ -744,11 +891,16 @@ class _LandingScreenState extends State<LandingScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.electricCyan.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.electricCyan.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: AppColors.electricCyan.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       'OFFICIAL OPERATORS',
@@ -788,7 +940,10 @@ class _LandingScreenState extends State<LandingScreen> {
             runSpacing: 12,
             children: partners.map((p) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF161C28),
                   borderRadius: BorderRadius.circular(14),
@@ -911,56 +1066,64 @@ class _LandingScreenState extends State<LandingScreen> {
     final services = [
       {
         'title': 'Airtime top-up',
-        'desc': 'MTN, Glo, Airtel and 9mobile at wholesale discount, delivered the second you pay.',
+        'desc':
+            'MTN, Glo, Airtel and 9mobile at wholesale discount, delivered the second you pay.',
         'icon': Icons.phone_android_rounded,
         'color': sAirtime,
         'route': '/services/airtime',
       },
       {
         'title': 'Data bundles',
-        'desc': 'SME, gifting and corporate plans. Daily, weekly and monthly, every single network.',
+        'desc':
+            'SME, gifting and corporate plans. Daily, weekly and monthly, every single network.',
         'icon': Icons.wifi_rounded,
         'color': sData,
         'route': '/services/data',
       },
       {
         'title': 'Cable TV',
-        'desc': 'DStv, GOtv and Startimes renewals. Enter smartcard, the decoder comes on instantly.',
+        'desc':
+            'DStv, GOtv and Startimes renewals. Enter smartcard, the decoder comes on instantly.',
         'icon': Icons.tv_rounded,
         'color': sCable,
         'route': '/services/tv',
       },
       {
         'title': 'Electricity bills',
-        'desc': 'Prepaid meter tokens and postpaid bills for every Disco with token on screen.',
+        'desc':
+            'Prepaid meter tokens and postpaid bills for every Disco with token on screen.',
         'icon': Icons.flash_on_rounded,
         'color': sPower,
         'route': '/services/electricity',
       },
       {
         'title': 'Airtime to Cash',
-        'desc': 'Convert excess airtime from MTN, Airtel, and 9mobile directly to cash in your bank or wallet.',
+        'desc':
+            'Convert excess airtime from MTN, Airtel, and 9mobile directly to cash in your bank or wallet.',
         'icon': Icons.sync_alt_rounded,
         'color': const Color(0xFF14B8A6),
         'route': '/services/airtime',
       },
       {
         'title': 'Recharge card printing',
-        'desc': 'Print customized recharge cards with your business branding and sell offline.',
+        'desc':
+            'Print customized recharge cards with your business branding and sell offline.',
         'icon': Icons.print_rounded,
         'color': sPrint,
         'route': '/dashboard',
       },
       {
         'title': 'Wallet funding',
-        'desc': 'Dedicated virtual account numbers. Transfer from any bank and it reflects at once.',
+        'desc':
+            'Dedicated virtual account numbers. Transfer from any bank and it reflects at once.',
         'icon': Icons.account_balance_wallet_rounded,
         'color': sWallet,
         'route': '/wallet/fund',
       },
       {
         'title': 'Referral earnings',
-        'desc': 'Bring people in and earn 2% on first deposits, paid directly into your wallet.',
+        'desc':
+            'Bring people in and earn 2% on first deposits, paid directly into your wallet.',
         'icon': Icons.people_alt_rounded,
         'color': sRefer,
         'route': '/dashboard',
@@ -968,10 +1131,17 @@ class _LandingScreenState extends State<LandingScreen> {
     ];
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 48 : 20,
+        vertical: 48,
+      ),
       child: Column(
         children: [
-          _buildSectionHeader('WHAT YOU CAN BUY', 'One wallet, everything people pay for', 'Eight automated services on a single balance. Buy for yourself, or resell to customers.'),
+          _buildSectionHeader(
+            'WHAT YOU CAN BUY',
+            'One wallet, everything people pay for',
+            'Eight automated services on a single balance. Buy for yourself, or resell to customers.',
+          ),
           const SizedBox(height: 36),
           GridView.builder(
             shrinkWrap: true,
@@ -1006,7 +1176,11 @@ class _LandingScreenState extends State<LandingScreen> {
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF141720) : Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0)),
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFF26334D)
+                          : const Color(0xFFE2E8F0),
+                    ),
                     boxShadow: isDark
                         ? null
                         : [
@@ -1022,8 +1196,15 @@ class _LandingScreenState extends State<LandingScreen> {
                     children: [
                       Container(
                         padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: s['color'] as Color, borderRadius: BorderRadius.circular(12)),
-                        child: Icon(s['icon'] as IconData, color: Colors.white, size: 20),
+                        decoration: BoxDecoration(
+                          color: s['color'] as Color,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          s['icon'] as IconData,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(height: 14),
                       Text(
@@ -1031,7 +1212,9 @@ class _LandingScreenState extends State<LandingScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -1040,7 +1223,9 @@ class _LandingScreenState extends State<LandingScreen> {
                           s['desc'] as String,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B),
                             height: 1.4,
                           ),
                         ),
@@ -1056,7 +1241,11 @@ class _LandingScreenState extends State<LandingScreen> {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.primaryBlue),
+                          const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 14,
+                            color: AppColors.primaryBlue,
+                          ),
                         ],
                       ),
                     ],
@@ -1075,30 +1264,67 @@ class _LandingScreenState extends State<LandingScreen> {
   // ====================================================================
   Widget _buildHowItWorksSection(bool isDesktop) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 48 : 20,
+        vertical: 48,
+      ),
       color: const Color(0xFF10131B),
       child: Column(
         children: [
-          _buildSectionHeader('GETTING STARTED', 'Three steps, about five minutes', 'Everything is automated so you can start buying and reselling right away.'),
+          _buildSectionHeader(
+            'GETTING STARTED',
+            'Three steps, about five minutes',
+            'Everything is automated so you can start buying and reselling right away.',
+          ),
           const SizedBox(height: 36),
           isDesktop
               ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: _buildStepItem('1', 'Create your account', 'Name, phone number and a secure password. Setup your 4-digit PIN in 60 seconds.')),
+                    Expanded(
+                      child: _buildStepItem(
+                        '1',
+                        'Create your account',
+                        'Name, phone number and a secure password. Setup your 4-digit PIN in 60 seconds.',
+                      ),
+                    ),
                     const SizedBox(width: 24),
-                    Expanded(child: _buildStepItem('2', 'Fund your wallet', 'You receive dedicated automated bank accounts. Transfer from any bank app and it reflects instantly.')),
+                    Expanded(
+                      child: _buildStepItem(
+                        '2',
+                        'Fund your wallet',
+                        'You receive dedicated automated bank accounts. Transfer from any bank app and it reflects instantly.',
+                      ),
+                    ),
                     const SizedBox(width: 24),
-                    Expanded(child: _buildStepItem('3', 'Start buying or selling', 'Buy for yourself or sell to customers with instant receipts and automated transaction protection.')),
+                    Expanded(
+                      child: _buildStepItem(
+                        '3',
+                        'Start buying or selling',
+                        'Buy for yourself or sell to customers with instant receipts and automated transaction protection.',
+                      ),
+                    ),
                   ],
                 )
               : Column(
                   children: [
-                    _buildStepItem('1', 'Create your account', 'Name, phone number and a secure password. Setup your 4-digit PIN in 60 seconds.'),
+                    _buildStepItem(
+                      '1',
+                      'Create your account',
+                      'Name, phone number and a secure password. Setup your 4-digit PIN in 60 seconds.',
+                    ),
                     const SizedBox(height: 20),
-                    _buildStepItem('2', 'Fund your wallet', 'You receive dedicated automated bank accounts. Transfer from any bank app and it reflects instantly.'),
+                    _buildStepItem(
+                      '2',
+                      'Fund your wallet',
+                      'You receive dedicated automated bank accounts. Transfer from any bank app and it reflects instantly.',
+                    ),
                     const SizedBox(height: 20),
-                    _buildStepItem('3', 'Start buying or selling', 'Buy for yourself or sell to customers with instant receipts and automated transaction protection.'),
+                    _buildStepItem(
+                      '3',
+                      'Start buying or selling',
+                      'Buy for yourself or sell to customers with instant receipts and automated transaction protection.',
+                    ),
                   ],
                 ),
         ],
@@ -1125,189 +1351,33 @@ class _LandingScreenState extends State<LandingScreen> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
-              child: Text(num, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.electricCyan)),
+              child: Text(
+                num,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.electricCyan,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 16),
-          Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-          const SizedBox(height: 8),
-          Text(desc, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFF94A3B8), height: 1.5)),
-        ],
-      ),
-    );
-  }
-
-  // ====================================================================
-  // 5. LIVE INTERACTIVE RATES SECTION ("Know the price before you pay")
-  // ====================================================================
-  Widget _buildRatesSection(bool isDesktop) {
-    final networks = ['MTN', 'Glo', 'Airtel', '9mobile'];
-    final plans = _ratePlans[_selectedRateNetwork] ?? [];
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
-      child: Column(
-        children: [
-          _buildSectionHeader('RATES', 'Know the price before you pay', 'Real-time data bundle prices. Clear, wholesale, and 100% transparent.'),
-          const SizedBox(height: 24),
-          // Network selector tabs
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: networks.map((net) {
-              final isSel = _selectedRateNetwork == net;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: InkWell(
-                  onTap: () => setState(() => _selectedRateNetwork = net),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isSel ? AppColors.primaryBlue : const Color(0xFF141720),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: isSel ? AppColors.electricCyan : const Color(0xFF26334D)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ServiceBrandLogo(provider: net, size: 20, borderRadius: 5),
-                        const SizedBox(width: 8),
-                        Text(
-                          net,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: isSel ? Colors.black : Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 28),
-          // Rate Cards Grid
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isDesktop ? 4 : 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: isDesktop ? 1.45 : 1.25,
+          Text(
+            title,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
             ),
-            itemCount: plans.length,
-            itemBuilder: (context, i) {
-              final p = plans[i];
-              return Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF141720),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF26334D)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            p['plan'] as String,
-                            style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        ServiceBrandLogo(provider: _selectedRateNetwork, size: 22, borderRadius: 6),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(p['validity'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF94A3B8))),
-                    const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('₦${p["price"]}', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.electricCyan)),
-                        InkWell(
-                          onTap: () {
-                            final auth = context.read<AuthProvider>();
-                            if (!auth.isAuthenticated) {
-                              TopNotification.showInfo(
-                                context,
-                                'Please sign in or create an account to purchase data plans.',
-                                title: 'Authentication Required',
-                              );
-                              context.push('/login');
-                              return;
-                            }
-                            context.push('/services/data');
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: AppColors.electricCyan.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: AppColors.electricCyan.withValues(alpha: 0.4)),
-                            ),
-                            child: Text(
-                              'Buy',
-                              style: GoogleFonts.plusJakartaSans(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.electricCyan),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
           ),
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 12,
-            runSpacing: 10,
-            alignment: WrapAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  final auth = context.read<AuthProvider>();
-                  if (!auth.isAuthenticated) {
-                    TopNotification.showInfo(
-                      context,
-                      'Please sign in or create an account to purchase data plans.',
-                      title: 'Authentication Required',
-                    );
-                    context.push('/login');
-                    return;
-                  }
-                  context.push('/services/data');
-                },
-                icon: const Icon(Icons.flash_on_rounded, size: 16),
-                label: Text('Buy $_selectedRateNetwork Data Now', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13.5)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryBlue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              OutlinedButton.icon(
-                onPressed: () => context.push('/rates'),
-                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                label: Text('See complete rates table', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13.5)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Color(0xFF26334D)),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
+          const SizedBox(height: 8),
+          Text(
+            desc,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              color: const Color(0xFF94A3B8),
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -1321,42 +1391,55 @@ class _LandingScreenState extends State<LandingScreen> {
     final reasons = [
       {
         'title': 'Delivered or refunded',
-        'desc': 'If a network rejects an order, your wallet balance is credited back automatically. Nobody has to chase anyone.',
+        'desc':
+            'If a network rejects an order, your wallet balance is credited back automatically. Nobody has to chase anyone.',
         'icon': Icons.bolt_rounded,
       },
       {
         'title': 'A PIN on every purchase',
-        'desc': 'Your password signs you in. A dedicated 4-digit security transaction PIN authorises money leaving your wallet.',
+        'desc':
+            'Your password signs you in. A dedicated 4-digit security transaction PIN authorises money leaving your wallet.',
         'icon': Icons.lock_outline_rounded,
       },
       {
         'title': 'A receipt for everything',
-        'desc': 'Every order keeps its verifiable reference, token, and status permanently, so disputes are settled in seconds.',
+        'desc':
+            'Every order keeps its verifiable reference, token, and status permanently, so disputes are settled in seconds.',
         'icon': Icons.receipt_long_rounded,
       },
       {
         'title': 'Wholesale prices that stay low',
-        'desc': 'Direct provider volume pricing passed straight to you. What you see on the rates page is what you pay.',
+        'desc':
+            'Direct provider volume pricing passed straight to you. What you see on the rates page is what you pay.',
         'icon': Icons.trending_up_rounded,
       },
       {
         'title': 'Built for every phone',
-        'desc': 'Lightweight, ultra-fast, and responsive. Works smoothly on low-end Androids as well as high-end devices.',
+        'desc':
+            'Lightweight, ultra-fast, and responsive. Works smoothly on low-end Androids as well as high-end devices.',
         'icon': Icons.phone_android_rounded,
       },
       {
         'title': 'Support that actually replies',
-        'desc': 'Direct human assistance on WhatsApp and in-app live chat. Quick answers whenever you need guidance.',
+        'desc':
+            'Direct human assistance on WhatsApp and in-app live chat. Quick answers whenever you need guidance.',
         'icon': Icons.support_agent_rounded,
       },
     ];
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 48 : 20,
+        vertical: 48,
+      ),
       color: const Color(0xFF10131B),
       child: Column(
         children: [
-          _buildSectionHeader('WHY PEOPLE STAY', 'Built around what people complain about', 'Not just features that demo well. The real safeguards that decide whether you stay tomorrow.'),
+          _buildSectionHeader(
+            'WHY PEOPLE STAY',
+            'Built around what people complain about',
+            'Not just features that demo well. The real safeguards that decide whether you stay tomorrow.',
+          ),
           const SizedBox(height: 36),
           GridView.builder(
             shrinkWrap: true,
@@ -1382,13 +1465,34 @@ class _LandingScreenState extends State<LandingScreen> {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: AppColors.electricCyan.withOpacity(0.18), shape: BoxShape.circle),
-                      child: Icon(r['icon'] as IconData, color: AppColors.electricCyan, size: 18),
+                      decoration: BoxDecoration(
+                        color: AppColors.electricCyan.withOpacity(0.18),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        r['icon'] as IconData,
+                        color: AppColors.electricCyan,
+                        size: 18,
+                      ),
                     ),
                     const SizedBox(height: 12),
-                    Text(r['title'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white)),
+                    Text(
+                      r['title'] as String,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
                     const SizedBox(height: 6),
-                    Text(r['desc'] as String, style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8), height: 1.45)),
+                    Text(
+                      r['desc'] as String,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: const Color(0xFF94A3B8),
+                        height: 1.45,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -1400,101 +1504,14 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   // ====================================================================
-  // 7. TESTIMONIALS SECTION ("What people say")
-  // ====================================================================
-  Widget _buildTestimonialsSection(bool isDesktop) {
-    final reviews = [
-      {
-        'quote': 'I sell airtime beside my main goods now. A customer pays cash and I load it before they finish counting change. That alone brings people into the shop.',
-        'name': 'Amaka Obi',
-        'role': 'Phone accessories shop owner, Onitsha',
-        'initials': 'AO',
-      },
-      {
-        'quote': 'What sold me was the automated refund. Before this, a network failure meant messaging somebody and waiting till evening. Here it just returns to the wallet by itself.',
-        'name': 'Suleiman Bello',
-        'role': 'Data reseller, Kaduna',
-        'initials': 'SB',
-      },
-      {
-        'quote': 'I fund from my bank app and it reflects before I even switch apps. No more waiting on confirmations when I need data late at night.',
-        'name': 'Tolu Adeyemi',
-        'role': 'Tech entrepreneur & reseller, Ibadan',
-        'initials': 'TA',
-      },
-    ];
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
-      child: Column(
-        children: [
-          _buildSectionHeader('CUSTOMERS', 'What people say', 'Real experiences from everyday merchants, agents, and businesses.'),
-          const SizedBox(height: 36),
-          isDesktop
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: reviews.map((rev) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: _buildReviewCard(rev)))).toList(),
-                )
-              : Column(
-                  children: reviews.map((rev) => Padding(padding: const EdgeInsets.only(bottom: 16), child: _buildReviewCard(rev))).toList(),
-                ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReviewCard(Map<String, String> rev) {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141720),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF26334D)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 5 Stars
-          Row(
-            children: List.generate(
-              5,
-              (_) => const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 18),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            '“${rev['quote']!}”',
-            style: GoogleFonts.plusJakartaSans(fontSize: 13, height: 1.5, color: const Color(0xFFCBD5E1), fontStyle: FontStyle.italic),
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: AppColors.primaryBlue,
-                child: Text(rev['initials']!, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white)),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(rev['name']!, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
-                  Text(rev['role']!, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: const Color(0xFF94A3B8))),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ====================================================================
   // 8. MOBILE SHOWCASE BAND ("Your shop counter fits in your pocket")
   // ====================================================================
   Widget _buildMobilePocketBand(bool isDesktop) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 24),
+      margin: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 48 : 20,
+        vertical: 24,
+      ),
       padding: const EdgeInsets.all(36),
       decoration: BoxDecoration(
         color: const Color(0xFF141720),
@@ -1509,21 +1526,54 @@ class _LandingScreenState extends State<LandingScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('ON YOUR PHONE', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.electricCyan, letterSpacing: 1.0)),
+                      Text(
+                        'ON YOUR PHONE',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.electricCyan,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
                       const SizedBox(height: 8),
-                      Text('Your shop counter fits in your pocket', style: GoogleFonts.plusJakartaSans(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
+                      Text(
+                        'Your shop counter fits in your pocket',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
                       const SizedBox(height: 10),
-                      Text('The whole platform runs smoothly in any mobile browser or app. Instant automated funding and lightning top-ups wherever you are.', style: GoogleFonts.plusJakartaSans(fontSize: 13.5, color: const Color(0xFF94A3B8), height: 1.5)),
+                      Text(
+                        'The whole platform runs smoothly in any mobile browser or app. Instant automated funding and lightning top-ups wherever you are.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.5,
+                          color: const Color(0xFF94A3B8),
+                          height: 1.5,
+                        ),
+                      ),
                       const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: () => context.push('/register'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryBlue,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: Text('Create free account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13)),
+                        child: Text(
+                          'Create free account',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -1533,10 +1583,18 @@ class _LandingScreenState extends State<LandingScreen> {
                   flex: 5,
                   child: Column(
                     children: [
-                      _buildCheckBullet('Works on any Android or iPhone browser'),
-                      _buildCheckBullet('Funding reflects while still in your bank app'),
-                      _buildCheckBullet('Receipts you can download or forward instantly'),
-                      _buildCheckBullet('A 4-digit transaction PIN before any money leaves'),
+                      _buildCheckBullet(
+                        'Works on any Android or iPhone browser',
+                      ),
+                      _buildCheckBullet(
+                        'Funding reflects while still in your bank app',
+                      ),
+                      _buildCheckBullet(
+                        'Receipts you can download or forward instantly',
+                      ),
+                      _buildCheckBullet(
+                        'A 4-digit transaction PIN before any money leaves',
+                      ),
                     ],
                   ),
                 ),
@@ -1545,14 +1603,34 @@ class _LandingScreenState extends State<LandingScreen> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('ON YOUR PHONE', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w900, color: AppColors.electricCyan)),
+                Text(
+                  'ON YOUR PHONE',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.electricCyan,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                Text('Your shop counter fits in your pocket', style: GoogleFonts.plusJakartaSans(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
+                Text(
+                  'Your shop counter fits in your pocket',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 _buildCheckBullet('Works on any Android or iPhone browser'),
-                _buildCheckBullet('Funding reflects while still in your bank app'),
-                _buildCheckBullet('Receipts you can download or forward instantly'),
-                _buildCheckBullet('A 4-digit transaction PIN before money leaves'),
+                _buildCheckBullet(
+                  'Funding reflects while still in your bank app',
+                ),
+                _buildCheckBullet(
+                  'Receipts you can download or forward instantly',
+                ),
+                _buildCheckBullet(
+                  'A 4-digit transaction PIN before money leaves',
+                ),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
@@ -1562,9 +1640,16 @@ class _LandingScreenState extends State<LandingScreen> {
                       backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: Text('Create free account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+                    child: Text(
+                      'Create free account',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -1577,61 +1662,20 @@ class _LandingScreenState extends State<LandingScreen> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
+          const Icon(
+            Icons.check_circle_rounded,
+            color: Color(0xFF10B981),
+            size: 18,
+          ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(text, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ====================================================================
-  // 9. FAQ SECTION (Accordion)
-  // ====================================================================
-  Widget _buildFaqSection(bool isDesktop) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
-      child: Column(
-        children: [
-          _buildSectionHeader('QUESTIONS', 'Frequently asked', 'Everything you need to know about wallet funding, automated refunds, and reselling.'),
-          const SizedBox(height: 36),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 820),
-            child: Column(
-              children: _faqs.map((faq) {
-                final isOpen = faq['isOpen'] as bool;
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF141720),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF26334D)),
-                  ),
-                  child: Theme(
-                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                    child: ExpansionTile(
-                      initiallyExpanded: isOpen,
-                      title: Text(
-                        faq['q'] as String,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 14.5, fontWeight: FontWeight.w800, color: Colors.white),
-                      ),
-                      iconColor: AppColors.electricCyan,
-                      collapsedIconColor: Colors.grey,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          child: Text(
-                            faq['a'] as String,
-                            style: GoogleFonts.plusJakartaSans(fontSize: 13, height: 1.5, color: const Color(0xFF94A3B8)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+            child: Text(
+              text,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -1644,7 +1688,10 @@ class _LandingScreenState extends State<LandingScreen> {
   // ====================================================================
   Widget _buildFinalCtaSection(bool isDesktop) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 64),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 48 : 20,
+        vertical: 64,
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
@@ -1664,7 +1711,11 @@ class _LandingScreenState extends State<LandingScreen> {
               Text(
                 'No monthly fee, no minimum funding, and zero paperwork. Create your account, fund it with whatever you have, and top-up in seconds.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(fontSize: 14.5, height: 1.6, color: const Color(0xFF94A3B8)),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14.5,
+                  height: 1.6,
+                  color: const Color(0xFF94A3B8),
+                ),
               ),
               const SizedBox(height: 28),
               Wrap(
@@ -1674,24 +1725,49 @@ class _LandingScreenState extends State<LandingScreen> {
                   ElevatedButton.icon(
                     onPressed: () => context.push('/register'),
                     icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                    label: Text('Create free account', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14)),
+                    label: Text(
+                      'Create free account',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 26,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                   ),
                   OutlinedButton(
                     onPressed: () => context.push('/login'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      side: const BorderSide(color: Color(0xFF26334D), width: 1.5),
-                      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      side: const BorderSide(
+                        color: Color(0xFF26334D),
+                        width: 1.5,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 26,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
-                    child: Text('I already have one', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
+                    child: Text(
+                      'I already have one',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1708,7 +1784,10 @@ class _LandingScreenState extends State<LandingScreen> {
   Widget _buildFooter(bool isDesktop) {
     return Container(
       color: const Color(0xFF090B0F),
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 20, vertical: 48),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 48 : 20,
+        vertical: 48,
+      ),
       child: Column(
         children: [
           isDesktop
@@ -1731,7 +1810,11 @@ class _LandingScreenState extends State<LandingScreen> {
                           const SizedBox(height: 14),
                           Text(
                             'The fastest way to pay for airtime, data, cable TV and electricity in Nigeria. One wallet, wholesale reseller rates, and automatic instant refunds.',
-                            style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8), height: 1.6),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5,
+                              color: const Color(0xFF94A3B8),
+                              height: 1.6,
+                            ),
                           ),
                         ],
                       ),
@@ -1743,7 +1826,10 @@ class _LandingScreenState extends State<LandingScreen> {
                         {'title': 'Buy airtime', 'route': '/services/airtime'},
                         {'title': 'Buy data', 'route': '/services/data'},
                         {'title': 'Cable TV', 'route': '/services/tv'},
-                        {'title': 'Electricity', 'route': '/services/electricity'},
+                        {
+                          'title': 'Electricity',
+                          'route': '/services/electricity',
+                        },
                         {'title': 'Fund Wallet', 'route': '/wallet/fund'},
                       ]),
                     ),
@@ -1782,30 +1868,46 @@ class _LandingScreenState extends State<LandingScreen> {
                     const SizedBox(height: 12),
                     Text(
                       'The fastest way to pay for airtime, data, bills, and cable in Nigeria.',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF94A3B8)),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: const Color(0xFF94A3B8),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     _footerCol('Services', [
                       {'title': 'Buy airtime', 'route': '/services/airtime'},
                       {'title': 'Buy data', 'route': '/services/data'},
                       {'title': 'Cable TV', 'route': '/services/tv'},
-                      {'title': 'Electricity', 'route': '/services/electricity'},
+                      {
+                        'title': 'Electricity',
+                        'route': '/services/electricity',
+                      },
                     ]),
                   ],
                 ),
           const SizedBox(height: 40),
           const Divider(color: Color(0xFF26334D)),
           const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 16,
+            runSpacing: 12,
             children: [
               Text(
-                '© ${DateTime.now().year} Avotek. All rights reserved.',
-                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF64748B)),
+                '© 2023-${DateTime.now().year} by Avo Technologies.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF64748B),
+                ),
               ),
               Text(
                 'Avotek VTU Platform',
-                style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: AppColors.electricCyan, fontWeight: FontWeight.w700),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11.5,
+                  color: AppColors.electricCyan,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -1818,7 +1920,14 @@ class _LandingScreenState extends State<LandingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(header, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
+        Text(
+          header,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
         const SizedBox(height: 12),
         ...links.map((link) {
           return Padding(
@@ -1841,7 +1950,10 @@ class _LandingScreenState extends State<LandingScreen> {
               },
               child: Text(
                 link['title']!,
-                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF94A3B8)),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  color: const Color(0xFF94A3B8),
+                ),
               ),
             ),
           );
@@ -1891,7 +2003,9 @@ class _LandingScreenState extends State<LandingScreen> {
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                color: isDark
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xFF64748B),
                 height: 1.5,
               ),
             ),
