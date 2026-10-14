@@ -1,5 +1,5 @@
 [functions.identifier-login]
 verify_jwt = false
 
-[functions.bigisub]
+[functions.vtu-provider]
 verify_jwt = false

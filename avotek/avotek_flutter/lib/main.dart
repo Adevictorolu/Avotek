@@ -57,6 +57,8 @@ class _AvotekAppState extends State<AvotekApp> {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeProvider.themeMode,
+      themeAnimationDuration: const Duration(milliseconds: 320),
+      themeAnimationCurve: Curves.easeInOutCubic,
       routerConfig: _router,
     );
   }

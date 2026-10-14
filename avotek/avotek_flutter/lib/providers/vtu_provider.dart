@@ -9,7 +9,7 @@ class VtuProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _lastError;
 
-  // Cached live plans from Bigisub
+  // Cached live plans from the configured provider.
   final Map<int, List<Map<String, dynamic>>> _liveDataPlansCache = {};
   final Map<String, List<Map<String, dynamic>>> _cablePlansCache = {};
   List<Map<String, dynamic>> _electricityProviders = [];
@@ -144,17 +144,40 @@ class VtuProvider extends ChangeNotifier {
         : clean.substring(0, 4);
 
     const mtnPrefixes = [
-      '0803', '0806', '0703', '0706', '0813', '0816', '0810', '0814', '0903', '0906', '0913', '0916'
+      '0803',
+      '0806',
+      '0703',
+      '0706',
+      '0813',
+      '0816',
+      '0810',
+      '0814',
+      '0903',
+      '0906',
+      '0913',
+      '0916',
     ];
     const airtelPrefixes = [
-      '0802', '0808', '0708', '0812', '0701', '0902', '0901', '0907', '0912'
+      '0802',
+      '0808',
+      '0708',
+      '0812',
+      '0701',
+      '0902',
+      '0901',
+      '0907',
+      '0912',
     ];
     const gloPrefixes = [
-      '0805', '0807', '0705', '0815', '0811', '0905', '0915'
+      '0805',
+      '0807',
+      '0705',
+      '0815',
+      '0811',
+      '0905',
+      '0915',
     ];
-    const nineMobilePrefixes = [
-      '0809', '0817', '0818', '0909', '0908'
-    ];
+    const nineMobilePrefixes = ['0809', '0817', '0818', '0909', '0908'];
 
     if (mtnPrefixes.contains(prefix)) return 'MTN';
     if (airtelPrefixes.contains(prefix)) return 'AIRTEL';
@@ -164,12 +187,18 @@ class VtuProvider extends ChangeNotifier {
     return 'MTN';
   }
 
-  /// Fetch Live Data Plans directly from Bigisub API
-  Future<List<Map<String, dynamic>>> fetchLiveDataPlans(dynamic network, {String? planType}) async {
-    final networkId = network is int ? network : VtuApiService.mapNetworkNameToId(network.toString());
-    
+  /// Fetch live data plans through the server-side provider proxy.
+  Future<List<Map<String, dynamic>>> fetchLiveDataPlans(
+    dynamic network, {
+    String? planType,
+  }) async {
+    final networkId = network is int
+        ? network
+        : VtuApiService.mapNetworkNameToId(network.toString());
+
     // Check in-memory cache
-    if (_liveDataPlansCache.containsKey(networkId) && (planType == null || planType.isEmpty || planType == 'ALL')) {
+    if (_liveDataPlansCache.containsKey(networkId) &&
+        (planType == null || planType.isEmpty || planType == 'ALL')) {
       return _liveDataPlansCache[networkId]!;
     }
 
@@ -196,7 +225,9 @@ class VtuProvider extends ChangeNotifier {
     }
 
     try {
-      final packages = await VtuApiService.instance.getCablePlans(cableName: provider);
+      final packages = await VtuApiService.instance.getCablePlans(
+        cableName: provider,
+      );
       if (packages.isNotEmpty) {
         _cablePlansCache[key] = packages;
       }
@@ -301,9 +332,10 @@ class VtuProvider extends ChangeNotifier {
       token = data['token']?.toString();
       units = data['units']?.toString();
       message = response['message']?.toString() ?? message;
-    } on BigisubRequestException catch (error) {
+    } on VtuProviderRequestException catch (error) {
       final isAmbiguous = error.statusCode == 0 || error.statusCode >= 500;
-      final isUnconfigured = error.message?.toLowerCase().contains('not configured') == true;
+      final isUnconfigured =
+          error.message?.toLowerCase().contains('not configured') == true;
       status = isAmbiguous && !isUnconfigured ? 'pending' : 'failed';
       message = status == 'pending'
           ? 'The purchase status could not be confirmed. Check your order history before retrying.'
@@ -314,7 +346,7 @@ class VtuProvider extends ChangeNotifier {
       message =
           'The purchase status could not be confirmed. Check your order history before retrying.';
       _lastError = message;
-      debugPrint('Bigisub purchase outcome is uncertain: $error');
+      debugPrint('VTU provider purchase outcome is uncertain: $error');
     }
 
     final order = await SupabaseService.instance.recordOrder(
@@ -344,7 +376,7 @@ class VtuProvider extends ChangeNotifier {
   // LIVE PURCHASES & SUPABASE SYNCHRONIZATION
   // ============================================================================
 
-  /// Live Airtime Purchase via Bigisub API & Supabase persistence
+  /// Airtime purchase through the provider proxy and Supabase persistence.
   Future<OrderResult> buyAirtime({
     required dynamic userId,
     required String network,
@@ -368,7 +400,7 @@ class VtuProvider extends ChangeNotifier {
     );
   }
 
-  /// Live Data Bundle Purchase via Bigisub API & Supabase persistence
+  /// Data bundle purchase through the provider proxy and Supabase persistence.
   Future<OrderResult> buyData({
     required dynamic userId,
     required String network,
@@ -379,7 +411,6 @@ class VtuProvider extends ChangeNotifier {
     int? planId,
     String? userPin,
   }) async {
-
     // Resolve plan ID
     var resolvedPlanId = planId;
     if (planId == null) {
@@ -400,7 +431,7 @@ class VtuProvider extends ChangeNotifier {
       resolvedPlanId ??= (match?['id'] as num?)?.toInt();
     }
     if (resolvedPlanId == null) {
-      throw Exception('Refresh plans and select a valid Bigisub data plan.');
+      throw Exception('Refresh plans and select an available data plan.');
     }
     return _purchase(
       userId: userId,
@@ -419,7 +450,7 @@ class VtuProvider extends ChangeNotifier {
     );
   }
 
-  /// Live Smartcard / IUC Verification via Bigisub API
+  /// Smartcard / IUC verification through the provider proxy.
   Future<VerificationResponse> verifySmartcard({
     required String provider,
     required String smartcardNumber,
@@ -435,8 +466,8 @@ class VtuProvider extends ChangeNotifier {
       final bouquet = data?['current_bouquet']?.toString() ?? provider;
 
       return VerificationResponse(
-        isValid: res['success'] == true ||
-            (res['success'] == null && data != null),
+        isValid:
+            res['success'] == true || (res['success'] == null && data != null),
         customerName: name,
         identifier: smartcardNumber,
         details: '$bouquet • $provider',
@@ -447,12 +478,13 @@ class VtuProvider extends ChangeNotifier {
         isValid: false,
         customerName: '',
         identifier: smartcardNumber,
-        details: 'Could not verify this smartcard with Bigisub.',
+        details:
+            'Could not verify this smartcard. Check the details and retry.',
       );
     }
   }
 
-  /// Live Cable TV Subscription via Bigisub API
+  /// Cable TV subscription through the provider proxy.
   Future<OrderResult> payCableTV({
     required dynamic userId,
     required String provider,
@@ -484,7 +516,7 @@ class VtuProvider extends ChangeNotifier {
     );
   }
 
-  /// Live Electricity Meter Verification via Bigisub API
+  /// Electricity meter verification through the provider proxy.
   Future<VerificationResponse> verifyMeter({
     required String disco,
     required String meterNumber,
@@ -503,8 +535,8 @@ class VtuProvider extends ChangeNotifier {
       final discoName = data?['disco']?.toString() ?? disco;
 
       return VerificationResponse(
-        isValid: res['success'] == true ||
-            (res['success'] == null && data != null),
+        isValid:
+            res['success'] == true || (res['success'] == null && data != null),
         customerName: name,
         identifier: meterNumber,
         details: '$discoName ($meterType) • $address',
@@ -515,12 +547,12 @@ class VtuProvider extends ChangeNotifier {
         isValid: false,
         customerName: '',
         identifier: meterNumber,
-        details: 'Could not verify this meter with Bigisub.',
+        details: 'Could not verify this meter. Check the details and retry.',
       );
     }
   }
 
-  /// Live Electricity Bill Payment / Prepaid Token via Bigisub API
+  /// Electricity bill payment / prepaid token through the provider proxy.
   Future<OrderResult> payElectricity({
     required dynamic userId,
     required String disco,

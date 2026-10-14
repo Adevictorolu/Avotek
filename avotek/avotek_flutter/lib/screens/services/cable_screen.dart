@@ -18,77 +18,78 @@ class _CableScreenState extends State<CableScreen> {
   final _smartcardController = TextEditingController();
   String _selectedProvider = 'DSTV';
   String? _selectedPackage;
-  double _packageAmount = 0.0;
+  double _packageAmount = 0;
 
   bool _isVerifying = false;
   String? _verifiedCustomerName;
 
-  final Map<String, List<Map<String, dynamic>>> _packages = {
-    'DSTV': [
-      {'code': 'dstv-padi', 'name': 'DStv Padi', 'price': 3600.0},
-      {'code': 'dstv-yanga', 'name': 'DStv Yanga', 'price': 5100.0},
-      {'code': 'dstv-confam', 'name': 'DStv Confam', 'price': 9300.0},
-      {'code': 'dstv-compact', 'name': 'DStv Compact', 'price': 15700.0},
-    ],
-    'GOTV': [
-      {'code': 'gotv-smallie', 'name': 'GOtv Smallie', 'price': 1575.0},
-      {'code': 'gotv-jinja', 'name': 'GOtv Jinja', 'price': 3300.0},
-      {'code': 'gotv-jolli', 'name': 'GOtv Jolli', 'price': 4850.0},
-      {'code': 'gotv-max', 'name': 'GOtv Max', 'price': 7200.0},
-    ],
-    'STARTIMES': [
-      {'code': 'nova', 'name': 'Startimes Nova', 'price': 1700.0},
-      {'code': 'basic', 'name': 'Startimes Basic', 'price': 3300.0},
-      {'code': 'classic', 'name': 'Startimes Classic', 'price': 5000.0},
-    ],
-  };
-
   List<Map<String, dynamic>> _livePackages = [];
   bool _isLoadingPackages = false;
+  String? _packageLoadError;
 
   @override
   void initState() {
     super.initState();
-    _selectedPackage = _packages[_selectedProvider]!.first['code'];
-    _packageAmount = _packages[_selectedProvider]!.first['price'];
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadLivePackages());
   }
 
   Future<void> _loadLivePackages() async {
-    setState(() => _isLoadingPackages = true);
+    final provider = _selectedProvider;
+    setState(() {
+      _isLoadingPackages = true;
+      _packageLoadError = null;
+      _livePackages = [];
+      _selectedPackage = null;
+      _packageAmount = 0;
+    });
     try {
       final vtu = context.read<VtuProvider>();
-      final pkgs = await vtu.fetchCablePackages(_selectedProvider);
-      if (pkgs.isNotEmpty && mounted) {
-        final formatted = pkgs.map((p) {
-          final amt = (p['amount'] as num?)?.toDouble() ?? 0.0;
-          final code = p['variation_code']?.toString() ?? p['id']?.toString() ?? '';
-          final name = p['product_name']?.toString() ?? code;
-          return {
-            'code': code,
-            'name': name,
-            'price': amt,
-          };
-        }).toList();
+      final pkgs = await vtu.fetchCablePackages(provider);
+      if (!mounted || provider != _selectedProvider) return;
+      final formatted = pkgs
+          .map((p) {
+            final amt = (p['amount'] as num?)?.toDouble() ?? 0.0;
+            final code =
+                p['variation_code']?.toString() ?? p['id']?.toString() ?? '';
+            final name = p['product_name']?.toString() ?? code;
+            return {
+              'code': code,
+              'name': name,
+              'price': amt,
+            };
+          })
+          .where((package) {
+            return (package['code'] as String).isNotEmpty &&
+                (package['price'] as double) > 0;
+          })
+          .toList();
 
-        setState(() {
-          _livePackages = formatted;
-          _isLoadingPackages = false;
-          if (formatted.isNotEmpty) {
-            _selectedPackage = formatted.first['code'] as String?;
-            _packageAmount = formatted.first['price'] as double;
-          }
-        });
-        return;
-      }
-    } catch (_) {}
-    if (mounted) setState(() => _isLoadingPackages = false);
+      setState(() {
+        _livePackages = formatted;
+        _isLoadingPackages = false;
+        if (formatted.isEmpty) {
+          _packageLoadError =
+              'No packages are currently available. Try again later.';
+        } else {
+          _selectedPackage = formatted.first['code'] as String;
+          _packageAmount = formatted.first['price'] as double;
+        }
+      });
+    } catch (error) {
+      if (!mounted || provider != _selectedProvider) return;
+      setState(() {
+        _isLoadingPackages = false;
+        _packageLoadError =
+            'Could not load live packages. Check your connection and retry.';
+      });
+      TopNotification.showError(
+        context,
+        'Could not load cable packages: $error',
+      );
+    }
   }
 
-  List<Map<String, dynamic>> _getCurrentPackages() {
-    if (_livePackages.isNotEmpty) return _livePackages;
-    return _packages[_selectedProvider] ?? [];
-  }
+  List<Map<String, dynamic>> _getCurrentPackages() => _livePackages;
 
   @override
   void dispose() {
@@ -99,7 +100,10 @@ class _CableScreenState extends State<CableScreen> {
   Future<void> _handleVerify() async {
     final card = _smartcardController.text.trim();
     if (card.length < 8) {
-      TopNotification.showWarning(context, 'Please enter a valid smartcard/IUC number');
+      TopNotification.showWarning(
+        context,
+        'Please enter a valid smartcard/IUC number',
+      );
       return;
     }
 
@@ -121,18 +125,31 @@ class _CableScreenState extends State<CableScreen> {
     });
 
     if (!result.isValid && mounted) {
-      TopNotification.showError(context, 'Could not verify smartcard number. Please check.');
+      TopNotification.showError(
+        context,
+        'Could not verify smartcard number. Please check.',
+      );
     }
   }
 
   Future<void> _handlePurchase() async {
+    if (_selectedPackage == null || _livePackages.isEmpty) {
+      TopNotification.showWarning(
+        context,
+        'Live packages are not available. Refresh and try again.',
+      );
+      return;
+    }
     final card = _smartcardController.text.trim();
     if (card.length < 8) {
       TopNotification.showWarning(context, 'Please enter smartcard number');
       return;
     }
     if (_verifiedCustomerName == null) {
-      TopNotification.showWarning(context, 'Verify this smartcard before purchasing.');
+      TopNotification.showWarning(
+        context,
+        'Verify this smartcard before purchasing.',
+      );
       return;
     }
 
@@ -153,7 +170,8 @@ class _CableScreenState extends State<CableScreen> {
       context,
       title: 'Confirm Cable TV Subscription',
       amount: _packageAmount,
-      description: '$_selectedProvider • $card\nSubscriber: ${_verifiedCustomerName ?? "Customer"}',
+      description:
+          '$_selectedProvider • $card\nSubscriber: ${_verifiedCustomerName ?? "Customer"}',
       onPinSubmit: (pin) async {
         transactionPin = pin;
         return auth.verifyPin(pin);
@@ -178,11 +196,19 @@ class _CableScreenState extends State<CableScreen> {
 
         if (!mounted) return;
         if (!result.success || result.order.status == 'failed') {
-          TopNotification.showError(context, result.message, title: 'Subscription Failed');
+          TopNotification.showError(
+            context,
+            result.message,
+            title: 'Subscription Failed',
+          );
           return;
         }
         if (result.order.status == 'pending') {
-          TopNotification.showWarning(context, result.message, title: 'Subscription Pending');
+          TopNotification.showWarning(
+            context,
+            result.message,
+            title: 'Subscription Pending',
+          );
           return;
         }
         showDialog(
@@ -245,8 +271,8 @@ class _CableScreenState extends State<CableScreen> {
                             setState(() {
                               _selectedProvider = p;
                               _verifiedCustomerName = null;
-                              _selectedPackage = _packages[p]?.first['code'];
-                              _packageAmount = _packages[p]?.first['price'] ?? 0.0;
+                              _selectedPackage = null;
+                              _packageAmount = 0;
                             });
                             _loadLivePackages();
                           }
@@ -268,7 +294,11 @@ class _CableScreenState extends State<CableScreen> {
                   suffixIcon: TextButton(
                     onPressed: _isVerifying ? null : _handleVerify,
                     child: _isVerifying
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Text('Verify'),
                   ),
                 ),
@@ -280,16 +310,26 @@ class _CableScreenState extends State<CableScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: AppColors.success.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.verified_user_rounded, color: AppColors.success, size: 18),
+                      const Icon(
+                        Icons.verified_user_rounded,
+                        color: AppColors.success,
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Subscriber: $_verifiedCustomerName',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.success),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.success,
+                          ),
                         ),
                       ),
                     ],
@@ -302,7 +342,11 @@ class _CableScreenState extends State<CableScreen> {
                 children: [
                   Text(
                     'Select Bouquet / Package',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF334155)),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white70 : const Color(0xFF334155),
+                    ),
                   ),
                   if (_isLoadingPackages)
                     const SizedBox(
@@ -313,6 +357,17 @@ class _CableScreenState extends State<CableScreen> {
                 ],
               ),
               const SizedBox(height: 10),
+              if (_packageLoadError != null && !_isLoadingPackages)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(
+                    _packageLoadError!,
+                    style: TextStyle(
+                      color: isDark ? AppColors.warning : AppColors.error,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
               ...currentPackages.map((pkg) {
                 final isSelected = pkg['code'] == _selectedPackage;
                 return InkWell(
@@ -325,16 +380,26 @@ class _CableScreenState extends State<CableScreen> {
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? (isDark ? AppColors.primaryCyan : AppColors.primaryBlue).withValues(alpha: 0.1)
+                          ? (isDark
+                                    ? AppColors.primaryCyan
+                                    : AppColors.primaryBlue)
+                                .withValues(alpha: 0.1)
                           : (isDark ? AppColors.darkCard : AppColors.lightCard),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
-                            ? (isDark ? AppColors.primaryCyan : AppColors.primaryBlue)
-                            : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                            ? (isDark
+                                  ? AppColors.primaryCyan
+                                  : AppColors.primaryBlue)
+                            : (isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder),
                         width: isSelected ? 1.8 : 1,
                       ),
                     ),
@@ -343,11 +408,23 @@ class _CableScreenState extends State<CableScreen> {
                       children: [
                         Text(
                           pkg['name'],
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
+                          ),
                         ),
                         Text(
                           '₦${pkg['price'].toStringAsFixed(0)}',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: isDark ? AppColors.primaryCyan : AppColors.primaryBlue),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: isDark
+                                ? AppColors.primaryCyan
+                                : AppColors.primaryBlue,
+                          ),
                         ),
                       ],
                     ),
@@ -356,9 +433,21 @@ class _CableScreenState extends State<CableScreen> {
               }),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: vtu.isLoading ? null : _handlePurchase,
+                onPressed:
+                    vtu.isLoading ||
+                        _isLoadingPackages ||
+                        _selectedPackage == null
+                    ? null
+                    : _handlePurchase,
                 child: vtu.isLoading
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : Text('Pay ₦${_packageAmount.toStringAsFixed(0)}'),
               ),
             ],

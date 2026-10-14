@@ -167,7 +167,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
         _processingMessage = 'Confirming your transaction status…';
       });
 
-      // 4. Dispatch live aggregator order (Bigisub Gateway API)
+      // 4. Dispatch the order through the server-side VTU provider.
       final result = await vtu.buyAirtime(
         userId: auth.user?.id ?? 1001,
         network: _selectedNetwork,

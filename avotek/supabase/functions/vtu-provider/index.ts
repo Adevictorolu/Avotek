@@ -172,7 +172,7 @@ Deno.serve(async (request) => {
 
   const action = String(requestBody.action ?? "");
   const config = actions[action];
-  if (!config) return jsonResponse({ message: "Unsupported Bigisub operation." }, 400);
+  if (!config) return jsonResponse({ message: "Unsupported VTU provider operation." }, 400);
 
   const payload = requestBody.payload as JsonMap;
   try {
@@ -182,7 +182,7 @@ Deno.serve(async (request) => {
   }
 
   const token = Deno.env.get("BIGISUB_API_TOKEN");
-  if (!token) return jsonResponse({ message: "Bigisub is not configured on the server." }, 503);
+  if (!token) return jsonResponse({ message: "VTU services are not configured on the server." }, 503);
 
   if (action === "data.purchase") {
     try {
@@ -208,21 +208,21 @@ Deno.serve(async (request) => {
         return jsonResponse({
           success: false,
           status: "failed",
-          message: "The selected data plan is unavailable from Bigisub. Refresh plans and try again.",
+          message: "The selected data plan is unavailable. Refresh plans and try again.",
         });
       }
       if (Number(payload.sell_price) < providerPrice) {
         return jsonResponse({
           success: false,
           status: "failed",
-          message: "The selected data plan price is below Bigisub's current price. Refresh plans and try again.",
+          message: "The selected data plan price changed. Refresh plans and try again.",
         });
       }
     } catch {
       return jsonResponse({
         success: false,
         status: "failed",
-        message: "Could not verify the current data plan price with Bigisub.",
+        message: "Could not verify the current data plan price. Please try again.",
       });
     }
   }
@@ -252,21 +252,21 @@ Deno.serve(async (request) => {
         return jsonResponse({
           success: false,
           status: "failed",
-          message: "The selected cable package is unavailable from Bigisub. Refresh packages and try again.",
+          message: "The selected cable package is unavailable. Refresh packages and try again.",
         });
       }
       if (Number(payload.amount) < providerPrice) {
         return jsonResponse({
           success: false,
           status: "failed",
-          message: "The selected cable package price is below Bigisub's current price. Refresh packages and try again.",
+          message: "The selected cable package price changed. Refresh packages and try again.",
         });
       }
     } catch {
       return jsonResponse({
         success: false,
         status: "failed",
-        message: "Could not verify the current cable package price with Bigisub.",
+        message: "Could not verify the current cable package price. Please try again.",
       });
     }
   }
@@ -274,7 +274,7 @@ Deno.serve(async (request) => {
   if (config.purchase) {
     const aggregatorPin = Deno.env.get("BIGISUB_TRANSACTION_PIN");
     if (!aggregatorPin) {
-      return jsonResponse({ message: "Bigisub transaction PIN is not configured on the server." }, 503);
+      return jsonResponse({ message: "The service provider is not fully configured." }, 503);
     }
     const userPin = String(requestBody.user_pin ?? "");
     if (!/^\d{4}$/.test(userPin)) return jsonResponse({ message: "Enter your 4-digit transaction PIN." }, 400);
@@ -380,7 +380,7 @@ Deno.serve(async (request) => {
           supabaseUrl,
           reference,
           "failed",
-          String(providerBody.message ?? "Bigisub rejected the purchase."),
+          String(providerBody.message ?? "The provider rejected the purchase."),
           authData.user.id,
         );
       } else if (status === "completed") {
@@ -388,7 +388,7 @@ Deno.serve(async (request) => {
           supabaseUrl,
           reference,
           "completed",
-          String(providerBody.message ?? "Bigisub purchase completed."),
+          String(providerBody.message ?? "Purchase completed."),
           authData.user.id,
         );
       }
@@ -403,13 +403,13 @@ Deno.serve(async (request) => {
         message: String(providerBody.message ?? (status === "pending"
           ? "Provider response pending confirmation."
           : status === "failed"
-          ? "Bigisub rejected the purchase."
+          ? "The provider rejected the purchase."
           : "Purchase completed.")),
       });
     }
 
     if (!upstream.ok) {
-      return jsonResponse({ message: String(providerBody.message ?? "Bigisub request failed.") }, 502);
+      return jsonResponse({ message: String(providerBody.message ?? "The provider request failed.") }, 502);
     }
     return jsonResponse(providerBody);
   } catch {
@@ -428,6 +428,6 @@ Deno.serve(async (request) => {
         message: "The provider response is delayed. Your purchase is pending confirmation.",
       });
     }
-    return jsonResponse({ message: "Could not reach Bigisub. Please try again." }, 502);
+    return jsonResponse({ message: "Could not reach the service provider. Please try again." }, 502);
   }
 });

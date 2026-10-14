@@ -258,7 +258,7 @@ class _DataScreenState extends State<DataScreen> {
         _processingMessage = 'Confirming your transaction status…';
       });
 
-      // 4. Dispatch live aggregator order (Bigisub Gateway API)
+      // 4. Dispatch the order through the server-side VTU provider.
       final result = await vtu.buyData(
         userId: auth.user?.id ?? 1001,
         network: _selectedNetwork,

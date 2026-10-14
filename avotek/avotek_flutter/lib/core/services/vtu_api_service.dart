@@ -2,17 +2,17 @@ import 'dart:math';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class BigisubRequestException implements Exception {
+class VtuProviderRequestException implements Exception {
   final int statusCode;
   final String? message;
 
-  const BigisubRequestException(this.statusCode, [this.message]);
+  const VtuProviderRequestException(this.statusCode, [this.message]);
 
   @override
-  String toString() => message ?? 'Bigisub request failed ($statusCode).';
+  String toString() => message ?? 'VTU provider request failed ($statusCode).';
 }
 
-/// Client for the authenticated Bigisub Edge Function proxy.
+/// Client for the authenticated VTU provider Edge Function proxy.
 ///
 /// Provider credentials stay on the server and are never shipped with the app.
 class VtuApiService {
@@ -37,7 +37,7 @@ class VtuApiService {
     late final FunctionResponse response;
     try {
       response = await Supabase.instance.client.functions.invoke(
-        'bigisub',
+        'vtu-provider',
         body: body,
       );
     } on AssertionError {
@@ -47,16 +47,16 @@ class VtuApiService {
     } on FunctionException catch (error) {
       final details = error.details;
       final message = details is Map ? details['message']?.toString() : null;
-      throw BigisubRequestException(error.status, message);
+      throw VtuProviderRequestException(error.status, message);
     }
 
     if (response.status < 200 || response.status >= 300) {
       final data = response.data;
       final message = data is Map ? data['message']?.toString() : null;
-      throw BigisubRequestException(response.status, message);
+      throw VtuProviderRequestException(response.status, message);
     }
     if (response.data is! Map<String, dynamic>) {
-      throw Exception('Bigisub returned an invalid response.');
+      throw Exception('The VTU provider returned an invalid response.');
     }
     return response.data as Map<String, dynamic>;
   }

@@ -2,7 +2,7 @@
 
 This is the deployment checklist for the current code. A GitHub push does not
 deploy Supabase functions, configure Auth redirects, or activate payment
-providers. No real wallet top-up or Bigisub purchase should be enabled until
+providers. No real wallet top-up or provider purchase should be enabled until
 the relevant server configuration and provider tests below pass.
 
 ## 1. Fix the localhost authentication callback
@@ -63,22 +63,48 @@ clients permission to update wallet balances directly.
 ## 3. Configure Auth and VTU functions securely
 
 1. Confirm the Supabase Auth redirect allow-list from step 1.
-2. Set the Bigisub token and aggregator transaction PIN as Supabase Edge
-   Function secrets. Rotate any token previously pasted into chat or source
-   control; do not paste secrets into GitHub, this document, or Flutter.
+2. Set `BIGISUB_API_TOKEN` and `BIGISUB_TRANSACTION_PIN` as Supabase Edge
+   Function secrets for the upstream provider adapter. Rotate any token
+   previously pasted into chat or source control; do not paste secrets into
+   GitHub, this document, or Flutter.
 3. Set the service-role key only as a Supabase-managed function secret when
    needed by trusted server code; never embed it in the app.
 4. Deploy the functions:
 
    ```powershell
    supabase functions deploy identifier-login
-   supabase functions deploy bigisub
+   supabase functions deploy vtu-provider
    ```
 
-5. Confirm the exact Bigisub endpoint, payload fields, plan-price fields, and
-   provider status meanings with Bigisub. The adapter paths were not verified
-   against live credentials in this workspace.
-6. With a funded provider float, test one low-value transaction for each
+### Function names currently used by the app
+
+| Supabase function | Purpose |
+| --- | --- |
+| `identifier-login` | Resolves the app's identifier-based sign-in flow. |
+| `vtu-provider` | Authenticated server adapter for wallet balance, airtime, data plans and purchase, cable plans/verification/purchase, electricity provider lookup/verification/payment, and transaction requery. |
+
+The adapter currently accepts these action names: `wallet.balance`,
+`airtime.purchase`, `data.plans`, `data.purchase`, `cable.plans`,
+`cable.verify`, `cable.purchase`, `electricity.providers`,
+`electricity.verify`, `electricity.purchase`, and `transaction.requery`.
+Keep provider credentials and service-role credentials in Supabase secrets;
+never put them in Flutter or the repository.
+
+5. Confirm the adapter paths, payload fields, plan-price fields, transaction
+   status meanings, and live behavior with the upstream provider. The public
+   documentation URL provided in chat did not expose enough endpoint detail to
+   verify those contracts, and this workspace has no authenticated Supabase
+   deployment access. The configured function name must be checked against the
+   deployed project; an earlier deployment responded that the old function
+   name was not found. Do not claim the purchase flows are live until a
+   deployment and authenticated end-to-end tests succeed.
+
+6. Education PINs, ISP, bulk SMS, airtime PIN generation, wallet funding, and
+   payment-gateway operations do not have verified contracts implemented in
+   this adapter. Obtain endpoint paths, required fields, response examples,
+   error/status meanings, and test credentials from the provider before
+   adding those services. Do not infer the contracts from the category list.
+7. With a funded provider float, test one low-value transaction for each
    available service. Check provider references/status, customer wallet,
    ledger, confirmed-failure refunds, and duplicate/retry behavior. Do not
    release a transaction whose status is ambiguous; reconcile it with Bigisub.
@@ -144,7 +170,7 @@ success.
 `https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/bigisub` returned HTTP
 404 with `NOT_FOUND` / “Requested function was not found.” The browser's CORS
 error is therefore a symptom of the missing production function, not evidence
-that a purchase reached Bigisub. Deploy the reviewed function to the intended
+that a purchase reached the upstream provider. Deploy `vtu-provider` to the intended
 Supabase project, configure rotated secrets, then repeat the preflight and
 authenticated low-value tests before enabling purchases.
 
@@ -153,7 +179,7 @@ Before enabling customers to transact:
 1. **Rotate the Bigisub token that was pasted into chat.** Store the rotated
    token and provider transaction PIN only as Supabase Edge Function secrets.
    Never put either value in Flutter, Git, logs, or support messages.
-2. Apply and verify the Supabase migrations and deploy `bigisub` and
+2. Apply and verify the Supabase migrations and deploy `vtu-provider` and
    `identifier-login`. Confirm the current production functions read their
    secrets and authorize the signed-in user.
 3. Confirm Bigisub's exact endpoint, field names, price rules, PIN-generation

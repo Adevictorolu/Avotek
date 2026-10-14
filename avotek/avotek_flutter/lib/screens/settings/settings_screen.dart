@@ -40,27 +40,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkCardVariant
-                      : AppColors.lightCardVariant,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Draft for review before public launch. Confirm the legal '
-                  'business identity, contact details, and final provider '
-                  'arrangements before relying on this document.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
               for (final section in sections) ...[
                 Text(
                   section.$1,
@@ -1278,7 +1257,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Bigisub Integration',
+                        'Service provider connection',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
@@ -1342,7 +1321,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 child: Text(
-                  'Bigisub credentials are not stored or exposed in this app.',
+                  'Provider credentials are stored securely on the server and are not exposed in this app.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
