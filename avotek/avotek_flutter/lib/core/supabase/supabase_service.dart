@@ -6,6 +6,7 @@ import '../../models/user_model.dart';
 import '../../models/wallet_model.dart';
 import '../../models/transaction_model.dart';
 import '../../models/vtu_models.dart';
+import '../../models/notification_preferences.dart';
 
 @visibleForTesting
 String buildWebAuthRedirectUrl(Uri currentUri, String route) {
@@ -255,6 +256,22 @@ class SupabaseService {
       throw Exception('Open the password-reset link from your email first.');
     }
     await client.auth.updateUser(UserAttributes(password: password));
+  }
+
+  NotificationPreferences getNotificationPreferences() =>
+      NotificationPreferences.fromUserMetadata(currentAuthUser?.userMetadata);
+
+  Future<void> saveNotificationPreferences(
+    NotificationPreferences preferences,
+  ) async {
+    final user = currentAuthUser;
+    if (user == null) {
+      throw StateError('Sign in to update notification preferences.');
+    }
+
+    final metadata = Map<String, dynamic>.from(user.userMetadata ?? const {});
+    metadata['notification_preferences'] = preferences.toJson();
+    await client.auth.updateUser(UserAttributes(data: metadata));
   }
 
   // ==========================================

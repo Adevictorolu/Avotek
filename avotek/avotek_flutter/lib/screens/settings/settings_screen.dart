@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/notification_preferences.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 
@@ -18,6 +21,64 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  static const _whatsAppSupportNumber = '2348167002789';
+  late NotificationPreferences _notificationPreferences;
+  bool _savingNotificationPreferences = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationPreferences = SupabaseService.instance
+        .getNotificationPreferences();
+  }
+
+  Future<void> _saveNotificationPreferences(
+    NotificationPreferences preferences,
+  ) async {
+    setState(() => _savingNotificationPreferences = true);
+    try {
+      await SupabaseService.instance.saveNotificationPreferences(preferences);
+      if (!mounted) return;
+      setState(() => _notificationPreferences = preferences);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Notification preference saved. Delivery requires channel setup.',
+          ),
+          backgroundColor: AppColors.primaryBlue,
+        ),
+      );
+    } catch (error) {
+      debugPrint('Saving notification preferences failed: $error');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not save notification preferences. Try again.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _savingNotificationPreferences = false);
+      }
+    }
+  }
+
+  Future<void> _openWhatsAppSupport() async {
+    final uri = Uri.https('wa.me', '/$_whatsAppSupportNumber', {
+      'text': 'Hello Avotek Support, I need help with my account.',
+    });
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open WhatsApp. Please try again later.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   void _showLegalDocument(
     String title,
     List<(String, String)> sections,
@@ -787,7 +848,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // --- MODAL: API DOCUMENTATION & TOKEN (Matches Screenshot 3 & 4) ---
   void _openApiDocumentationModal() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final ipCtrl = TextEditingController();
 
     showDialog(
       context: context,
@@ -951,6 +1011,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                Text(
+                  'Connected service routes',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'The deployed adapter exposes wallet.balance, '
+                  'airtime.purchase, data.plans/data.purchase, '
+                  'cable.plans/cable.verify/cable.purchase, '
+                  'electricity.providers/electricity.verify/'
+                  'electricity.purchase, and transaction.requery through '
+                  'the server-side vtu-provider function. Result-checker '
+                  'PINs, bulk SMS, and airtime PIN generation are not wired '
+                  'because their authenticated endpoint contracts are not '
+                  'available. These routes have not passed authenticated '
+                  'live transaction tests.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    height: 1.45,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => _openProviderResource(
+                    Uri.parse('https://rif.africa/technotronics/api/bigisub'),
+                  ),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 17),
+                  label: const Text('Open Bigisub API documentation'),
+                ),
                 const SizedBox(height: 24),
 
                 // Provider credentials are managed server-side.
@@ -1033,7 +1130,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'IP Whitelist',
+                                'Provider IP allowlist',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
@@ -1061,7 +1158,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ),
                             child: Text(
-                              'OFF',
+                              'Managed externally',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
@@ -1075,7 +1172,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Restrict your API token to specific IP addresses. When active, only requests from whitelisted IPs can use your token.',
+                        'Avotek cannot read or change the Bigisub IP allowlist. '
+                        'Use the provider dashboard to manage this setting.',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           color: isDark
@@ -1110,7 +1208,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'No IP restriction - any IP can use your API token',
+                                'Changes made here are not applied to the provider.',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.5,
                                   color: isDark
@@ -1124,85 +1222,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: 14),
 
-                      // Input row: e.g. 41.190.2.50 + Add
+                      // Provider allowlist is configured outside Avotek.
                       Row(
                         children: [
                           Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                              ),
-                              decoration: BoxDecoration(
+                            child: Text(
+                              'Only the provider can apply allowlist changes.',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
                                 color: isDark
-                                    ? AppColors.darkCard
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isDark
-                                      ? AppColors.darkBorder
-                                      : const Color(0xFFCBD5E1),
-                                ),
-                              ),
-                              child: TextField(
-                                controller: ipCtrl,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13,
-                                  color: isDark
-                                      ? Colors.white
-                                      : const Color(0xFF0F172A),
-                                ),
-                                decoration: InputDecoration(
-                                  border: InputBorder.none,
-                                  hintText: 'e.g. 41.190.2.50',
-                                  hintStyle: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12.5,
-                                    color: isDark
-                                        ? Colors.white30
-                                        : Colors.black26,
-                                  ),
-                                ),
+                                    ? AppColors.metallicLight
+                                    : AppColors.slateGrey,
                               ),
                             ),
                           ),
                           const SizedBox(width: 10),
-                          ElevatedButton(
-                            onPressed: () {
-                              if (ipCtrl.text.trim().isNotEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'IP ${ipCtrl.text.trim()} added to whitelist!',
-                                    ),
-                                    backgroundColor: AppColors.success,
-                                  ),
-                                );
-                                ipCtrl.clear();
-                              }
-                            },
+                          ElevatedButton.icon(
+                            onPressed: () => _openProviderResource(
+                              Uri.parse(
+                                'https://bigisub.ng/dashboard/settings/',
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.open_in_new_rounded,
+                              size: 16,
+                            ),
+                            label: const Text('Open dashboard'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryBlue,
                               foregroundColor: Colors.white,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 18,
+                                horizontal: 14,
                                 vertical: 12,
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.add, size: 16),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Add',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
                         ],
@@ -1348,7 +1401,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Created:',
+                      'Secret location:',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.5,
                         color: isDark
@@ -1357,7 +1410,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     Text(
-                      '10/1/2026, 7:21:29 AM',
+                      'Managed in Supabase Edge Function secrets',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
@@ -1466,6 +1519,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _openProviderResource(Uri uri) async {
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open the provider dashboard.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   void _openChangePasswordDialog() {
@@ -2925,7 +2990,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.primaryBlue,
                         iconBg: AppColors.primaryBlue.withValues(alpha: 0.15),
                         title: 'API Documentation',
-                        subtitle: 'Developer tools and API access',
+                        subtitle: 'Provider endpoints and integration status',
                         trailing: const Icon(
                           Icons.chevron_right_rounded,
                           color: Colors.grey,
@@ -3017,6 +3082,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Notifications',
                     children: [
                       Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+                        child: Text(
+                          'Save your delivery choices below. Email, push, and '
+                          'WhatsApp receipt delivery are not active until '
+                          'their server providers are configured. Receipts '
+                          'remain available in transaction history.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            height: 1.45,
+                            color: isDark
+                                ? AppColors.metallicLight
+                                : AppColors.slateGrey,
+                          ),
+                        ),
+                      ),
+                      Padding(
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                         child: Text(
                           'TRANSACTION UPDATES',
@@ -3032,25 +3113,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       _buildToggleTile(
                         icon: Icons.phone_android_rounded,
-                        title: 'Push notifications',
-                        badge: 'NOT SET UP',
+                        title: 'Push receipt preference',
+                        badge: 'PREFERENCE ONLY',
                         warningNote:
                             'Push delivery is not configured for this deployment.',
-                        value: false,
-                        enabled: false,
-                        onChanged: (_) {},
+                        value: _notificationPreferences.pushNotifications,
+                        enabled: !_savingNotificationPreferences,
+                        onChanged: (value) => _saveNotificationPreferences(
+                          _notificationPreferences.copyWith(
+                            pushNotifications: value,
+                          ),
+                        ),
                         isDark: isDark,
                       ),
                       _buildDivider(isDark),
                       _buildToggleTile(
                         icon: Icons.mail_outline_rounded,
-                        title: 'Email transaction alerts',
-                        badge: 'NOT SET UP',
+                        title: 'Email receipt preference',
+                        badge: 'PREFERENCE ONLY',
                         warningNote:
-                            'A transactional email provider and server-side event delivery are required.',
-                        value: false,
-                        enabled: false,
-                        onChanged: (_) {},
+                            'Email receipts require a configured transactional mail provider.',
+                        value: _notificationPreferences.emailReceipts,
+                        enabled: !_savingNotificationPreferences,
+                        onChanged: (value) => _saveNotificationPreferences(
+                          _notificationPreferences.copyWith(
+                            emailReceipts: value,
+                          ),
+                        ),
+                        isDark: isDark,
+                      ),
+                      _buildDivider(isDark),
+                      _buildToggleTile(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        title: 'WhatsApp receipt preference',
+                        badge: 'PREFERENCE ONLY',
+                        warningNote:
+                            'Automated WhatsApp receipts need a verified business API and approved message template.',
+                        value: _notificationPreferences.whatsappReceipts,
+                        enabled: !_savingNotificationPreferences,
+                        onChanged: (value) => _saveNotificationPreferences(
+                          _notificationPreferences.copyWith(
+                            whatsappReceipts: value,
+                          ),
+                        ),
+                        isDark: isDark,
+                      ),
+                      _buildDivider(isDark),
+                      _buildSettingTile(
+                        icon: Icons.support_agent_rounded,
+                        iconColor: AppColors.success,
+                        iconBg: AppColors.success.withValues(alpha: 0.15),
+                        title: 'WhatsApp Support',
+                        subtitle: '+234 816 700 2789 · opens WhatsApp',
+                        trailing: const Icon(
+                          Icons.open_in_new_rounded,
+                          color: AppColors.success,
+                          size: 18,
+                        ),
+                        onTap: _openWhatsAppSupport,
                         isDark: isDark,
                       ),
                       _buildDivider(isDark),

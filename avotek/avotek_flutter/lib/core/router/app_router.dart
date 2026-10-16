@@ -25,6 +25,7 @@ import '../../screens/services/data_screen.dart';
 import '../../screens/services/electricity_screen.dart';
 import '../../screens/services/services_hub_screen.dart';
 import '../../screens/settings/settings_screen.dart';
+import '../../screens/stats/statistics_screen.dart';
 import '../../screens/transactions/transactions_screen.dart';
 import '../../screens/wallet/fund_wallet_screen.dart';
 import '../../screens/wallet/wallet_screen.dart';
@@ -270,7 +271,7 @@ class AppRouter {
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,
             state,
-            AffiliateScreen(onToggleTheme: themeToggle),
+            StatisticsScreen(onToggleTheme: themeToggle),
           ),
         ),
         GoRoute(

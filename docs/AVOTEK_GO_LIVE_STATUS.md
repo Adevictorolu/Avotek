@@ -33,6 +33,16 @@ not prove that a provider credential is valid or that a real transaction works.
   admin email check alone.
 - The transaction history has individual receipt details and downloadable
   text receipts/CSV statements, but automatic email delivery is not configured.
+- Account notification choices for email, push, and WhatsApp are saved in the
+  signed-in user's Supabase Auth metadata. They are preferences only; they do
+  not send messages until transactional email, push, and WhatsApp Business API
+  delivery providers are separately configured and server-side event dispatch
+  is implemented. The Settings page links to the supplied WhatsApp support
+  contact for user-initiated support chats.
+- Following the Settings and receipt updates, targeted Flutter analysis passed,
+  all 21 Flutter tests passed, and `flutter build web --release --no-pub`
+  completed successfully on 2026-10-16. This verifies the local build, not a
+  deployment or an end-to-end live transaction.
 - Provider credentials and Paystack keys have not been validated by completing
   an authenticated test transaction.
 

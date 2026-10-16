@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../../core/responsive/responsive_layout.dart';
+import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
@@ -216,15 +219,44 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
   @override
   Widget build(BuildContext context) {
     final vtu = context.watch<VtuProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDesktop = ResponsiveLayout.isDesktop(context);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Electricity Bill')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    return ResponsiveShell(
+      currentRoute: '/services/electricity',
+      child: Scaffold(
+        backgroundColor: isDark
+            ? const Color(0xFF0A0D14)
+            : const Color(0xFFF8FAFC),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: ListView(
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 32 : 16,
+                vertical: 24,
+              ),
             children: [
+              Text(
+                'Electricity Bill',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Verify your meter and purchase electricity from your wallet.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 20),
               DropdownButtonFormField<String>(
                 initialValue: _selectedDisco,
                 decoration: const InputDecoration(labelText: 'Select Disco / Provider'),
@@ -334,6 +366,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                     : const Text('Pay Electricity Bill'),
               ),
             ],
+          ),
           ),
         ),
       ),
