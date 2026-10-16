@@ -11,19 +11,20 @@ The latest check of the linked Supabase project found:
 
 - Migrations `20261010120000`, `20261012140000`, and `20261014180000` are
   applied, and the core profile, wallet, transaction, and VTU tables/RPCs exist.
-- `identifier-login` and `vtu-provider` are active. `paystack-payments` is not
-  deployed.
+- `identifier-login`, `vtu-provider`, and `paystack-payments` are active.
+  `paystack-payments` was deployed, but a request returns HTTP 503 because its
+  required payment secrets are not configured. This is fail-closed behavior.
 - Paystack requires the Edge Function secrets `PAYSTACK_SECRET_KEY` and
   `PAYSTACK_CALLBACK_URL`. Those names were not present; legacy-labelled
-  Paystack secrets do not configure this function. Secret values were not
-  retrieved or copied.
+  Paystack secrets do not configure this function.
 - No authenticated provider purchase or Paystack Test-mode transaction has
   been run. The provider endpoints and credentials still need verification
   before customer transactions are enabled.
 
-Credentials previously shared in chat should be rotated before use. Add
-replacement values directly in Supabase Dashboard → Edge Functions → Secrets;
-do not send them in chat, source control, or logs.
+Credentials previously shared in chat, and any credential material returned
+by CLI secret-list output, should be treated as exposed and rotated before use.
+Add replacement values directly in Supabase Dashboard → Edge Functions →
+Secrets; do not send them in chat, source control, or logs.
 
 ## 1. Fix the localhost authentication callback
 
@@ -225,18 +226,21 @@ server verification and signed webhook) and for airtime, data plans and
 purchases, cable plans/verification/purchases, electricity providers,
 verification/purchases, and transaction requery. The core database migrations
 are applied and `vtu-provider` is active in the linked project, but
-`paystack-payments` is not deployed and neither integration has passed
-authenticated end-to-end transaction testing. The VTU adapter does not provide
-airtime PIN generation, result-checker PINs, bulk SMS, ISP subscriptions,
-betting, transactional email, or gift voucher issuance/redemption. Betting has
-been removed from the service menu; unintegrated services are shown as coming
-soon instead of reporting fake success.
+`paystack-payments` is deployed but has not been configured with its required
+secrets. Neither integration has passed authenticated end-to-end transaction
+testing. The VTU adapter does not provide airtime PIN generation, result-checker
+PINs, bulk SMS, ISP subscriptions, betting, transactional email, or gift
+voucher issuance/redemption. Betting has been removed from the service menu;
+unintegrated services are shown as coming soon instead of reporting fake
+success.
 
 **Latest linked-project check:** the migrations are applied and
-`identifier-login` / `vtu-provider` are active; `paystack-payments` is not
-deployed. An earlier OPTIONS preflight to the obsolete `/bigisub` function URL
-returned HTTP 404. This deployment check does not confirm upstream connectivity
-or a completed purchase. No low-value provider or Paystack Test transaction has
+`identifier-login`, `vtu-provider`, and `paystack-payments` are active. A direct
+request to `paystack-payments` returned HTTP 503, “Payment service is not
+configured,” because the required secrets are absent. This confirms the
+function is reachable and fails closed; it does not confirm successful payment
+processing. An earlier OPTIONS preflight to the obsolete `/bigisub` function
+URL returned HTTP 404. No low-value provider or Paystack Test transaction has
 been run.
 
 Before enabling customers to transact:
@@ -247,9 +251,9 @@ Before enabling customers to transact:
    the provider PIN is the upstream API transaction PIN, not a customer's
    Avotek purchase PIN.
 2. Verify the migrations and active functions in Supabase. After rotating the
-   provider credentials, redeploy `vtu-provider`; deploy `paystack-payments`
-   only after its required secrets are configured. Confirm functions authorize
-   signed-in users where required.
+   provider credentials, redeploy `vtu-provider`. Set the Paystack secrets and
+   redeploy `paystack-payments` if its configuration is changed. Confirm
+   functions authorize signed-in users where required.
 3. Confirm Bigisub's exact endpoint, field names, price rules, PIN-generation
    quantity contract, and status/refund meanings from the authenticated
    provider documentation. The customer phone number must not be sent for
