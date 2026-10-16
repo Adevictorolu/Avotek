@@ -25,7 +25,7 @@ AVOTEK runs on a high-throughput architecture consisting of:
 - **Authentication & database**: Supabase Auth, PostgreSQL, and Edge Functions.
 - **VTU provider**: The upstream VTU provider is called through the authenticated `vtu-provider` Edge Function.
 
-> **Live status:** Paystack checkout, server verification, signed webhook handling, and idempotent wallet-credit code are implemented, but are **not live until the database migration and Edge Function have been deployed and tested with the correct Paystack credentials**. Dedicated virtual accounts, WhatsApp messages, and Termii messages are not implemented. Do not advertise live payments until the checklist in [`GO_LIVE_NEXT_STEPS.md`](./GO_LIVE_NEXT_STEPS.md) is complete. The app does not fabricate bank details.
+> **Live status:** Paystack checkout, server verification, signed webhook handling, and idempotent wallet-credit code are implemented, but an authenticated test payment has not been verified. Dedicated virtual accounts, WhatsApp messages, and Termii messages are not implemented. Do not advertise live payments until the checklist in [`AVOTEK_GO_LIVE_STATUS.md`](./AVOTEK_GO_LIVE_STATUS.md) is complete. The app does not fabricate bank details.
 
 ```mermaid
 graph TD
@@ -46,7 +46,7 @@ Paystack checkout initialization, server-side verification, and signed webhook
 handling are implemented in `paystack-payments`. Wallet crediting remains
 disabled in production until the database migration and function are deployed,
 Paystack secrets and URLs are configured, and the Test-mode checks in
-[`GO_LIVE_NEXT_STEPS.md`](./GO_LIVE_NEXT_STEPS.md) pass. Dedicated Virtual
+[`AVOTEK_GO_LIVE_STATUS.md`](./AVOTEK_GO_LIVE_STATUS.md) pass. Dedicated Virtual
 Accounts are not implemented. Do not accept screenshots or manual transfers as
 proof of payment.
 
@@ -57,7 +57,7 @@ proof of payment.
    chat. The app does not need the Paystack public key for server-created
    checkout sessions.
 3. Configure `PAYSTACK_CALLBACK_URL` and deploy `paystack-payments` as
-   documented in [`GO_LIVE_NEXT_STEPS.md`](./GO_LIVE_NEXT_STEPS.md).
+   documented in [`AVOTEK_GO_LIVE_STATUS.md`](./AVOTEK_GO_LIVE_STATUS.md).
 
 ### 2.2 Configure Webhooks
 1. Set the Paystack Test Webhook URL to

@@ -325,7 +325,7 @@ class AdminDashboardScreen extends StatelessWidget {
         onTap: () => _openExternal(
           context,
           Uri.parse(
-            'https://github.com/Adevictorolu/Avotek/blob/main/docs/GO_LIVE_NEXT_STEPS.md',
+            'https://github.com/Adevictorolu/Avotek/blob/main/docs/AVOTEK_GO_LIVE_STATUS.md',
           ),
         ),
       ),

@@ -76,6 +76,6 @@ when testing authentication on deploy previews.
 
 Test a new signup confirmation, email/password login, Google login, password
 recovery, and sign-out against the deployed site. Review
-`docs/GO_LIVE_NEXT_STEPS.md` for existing backend prerequisites before enabling
+`docs/AVOTEK_GO_LIVE_STATUS.md` for existing backend prerequisites before enabling
 real financial transactions. No backend data migration or payment activation
 is performed by the frontend deployment script.

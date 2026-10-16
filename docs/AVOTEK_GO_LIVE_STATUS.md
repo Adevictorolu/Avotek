@@ -1,9 +1,40 @@
-# Avotek: what remains before going live
+# Avotek: deployment and go-live status
 
-This is the deployment checklist for the current code. A GitHub push does not
-deploy Supabase functions, configure Auth redirects, or activate payment
-providers. No real wallet top-up or provider purchase should be enabled until
-the relevant server configuration and provider tests below pass.
+This status document records what is implemented and what still blocks live
+transactions. A successful deployment or an unauthenticated HTTP response does
+not prove that a provider credential is valid or that a real transaction works.
+
+## Completed and verified
+
+- The Flutter application is published through GitHub Pages, with maintained
+  CI and deployment workflows. The duplicate broken Dart workflow was removed.
+- The three core database migrations are applied to the linked Supabase project.
+- `identifier-login`, `vtu-provider`, and `paystack-payments` are deployed.
+- The VTU function answers CORS preflight and rejects unauthenticated requests.
+  The Paystack function also rejects unauthenticated initialization requests.
+  These checks verify routing and authentication boundaries only.
+- The app has server-side adapters for airtime, data, cable, electricity,
+  transaction requery, and Paystack checkout/webhook handling.
+- Unsupported provider products are not advertised as working: result-checker
+  PINs, bulk SMS, and airtime PIN generation remain disabled until their exact
+  provider API contracts are available and implemented.
+
+## Not yet verified or implemented
+
+- No authenticated Bigisub service operation or Paystack Test/Live payment has
+  been completed. The current deployment is **not certified ready for live
+  transactions**.
+- The public Bigisub documentation does not expose the request/response
+  contracts needed to implement result-checker PINs, bulk SMS, or airtime PIN
+  generation. No endpoint or purchase payload has been guessed.
+- The Avotek admin page links to provider/project consoles; it is not yet a
+  server-authorized console for global activity, user creation/deletion, or
+  service-price changes. Do not expose those operations using the client-side
+  admin email check alone.
+- The transaction history has individual receipt details and downloadable
+  text receipts/CSV statements, but automatic email delivery is not configured.
+- Provider credentials and Paystack keys have not been validated by completing
+  an authenticated test transaction.
 
 ## Current linked-project status
 
