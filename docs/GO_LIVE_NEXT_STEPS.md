@@ -14,9 +14,13 @@ The latest check of the linked Supabase project found:
 - `identifier-login`, `vtu-provider`, and `paystack-payments` are active.
   `paystack-payments` was deployed, but a request returns HTTP 503 because its
   required payment secrets are not configured. This is fail-closed behavior.
-- Paystack requires the Edge Function secrets `PAYSTACK_SECRET_KEY` and
-  `PAYSTACK_CALLBACK_URL`. Those names were not present; legacy-labelled
-  Paystack secrets do not configure this function.
+- The app calls the `vtu-provider` Edge Function by its deployed name. Its
+  endpoint responds to CORS preflight and rejects unauthenticated requests;
+  the Bigisub secret names are configured, but credentials and provider
+  operations have not been validated with an authenticated account.
+- Paystack callback `PAYSTACK_CALLBACK_URL` is configured. The required
+  `PAYSTACK_SECRET_KEY` name is absent; a legacy-labelled `Live secret key`
+  does not configure this function.
 - No authenticated provider purchase or Paystack Test-mode transaction has
   been run. The provider endpoints and credentials still need verification
   before customer transactions are enabled.
@@ -225,35 +229,42 @@ The app has Edge Function adapters for Paystack wallet funding (checkout,
 server verification and signed webhook) and for airtime, data plans and
 purchases, cable plans/verification/purchases, electricity providers,
 verification/purchases, and transaction requery. The core database migrations
-are applied and `vtu-provider` is active in the linked project, but
-`paystack-payments` is deployed but has not been configured with its required
-secrets. Neither integration has passed authenticated end-to-end transaction
-testing. The VTU adapter does not provide airtime PIN generation, result-checker
-PINs, bulk SMS, ISP subscriptions, betting, transactional email, or gift
-voucher issuance/redemption. Betting has been removed from the service menu;
+are applied; `vtu-provider` and `paystack-payments` are deployed. The VTU
+endpoint responds to CORS preflight and rejects unauthenticated requests, but
+no authenticated provider operation has been run. Paystack has not been
+configured with `PAYSTACK_SECRET_KEY`, so its endpoint fails closed. Neither
+integration has passed authenticated end-to-end transaction testing. The VTU
+adapter does not provide airtime PIN generation, result-checker PINs, bulk SMS,
+ISP subscriptions, betting, transactional email, or gift voucher
+issuance/redemption. Betting has been removed from the service menu;
 unintegrated services are shown as coming soon instead of reporting fake
 success.
 
 **Latest linked-project check:** the migrations are applied and
-`identifier-login`, `vtu-provider`, and `paystack-payments` are active. A direct
-request to `paystack-payments` returned HTTP 503, “Payment service is not
-configured,” because the required secrets are absent. This confirms the
-function is reachable and fails closed; it does not confirm successful payment
-processing. An earlier OPTIONS preflight to the obsolete `/bigisub` function
-URL returned HTTP 404. No low-value provider or Paystack Test transaction has
-been run.
+`identifier-login`, `vtu-provider`, and `paystack-payments` are active. The
+`vtu-provider` endpoint returned HTTP 200 for its CORS preflight and HTTP 401
+for an unauthenticated read request, confirming endpoint routing and the
+authentication boundary without performing a purchase. `BIGISUB_API_TOKEN`
+and `BIGISUB_TRANSACTION_PIN` secret names exist, but their values and upstream
+operations have not been authenticated or validated. A direct request to
+`paystack-payments` returned HTTP 503, “Payment service is not configured,”
+because `PAYSTACK_SECRET_KEY` is absent. `PAYSTACK_CALLBACK_URL` is configured.
+These checks confirm deployment/routing and fail-closed behavior only; they do
+not confirm successful transactions. No low-value provider or Paystack Test
+transaction has been run.
 
 Before enabling customers to transact:
 
-1. **Rotate the Bigisub token that was pasted into chat.** Store the rotated
-   token and provider transaction PIN only as Supabase Edge Function secrets.
-   Never put either value in Flutter, Git, logs, or support messages. Confirm
-   the provider PIN is the upstream API transaction PIN, not a customer's
-   Avotek purchase PIN.
-2. Verify the migrations and active functions in Supabase. After rotating the
-   provider credentials, redeploy `vtu-provider`. Set the Paystack secrets and
-   redeploy `paystack-payments` if its configuration is changed. Confirm
-   functions authorize signed-in users where required.
+1. **Rotate the Bigisub token and transaction PIN previously shared in chat
+   or returned in CLI output.** Store the rotated token and provider transaction
+   PIN only as Supabase Edge Function secrets. Never put either value in
+   Flutter, Git, logs, or support messages. Confirm the provider PIN is the
+   upstream API transaction PIN, not a customer's Avotek purchase PIN.
+2. Verify the migrations and active functions in Supabase. `vtu-provider` has
+   been deployed with the current adapter; after rotating provider credentials,
+   redeploy it and perform authenticated non-purchase checks. Set the rotated
+   Paystack key under `PAYSTACK_SECRET_KEY` and redeploy `paystack-payments`.
+   Confirm functions authorize signed-in users where required.
 3. Confirm Bigisub's exact endpoint, field names, price rules, PIN-generation
    quantity contract, and status/refund meanings from the authenticated
    provider documentation. The customer phone number must not be sent for
