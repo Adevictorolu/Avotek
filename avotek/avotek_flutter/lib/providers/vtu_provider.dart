@@ -111,27 +111,6 @@ class VtuProvider extends ChangeNotifier {
         defaultMarkup: 10.0,
         active: true,
       ),
-      // Educational Exam PINs
-      const ServiceCatalog(
-        id: 501,
-        serviceType: 'exam_pin',
-        name: 'WAEC Result Checker PIN (Instant)',
-        variationCode: 'EXAM-WAEC-01',
-        provider: 'WAEC',
-        costPrice: 5250.0,
-        defaultMarkup: 50.0,
-        active: true,
-      ),
-      const ServiceCatalog(
-        id: 502,
-        serviceType: 'exam_pin',
-        name: 'NECO Token (Direct Result Checker)',
-        variationCode: 'EXAM-NECO-01',
-        provider: 'NECO',
-        costPrice: 2500.0,
-        defaultMarkup: 50.0,
-        active: true,
-      ),
     ];
   }
 

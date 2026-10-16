@@ -1,7 +1,17 @@
 import 'package:avotek_flutter/core/services/vtu_api_service.dart';
+import 'package:avotek_flutter/providers/vtu_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('does not advertise fabricated education PIN catalog products', () {
+    final provider = VtuProvider();
+
+    expect(
+      provider.catalog.where((plan) => plan.serviceType == 'exam_pin'),
+      isEmpty,
+    );
+  });
+
   group('Bigisub request mappings', () {
     test('maps the supported Nigerian mobile networks', () {
       expect(VtuApiService.mapNetworkNameToId('MTN'), 1);

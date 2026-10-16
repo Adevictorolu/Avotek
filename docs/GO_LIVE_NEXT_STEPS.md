@@ -12,15 +12,19 @@ The latest check of the linked Supabase project found:
 - Migrations `20261010120000`, `20261012140000`, and `20261014180000` are
   applied, and the core profile, wallet, transaction, and VTU tables/RPCs exist.
 - `identifier-login`, `vtu-provider`, and `paystack-payments` are active.
-  `paystack-payments` was deployed, but a request returns HTTP 503 because its
-  required payment secrets are not configured. This is fail-closed behavior.
+  A valid unauthenticated initialization request to `paystack-payments` reaches
+  the authentication check (HTTP 401), indicating its required server
+  configuration names are present. This does not validate the Paystack key or
+  prove a transaction can complete.
 - The app calls the `vtu-provider` Edge Function by its deployed name. Its
   endpoint responds to CORS preflight and rejects unauthenticated requests;
   the Bigisub secret names are configured, but credentials and provider
   operations have not been validated with an authenticated account.
-- Paystack callback `PAYSTACK_CALLBACK_URL` is configured. The required
-  `PAYSTACK_SECRET_KEY` name is absent; a legacy-labelled `Live secret key`
-  does not configure this function.
+- Paystack callback `PAYSTACK_CALLBACK_URL` is configured. An unauthenticated
+  initialization request now reaches the authentication check, showing the
+  function has the required server configuration names. This does not verify
+  that the Paystack key is valid, which account mode it belongs to, or that a
+  payment can complete.
 - No authenticated provider purchase or Paystack Test-mode transaction has
   been run. The provider endpoints and credentials still need verification
   before customer transactions are enabled.
@@ -125,11 +129,13 @@ never put them in Flutter or the repository.
    Do not claim purchase flows are live until the contracts are confirmed and
    controlled tests succeed.
 
-6. Education PINs, ISP, bulk SMS, and airtime PIN generation do not have
-   verified contracts implemented in the VTU adapter. Obtain endpoint paths,
-   required fields, response examples, error/status meanings, and test
-   credentials from the provider before adding those services. Do not infer
-   the contracts from the category list.
+6. The service page lists Result Checker PINs, Bulk SMS, and Airtime PIN
+   Generation as disabled until their provider contracts are verified. These
+   actions are not implemented in the VTU adapter. Obtain endpoint paths,
+   required fields, response examples, price rules, quantity limits,
+   error/status meanings, and provider-approved test credentials from the
+   authenticated provider documentation before adding them. Do not infer
+   contracts from the category list.
 7. With a funded provider float, test one low-value transaction for each
    available service. Check provider references/status, customer wallet,
    ledger, confirmed-failure refunds, and duplicate/retry behavior. Do not
@@ -229,10 +235,11 @@ The app has Edge Function adapters for Paystack wallet funding (checkout,
 server verification and signed webhook) and for airtime, data plans and
 purchases, cable plans/verification/purchases, electricity providers,
 verification/purchases, and transaction requery. The core database migrations
-are applied; `vtu-provider` and `paystack-payments` are deployed. The VTU
-endpoint responds to CORS preflight and rejects unauthenticated requests, but
-no authenticated provider operation has been run. Paystack has not been
-configured with `PAYSTACK_SECRET_KEY`, so its endpoint fails closed. Neither
+are applied; `vtu-provider` and `paystack-payments` are deployed. The VTU endpoint responds
+to CORS preflight and rejects unauthenticated requests, but no authenticated
+provider operation has been run. Paystack's callback is configured, and its
+unauthenticated initialization request reaches the authentication check. This
+does not validate the Paystack key or prove that wallet funding works. Neither
 integration has passed authenticated end-to-end transaction testing. The VTU
 adapter does not provide airtime PIN generation, result-checker PINs, bulk SMS,
 ISP subscriptions, betting, transactional email, or gift voucher
@@ -247,11 +254,13 @@ for an unauthenticated read request, confirming endpoint routing and the
 authentication boundary without performing a purchase. `BIGISUB_API_TOKEN`
 and `BIGISUB_TRANSACTION_PIN` secret names exist, but their values and upstream
 operations have not been authenticated or validated. A direct request to
-`paystack-payments` returned HTTP 503, “Payment service is not configured,”
-because `PAYSTACK_SECRET_KEY` is absent. `PAYSTACK_CALLBACK_URL` is configured.
-These checks confirm deployment/routing and fail-closed behavior only; they do
-not confirm successful transactions. No low-value provider or Paystack Test
-transaction has been run.
+`paystack-payments` with a valid JSON body and no user token returned HTTP 401,
+“Authentication is required,” reaching the authentication check rather than
+the missing-configuration response. `PAYSTACK_CALLBACK_URL` is configured.
+This does not establish that the Paystack key is valid, whether it is Test or
+Live mode, or that a transaction succeeds. These checks confirm
+deployment/routing and fail-closed behavior only. No low-value provider or
+Paystack Test transaction has been run.
 
 Before enabling customers to transact:
 

@@ -29,7 +29,21 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '$serviceName is not available yet.',
+          '$serviceName is not enabled yet.',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: AppColors.primaryBlue,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showAwaitingProviderContract(String serviceName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '$serviceName is disabled until Bigisub request and response details '
+          'are verified.',
           style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
         ),
         backgroundColor: AppColors.primaryBlue,
@@ -179,13 +193,16 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                     title: 'Bulk SMS',
                     icon: Icons.chat_bubble_outline_rounded,
                     isComingSoon: true,
-                    onTap: _showBulkSmsModal,
+                    onTap: () =>
+                        _showAwaitingProviderContract('Bulk SMS'),
                   ),
                   _ServiceCardData(
-                    title: 'Printing Airtime',
+                    title: 'Airtime PIN Generation',
                     icon: Icons.print_rounded,
                     isComingSoon: true,
-                    onTap: _showAirtimePrintingModal,
+                    onTap: () => _showAwaitingProviderContract(
+                      'Airtime PIN generation',
+                    ),
                   ),
                 ],
               ),
@@ -247,10 +264,12 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                 isDark: isDark,
                 cards: [
                   _ServiceCardData(
-                    title: 'Result Checker',
+                    title: 'Result Checker PINs',
                     icon: Icons.school_rounded,
                     isComingSoon: true,
-                    onTap: () => _showComingSoon('Result Checker PINs'),
+                    onTap: () => _showAwaitingProviderContract(
+                      'Result Checker PINs',
+                    ),
                   ),
                 ],
               ),
@@ -517,10 +536,6 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
     );
   }
 
-  // --- Services awaiting provider configuration ---
-  void _showBulkSmsModal() => _showComingSoon('Bulk SMS');
-
-  void _showAirtimePrintingModal() => _showComingSoon('Airtime PIN generation');
 }
 
 class _ServiceCardData {

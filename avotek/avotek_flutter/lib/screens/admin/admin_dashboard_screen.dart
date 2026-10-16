@@ -199,10 +199,10 @@ class AdminDashboardScreen extends StatelessWidget {
           Expanded(
             child: Text(
               'Provider credentials and privileged data must be managed on the '
-              'secured Supabase backend. Avotek never stores API secrets in '
-              'this browser. These links require a Supabase project account; '
-              'the Avotek admin email alone does not grant Supabase project '
-              'permissions.',
+              'secured Supabase backend. Never enter or store API secrets in '
+              'Avotek or share them in chat. These links require a Supabase '
+              'project account; the Avotek admin email alone does not grant '
+              'Supabase project permissions.',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 height: 1.5,
@@ -254,13 +254,49 @@ class AdminDashboardScreen extends StatelessWidget {
     final tools = [
       _AdminTool(
         icon: Icons.key_rounded,
-        title: 'Provider API secrets',
+        title: 'Edge Function secrets',
         description:
-            'Configure BIGISUB_API_TOKEN and payment-provider secrets in '
-            'Supabase Edge Function settings.',
+            'Set BIGISUB_API_TOKEN, BIGISUB_TRANSACTION_PIN, '
+            'PAYSTACK_SECRET_KEY, and PAYSTACK_CALLBACK_URL in Supabase. '
+            'Never enter key values in Avotek.',
         onTap: () => _openExternal(
           context,
           Uri.parse('$_projectUrl/settings/functions'),
+        ),
+      ),
+      _AdminTool(
+        icon: Icons.functions_rounded,
+        title: 'Edge Functions and logs',
+        description:
+            'Review deployments and logs for vtu-provider, '
+            'paystack-payments, and identifier-login.',
+        onTap: () => _openExternal(
+          context,
+          Uri.parse('$_projectUrl/functions'),
+        ),
+      ),
+      _AdminTool(
+        icon: Icons.payments_outlined,
+        title: 'Paystack dashboard',
+        description:
+            'Webhook: https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/'
+            'paystack-payments. Callback: Avotek wallet/fund. Complete '
+            'Test-mode checks before Live.',
+        onTap: () => _openExternal(
+          context,
+          Uri.parse('https://dashboard.paystack.com/'),
+        ),
+      ),
+      _AdminTool(
+        icon: Icons.menu_book_outlined,
+        title: 'Bigisub API documentation',
+        description:
+            'Open provider documentation for request fields and status '
+            'contracts, including result-checker PINs, bulk SMS, and airtime '
+            'PIN generation.',
+        onTap: () => _openExternal(
+          context,
+          Uri.parse('https://rif.africa/technotronics/api/bigisub'),
         ),
       ),
       _AdminTool(
@@ -280,6 +316,19 @@ class AdminDashboardScreen extends StatelessWidget {
         onTap: () =>
             _openExternal(context, Uri.parse('$_projectUrl/auth/users')),
       ),
+      _AdminTool(
+        icon: Icons.checklist_rounded,
+        title: 'Go-live checklist',
+        description:
+            'Review required migrations, endpoint checks, provider tests, and '
+            'payment verification before enabling customer transactions.',
+        onTap: () => _openExternal(
+          context,
+          Uri.parse(
+            'https://github.com/Adevictorolu/Avotek/blob/main/docs/GO_LIVE_NEXT_STEPS.md',
+          ),
+        ),
+      ),
     ];
     return _toolGrid(tools, width, isDark);
   }
@@ -298,7 +347,7 @@ class AdminDashboardScreen extends StatelessWidget {
         crossAxisCount: count,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        mainAxisExtent: 154,
+        mainAxisExtent: 176,
       ),
       itemBuilder: (context, index) => _AdminToolCard(
         tool: tools[index],
@@ -374,7 +423,7 @@ class _AdminToolCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         tool.description,
-                        maxLines: 4,
+                        maxLines: 5,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
