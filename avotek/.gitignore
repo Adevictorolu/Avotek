@@ -2,5 +2,8 @@
 .dart_tool/
 .packages
 
+# Supabase CLI link and local project metadata
+supabase/.temp/
+
 # Pubspec overrides
 pubspec_overrides.yaml

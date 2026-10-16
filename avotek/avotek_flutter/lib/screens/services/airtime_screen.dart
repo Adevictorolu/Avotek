@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/nigerian_network_detector.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
 import '../../widgets/avotek_loading_indicator.dart';
@@ -26,6 +27,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
   final _pinController = TextEditingController();
 
   String _selectedNetwork = 'MTN';
+  bool _networkManuallySelected = false;
   String _selectedTopupType = 'VTU';
   double _amount = 0.0;
   bool _isProcessing = false;
@@ -63,8 +65,19 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
   @override
   void initState() {
     super.initState();
-    _phoneController.addListener(() => setState(() {}));
+    _phoneController.addListener(_onPhoneChanged);
     _amountController.addListener(_onAmountInputChanged);
+  }
+
+  void _onPhoneChanged() {
+    final phone = _phoneController.text;
+    if (phone.trim().isEmpty) {
+      _networkManuallySelected = false;
+    } else if (!_networkManuallySelected) {
+      final detected = NigerianNetworkDetector.detect(phone);
+      if (detected != null) _selectedNetwork = detected;
+    }
+    setState(() {});
   }
 
   void _onAmountInputChanged() {
@@ -130,6 +143,15 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     }
 
     final auth = context.read<AuthProvider>();
+    final currentUser = auth.user;
+    if (currentUser == null) {
+      TopNotification.showError(
+        context,
+        'Your session has expired. Sign in again to continue.',
+        title: 'Sign-in Required',
+      );
+      return;
+    }
     final vtu = context.read<VtuProvider>();
 
     setState(() {
@@ -169,7 +191,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
 
       // 4. Dispatch the order through the server-side VTU provider.
       final result = await vtu.buyAirtime(
-        userId: auth.user?.id ?? 1001,
+        userId: currentUser.id,
         network: _selectedNetwork,
         phone: phone,
         amount: _amount,
@@ -517,8 +539,10 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           children: _networks.map((net) {
             final isSelected = _selectedNetwork == net['code'];
             return InkWell(
-              onTap: () =>
-                  setState(() => _selectedNetwork = net['code'] as String),
+              onTap: () => setState(() {
+                _selectedNetwork = net['code'] as String;
+                _networkManuallySelected = true;
+              }),
               borderRadius: BorderRadius.circular(16),
               child: Container(
                 width: 96,
@@ -693,23 +717,43 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
               color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1),
             ),
           ),
-          child: TextField(
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : Colors.black,
-            ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: 'Phone number',
-              hintStyle: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isDark ? const Color(0xFF64748B) : Colors.black38,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'Phone number',
+                  hintStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? const Color(0xFF64748B) : Colors.black38,
+                  ),
+                ),
               ),
-            ),
+              if (NigerianNetworkDetector.detect(_phoneController.text) != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    _networkManuallySelected
+                        ? 'Network selected manually. Ported numbers may use a different network.'
+                        : 'Suggested network: $_selectedNetwork. Confirm if this number was ported.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 16),

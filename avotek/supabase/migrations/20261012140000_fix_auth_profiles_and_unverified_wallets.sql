@@ -15,8 +15,12 @@ WHERE username IS NULL OR BTRIM(username) = '';
 WITH duplicate_ids AS (
     SELECT id
     FROM public.profiles
-    GROUP BY UPPER(avo_id)
-    HAVING COUNT(*) > 1
+    WHERE UPPER(avo_id) IN (
+        SELECT UPPER(avo_id)
+        FROM public.profiles
+        GROUP BY UPPER(avo_id)
+        HAVING COUNT(*) > 1
+    )
 )
 UPDATE public.profiles AS profile
 SET avo_id = 'AVO-' || UPPER(REPLACE(profile.id::TEXT, '-', ''))
@@ -26,8 +30,12 @@ WHERE profile.id = duplicate_ids.id;
 WITH duplicate_usernames AS (
     SELECT id
     FROM public.profiles
-    GROUP BY LOWER(username)
-    HAVING COUNT(*) > 1
+    WHERE LOWER(username) IN (
+        SELECT LOWER(username)
+        FROM public.profiles
+        GROUP BY LOWER(username)
+        HAVING COUNT(*) > 1
+    )
 )
 UPDATE public.profiles AS profile
 SET username = LOWER(profile.username) || '_' ||

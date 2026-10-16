@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/services/vtu_api_service.dart';
 import '../core/supabase/supabase_service.dart';
+import '../core/utils/nigerian_network_detector.dart';
 import '../models/vtu_models.dart';
 
 class VtuProvider extends ChangeNotifier {
@@ -135,57 +136,8 @@ class VtuProvider extends ChangeNotifier {
   }
 
   // Auto-detect Nigerian Telecom network from phone prefix
-  static String detectNetwork(String phone) {
-    final clean = phone.replaceAll(RegExp(r'\D'), '');
-    if (clean.length < 4) return 'MTN';
-
-    String prefix = clean.startsWith('234') && clean.length >= 6
-        ? '0${clean.substring(3, 6)}'
-        : clean.substring(0, 4);
-
-    const mtnPrefixes = [
-      '0803',
-      '0806',
-      '0703',
-      '0706',
-      '0813',
-      '0816',
-      '0810',
-      '0814',
-      '0903',
-      '0906',
-      '0913',
-      '0916',
-    ];
-    const airtelPrefixes = [
-      '0802',
-      '0808',
-      '0708',
-      '0812',
-      '0701',
-      '0902',
-      '0901',
-      '0907',
-      '0912',
-    ];
-    const gloPrefixes = [
-      '0805',
-      '0807',
-      '0705',
-      '0815',
-      '0811',
-      '0905',
-      '0915',
-    ];
-    const nineMobilePrefixes = ['0809', '0817', '0818', '0909', '0908'];
-
-    if (mtnPrefixes.contains(prefix)) return 'MTN';
-    if (airtelPrefixes.contains(prefix)) return 'AIRTEL';
-    if (gloPrefixes.contains(prefix)) return 'GLO';
-    if (nineMobilePrefixes.contains(prefix)) return '9MOBILE';
-
-    return 'MTN';
-  }
+  static String detectNetwork(String phone) =>
+      NigerianNetworkDetector.detect(phone) ?? 'MTN';
 
   /// Fetch live data plans through the server-side provider proxy.
   Future<List<Map<String, dynamic>>> fetchLiveDataPlans(

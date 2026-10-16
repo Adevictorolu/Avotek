@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/nigerian_network_detector.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
 import '../../widgets/avotek_loading_indicator.dart';
@@ -24,6 +25,7 @@ class _DataScreenState extends State<DataScreen> {
   final _pinController = TextEditingController();
 
   String _selectedNetwork = 'MTN';
+  bool _networkManuallySelected = false;
   String _selectedCategory = 'SME';
   Map<String, dynamic>? _selectedPlan;
   bool _isProcessing = false;
@@ -58,79 +60,68 @@ class _DataScreenState extends State<DataScreen> {
 
   final List<String> _categories = ['SME', 'Gifting', 'Corporate'];
 
-  final Map<String, List<Map<String, dynamic>>> _plansMap = {
-    'MTN': [
-      {'plan': '500MB SME (30 Days)', 'price': 140.0, 'code': 'MTN-500MB'},
-      {'plan': '1GB SME (30 Days)', 'price': 260.0, 'code': 'MTN-1GB'},
-      {'plan': '2GB SME (30 Days)', 'price': 520.0, 'code': 'MTN-2GB'},
-      {'plan': '3GB SME (30 Days)', 'price': 780.0, 'code': 'MTN-3GB'},
-      {'plan': '5GB SME (30 Days)', 'price': 1300.0, 'code': 'MTN-5GB'},
-      {'plan': '10GB SME (30 Days)', 'price': 2600.0, 'code': 'MTN-10GB'},
-    ],
-    'GLO': [
-      {
-        'plan': '500MB Corporate (30 Days)',
-        'price': 145.0,
-        'code': 'GLO-500MB',
-      },
-      {'plan': '1GB Corporate (30 Days)', 'price': 255.0, 'code': 'GLO-1GB'},
-      {'plan': '2GB Corporate (30 Days)', 'price': 510.0, 'code': 'GLO-2GB'},
-      {'plan': '5GB Corporate (30 Days)', 'price': 1275.0, 'code': 'GLO-5GB'},
-      {'plan': '10GB Corporate (30 Days)', 'price': 2550.0, 'code': 'GLO-10GB'},
-    ],
-    'AIRTEL': [
-      {'plan': '500MB CG (30 Days)', 'price': 150.0, 'code': 'AIR-500MB'},
-      {'plan': '1GB CG (30 Days)', 'price': 265.0, 'code': 'AIR-1GB'},
-      {'plan': '2GB CG (30 Days)', 'price': 530.0, 'code': 'AIR-2GB'},
-      {'plan': '5GB CG (30 Days)', 'price': 1325.0, 'code': 'AIR-5GB'},
-      {'plan': '10GB CG (30 Days)', 'price': 2650.0, 'code': 'AIR-10GB'},
-    ],
-    'T2': [
-      {'plan': '1GB SME (30 Days)', 'price': 240.0, 'code': 'T2-1GB'},
-      {'plan': '2GB SME (30 Days)', 'price': 480.0, 'code': 'T2-2GB'},
-      {'plan': '5GB SME (30 Days)', 'price': 1200.0, 'code': 'T2-5GB'},
-    ],
-    'VITEL': [
-      {'plan': '1GB Data (30 Days)', 'price': 250.0, 'code': 'VIT-1GB'},
-      {'plan': '2GB Data (30 Days)', 'price': 500.0, 'code': 'VIT-2GB'},
-      {'plan': '5GB Data (30 Days)', 'price': 1250.0, 'code': 'VIT-5GB'},
-    ],
-  };
-
   List<Map<String, dynamic>> _livePlans = [];
   bool _isLoadingPlans = false;
+  String? _planLoadError;
 
   @override
   void initState() {
     super.initState();
-    _selectedPlan = _plansMap['MTN']![1];
+    _phoneController.addListener(_onPhoneChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadLivePlans());
   }
 
+  void _onPhoneChanged() {
+    final phone = _phoneController.text;
+    if (phone.trim().isEmpty) {
+      _networkManuallySelected = false;
+    } else if (!_networkManuallySelected) {
+      final detected = NigerianNetworkDetector.detect(phone);
+      if (detected != null && detected != _selectedNetwork) {
+        _onNetworkSelected(detected, manuallySelected: false);
+      }
+    }
+    setState(() {});
+  }
+
   Future<void> _loadLivePlans() async {
-    setState(() => _isLoadingPlans = true);
+    final network = _selectedNetwork;
+    setState(() {
+      _isLoadingPlans = true;
+      _planLoadError = null;
+      _livePlans = [];
+      _selectedPlan = null;
+    });
     try {
       final vtu = context.read<VtuProvider>();
-      final rawPlans = await vtu.fetchLiveDataPlans(_selectedNetwork);
+      final rawPlans = await vtu.fetchLiveDataPlans(network);
+      if (!mounted || network != _selectedNetwork) return;
       if (rawPlans.isNotEmpty && mounted) {
-        final formatted = rawPlans.map((p) {
-          final size = p['size'] ?? '';
-          final vol = p['plan_volume'] ?? '';
-          final type = p['plantype'] ?? '';
-          final val = p['validity'] ?? '';
-          final amt =
-              (p['amount'] as num?)?.toDouble() ??
-              (p['plan_amount'] as num?)?.toDouble() ??
-              0.0;
-          final id = (p['id'] as num?)?.toInt() ?? 0;
-          return {
-            'id': id,
-            'plan': '$size$vol $type ($val)',
-            'price': amt,
-            'code': 'BIGISUB-$id',
-            'plantype': type.toString().toUpperCase(),
-          };
-        }).toList();
+        final formatted = rawPlans
+            .map((p) {
+              final size = p['size'] ?? '';
+              final vol = p['plan_volume'] ?? '';
+              final type = p['plantype'] ?? '';
+              final val = p['validity'] ?? '';
+              final amt =
+                  (p['amount'] as num?)?.toDouble() ??
+                  (p['plan_amount'] as num?)?.toDouble() ??
+                  0.0;
+              final id = (p['id'] as num?)?.toInt() ?? 0;
+              return {
+                'id': id,
+                'plan': '$size$vol $type ($val)',
+                'price': amt,
+                'code': 'BIGISUB-$id',
+                'plantype': type.toString().toUpperCase(),
+              };
+            })
+            .where((plan) {
+              return (plan['id'] as int) > 0 &&
+                  (plan['price'] as double) > 0 &&
+                  (plan['plan'] as String).trim().isNotEmpty;
+            })
+            .toList();
 
         setState(() {
           _livePlans = formatted;
@@ -138,15 +129,27 @@ class _DataScreenState extends State<DataScreen> {
           final filtered = _getFilteredPlans();
           if (filtered.isNotEmpty) {
             _selectedPlan = filtered.first;
+          } else {
+            _planLoadError = 'No live data bundles are currently available.';
           }
         });
         return;
       }
-    } catch (e) {
-      debugPrint('Error loading live plans: $e');
-    }
-    if (mounted) {
-      setState(() => _isLoadingPlans = false);
+      setState(() {
+        _isLoadingPlans = false;
+        _planLoadError = 'No live data bundles are currently available.';
+      });
+    } catch (error) {
+      if (!mounted || network != _selectedNetwork) return;
+      setState(() {
+        _isLoadingPlans = false;
+        _planLoadError =
+            'Could not load live data bundles. Check your connection and retry.';
+      });
+      TopNotification.showError(
+        context,
+        'Could not load live data bundles: $error',
+      );
     }
   }
 
@@ -159,7 +162,7 @@ class _DataScreenState extends State<DataScreen> {
       if (filtered.isNotEmpty) return filtered;
       return _livePlans;
     }
-    return _plansMap[_selectedNetwork] ?? [];
+    return const [];
   }
 
   @override
@@ -169,13 +172,14 @@ class _DataScreenState extends State<DataScreen> {
     super.dispose();
   }
 
-  void _onNetworkSelected(String netCode) {
+  void _onNetworkSelected(
+    String netCode, {
+    bool manuallySelected = true,
+  }) {
     setState(() {
       _selectedNetwork = netCode;
-      final fallback = _plansMap[netCode];
-      if (fallback != null && fallback.isNotEmpty) {
-        _selectedPlan = fallback.first;
-      }
+      _networkManuallySelected = manuallySelected;
+      _selectedPlan = null;
     });
     _loadLivePlans();
   }
@@ -220,6 +224,15 @@ class _DataScreenState extends State<DataScreen> {
     }
 
     final auth = context.read<AuthProvider>();
+    final currentUser = auth.user;
+    if (currentUser == null) {
+      TopNotification.showError(
+        context,
+        'Your session has expired. Sign in again to continue.',
+        title: 'Sign-in Required',
+      );
+      return;
+    }
     final vtu = context.read<VtuProvider>();
     final amount = (_selectedPlan!['price'] as num).toDouble();
 
@@ -260,7 +273,7 @@ class _DataScreenState extends State<DataScreen> {
 
       // 4. Dispatch the order through the server-side VTU provider.
       final result = await vtu.buyData(
-        userId: auth.user?.id ?? 1001,
+        userId: currentUser.id,
         network: _selectedNetwork,
         phone: phone,
         variationCode: _selectedPlan!['plan'] as String,
@@ -632,55 +645,93 @@ class _DataScreenState extends State<DataScreen> {
           ],
         ),
         const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF141720) : Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1),
+        if (currentPlans.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF141720) : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF26334D)
+                    : const Color(0xFFCBD5E1),
+              ),
             ),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<Map<String, dynamic>>(
-              isExpanded: true,
-              value: currentPlans.contains(_selectedPlan)
-                  ? _selectedPlan
-                  : (currentPlans.isNotEmpty ? currentPlans.first : null),
-              dropdownColor: isDark ? const Color(0xFF141720) : Colors.white,
-              items: currentPlans.map((plan) {
-                final price = (plan['price'] as num).toDouble();
-                return DropdownMenuItem<Map<String, dynamic>>(
-                  value: plan,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          plan['plan'] as String,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isLoadingPlans
+                      ? 'Loading live data bundles…'
+                      : (_planLoadError ?? 'No live data bundles available.'),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: isDark ? Colors.white70 : AppColors.slateGrey,
+                  ),
+                ),
+                if (!_isLoadingPlans) ...[
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: _loadLivePlans,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ],
+            ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF141720) : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF26334D)
+                    : const Color(0xFFCBD5E1),
+              ),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<Map<String, dynamic>>(
+                isExpanded: true,
+                value: currentPlans.contains(_selectedPlan)
+                    ? _selectedPlan
+                    : currentPlans.first,
+                dropdownColor: isDark ? const Color(0xFF141720) : Colors.white,
+                items: currentPlans.map((plan) {
+                  final price = (plan['price'] as num).toDouble();
+                  return DropdownMenuItem<Map<String, dynamic>>(
+                    value: plan,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            plan['plan'] as String,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          '₦${price.toStringAsFixed(2)}',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF00D2FF),
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      Text(
-                        '₦${price.toStringAsFixed(2)}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF00D2FF),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-              onChanged: (val) => setState(() => _selectedPlan = val),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) => setState(() => _selectedPlan = val),
+              ),
             ),
           ),
-        ),
         const SizedBox(height: 24),
 
         // STEP 4: RECIPIENT DETAILS
@@ -702,6 +753,21 @@ class _DataScreenState extends State<DataScreen> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
         ),
+        if (NigerianNetworkDetector.detect(_phoneController.text) != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              _networkManuallySelected
+                  ? 'Network selected manually. Ported numbers may use a different network.'
+                  : 'Suggested network: $_selectedNetwork. Confirm if this number was ported.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                color: isDark
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xFF64748B),
+              ),
+            ),
+          ),
         const SizedBox(height: 14),
         TextField(
           controller: _pinController,

@@ -5,6 +5,26 @@ deploy Supabase functions, configure Auth redirects, or activate payment
 providers. No real wallet top-up or provider purchase should be enabled until
 the relevant server configuration and provider tests below pass.
 
+## Current linked-project status
+
+The latest check of the linked Supabase project found:
+
+- Migrations `20261010120000`, `20261012140000`, and `20261014180000` are
+  applied, and the core profile, wallet, transaction, and VTU tables/RPCs exist.
+- `identifier-login` and `vtu-provider` are active. `paystack-payments` is not
+  deployed.
+- Paystack requires the Edge Function secrets `PAYSTACK_SECRET_KEY` and
+  `PAYSTACK_CALLBACK_URL`. Those names were not present; legacy-labelled
+  Paystack secrets do not configure this function. Secret values were not
+  retrieved or copied.
+- No authenticated provider purchase or Paystack Test-mode transaction has
+  been run. The provider endpoints and credentials still need verification
+  before customer transactions are enabled.
+
+Credentials previously shared in chat should be rotated before use. Add
+replacement values directly in Supabase Dashboard → Edge Functions → Secrets;
+do not send them in chat, source control, or logs.
+
 ## 1. Fix the localhost authentication callback
 
 The attached `ERR_CONNECTION_REFUSED` page means the browser was sent to a
@@ -94,12 +114,11 @@ never put them in Flutter or the repository.
 
 5. Confirm the adapter paths, payload fields, plan-price fields, transaction
    status meanings, and live behavior with the upstream provider. The public
-   documentation URL provided in chat did not expose enough endpoint detail to
-   verify those contracts, and this workspace has no authenticated Supabase
-   deployment access. The configured function name must be checked against the
-   deployed project; an earlier deployment responded that the old function
-   name was not found. Do not claim the purchase flows are live until a
-   deployment and authenticated end-to-end tests succeed.
+   documentation URL provided in chat did not expose enough endpoint detail
+   to verify those contracts. Although `vtu-provider` is now active in the
+   linked project, no authenticated end-to-end purchase test has been run.
+   Do not claim purchase flows are live until the contracts are confirmed and
+   controlled tests succeed.
 
 6. Education PINs, ISP, bulk SMS, and airtime PIN generation do not have
    verified contracts implemented in the VTU adapter. Obtain endpoint paths,
@@ -204,30 +223,33 @@ service live based on the category list alone.
 The app has Edge Function adapters for Paystack wallet funding (checkout,
 server verification and signed webhook) and for airtime, data plans and
 purchases, cable plans/verification/purchases, electricity providers,
-verification/purchases, and transaction requery. These still need deployment,
-the production database functions and secrets, and end-to-end validation in
-the intended project. The VTU adapter does not provide airtime PIN generation,
-result-checker PINs, bulk SMS, ISP subscriptions, betting, transactional
-email, or gift voucher issuance/redemption. Betting has been removed from the
-service menu; unintegrated services are shown as coming soon instead of
-reporting fake success.
+verification/purchases, and transaction requery. The core database migrations
+are applied and `vtu-provider` is active in the linked project, but
+`paystack-payments` is not deployed and neither integration has passed
+authenticated end-to-end transaction testing. The VTU adapter does not provide
+airtime PIN generation, result-checker PINs, bulk SMS, ISP subscriptions,
+betting, transactional email, or gift voucher issuance/redemption. Betting has
+been removed from the service menu; unintegrated services are shown as coming
+soon instead of reporting fake success.
 
-**Production deployment check (14 October 2026):** an OPTIONS preflight to
-`https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/bigisub` returned HTTP
-404 with `NOT_FOUND` / “Requested function was not found.” The browser's CORS
-error is therefore a symptom of the missing production function, not evidence
-that a purchase reached the upstream provider. Deploy `vtu-provider` to the intended
-Supabase project, configure rotated secrets, then repeat the preflight and
-authenticated low-value tests before enabling purchases.
+**Latest linked-project check:** the migrations are applied and
+`identifier-login` / `vtu-provider` are active; `paystack-payments` is not
+deployed. An earlier OPTIONS preflight to the obsolete `/bigisub` function URL
+returned HTTP 404. This deployment check does not confirm upstream connectivity
+or a completed purchase. No low-value provider or Paystack Test transaction has
+been run.
 
 Before enabling customers to transact:
 
 1. **Rotate the Bigisub token that was pasted into chat.** Store the rotated
    token and provider transaction PIN only as Supabase Edge Function secrets.
-   Never put either value in Flutter, Git, logs, or support messages.
-2. Apply and verify the Supabase migrations and deploy `vtu-provider`,
-   `paystack-payments`, and `identifier-login`. Confirm the functions read
-   their server secrets and authorize signed-in users where required.
+   Never put either value in Flutter, Git, logs, or support messages. Confirm
+   the provider PIN is the upstream API transaction PIN, not a customer's
+   Avotek purchase PIN.
+2. Verify the migrations and active functions in Supabase. After rotating the
+   provider credentials, redeploy `vtu-provider`; deploy `paystack-payments`
+   only after its required secrets are configured. Confirm functions authorize
+   signed-in users where required.
 3. Confirm Bigisub's exact endpoint, field names, price rules, PIN-generation
    quantity contract, and status/refund meanings from the authenticated
    provider documentation. The customer phone number must not be sent for
