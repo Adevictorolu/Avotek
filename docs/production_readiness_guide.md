@@ -6,7 +6,7 @@ This comprehensive guide details the exact steps required to take the **AVOTEK V
 
 ## Table of Contents
 1. [Overview & Architectural Topography](#1-overview--architectural-topography)
-2. [Paystack Live Setup (Dedicated NUBAN & Webhooks)](#2-paystack-live-setup-dedicated-nuban--webhooks)
+2. [Paystack Checkout & Webhooks](#2-paystack-checkout-and-webhook-setup)
 3. [Bigisub VTU Setup & Float Funding](#3-bigisub-vtu-setup--float-funding)
 4. [WhatsApp Cloud API & Termii SMS Setup](#4-whatsapp-cloud-api--termii-sms-setup)
 5. [CAC Business Registration Operations](#5-cac-business-registration-operations)
@@ -43,12 +43,42 @@ graph TD
 ## 2. Paystack Checkout and Webhook Setup
 
 Paystack checkout initialization, server-side verification, and signed webhook
-handling are implemented in `paystack-payments`. Wallet crediting remains
-disabled in production until the database migration and function are deployed,
+handling are implemented in the `paystack-payments` Supabase Edge Function.
+The function credits a wallet only after an authenticated initialization
+record, Paystack server-side verification, and exact reference, status,
+currency, and amount checks. This integration is not certified ready for
+customer transactions until the database migration and function are deployed,
 Paystack secrets and URLs are configured, and the Test-mode checks in
 [`AVOTEK_GO_LIVE_STATUS.md`](./AVOTEK_GO_LIVE_STATUS.md) pass. Dedicated Virtual
 Accounts are not implemented. Do not accept screenshots or manual transfers as
 proof of payment.
+
+### Current Paystack transaction API flow
+
+The server uses the official Paystack REST API over HTTPS:
+
+1. `POST https://api.paystack.co/transaction/initialize` with the user's
+   verified email, an integer amount in the currency subunit (NGN kobo, so
+   naira multiplied by 100), `currency: "NGN"`, a server-generated unique
+   reference, the callback URL, and wallet-funding metadata.
+2. Return only the validated HTTPS `authorization_url` and reference to the
+   signed-in Flutter client. The secret key remains in Supabase.
+3. After checkout, verify with
+   `GET https://api.paystack.co/transaction/verify/{reference}`. Do not treat
+   the redirect, `trxref`, a client response, or a screenshot as payment
+   confirmation.
+4. For a valid `charge.success` webhook, check `x-paystack-signature` as
+   HMAC-SHA512 of the exact raw request body using `PAYSTACK_SECRET_KEY`, then
+   independently verify the transaction. Credit once through the locked
+   `credit_paystack_wallet_funding` database function; duplicate webhook or
+   verification calls must not credit twice.
+
+The app currently accepts whole-naira amounts from ₦100 to ₦1,000,000. This is
+Avotek's own limit; the amount sent to Paystack is in kobo. The current webhook
+endpoint is
+`https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/paystack-payments`.
+`PAYSTACK_CALLBACK_URL` is the customer's return URL, not the webhook, and no
+separate `PAYSTACK_WEBHOOK_SECRET` is used by this implementation.
 
 ### 2.1 Configure Paystack keys safely
 1. Log into your [Paystack Dashboard](https://dashboard.paystack.com).
@@ -183,6 +213,11 @@ Never use a client-side shared passkey. Before exposing the admin suite, enforce
 ---
 
 ## 8. Serverpod Backend & Docker Production Deployment
+
+> **Legacy deployment notes:** This section describes an earlier Serverpod
+> deployment and its `.env.production` variables. The current app uses
+> Supabase Auth, PostgreSQL, and Edge Functions. Do not deploy this Serverpod
+> configuration as a replacement for the Paystack/Supabase setup in section 2.
 
 ### 8.1 Environment Variables
 Create `.env.production` in `avotek/avotek_server/config/`:

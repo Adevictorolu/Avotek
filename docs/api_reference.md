@@ -1,5 +1,13 @@
 # AVOTEK API Reference & Protocol Specification
 
+> **Status:** This document describes the earlier Serverpod API design and is
+> not the API currently used by the Flutter app. The deployed wallet-funding
+> integration is the authenticated Supabase Edge Function
+> `paystack-payments`, documented in
+> [`production_readiness_guide.md`](./production_readiness_guide.md#2-paystack-checkout-and-webhook-setup).
+> Do not configure Paystack against the legacy `POST /webhook/paystack` route
+> below; use the Supabase function webhook URL in the go-live guide.
+
 AVOTEK leverages **Serverpod** as its backend architecture. Flutter clients connect directly to Serverpod via typed binary/JSON RPC protocols with zero REST boilerplate or manually serialized request models.
 
 The generated typed client package `avotek_client` exposes endpoints grouped by business domain.
@@ -133,9 +141,11 @@ Requires elevated administrative privileges (`admin` or `superadmin` role).
 
 ---
 
-## 6. HTTP Webhook Endpoints
+## 6. Legacy HTTP Webhook Endpoints (not deployed)
 
-Mounted via Serverpod Web Server on port `8082`:
+The endpoints in this section document the earlier Serverpod design. They are
+not mounted by the current Supabase deployment and must not be used for
+production Paystack configuration.
 
 ### `POST /webhook/paystack`
 - **Security:** Validates `X-Paystack-Signature` against HMAC-SHA512 of raw body with `PAYSTACK_WEBHOOK_SECRET`.

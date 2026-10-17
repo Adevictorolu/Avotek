@@ -1,5 +1,13 @@
 # AVOTEK VTUPress, Aggregator Keys & Payments Setup Guide
 
+> **Legacy guide:** The current app does not use the Serverpod/VTUPress,
+> VTpass, ClubKonnect, or automatic mock-aggregator setup described here.
+> Wallet funding currently uses Paystack hosted checkout through the
+> `paystack-payments` Supabase Edge Function. Follow
+> [`AVOTEK_GO_LIVE_STATUS.md`](./AVOTEK_GO_LIVE_STATUS.md) for the current
+> deployment and testing steps. Dedicated virtual accounts and automatic
+> simulated payments are not implemented.
+
 This guide provides step-by-step instructions on how to set up **VTUPress**, **VTpass**, **ClubKonnect**, and **Paystack** for AVOTEK, how to retrieve all API keys and secret keys, fund your float balances, and ensure the frontend and backend operate synchronously.
 
 ---
@@ -52,28 +60,27 @@ VTUPress itself connects to upstream providers like **VTpass** and **ClubKonnect
 
 ---
 
-## 3. Paystack Automated Payments & Customer Virtual Accounts
+## 3. Paystack Hosted Checkout (current integration)
 
-AVOTEK automates customer wallet funding using **Dedicated Virtual Accounts (DVA)**. Every user registered on AVOTEK gets an automated Wema Bank or Titan Trust account number. When the customer makes a bank transfer, Paystack instantly pings AVOTEK via webhook to credit their wallet.
+The current wallet-funding flow creates a hosted Paystack checkout session from
+the authenticated Supabase Edge Function. It does not provision dedicated
+virtual accounts or accept manual bank transfers as proof of payment.
 
-### 3.1 Obtaining Paystack Live Keys
-1. Log in to [dashboard.paystack.com](https://dashboard.paystack.com).
-2. Complete business compliance (Tier 2 or Tier 3).
-3. Switch toggle to **Live Mode** in the top navigation.
-4. Go to **Settings > API Keys & Webhooks**.
-5. Copy:
-   - **Secret Key:** `sk_live_...`
-   - **Public Key:** `pk_live_...`
-6. Under **Preferences**, enable **Dedicated Virtual Accounts**.
+### 3.1 Configure keys and URLs
 
-### 3.2 Setting the Paystack Webhook
-1. On the same **API Keys & Webhooks** page, locate **Live Webhook URL**.
-2. Set your production webhook URL:
-   ```text
-   https://api.yourdomain.com:8082/webhook/paystack
-   ```
-   *(Or through Nginx/reverse proxy: `https://api.yourdomain.com/webhook/paystack`)*
-3. When transfers arrive, AVOTEK verifies the `x-paystack-signature` using HMAC SHA512 and credits the customer's wallet instantly with atomic ledger locking.
+1. Start with Paystack **Test Mode** and save its secret key in Supabase
+   Edge Function secrets as `PAYSTACK_SECRET_KEY`. Do not put it in Flutter,
+   Git, chat, or logs.
+2. Set `PAYSTACK_CALLBACK_URL` to
+   `https://adevictorolu.github.io/Avotek/#/wallet/fund`.
+3. Set Paystack's webhook URL to
+   `https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/paystack-payments`.
+   This is the webhook endpoint; the callback is only the customer's return
+   URL. Do not configure a separate `PAYSTACK_WEBHOOK_SECRET`; the function
+   verifies `x-paystack-signature` with `PAYSTACK_SECRET_KEY`.
+4. Follow the Test-mode and Live-mode verification steps in
+   [`AVOTEK_GO_LIVE_STATUS.md`](./AVOTEK_GO_LIVE_STATUS.md). A Live secret key
+   or configured URL alone does not establish that wallet funding works.
 
 ---
 
@@ -97,10 +104,10 @@ CK_USER_ID=your_clubkonnect_userid
 CK_API_KEY=your_clubkonnect_apikey
 CK_BASE_URL=https://www.clubkonnect.com/api
 
-# --- Paystack Payments ---
-PAYSTACK_SECRET_KEY=sk_live_xxxxxxxxxxxxxxxxxxxxxxxx
-PAYSTACK_PUBLIC_KEY=pk_live_xxxxxxxxxxxxxxxxxxxxxxxx
-PAYSTACK_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxx
+# Current Paystack secrets belong in Supabase Edge Function secrets, not this
+# legacy Serverpod .env:
+# PAYSTACK_SECRET_KEY=<Paystack test/live secret key>
+# PAYSTACK_CALLBACK_URL=https://adevictorolu.github.io/Avotek/#/wallet/fund
 ```
 
 > **Note on Sandbox Mode:** If no third-party keys are supplied, AVOTEK automatically activates `MockAggregator`, supplying simulated tokens, instant approvals, and mock transactions so you can test all features end-to-end without spending real money.

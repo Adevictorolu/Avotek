@@ -30,9 +30,9 @@ All platform secrets and configuration values reside on the backend. No secret k
 | `CK_USER_ID` | Prod | `your_userid` | ClubKonnect user ID for secondary fallback routing. |
 | `CK_API_KEY` | Prod | `your_apikey` | ClubKonnect API secret key. |
 | `CK_BASE_URL` | No | `https://www.clubkonnect.com/api` | ClubKonnect endpoint URL. |
-| `PAYSTACK_SECRET_KEY` | Prod | `sk_test_...` / `sk_live_...` | Paystack secret key used for dedicated virtual accounts & verification. |
-| `PAYSTACK_PUBLIC_KEY` | No | `pk_test_...` / `pk_live_...` | Paystack public key. |
-| `PAYSTACK_WEBHOOK_SECRET` | Prod | `whsec_...` | Secret token to verify `X-Paystack-Signature` HMAC. |
+| `PAYSTACK_SECRET_KEY` | Prod | `sk_test_...` / `sk_live_...` | Server-only key used to initialize and verify wallet-funding transactions and validate Paystack webhook signatures. |
+| `PAYSTACK_CALLBACK_URL` | Prod | `https://adevictorolu.github.io/Avotek/#/wallet/fund` | HTTPS return URL sent to Paystack at transaction initialization; it is not a webhook URL. |
+| `PAYSTACK_PUBLIC_KEY` | No | `pk_test_...` / `pk_live_...` | Not currently used: checkout sessions are initialized server-side. Never substitute this for the secret key. |
 | `WHATSAPP_TOKEN` | Prod | `EAAG...` | Meta Graph API permanent System User Access Token. |
 | `WHATSAPP_PHONE_NUMBER_ID` | Prod | `102938475610293` | Meta WhatsApp Cloud API Phone Number ID. |
 | `WHATSAPP_VERIFY_TOKEN` | Prod | `avotek_whatsapp_secure_2026` | Custom challenge token for Meta webhook subscription verification. |

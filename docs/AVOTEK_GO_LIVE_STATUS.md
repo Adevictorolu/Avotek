@@ -192,7 +192,7 @@ Paystack dashboard setup below are complete and tested**.
 1. Apply migrations to the linked Supabase project:
 
    ```powershell
-   supabase db push
+   supabase db push --project-ref gcixbqrridzgobkqnlfz
    ```
 
    This includes
@@ -201,6 +201,9 @@ Paystack dashboard setup below are complete and tested**.
 2. In Supabase **Edge Functions → Secrets**, configure:
    - `PAYSTACK_SECRET_KEY`: use the Paystack **Test Secret Key** while testing.
    - `PAYSTACK_CALLBACK_URL`: `https://adevictorolu.github.io/Avotek/#/wallet/fund`
+   - The Paystack public key is not needed for this server-created checkout
+     flow. Do not configure a separate `PAYSTACK_WEBHOOK_SECRET`: webhook
+     signatures are checked with the same `PAYSTACK_SECRET_KEY`.
    - The existing Supabase environment variables `SUPABASE_URL`,
      `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` must be available to
      the function runtime. Never put service-role or Paystack secret keys in
@@ -210,8 +213,16 @@ Paystack dashboard setup below are complete and tested**.
 3. Deploy the function:
 
    ```powershell
-   supabase functions deploy paystack-payments
+   supabase functions deploy paystack-payments --project-ref gcixbqrridzgobkqnlfz
    ```
+
+   The function uses Paystack's `POST /transaction/initialize` endpoint. It
+   sends the amount in kobo (`NGN` × 100) and returns the hosted authorization
+   URL. The signed-in app then calls the function to verify the reference,
+   which uses Paystack's `GET /transaction/verify/{reference}` endpoint. The
+   function checks the Paystack API response status, transaction status,
+   reference, NGN currency, and exact amount before calling the server-only
+   wallet-credit RPC.
 
 4. In Paystack **Test** settings, set the callback URL to the same Avotek
    wallet URL. Set the **Webhook URL** to:
@@ -227,11 +238,16 @@ Paystack dashboard setup below are complete and tested**.
    Leave Paystack IP whitelisting disabled unless you have confirmed a stable
    outbound IP for the Supabase function runtime; the customer's IP is not the
    server IP used for Paystack API requests.
-5. Test in Test mode using Paystack's test payment details. Confirm the
-   checkout returns to the app, the server verifies the reference and exact
-   amount/currency, the wallet and ledger update once, and duplicate webhooks
-   do not add another credit. Also test failed, abandoned, delayed, and
-   signature-invalid callbacks. A return to the app alone never credits funds.
+5. Test in Test mode using Paystack's test payment details and an authenticated
+   Avotek test account. Confirm initialization returns a hosted checkout URL,
+   checkout returns to the app with its reference, server verification matches
+   the reference and exact amount/currency, and the wallet and ledger update
+   once. Confirm the signed `charge.success` webhook also completes the flow,
+   and duplicate webhook/verification calls do not add another credit. Test
+   declined/failed, abandoned, delayed, wrong-amount, wrong-currency,
+   unknown-reference, and invalid-signature cases; none may credit the wallet.
+   A return to the app alone never credits funds. Do not move to Live until all
+   Test-mode checks pass.
 6. For Live mode, use a separate production Supabase project where possible.
    Set its `PAYSTACK_SECRET_KEY` to the Live Secret Key in Supabase Secrets,
    apply the reviewed migration, deploy `paystack-payments`, and point the Live
