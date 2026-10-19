@@ -41,8 +41,9 @@ not prove that a provider credential is valid or that a real transaction works.
   contact for user-initiated support chats.
 - Following the Settings and receipt updates, targeted Flutter analysis passed,
   all 21 Flutter tests passed, and `flutter build web --release --no-pub`
-  completed successfully on 2026-10-16. This verifies the local build, not a
-  deployment or an end-to-end live transaction.
+  completed successfully on 2026-10-19. The Cable TV and Electricity screens
+  were restyled and targeted Dart analysis plus all 21 Flutter tests passed.
+  This verifies the local build, not a deployment or an end-to-end transaction.
 - Provider credentials and Paystack keys have not been validated by completing
   an authenticated test transaction.
 
@@ -69,6 +70,14 @@ The latest check of the linked Supabase project found:
 - No authenticated provider purchase or Paystack Test-mode transaction has
   been run. The provider endpoints and credentials still need verification
   before customer transactions are enabled.
+- On 2026-10-19, the supplied Paystack Test secret was accepted by Paystack's
+  read-only balance API check, saved as the Supabase `PAYSTACK_SECRET_KEY`, and
+  `paystack-payments` was redeployed (version 9). An unauthenticated
+  initialization request still returns HTTP 401, as required. These checks
+  verify Test-key authentication, secret wiring, deployment, and fail-closed
+  access only; they do not prove an authenticated checkout or wallet credit.
+  The public key was not added because this server-created hosted-checkout
+  integration does not use it.
 
 Credentials previously shared in chat, and any credential material returned
 by CLI secret-list output, should be treated as exposed and rotated before use.
@@ -200,10 +209,13 @@ Paystack dashboard setup below are complete and tested**.
    Verify the migration succeeded before deploying the function.
 2. In Supabase **Edge Functions → Secrets**, configure:
    - `PAYSTACK_SECRET_KEY`: use the Paystack **Test Secret Key** while testing.
+     The project has been configured with a Test key; this does not prove that
+     an authenticated checkout can complete.
    - `PAYSTACK_CALLBACK_URL`: `https://adevictorolu.github.io/Avotek/#/wallet/fund`
    - The Paystack public key is not needed for this server-created checkout
-     flow. Do not configure a separate `PAYSTACK_WEBHOOK_SECRET`: webhook
-     signatures are checked with the same `PAYSTACK_SECRET_KEY`.
+     flow and must not be put in the Flutter app for this integration. Do not
+     configure a separate `PAYSTACK_WEBHOOK_SECRET`: webhook signatures are
+     checked with the same `PAYSTACK_SECRET_KEY`.
    - The existing Supabase environment variables `SUPABASE_URL`,
      `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` must be available to
      the function runtime. Never put service-role or Paystack secret keys in
@@ -248,7 +260,15 @@ Paystack dashboard setup below are complete and tested**.
    unknown-reference, and invalid-signature cases; none may credit the wallet.
    A return to the app alone never credits funds. Do not move to Live until all
    Test-mode checks pass.
-6. For Live mode, use a separate production Supabase project where possible.
+6. The Admin page's **Paystack mode & secrets** button opens Supabase's Edge
+   Function secrets page; the app deliberately does not provide a browser-side
+   switch that can expose or silently change payment credentials. After the
+   Test-mode checks above pass, activate Live by replacing only
+   `PAYSTACK_SECRET_KEY` with the Live Secret Key in Supabase. The Paystack
+   public key does not control this hosted-checkout flow. Verify the signed
+   webhook and complete a controlled low-value Live payment before opening
+   funding to customers. If any check is incomplete, keep the Test key active.
+7. For Live mode, use a separate production Supabase project where possible.
    Set its `PAYSTACK_SECRET_KEY` to the Live Secret Key in Supabase Secrets,
    apply the reviewed migration, deploy `paystack-payments`, and point the Live
    Paystack webhook/callback settings at the production function and app URLs.

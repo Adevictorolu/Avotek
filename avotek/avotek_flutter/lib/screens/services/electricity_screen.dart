@@ -72,6 +72,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
       meterType: _selectedMeterType,
     );
 
+    if (!mounted) return;
     setState(() {
       _isVerifying = false;
       if (result.isValid) {
@@ -81,7 +82,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     });
 
     if (!result.isValid && mounted) {
-      TopNotification.showError(context, 'Could not verify meter number. Check details and retry.');
+      TopNotification.showError(
+        context,
+        'Could not verify meter number. Check details and retry.',
+      );
     }
   }
 
@@ -89,18 +93,39 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     final meter = _meterController.text.trim();
     final amount = double.tryParse(_amountController.text.trim()) ?? 0.0;
 
-    if (meter.length < 8 || amount < 500) {
-      TopNotification.showWarning(context, 'Minimum electricity purchase is ₦500');
+    if (meter.length < 8) {
+      TopNotification.showWarning(
+        context,
+        'Please enter a valid meter number.',
+      );
+      return;
+    }
+    if (amount < 500 || amount != amount.roundToDouble()) {
+      TopNotification.showWarning(
+        context,
+        'Enter a whole-naira amount of at least ₦500.',
+      );
       return;
     }
     if (_verifiedCustomerName == null) {
-      TopNotification.showWarning(context, 'Verify this meter before purchasing.');
+      TopNotification.showWarning(
+        context,
+        'Verify this meter before purchasing.',
+      );
       return;
     }
 
     final auth = context.read<AuthProvider>();
     final wallet = context.read<WalletProvider>();
     final vtu = context.read<VtuProvider>();
+    final phone = auth.user?.phone.trim() ?? '';
+    if (phone.isEmpty) {
+      TopNotification.showWarning(
+        context,
+        'Add a phone number to your account before paying this bill.',
+      );
+      return;
+    }
 
     if (wallet.balance < amount) {
       TopNotification.showError(
@@ -116,7 +141,8 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
       context,
       title: 'Confirm Electricity Purchase',
       amount: amount,
-      description: '${_discos[_selectedDisco] ?? _selectedDisco} • $meter\nCustomer: ${_verifiedCustomerName ?? "Customer"}',
+      description:
+          '${_discos[_selectedDisco] ?? _selectedDisco} • $meter\nCustomer: ${_verifiedCustomerName ?? "Customer"}',
       onPinSubmit: (pin) async {
         transactionPin = pin;
         return auth.verifyPin(pin);
@@ -132,7 +158,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
           meterType: _selectedMeterType,
           amount: amount,
           customerName: _verifiedCustomerName,
-          phone: (auth.user?.phone != null && auth.user!.phone.isNotEmpty) ? auth.user!.phone : '08000000000',
+          phone: phone,
           userPin: transactionPin,
         );
 
@@ -141,16 +167,28 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
 
         if (!mounted) return;
         if (!result.success || result.order.status == 'failed') {
-          TopNotification.showError(context, result.message, title: 'Payment Failed');
+          TopNotification.showError(
+            context,
+            result.message,
+            title: 'Payment Failed',
+          );
           return;
         }
         if (result.order.status == 'pending') {
-          TopNotification.showWarning(context, result.message, title: 'Payment Pending');
+          TopNotification.showWarning(
+            context,
+            result.message,
+            title: 'Payment Pending',
+          );
           return;
         }
         final token = result.token;
         if (token == null || token.isEmpty) {
-          TopNotification.showWarning(context, result.message, title: 'Payment Completed');
+          TopNotification.showWarning(
+            context,
+            result.message,
+            title: 'Payment Completed',
+          );
           return;
         }
         showDialog(
@@ -167,7 +205,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Your prepaid electricity token is ready:', style: TextStyle(fontSize: 13)),
+                const Text(
+                  'Your prepaid electricity token is ready:',
+                  style: TextStyle(fontSize: 13),
+                ),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -181,21 +222,37 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                     children: [
                       SelectableText(
                         token,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.copy_rounded, size: 18),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: token));
-                          TopNotification.showSuccess(context, 'Token copied to clipboard!');
+                          TopNotification.showSuccess(
+                            context,
+                            'Token copied to clipboard!',
+                          );
                         },
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 10),
-                Text('Units: ${result.units ?? "Available Units"}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                Text('Meter: $meter (${_discos[_selectedDisco]})', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                Text(
+                  'Units: ${result.units ?? "Available Units"}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  'Meter: $meter (${_discos[_selectedDisco]})',
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
               ],
             ),
             actions: [
@@ -221,6 +278,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     final vtu = context.watch<VtuProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final amount = double.tryParse(_amountController.text.trim()) ?? 0;
+    final canPurchase =
+        !vtu.isLoading && _verifiedCustomerName != null && amount >= 500;
 
     return ResponsiveShell(
       currentRoute: '/services/electricity',
@@ -236,137 +296,330 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                 horizontal: isDesktop ? 32 : 16,
                 vertical: 24,
               ),
-            children: [
-              Text(
-                'Electricity Bill',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Verify your meter and purchase electricity from your wallet.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  color: isDark
-                      ? const Color(0xFF94A3B8)
-                      : const Color(0xFF64748B),
-                ),
-              ),
-              const SizedBox(height: 20),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedDisco,
-                decoration: const InputDecoration(labelText: 'Select Disco / Provider'),
-                items: _discos.entries.map((e) {
-                  return DropdownMenuItem(value: e.key, child: Text(e.value, style: const TextStyle(fontSize: 13)));
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() {
-                      _selectedDisco = val;
-                      _verifiedCustomerName = null;
-                      _verificationDetails = null;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: SegmentedButton<String>(
-                      segments: const [
-                        ButtonSegment(value: 'prepaid', label: Text('Prepaid')),
-                        ButtonSegment(value: 'postpaid', label: Text('Postpaid')),
-                      ],
-                      selected: {_selectedMeterType},
-                      onSelectionChanged: (set) {
-                        setState(() {
-                          _selectedMeterType = set.first;
-                          _verifiedCustomerName = null;
-                          _verificationDetails = null;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _meterController,
-                keyboardType: TextInputType.number,
-                onChanged: (_) => setState(() {
-                  _verifiedCustomerName = null;
-                  _verificationDetails = null;
-                }),
-                decoration: InputDecoration(
-                  labelText: 'Meter Number',
-                  hintText: 'e.g. 01423456789',
-                  suffixIcon: IconButton(
-                    icon: _isVerifying
-                        ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.check_circle_outline),
-                    tooltip: 'Verify Meter',
-                    onPressed: _isVerifying ? null : _handleVerify,
-                  ),
-                ),
-              ),
-              if (_verifiedCustomerName != null) ...[
-                const SizedBox(height: 10),
+              children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primaryBlue, AppColors.primaryCyan],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(22),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.verified_user_rounded, color: AppColors.success, size: 18),
-                      const SizedBox(width: 8),
+                      Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.bolt_rounded,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Customer: $_verifiedCustomerName',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.success),
-                            ),
-                            if (_verificationDetails != null && _verificationDetails!.isNotEmpty)
-                              Text(
-                                _verificationDetails!,
-                                style: const TextStyle(fontSize: 11, color: AppColors.success),
+                              'Electricity bill',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 23,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
                               ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Confirm your meter details and pay securely from your wallet.',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                height: 1.4,
+                                color: Colors.white.withValues(alpha: 0.88),
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
-              const SizedBox(height: 16),
-              TextField(
-                controller: _amountController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Amount (₦)',
-                  hintText: 'e.g. 5000',
-                  prefixText: '₦ ',
-                  prefixIcon: Icon(Icons.payments_outlined, size: 20),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Meter details',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedDisco,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Electricity provider',
+                          prefixIcon: Icon(Icons.power_rounded),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 18,
+                          ),
+                        ),
+                        items: _discos.entries.map((entry) {
+                          return DropdownMenuItem(
+                            value: entry.key,
+                            child: Text(
+                              entry.value,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setState(() {
+                            _selectedDisco = value;
+                            _verifiedCustomerName = null;
+                            _verificationDetails = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      SegmentedButton<String>(
+                        segments: const [
+                          ButtonSegment(
+                            value: 'prepaid',
+                            label: Text('Prepaid'),
+                            icon: Icon(Icons.flash_on_rounded),
+                          ),
+                          ButtonSegment(
+                            value: 'postpaid',
+                            label: Text('Postpaid'),
+                            icon: Icon(Icons.receipt_long_rounded),
+                          ),
+                        ],
+                        selected: {_selectedMeterType},
+                        onSelectionChanged: (selection) {
+                          setState(() {
+                            _selectedMeterType = selection.first;
+                            _verifiedCustomerName = null;
+                            _verificationDetails = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: _meterController,
+                        keyboardType: TextInputType.number,
+                        onChanged: (_) => setState(() {
+                          _verifiedCustomerName = null;
+                          _verificationDetails = null;
+                        }),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Meter number',
+                          hintText: 'Enter your meter number',
+                          prefixIcon: const Icon(Icons.speed_rounded),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 20,
+                          ),
+                          suffixIcon: Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: TextButton(
+                              onPressed: _isVerifying ? null : _handleVerify,
+                              child: _isVerifying
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Verify'),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_verifiedCustomerName != null) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: AppColors.success.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.verified_user_rounded,
+                                color: AppColors.success,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Customer: $_verifiedCustomerName',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.success,
+                                      ),
+                                    ),
+                                    if (_verificationDetails != null &&
+                                        _verificationDetails!.isNotEmpty)
+                                      Text(
+                                        _verificationDetails!,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12,
+                                          color: AppColors.success,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+                      Text(
+                        'Payment amount',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF334155),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _amountController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        onChanged: (_) => setState(() {}),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: '500 or more',
+                          prefixText: '₦ ',
+                          prefixIcon: Icon(Icons.payments_outlined),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 22,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Minimum purchase: ₦500',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: isDark
+                              ? AppColors.metallicLight
+                              : AppColors.slateGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 58,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: canPurchase
+                                  ? const [
+                                      AppColors.primaryBlue,
+                                      AppColors.primaryCyan,
+                                    ]
+                                  : const [
+                                      Color(0xFF64748B),
+                                      Color(0xFF475569),
+                                    ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: canPurchase ? _handlePurchase : null,
+                              child: Center(
+                                child: vtu.isLoading
+                                    ? const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Text(
+                                        amount >= 500
+                                            ? 'Pay ₦${amount.toStringAsFixed(0)}'
+                                            : 'Enter amount and verify meter',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          color: Colors.white,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: vtu.isLoading ? null : _handlePurchase,
-                child: vtu.isLoading
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Pay Electricity Bill'),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
         ),
       ),

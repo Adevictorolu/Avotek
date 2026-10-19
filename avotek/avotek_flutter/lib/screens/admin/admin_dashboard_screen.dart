@@ -254,11 +254,11 @@ class AdminDashboardScreen extends StatelessWidget {
     final tools = [
       _AdminTool(
         icon: Icons.key_rounded,
-        title: 'Edge Function secrets',
+        title: 'Paystack mode & secrets',
         description:
-            'Set BIGISUB_API_TOKEN, BIGISUB_TRANSACTION_PIN, '
-            'PAYSTACK_SECRET_KEY, and PAYSTACK_CALLBACK_URL in Supabase. '
-            'Never enter key values in Avotek.',
+            'Use PAYSTACK_SECRET_KEY for Test mode first. After every Test '
+            'check passes, replace it with the Live secret in Supabase. '
+            'This secure server-side step cannot be switched in the app.',
         onTap: () => _openExternal(
           context,
           Uri.parse('$_projectUrl/settings/functions'),
