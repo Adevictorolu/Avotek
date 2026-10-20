@@ -25,6 +25,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
   String? _lastVerifiedReference;
   String? _callbackReference;
   String? _verificationMessage;
+  Uri? _authorizationUri;
 
   @override
   void initState() {
@@ -57,17 +58,75 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     await _verifyPayment(reference);
   }
 
+  Future<void> _showPaymentSuccessDialog({
+    required double amountNaira,
+    required String reference,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        icon: const Icon(
+          Icons.check_circle_rounded,
+          color: Color(0xFF10B981),
+          size: 52,
+        ),
+        title: Text(
+          'Payment successful',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '₦${amountNaira.toStringAsFixed(2)}',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF0052FF),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text('Your wallet has been credited.'),
+            const SizedBox(height: 12),
+            SelectableText(
+              'Transaction reference\n$reference',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                height: 1.5,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _verifyPayment(String reference) async {
     setState(() {
       _isCheckingPayment = true;
       _verificationMessage = null;
     });
     try {
-      final status = await PaystackPaymentService.instance.verify(
+      final verification = await PaystackPaymentService.instance.verify(
         reference: reference,
       );
       if (!mounted) return;
-      if (status == 'completed') {
+      if (verification.status == 'completed') {
         final userId = context.read<AuthProvider>().user?.id;
         if (userId != null) {
           await context.read<WalletProvider>().fetchWallet(userId);
@@ -76,16 +135,17 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
         setState(() {
           _callbackReference = null;
           _verificationMessage = null;
+          _authorizationUri = null;
         });
-        TopNotification.showSuccess(
-          context,
-          'Your payment is confirmed and your wallet has been updated.',
-          title: 'Wallet funded',
+        await _showPaymentSuccessDialog(
+          amountNaira: verification.amountNaira!,
+          reference: verification.reference,
         );
-      } else if (status == 'failed') {
+      } else if (verification.status == 'failed') {
         setState(() {
           _callbackReference = null;
           _verificationMessage = null;
+          _authorizationUri = null;
         });
         TopNotification.showError(
           context,
@@ -142,21 +202,11 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
       if (!mounted) return;
       setState(() {
         _callbackReference = session.reference;
+        _authorizationUri = Uri.parse(session.authorizationUrl);
         _verificationMessage =
             'Checkout is ready. After paying, return here and check your payment status.';
       });
-      final opened = await launchUrl(
-        Uri.parse(session.authorizationUrl),
-        mode: LaunchMode.externalApplication,
-      );
-      if (!opened && mounted) {
-        TopNotification.showError(
-          context,
-          'Could not open Paystack checkout. Your wallet has not been charged. Reference: ${session.reference}',
-          title: 'Checkout unavailable',
-        );
-        return;
-      }
+      await _openCheckout();
     } catch (error) {
       if (mounted) {
         if (error is PaystackPaymentException && error.reference != null) {
@@ -174,6 +224,33 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
       }
     } finally {
       if (mounted) setState(() => _isStartingPayment = false);
+    }
+  }
+
+  Future<void> _openCheckout() async {
+    final authorizationUri = _authorizationUri;
+    if (authorizationUri == null) return;
+
+    try {
+      final opened = await launchUrl(
+        authorizationUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened && mounted) {
+        TopNotification.showError(
+          context,
+          'Could not open Paystack checkout. Use the Open secure checkout button to try again.',
+          title: 'Checkout unavailable',
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        TopNotification.showError(
+          context,
+          'Could not open Paystack checkout: $error',
+          title: 'Checkout unavailable',
+        );
+      }
     }
   }
 
@@ -284,7 +361,10 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: _isStartingPayment || _isCheckingPayment
+                          onPressed:
+                              _isStartingPayment ||
+                                  _isCheckingPayment ||
+                                  _authorizationUri != null
                               ? null
                               : _startPayment,
                           icon: _isStartingPayment
@@ -299,6 +379,8 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           label: Text(
                             _isStartingPayment
                                 ? 'Preparing secure checkout...'
+                                : _authorizationUri != null
+                                ? 'Checkout ready'
                                 : 'Continue to Paystack',
                           ),
                           style: ElevatedButton.styleFrom(
@@ -311,6 +393,24 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           ),
                         ),
                       ),
+                      if (_authorizationUri != null) ...[
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _openCheckout,
+                            icon: const Icon(Icons.open_in_new_rounded),
+                            label: const Text('Open secure checkout'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF0052FF),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                       if (_isCheckingPayment) ...[
                         const SizedBox(height: 16),
                         const LinearProgressIndicator(),

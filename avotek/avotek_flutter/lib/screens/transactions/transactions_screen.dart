@@ -3,7 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:provider/provider.dart';
+import 'package:printing/printing.dart';
 import '../../core/utils/text_file_download.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
@@ -684,7 +687,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   void _showReceiptModal(TransactionModel tx, bool isDark) {
-    final receipt = _receiptText(tx);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -741,34 +743,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           ),
           TextButton.icon(
             onPressed: () async {
-              final safeReference = tx.reference.replaceAll(
-                RegExp(r'[^A-Za-z0-9_-]'),
-                '_',
-              );
-              final downloaded = await downloadTextFile(
-                'avotek-receipt-$safeReference.txt',
-                receipt,
-              );
-              if (!downloaded) {
-                await Clipboard.setData(ClipboardData(text: receipt));
-              }
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    downloaded
-                        ? 'Receipt downloaded.'
-                        : 'Receipt copied to clipboard; paste it into a file to save.',
-                  ),
-                  backgroundColor: downloaded
-                      ? AppColors.success
-                      : AppColors.primaryBlue,
-                ),
-              );
+              Navigator.pop(ctx);
+              await _saveReceiptPdf(tx);
             },
-            icon: const Icon(Icons.download_rounded, size: 16),
+            icon: const Icon(Icons.picture_as_pdf_rounded, size: 16),
             label: Text(
-              'Download',
+              'Save PDF',
               style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
             ),
           ),
@@ -788,16 +768,173 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
   }
 
-  String _receiptText(TransactionModel tx) => [
-    'AVOTEK TRANSACTION RECEIPT',
-    'Reference: ${tx.reference}',
-    'Type: ${tx.type.toUpperCase()}',
-    'Service: ${tx.category.toUpperCase()}',
-    'Amount: NGN ${tx.amount.toStringAsFixed(2)}',
-    'Status: ${tx.status.toUpperCase()}',
-    'Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(tx.createdAt)}',
-    if (tx.narration?.isNotEmpty ?? false) 'Details: ${tx.narration}',
-  ].join('\n');
+  Future<void> _saveReceiptPdf(TransactionModel tx) async {
+    try {
+      final logoData = await rootBundle.load(
+        'assets/images/logo_large_light.png',
+      );
+      final logo = pw.MemoryImage(logoData.buffer.asUint8List());
+      final document = pw.Document();
+      final blue = PdfColor.fromInt(0xFF0052FF);
+      final slate = PdfColor.fromInt(0xFF64748B);
+
+      document.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(42),
+          build: (context) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.Image(
+                    logo,
+                    width: 132,
+                    height: 48,
+                    fit: pw.BoxFit.contain,
+                  ),
+                  pw.Spacer(),
+                  pw.Container(
+                    padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColor.fromInt(0xFFEAF0FF),
+                      borderRadius: pw.BorderRadius.circular(8),
+                    ),
+                    child: pw.Text(
+                      'TRANSACTION RECEIPT',
+                      style: pw.TextStyle(
+                        color: blue,
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 32),
+              pw.Container(
+                width: double.infinity,
+                padding: const pw.EdgeInsets.all(24),
+                decoration: pw.BoxDecoration(
+                  color: PdfColor.fromInt(0xFFF5F8FF),
+                  borderRadius: pw.BorderRadius.circular(14),
+                  border: pw.Border.all(color: PdfColor.fromInt(0xFFDCE6FF)),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'NGN ${tx.amount.toStringAsFixed(2)}',
+                      style: pw.TextStyle(
+                        color: blue,
+                        fontSize: 25,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.SizedBox(height: 8),
+                    pw.Text(
+                      'Status: ${tx.status.toUpperCase()}',
+                      style: pw.TextStyle(
+                        color: slate,
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 26),
+              _pdfReceiptRow('Reference', tx.reference, blue, slate),
+              _pdfReceiptRow(
+                'Transaction type',
+                tx.type.toUpperCase(),
+                blue,
+                slate,
+              ),
+              _pdfReceiptRow('Service', tx.category.toUpperCase(), blue, slate),
+              _pdfReceiptRow(
+                'Date',
+                DateFormat('dd MMM yyyy, hh:mm a').format(tx.createdAt),
+                blue,
+                slate,
+              ),
+              if (tx.narration?.isNotEmpty ?? false)
+                _pdfReceiptRow('Details', tx.narration!, blue, slate),
+              pw.Spacer(),
+              pw.Divider(color: PdfColor.fromInt(0xFFE2E8F0)),
+              pw.SizedBox(height: 8),
+              pw.Text(
+                'Avotek transaction receipt. Keep this document for your records. '
+                'A successful payment is confirmed by Avotek after server-side verification.',
+                style: pw.TextStyle(color: slate, fontSize: 9),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final safeReference = tx.reference.replaceAll(
+        RegExp(r'[^A-Za-z0-9_-]'),
+        '_',
+      );
+      await Printing.sharePdf(
+        bytes: await document.save(),
+        filename: 'avotek-receipt-$safeReference.pdf',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('PDF receipt is ready to save or share.'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not create the PDF receipt: $error'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  pw.Widget _pdfReceiptRow(
+    String label,
+    String value,
+    PdfColor blue,
+    PdfColor slate,
+  ) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 10),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.SizedBox(
+            width: 140,
+            child: pw.Text(
+              label,
+              style: pw.TextStyle(color: slate, fontSize: 10),
+            ),
+          ),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              style: pw.TextStyle(
+                color: blue,
+                fontSize: 10,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _receiptRow(String label, String value, bool isDark) {
     return Padding(

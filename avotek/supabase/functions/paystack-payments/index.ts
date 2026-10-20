@@ -57,6 +57,18 @@ async function verifyPaystackTransaction(
   return body.data;
 }
 
+function matchesRequestedAmount(payment: JsonMap, expectedKobo: number): boolean {
+  const amountKobo = Number(payment.amount);
+  const requestedAmount = payment.requested_amount;
+  if (!Number.isSafeInteger(amountKobo) || amountKobo < expectedKobo) return false;
+
+  if (requestedAmount === undefined || requestedAmount === null) {
+    return amountKobo === expectedKobo;
+  }
+  const requestedKobo = Number(requestedAmount);
+  return Number.isSafeInteger(requestedKobo) && requestedKobo === expectedKobo;
+}
+
 async function sha512HmacHex(secret: string, value: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -146,7 +158,7 @@ async function handleWebhook(
   if (
     payment.reference !== reference ||
     payment.currency !== "NGN" ||
-    Number(payment.amount) !== expectedKobo
+    !matchesRequestedAmount(payment, expectedKobo)
   ) {
     console.error("Paystack verification details do not match the pending funding record.");
     return jsonResponse({ message: "Payment details did not match the funding record." }, 409);
@@ -218,7 +230,7 @@ async function handleInitialize(
   }
 
   const reference = `AVOFUND_${crypto.randomUUID().replaceAll("-", "")}`;
-  const { error: prepareError } = await admin.rpc("prepare_paystack_wallet_funding", {
+  const { data: prepared, error: prepareError } = await admin.rpc("prepare_paystack_wallet_funding", {
     p_user_id: user.id,
     p_reference: reference,
     p_amount: amount,
@@ -226,6 +238,12 @@ async function handleInitialize(
   if (prepareError) {
     console.error("Could not create pending wallet funding record:", prepareError.message);
     return jsonResponse({ message: "Could not start wallet funding. Please try again." }, 503);
+  }
+  if (isRecord(prepared) && prepared.already_pending === true) {
+    return jsonResponse({
+      message: "A wallet funding payment is already pending. Check its status before starting another.",
+      reference: prepared.reference,
+    }, 409);
   }
 
   let response: Response;
@@ -321,7 +339,13 @@ async function handleVerify(
     return jsonResponse({ message: "Payment reference was not found." }, 404);
   }
   if (transaction.status === "completed") {
-    return jsonResponse({ status: "completed", credited: false });
+    return jsonResponse({
+      status: "completed",
+      credited: false,
+      reference,
+      amount: Number(transaction.amount),
+      currency: "NGN",
+    });
   }
   if (!["pending", "failed"].includes(transaction.status)) {
     return jsonResponse({ status: transaction.status, credited: false });
@@ -338,7 +362,7 @@ async function handleVerify(
   if (
     payment.reference !== reference ||
     payment.currency !== "NGN" ||
-    Number(payment.amount) !== expectedKobo
+    !matchesRequestedAmount(payment, expectedKobo)
   ) {
     console.error("Paystack verification details do not match the pending funding record.");
     return jsonResponse({ message: "Payment details did not match the funding record." }, 409);
@@ -367,7 +391,13 @@ async function handleVerify(
     console.error("Paystack verification wallet credit failed:", creditError.message);
     return jsonResponse({ message: "Payment is confirmed but wallet update is delayed." }, 503);
   }
-  return jsonResponse({ status: "completed", credited: true });
+  return jsonResponse({
+    status: "completed",
+    credited: true,
+    reference,
+    amount: Number(transaction.amount),
+    currency: "NGN",
+  });
 }
 
 Deno.serve(async (request) => {

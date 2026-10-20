@@ -8,7 +8,8 @@ not prove that a provider credential is valid or that a real transaction works.
 
 - The Flutter application is published through GitHub Pages, with maintained
   CI and deployment workflows. The duplicate broken Dart workflow was removed.
-- The three core database migrations are applied to the linked Supabase project.
+- The core database migrations, including the existing-account wallet backfill,
+  are applied to the linked Supabase project.
 - `identifier-login`, `vtu-provider`, and `paystack-payments` are deployed.
 - The VTU function answers CORS preflight and rejects unauthenticated requests.
   The Paystack function also rejects unauthenticated initialization requests.
@@ -21,9 +22,14 @@ not prove that a provider credential is valid or that a real transaction works.
 
 ## Not yet verified or implemented
 
-- No authenticated Bigisub service operation or Paystack Test/Live payment has
-  been completed. The current deployment is **not certified ready for live
+- The Paystack Test payment and wallet-credit path has been verified.
+  No authenticated Bigisub purchase or Paystack Live payment has been
+  completed. The current deployment is **not certified ready for live
   transactions**.
+- Live activation was not performed. The linked project contains simulated
+  Paystack Test credits and must not be switched to Live for real VTU purchases;
+  use a separate production Supabase project or obtain authorization for an
+  audited reversal first.
 - The public Bigisub documentation does not expose the request/response
   contracts needed to implement result-checker PINs, bulk SMS, or airtime PIN
   generation. No endpoint or purchase payload has been guessed.
@@ -32,7 +38,8 @@ not prove that a provider credential is valid or that a real transaction works.
   service-price changes. Do not expose those operations using the client-side
   admin email check alone.
 - The transaction history has individual receipt details and downloadable
-  text receipts/CSV statements, but automatic email delivery is not configured.
+  branded PDF receipts and CSV statements. Automatic email delivery is not
+  configured.
 - Account notification choices for email, push, and WhatsApp are saved in the
   signed-in user's Supabase Auth metadata. They are preferences only; they do
   not send messages until transactional email, push, and WhatsApp Business API
@@ -44,40 +51,51 @@ not prove that a provider credential is valid or that a real transaction works.
   completed successfully on 2026-10-19. The Cable TV and Electricity screens
   were restyled and targeted Dart analysis plus all 21 Flutter tests passed.
   This verifies the local build, not a deployment or an end-to-end transaction.
-- Provider credentials and Paystack keys have not been validated by completing
-  an authenticated test transaction.
+- No authenticated Bigisub service purchase has been completed. Paystack Test
+  credentials have completed Test transactions, but exposed credentials must
+  still be rotated before any Live activation.
 
 ## Current linked-project status
 
 The latest check of the linked Supabase project found:
 
-- Migrations `20261010120000`, `20261012140000`, and `20261014180000` are
-  applied, and the core profile, wallet, transaction, and VTU tables/RPCs exist.
+- Migrations `20261010120000`, `20261012140000`, `20261014180000`,
+  `20261019235500`, and `20261020010000` are applied, and the core profile,
+  wallet, transaction, and VTU tables/RPCs exist.
+- Migration `20261019235500_backfill_missing_wallets.sql` creates a zero-balance
+  NGN wallet only for profiles that do not have one. The account's missing
+  wallet has been repaired.
+- Four successful Paystack Test transactions (requested amounts ₦1,000, ₦100,
+  ₦100, and ₦200) were verified and credited once each. The Paystack dashboard
+  lists the ₦200 payment as ₦203.05 including fees. The Test wallet and ledger
+  balance is ₦1,400; these are simulated Test funds, not Live funds. The
+  smaller attempts were produced during checkout troubleshooting. This balance
+  must not be spent against a real VTU provider; reverse the simulated credits
+  with an audited ledger adjustment or isolate Test data before enabling Live
+  purchases.
+- Migration `20261020010000_prevent_duplicate_wallet_funding.sql` is applied.
+  It serializes funding initialization per wallet and returns the existing
+  pending reference instead of creating another pending attempt.
 - `identifier-login`, `vtu-provider`, and `paystack-payments` are active.
   A valid unauthenticated initialization request to `paystack-payments` reaches
   the authentication check (HTTP 401), indicating its required server
-  configuration names are present. This does not validate the Paystack key or
-  prove a transaction can complete.
+  configuration names are present. `paystack-payments` is deployed at version
+  11 with requested-amount validation and duplicate-pending protection.
 - The app calls the `vtu-provider` Edge Function by its deployed name. Its
   endpoint responds to CORS preflight and rejects unauthenticated requests;
   the Bigisub secret names are configured, but credentials and provider
   operations have not been validated with an authenticated account.
-- Paystack callback `PAYSTACK_CALLBACK_URL` is configured. An unauthenticated
-  initialization request now reaches the authentication check, showing the
-  function has the required server configuration names. This does not verify
-  that the Paystack key is valid, which account mode it belongs to, or that a
-  payment can complete.
-- No authenticated provider purchase or Paystack Test-mode transaction has
-  been run. The provider endpoints and credentials still need verification
-  before customer transactions are enabled.
-- On 2026-10-19, the supplied Paystack Test secret was accepted by Paystack's
-  read-only balance API check, saved as the Supabase `PAYSTACK_SECRET_KEY`, and
-  `paystack-payments` was redeployed (version 9). An unauthenticated
-  initialization request still returns HTTP 401, as required. These checks
-  verify Test-key authentication, secret wiring, deployment, and fail-closed
-  access only; they do not prove an authenticated checkout or wallet credit.
-  The public key was not added because this server-created hosted-checkout
-  integration does not use it.
+- Paystack callback `PAYSTACK_CALLBACK_URL` is configured. The authenticated
+  Test transactions and wallet credits are verified, but the Live key and a
+  real payment have not been validated.
+- The Paystack amount verification now compares the exact requested amount and
+  currency while excluding fees passed through to the payer. All four
+  successful Test transactions were credited through the idempotent RPC. No
+  authenticated Bigisub purchase has been run. The provider endpoints and
+  credentials still need verification before customer transactions are enabled.
+- The Paystack public key is not used by this server-created hosted-checkout
+  integration. The Live and Test secret values were previously exposed and
+  must be rotated before Live activation.
 
 Credentials previously shared in chat, and any credential material returned
 by CLI secret-list output, should be treated as exposed and rotated before use.
@@ -205,8 +223,12 @@ Paystack dashboard setup below are complete and tested**.
    ```
 
    This includes
-   `avotek/supabase/migrations/20261014180000_add_paystack_wallet_funding.sql`.
-   Verify the migration succeeded before deploying the function.
+   `avotek/supabase/migrations/20261014180000_add_paystack_wallet_funding.sql`
+   and the idempotent
+   `avotek/supabase/migrations/20261019235500_backfill_missing_wallets.sql`
+   and
+   `avotek/supabase/migrations/20261020010000_prevent_duplicate_wallet_funding.sql`.
+   Verify the migrations succeeded before deploying the function.
 2. In Supabase **Edge Functions → Secrets**, configure:
    - `PAYSTACK_SECRET_KEY`: use the Paystack **Test Secret Key** while testing.
      The project has been configured with a Test key; this does not prove that
@@ -278,6 +300,14 @@ Paystack dashboard setup below are complete and tested**.
 Wallet funding in the app redirects to Paystack checkout. The app no longer
 displays or relies on unverified virtual bank account details. Paystack wallet
 funding does not itself deploy or validate the separate VTU provider function.
+After initialization, the funding screen retains an **Open secure checkout**
+action so the user can retry opening the hosted page if a browser blocks the
+initial redirect. It prevents creating another funding attempt while that
+checkout is still pending.
+On successful server verification, the funding screen displays a confirmation
+dialog with the credited amount and transaction reference. Transaction
+history generates a logo-branded PDF receipt. These latest client changes
+must be built and deployed before they appear on the hosted site.
 
 ## 5. WhatsApp notifications are not live
 
@@ -334,10 +364,10 @@ operations have not been authenticated or validated. A direct request to
 `paystack-payments` with a valid JSON body and no user token returned HTTP 401,
 “Authentication is required,” reaching the authentication check rather than
 the missing-configuration response. `PAYSTACK_CALLBACK_URL` is configured.
-This does not establish that the Paystack key is valid, whether it is Test or
-Live mode, or that a transaction succeeds. These checks confirm
-deployment/routing and fail-closed behavior only. No low-value provider or
-Paystack Test transaction has been run.
+This does not establish that the Paystack Live key is valid or that a real
+transaction succeeds. Four Paystack Test transactions totaling ₦1,400 were
+later verified and credited as Test funds. These do not certify Live operation.
+No authenticated Bigisub purchase has been run.
 
 Before enabling customers to transact:
 

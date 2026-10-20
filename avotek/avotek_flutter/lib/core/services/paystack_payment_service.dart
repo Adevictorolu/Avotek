@@ -10,6 +10,20 @@ class PaystackPaymentSession {
   });
 }
 
+class PaystackPaymentVerification {
+  final String status;
+  final String reference;
+  final double? amountNaira;
+  final String? currency;
+
+  const PaystackPaymentVerification({
+    required this.status,
+    required this.reference,
+    this.amountNaira,
+    this.currency,
+  });
+}
+
 class PaystackPaymentService {
   static final PaystackPaymentService instance = PaystackPaymentService._();
   PaystackPaymentService._();
@@ -35,7 +49,9 @@ class PaystackPaymentService {
     );
   }
 
-  Future<String> verify({required String reference}) async {
+  Future<PaystackPaymentVerification> verify({
+    required String reference,
+  }) async {
     final response = await _invoke({
       'action': 'verify',
       'reference': reference,
@@ -46,7 +62,25 @@ class PaystackPaymentService {
         'Payment service returned an invalid verification result.',
       );
     }
-    return status;
+    final verifiedReference = response['reference'];
+    final amount = response['amount'];
+    final currency = response['currency'];
+    if (status == 'completed' &&
+        (verifiedReference != reference ||
+            amount is! num ||
+            !amount.isFinite ||
+            amount <= 0 ||
+            currency != 'NGN')) {
+      throw const FormatException(
+        'Payment service returned incomplete verified payment details.',
+      );
+    }
+    return PaystackPaymentVerification(
+      status: status,
+      reference: verifiedReference is String ? verifiedReference : reference,
+      amountNaira: amount is num ? amount.toDouble() : null,
+      currency: currency is String ? currency : null,
+    );
   }
 
   Future<Map<String, dynamic>> _invoke(Map<String, dynamic> body) async {
