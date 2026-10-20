@@ -259,7 +259,9 @@ class VtuProvider extends ChangeNotifier {
         _ => response['success'] == true ? 'successful' : 'failed',
       };
       if (response['success'] == false) status = 'failed';
-      final providerAmount = data['total_amount'] ?? data['total_cost'];
+      final providerAmount = response['charged_amount'] ??
+          data['total_amount'] ??
+          data['total_cost'];
       if (providerAmount is num &&
           providerAmount > 0 &&
           providerAmount.toDouble() == amount) {
@@ -342,7 +344,7 @@ class VtuProvider extends ChangeNotifier {
       network: network,
       recipient: phone,
       plan: '₦${amount.toStringAsFixed(0)} Airtime',
-      amount: chargedAmount,
+      amount: amount,
       dispatch: () => VtuApiService.instance.purchaseAirtime(
         network: network,
         phone: phone,
@@ -379,70 +381,6 @@ class VtuProvider extends ChangeNotifier {
           match = candidate;
           break;
         }
-
-        Future<List<Map<String, dynamic>>> fetchExamPinPrices() =>
-            VtuApiService.instance.getExamPinPrices();
-
-        Future<OrderResult> buyExamPins({
-          required dynamic userId,
-          required String examCode,
-          required String examName,
-          required int quantity,
-          required double unitPrice,
-          String? userPin,
-        }) {
-          final amount = unitPrice * quantity;
-          return _purchase(
-            userId: userId,
-            serviceType: 'education',
-            network: examCode.toUpperCase(),
-            recipient: 'exam pins',
-            plan: '$examName x$quantity',
-            amount: amount,
-            dispatch: () => VtuApiService.instance.purchaseExamPins(
-              examCode: examCode,
-              quantity: quantity,
-              pin: userPin,
-            ),
-          );
-        }
-
-        Future<Map<String, dynamic>> fetchSmsPricing() =>
-            VtuApiService.instance.getSmsPricing();
-
-        Future<OrderResult> sendBulkSms({
-          required dynamic userId,
-          required List<String> recipients,
-          required String message,
-          required String senderName,
-          required String userPin,
-        }) async {
-          final pricing = await fetchSmsPricing();
-          final data = pricing['data'];
-          final costPerPage = data is Map<String, dynamic>
-              ? (data['cost_per_page'] as num?)?.toDouble()
-              : null;
-          if (costPerPage == null || costPerPage <= 0) {
-            throw StateError('The SMS provider returned invalid pricing.');
-          }
-          final pages = VtuApiService.estimateSmsPages(message);
-          final amount = costPerPage * pages * recipients.length;
-
-          return _purchase(
-            userId: userId,
-            serviceType: 'bulk_sms',
-            network: 'SMS',
-            recipient: 'Bulk SMS (${recipients.length} recipients)',
-            plan: senderName,
-            amount: amount,
-            dispatch: () => VtuApiService.instance.sendBulkSms(
-              recipients: recipients,
-              message: message,
-              senderName: senderName,
-              pin: userPin,
-            ),
-          );
-        }
       }
       resolvedPlanId ??= (match?['id'] as num?)?.toInt();
     }
@@ -461,6 +399,70 @@ class VtuProvider extends ChangeNotifier {
         planId: resolvedPlanId!,
         phone: phone,
         sellPrice: sellPrice,
+        pin: userPin,
+      ),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> fetchExamPinPrices() =>
+      VtuApiService.instance.getExamPinPrices();
+
+  Future<OrderResult> buyExamPins({
+    required dynamic userId,
+    required String examCode,
+    required String examName,
+    required int quantity,
+    required double unitPrice,
+    String? userPin,
+  }) {
+    final amount = unitPrice * quantity;
+    return _purchase(
+      userId: userId,
+      serviceType: 'education',
+      network: examCode.toUpperCase(),
+      recipient: 'exam pins',
+      plan: '$examName x$quantity',
+      amount: amount,
+      dispatch: () => VtuApiService.instance.purchaseExamPins(
+        examCode: examCode,
+        quantity: quantity,
+        pin: userPin,
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> fetchSmsPricing() =>
+      VtuApiService.instance.getSmsPricing();
+
+  Future<OrderResult> sendBulkSms({
+    required dynamic userId,
+    required List<String> recipients,
+    required String message,
+    required String senderName,
+    required String userPin,
+  }) async {
+    final pricing = await fetchSmsPricing();
+    final data = pricing['data'];
+    final costPerPage = data is Map<String, dynamic>
+        ? (data['cost_per_page'] as num?)?.toDouble()
+        : null;
+    if (costPerPage == null || costPerPage <= 0) {
+      throw StateError('The SMS provider returned invalid pricing.');
+    }
+    final pages = VtuApiService.estimateSmsPages(message);
+    final amount = costPerPage * pages * recipients.length;
+
+    return _purchase(
+      userId: userId,
+      serviceType: 'bulk_sms',
+      network: 'SMS',
+      recipient: 'Bulk SMS (${recipients.length} recipients)',
+      plan: senderName,
+      amount: amount,
+      dispatch: () => VtuApiService.instance.sendBulkSms(
+        recipients: recipients,
+        message: message,
+        senderName: senderName,
         pin: userPin,
       ),
     );

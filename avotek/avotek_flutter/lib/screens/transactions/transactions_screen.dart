@@ -11,6 +11,7 @@ import '../../core/utils/text_file_download.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/services/vtu_api_service.dart';
 import '../../models/transaction_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
@@ -29,6 +30,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   String _searchQuery = '';
   String _activeFilter =
       'all'; // 'all', 'today', 'success', 'failed', 'pending'
+  final Set<String> _requeryingReferences = {};
 
   @override
   void initState() {
@@ -49,6 +51,46 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final wallet = context.read<WalletProvider>();
     if (auth.user?.id != null) {
       await wallet.fetchTransactions(auth.user!.id);
+    }
+  }
+
+  Future<void> _requeryTransaction(TransactionModel transaction) async {
+    if (_requeryingReferences.contains(transaction.reference)) return;
+    final auth = context.read<AuthProvider>();
+    final wallet = context.read<WalletProvider>();
+    final userId = auth.user?.id;
+    if (userId == null) return;
+    setState(() => _requeryingReferences.add(transaction.reference));
+    try {
+      final response = await VtuApiService.instance.requeryTransaction(
+        transaction.reference,
+      );
+      if (!mounted) return;
+      await wallet.fetchTransactions(userId);
+      await wallet.fetchWallet(userId);
+      await auth.refreshWallet();
+      final status = (response['status'] ?? '').toString().toLowerCase();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            status == 'completed' || status == 'successful'
+                ? 'Provider confirmed the transaction.'
+                : status == 'failed'
+                ? 'Provider confirmed the transaction failed; the wallet refund was processed.'
+                : 'The provider is still processing this transaction.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not recheck transaction: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _requeryingReferences.remove(transaction.reference));
+      }
     }
   }
 
@@ -574,6 +616,29 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                       ],
                                     ),
                                   ),
+                                  if (tx.status == 'pending' &&
+                                      tx.isDebit &&
+                                      tx.category != 'wallet_fund')
+                                    IconButton(
+                                      tooltip: 'Recheck provider status',
+                                      onPressed: _requeryingReferences
+                                              .contains(tx.reference)
+                                          ? null
+                                          : () => _requeryTransaction(tx),
+                                      icon: _requeryingReferences
+                                              .contains(tx.reference)
+                                          ? const SizedBox(
+                                              width: 18,
+                                              height: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : const Icon(
+                                              Icons.refresh_rounded,
+                                              size: 19,
+                                            ),
+                                    ),
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [

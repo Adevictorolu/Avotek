@@ -15,11 +15,13 @@ not prove that a provider credential is valid or that a real transaction works.
   The Paystack function also rejects unauthenticated initialization requests.
   These checks verify routing and authentication boundaries only.
 - The app has server-side adapters for airtime, data, cable, electricity,
-  transaction requery, and Paystack checkout/webhook handling.
-- Unsupported provider products are not advertised as working: result-checker
-  PINs, bulk SMS, ISP subscriptions, betting wallet funding, and airtime PIN
-  generation remain disabled until their provider contracts are implemented
-  and their wallet, pricing, and transaction flows are verified.
+  result-checker PINs, bulk SMS, transaction requery, and Paystack
+  checkout/webhook handling. Result-checker PIN and SMS flows now have
+  authenticated service screens, server-side pricing and wallet reservation,
+  and a status-recheck path.
+- ISP subscriptions, betting wallet funding, recharge PIN generation, and
+  Marketing Hub services remain disabled until their provider contracts and
+  server-authoritative pricing/settlement flows are implemented.
 
 ## Not yet verified or implemented
 
@@ -31,12 +33,11 @@ not prove that a provider credential is valid or that a real transaction works.
   Paystack Test credits and must not be switched to Live for real VTU purchases;
   use a separate production Supabase project or obtain authorization for an
   audited reversal first.
-- The public Bigisub page now confirms additional endpoint families for result
-  checker, recharge PIN, ISP, betting, SMS, and Marketing Hub. These services
-  are not wired into Avotek. The public overview does not establish the
-  complete provider-account pricing, customer wallet debit/refund behavior,
-  validation rules, or response/idempotency handling needed to enable them
-  safely. No new purchase endpoint has been guessed or called.
+- The documented result-checker and SMS contracts are now wired into the app.
+  They have not been exercised with an authenticated provider account; SMS
+  charges remain pending until provider status and cost are confirmed. ISP,
+  betting, recharge PIN, and Marketing Hub endpoints remain disabled pending
+  complete pricing and settlement verification.
 - The Avotek admin page links to provider/project consoles; it is not yet a
   server-authorized console for global activity, user creation/deletion, or
   service-price changes. Do not expose those operations using the client-side
@@ -59,10 +60,10 @@ not prove that a provider credential is valid or that a real transaction works.
   credentials have completed Test transactions, but exposed credentials must
   still be rotated before any Live activation.
 - The supplied public Bigisub documentation confirms the currently integrated
-  airtime, data, cable, electricity, wallet-balance, and transaction-requery
-  route families. The adapter now recognizes documented pending and terminal
-  status variants and transaction-ID field names. This confirms contract
-  details from the public page only; authenticated provider behavior and
+  airtime, data, cable, electricity, result-checker, SMS, wallet-balance, and
+  transaction-requery route families. The adapter recognizes documented
+  pending and terminal status variants and transaction-ID field names. These
+  are public-contract integrations only; authenticated provider behavior and
   purchase/refund settlement remain unverified.
 
 ## Current linked-project status
@@ -343,10 +344,11 @@ claiming that receipts or alerts are sent. Keep access tokens on the server.
 ## 7. Current service coverage and remaining launch work
 
 The public Bigisub documentation confirms route names and example contracts for
-the current core services, and lists additional endpoint families. The full
-authenticated dashboard documentation is still required to verify every
-request field and response/settlement semantic. Do not guess missing details or
-mark a service live based on the category list alone.
+the current core services, result checker, and bulk SMS, and lists further
+endpoint families. The full authenticated dashboard documentation is still
+required to verify account-specific pricing and all settlement semantics. Do
+not guess missing details or mark a service live based on the category list
+alone.
 
 The app has Edge Function adapters for Paystack wallet funding (checkout,
 server verification and signed webhook) and for airtime, data plans and
@@ -358,9 +360,10 @@ provider operation has been run. Paystack's callback is configured, and its
 unauthenticated initialization request reaches the authentication check. This
 does not validate the Paystack key or prove that wallet funding works. Neither
 integration has passed authenticated end-to-end transaction testing. The VTU
-adapter does not provide recharge PINs, result-checker PINs, bulk SMS, ISP
-subscriptions, betting, Marketing Hub services, transactional email, or gift
-voucher issuance/redemption. Betting has been removed from the service menu;
+adapter now provides result-checker PINs and bulk SMS in code, but neither has
+passed authenticated provider settlement testing. It does not provide recharge
+PINs, ISP subscriptions, betting, Marketing Hub services, transactional email,
+or gift voucher issuance/redemption. Betting has been removed from the service menu;
 unintegrated services are shown as coming soon instead of reporting fake
 success.
 

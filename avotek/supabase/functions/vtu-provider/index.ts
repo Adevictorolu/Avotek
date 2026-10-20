@@ -168,6 +168,12 @@ function validatePayload(action: string, payload: JsonMap): void {
     if (recipients.some((recipient) => !/^0\d{10}$/.test(String(recipient)))) {
       throw new Error("Every SMS recipient must be an 11-digit Nigerian number.");
     }
+    if (new Set(recipients.map(String)).size !== recipients.length) {
+      throw new Error("Remove duplicate SMS recipients before sending.");
+    }
+    if (payload.recipient_consent !== true) {
+      throw new Error("Confirm recipient consent before sending SMS.");
+    }
     const message = String(payload.message ?? "").trim();
     const messageLength = Array.from(message).length;
     if (messageLength < 1 || messageLength > 1000) {
@@ -246,6 +252,7 @@ Deno.serve(async (request) => {
 
   const payload = requestBody.payload as JsonMap;
   let purchaseAmount: number | null = null;
+  let reservedAmount: number | null = null;
   try {
     validatePayload(action, payload);
   } catch (error) {
@@ -454,19 +461,39 @@ Deno.serve(async (request) => {
     if (!/^[A-Za-z0-9_-]{1,100}$/.test(transactionId)) {
       return jsonResponse({ message: "Invalid transaction reference." }, 400);
     }
-    const { data: order, error: orderError } = await userClient
+    let { data: order, error: orderError } = await userClient
       .from("vtu_orders")
       .select("id,service_type,provider_reference")
       .eq("user_id", authData.user.id)
       .eq("provider_reference", transactionId)
       .maybeSingle();
-    if (orderError || !order) {
-      return jsonResponse({ message: "Transaction not found." }, 404);
+    if (orderError) {
+      return jsonResponse({ message: "Could not load this transaction." }, 500);
+    }
+    if (!order) {
+      const lookup = await userClient
+        .from("vtu_orders")
+        .select("id,service_type,provider_reference")
+        .eq("user_id", authData.user.id)
+        .eq("id", transactionId)
+        .maybeSingle();
+      order = lookup.data;
+      orderError = lookup.error;
+    }
+    if (orderError) {
+      return jsonResponse({ message: "Could not load this transaction." }, 500);
+    }
+    if (!order || typeof order.provider_reference !== "string" ||
+      !/^[A-Za-z0-9_-]{1,100}$/.test(order.provider_reference)) {
+      return jsonResponse({
+        message: "The provider reference is not available for this transaction.",
+      }, 409);
     }
     requeryOrder = order;
+    const providerTransactionId = order.provider_reference;
     path = order.service_type === "bulk_sms"
-      ? `/api/v2/communications/sms/job/${encodeURIComponent(transactionId)}/status/`
-      : `/api/v2/anubis/transactions/${encodeURIComponent(transactionId)}/requery/`;
+      ? `/api/v2/communications/sms/job/${encodeURIComponent(providerTransactionId)}/status/`
+      : `/api/v2/anubis/transactions/${encodeURIComponent(providerTransactionId)}/requery/`;
   }
 
   if (config.purchase) {
@@ -480,6 +507,7 @@ Deno.serve(async (request) => {
         message: "Could not verify the current data plan price. Refresh plans and try again.",
       }, 409);
     }
+    reservedAmount = amount;
     const category = action.split(".")[0];
     const narration = String(payload.narration ?? `${category} purchase`);
     const { data: reservation, error: reserveError } = await userClient.rpc(
@@ -512,7 +540,11 @@ Deno.serve(async (request) => {
   delete providerPayload.narration;
   if (config.purchase) {
     const aggregatorPin = Deno.env.get("BIGISUB_TRANSACTION_PIN")!;
-    providerPayload.pin = aggregatorPin;
+    if (action === "education.purchase") {
+      providerPayload.pin_code = aggregatorPin;
+    } else {
+      providerPayload.pin = aggregatorPin;
+    }
   }
 
   try {
@@ -535,11 +567,14 @@ Deno.serve(async (request) => {
 
     if (config.purchase) {
       let status = normalizedProviderStatus(providerBody);
+      let settlementMessage: string | null = null;
       if (action === "sms.send" && status === "completed") {
         const data = isRecord(providerBody.data) ? providerBody.data : {};
         const actualCost = Number(data.total_cost);
         if (!Number.isFinite(actualCost) || actualCost !== purchaseAmount) {
           status = "pending";
+          settlementMessage =
+            "SMS cost did not match the quote. The debit remains pending for reconciliation.";
         }
       }
       if (!upstream.ok && upstream.status < 500) status = "failed";
@@ -567,12 +602,13 @@ Deno.serve(async (request) => {
         status,
         reference,
         local_reference: reference,
+        charged_amount: reservedAmount,
         provider_reference: isRecord(providerBody.data)
           ? providerBody.data.transaction_id ?? providerBody.data.tran_id ??
             providerBody.data.tranx_id ?? providerBody.data.job_id ?? null
           : providerBody.transaction_id ?? providerBody.tran_id ??
             providerBody.tranx_id ?? providerBody.job_id ?? null,
-        message: String(providerBody.message ?? (status === "pending"
+        message: settlementMessage ?? String(providerBody.message ?? (status === "pending"
           ? "Provider response pending confirmation."
           : status === "failed"
           ? "The provider rejected the purchase."
@@ -587,20 +623,30 @@ Deno.serve(async (request) => {
         }, 502);
       }
       let status = normalizedProviderStatus(providerBody);
+      let requeryMessage = String(
+        providerBody.message ?? "Provider transaction status updated.",
+      );
       if (requeryOrder.service_type === "bulk_sms" && status === "completed") {
         const data = isRecord(providerBody.data) ? providerBody.data : {};
         const actualCost = Number(data.total_cost);
-        const { data: transaction } = await userClient
+        const { data: transaction, error: transactionError } = await userClient
           .from("transactions")
           .select("amount")
           .eq("user_id", authData.user.id)
           .eq("reference", requeryOrder.id)
           .maybeSingle();
+        if (transactionError) {
+          return jsonResponse({
+            message: "Could not verify the reserved SMS amount.",
+          }, 500);
+        }
         if (
           !Number.isFinite(actualCost) || !transaction ||
           Number(transaction.amount) !== actualCost
         ) {
           status = "pending";
+          requeryMessage =
+            "SMS cost could not be confirmed against the wallet reservation; the debit remains pending.";
         }
       }
       if (
@@ -633,6 +679,7 @@ Deno.serve(async (request) => {
         ...providerBody,
         success: status !== "failed",
         status,
+        message: requeryMessage,
       });
     }
 

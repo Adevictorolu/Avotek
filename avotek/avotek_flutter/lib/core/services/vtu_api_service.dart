@@ -262,6 +262,7 @@ class VtuApiService {
       'recipients': recipients.map(_cleanPhoneNumber).toList(),
       'message': message.trim(),
       'sender_name': senderName.trim(),
+      'recipient_consent': true,
     },
   );
 

@@ -127,7 +127,9 @@ The supplied public API page confirms the API base URL, `Authorization: Token â€
 
 For completed purchase responses, store `transaction_id`, `tran_id`, or `tranx_id` as the transaction identifier. Do not use `ref` or `api_id` for requery; the documentation identifies those as the upstream provider's own reference. A failed standard-service transaction is described as wallet-refunded by the provider. No authenticated provider transaction or settlement has yet been verified, so reconcile pending purchases through status queries and the provider dashboard.
 
-The public page exposes route names and some request/response examples for the additional service families, but Avotek has not implemented their wallet reservation/refund, pricing, validation, or transaction-state handling. Keep those products disabled until the full account documentation and provider behavior are confirmed. The public page does not establish webhook signing/retry semantics; do not configure an unverified callback or treat an undocumented webhook as authoritative.
+Result-checker PIN and bulk SMS now have server-side proxy actions and wallet reservation. The PIN price is read from the provider's live price list before a debit is reserved. SMS cost is calculated from the documented per-page rate and message length; the returned cost must match before the debit is finalized. Pending SMS and other purchases can be rechecked from transaction history. These additions have not been tested against an authenticated Bigisub account. Keep them disabled in production until the provider float, account pricing and final status/refund behavior have been verified with approved test transactions.
+
+ISP subscriptions, betting, recharge PINs, and Marketing Hub are not implemented in Avotek. The public page does not establish all account pricing and settlement details needed for safe wallet debits, so do not enable those products based on route names alone. The page also does not establish webhook signing/retry semantics; do not configure an unverified callback or treat an undocumented webhook as authoritative.
 
 ---
 

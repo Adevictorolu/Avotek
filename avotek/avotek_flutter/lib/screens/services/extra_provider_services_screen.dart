@@ -70,9 +70,11 @@ class _ExtraProviderServicesScreenState
         if (!mounted) return;
         setState(() {
           _examPrices = prices.where((price) {
+            final amount = price['amount'];
             return (price['code'] ?? price['exam_type']) != null &&
-                (price['amount'] as num?)?.toDouble().isFinite == true &&
-                (price['amount'] as num).toDouble() > 0;
+                amount is num &&
+                amount.isFinite &&
+                amount > 0;
           }).toList();
           _selectedExam = _examPrices.isEmpty ? null : _examPrices.first;
           _loadError = _examPrices.isEmpty
@@ -187,6 +189,7 @@ class _ExtraProviderServicesScreenState
       return;
     }
 
+    setState(() => _isPurchasing = true);
     String? transactionPin;
     final confirmed = await PinModal.show(
       context,
@@ -200,9 +203,11 @@ class _ExtraProviderServicesScreenState
         return auth.verifyPin(pin);
       },
     );
-    if (confirmed != true || !mounted || transactionPin == null) return;
-
-    setState(() => _isPurchasing = true);
+    if (!mounted) return;
+    if (confirmed != true || transactionPin == null) {
+      setState(() => _isPurchasing = false);
+      return;
+    }
     try {
       final result = _isExam
           ? await vtu.buyExamPins(
