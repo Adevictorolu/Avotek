@@ -20,7 +20,7 @@ const actions: Record<string, { method: string; path: string; purchase?: boolean
   "electricity.providers": { method: "GET", path: "/api/v2/bills/electricity/providers/" },
   "electricity.verify": { method: "POST", path: "/api/v2/bills/electricity/verify/" },
   "electricity.purchase": { method: "POST", path: "/api/v2/bills/electricity/pay/", purchase: true },
-  "transaction.requery": { method: "POST", path: "" },
+  "transaction.requery": { method: "GET", path: "" },
 };
 
 type JsonMap = Record<string, unknown>;
@@ -54,14 +54,38 @@ async function finalizePurchase(
   if (error) throw error;
 }
 
-function normalizedProviderStatus(body: JsonMap): "completed" | "failed" | "pending" {
+function normalizedProviderStatus(
+  body: JsonMap,
+): "completed" | "failed" | "pending" {
   const data = isRecord(body.data) ? body.data : {};
-  const raw = String(body.status ?? data.status ?? "").trim().toLowerCase();
-  if (body.success === false || ["failed", "failure", "error", "rejected"].includes(raw)) {
+  const raw = String(
+    body.status ?? data.status ?? body.status_detail ?? data.status_detail ??
+      "",
+  ).trim().toLowerCase();
+  if (
+    body.success === false ||
+    [
+      "failed",
+      "failure",
+      "error",
+      "rejected",
+      "cancelled",
+      "refunded",
+      "partial",
+    ].includes(raw)
+  ) {
     return "failed";
   }
-  if (["pending", "processing", "queued", "initiated"].includes(raw)) return "pending";
-  if (body.success === true || ["success", "successful", "completed"].includes(raw)) {
+  if (
+    ["pending", "processing", "submitted", "in_progress", "queued", "initiated"]
+      .includes(raw)
+  ) {
+    return "pending";
+  }
+  if (
+    body.success === true ||
+    ["success", "successful", "completed"].includes(raw)
+  ) {
     return "completed";
   }
   return "pending";
@@ -175,6 +199,7 @@ Deno.serve(async (request) => {
   if (!config) return jsonResponse({ message: "Unsupported VTU provider operation." }, 400);
 
   const payload = requestBody.payload as JsonMap;
+  let dataPurchaseAmount: number | null = null;
   try {
     validatePayload(action, payload);
   } catch (error) {
@@ -201,23 +226,27 @@ Deno.serve(async (request) => {
       const selectedPlan = plans.find((plan) =>
         isRecord(plan) && Number(plan.id) === Number(payload.plan)
       );
-      const providerPrice = isRecord(selectedPlan)
-        ? Number(selectedPlan.amount)
+      const currentPlanPrice = isRecord(selectedPlan)
+        ? Number(selectedPlan.amount ?? selectedPlan.plan_amount)
         : Number.NaN;
-      if (!plansResponse.ok || !Number.isFinite(providerPrice) || providerPrice <= 0) {
+      if (
+        !plansResponse.ok || !Number.isFinite(currentPlanPrice) ||
+        currentPlanPrice <= 0
+      ) {
         return jsonResponse({
           success: false,
           status: "failed",
           message: "The selected data plan is unavailable. Refresh plans and try again.",
         });
       }
-      if (Number(payload.sell_price) < providerPrice) {
+      if (Number(payload.sell_price) !== currentPlanPrice) {
         return jsonResponse({
           success: false,
           status: "failed",
           message: "The selected data plan price changed. Refresh plans and try again.",
         });
       }
+      dataPurchaseAmount = currentPlanPrice;
     } catch {
       return jsonResponse({
         success: false,
@@ -317,7 +346,16 @@ Deno.serve(async (request) => {
   }
 
   if (config.purchase) {
-    const amount = action === "data.purchase" ? Number(payload.sell_price) : Number(payload.amount);
+    const amount = action === "data.purchase"
+      ? dataPurchaseAmount
+      : Number(payload.amount);
+    if (amount === null || !Number.isFinite(amount)) {
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: "Could not verify the current data plan price. Refresh plans and try again.",
+      }, 409);
+    }
     const category = action.split(".")[0];
     const narration = String(payload.narration ?? `${category} purchase`);
     const { data: reservation, error: reserveError } = await userClient.rpc(
@@ -398,8 +436,10 @@ Deno.serve(async (request) => {
         status,
         reference,
         provider_reference: isRecord(providerBody.data)
-          ? providerBody.data.transaction_id ?? providerBody.data.reference ?? null
-          : providerBody.transaction_id ?? providerBody.reference ?? null,
+          ? providerBody.data.transaction_id ?? providerBody.data.tran_id ??
+            providerBody.data.tranx_id ?? null
+          : providerBody.transaction_id ?? providerBody.tran_id ??
+            providerBody.tranx_id ?? null,
         message: String(providerBody.message ?? (status === "pending"
           ? "Provider response pending confirmation."
           : status === "failed"

@@ -17,8 +17,9 @@ not prove that a provider credential is valid or that a real transaction works.
 - The app has server-side adapters for airtime, data, cable, electricity,
   transaction requery, and Paystack checkout/webhook handling.
 - Unsupported provider products are not advertised as working: result-checker
-  PINs, bulk SMS, and airtime PIN generation remain disabled until their exact
-  provider API contracts are available and implemented.
+  PINs, bulk SMS, ISP subscriptions, betting wallet funding, and airtime PIN
+  generation remain disabled until their provider contracts are implemented
+  and their wallet, pricing, and transaction flows are verified.
 
 ## Not yet verified or implemented
 
@@ -30,9 +31,12 @@ not prove that a provider credential is valid or that a real transaction works.
   Paystack Test credits and must not be switched to Live for real VTU purchases;
   use a separate production Supabase project or obtain authorization for an
   audited reversal first.
-- The public Bigisub documentation does not expose the request/response
-  contracts needed to implement result-checker PINs, bulk SMS, or airtime PIN
-  generation. No endpoint or purchase payload has been guessed.
+- The public Bigisub page now confirms additional endpoint families for result
+  checker, recharge PIN, ISP, betting, SMS, and Marketing Hub. These services
+  are not wired into Avotek. The public overview does not establish the
+  complete provider-account pricing, customer wallet debit/refund behavior,
+  validation rules, or response/idempotency handling needed to enable them
+  safely. No new purchase endpoint has been guessed or called.
 - The Avotek admin page links to provider/project consoles; it is not yet a
   server-authorized console for global activity, user creation/deletion, or
   service-price changes. Do not expose those operations using the client-side
@@ -54,6 +58,12 @@ not prove that a provider credential is valid or that a real transaction works.
 - No authenticated Bigisub service purchase has been completed. Paystack Test
   credentials have completed Test transactions, but exposed credentials must
   still be rotated before any Live activation.
+- The supplied public Bigisub documentation confirms the currently integrated
+  airtime, data, cable, electricity, wallet-balance, and transaction-requery
+  route families. The adapter now recognizes documented pending and terminal
+  status variants and transaction-ID field names. This confirms contract
+  details from the public page only; authenticated provider behavior and
+  purchase/refund settlement remain unverified.
 
 ## Current linked-project status
 
@@ -332,11 +342,11 @@ claiming that receipts or alerts are sent. Keep access tokens on the server.
 
 ## 7. Current service coverage and remaining launch work
 
-The public Bigisub documentation page describes the available product
-categories, but the supplied Bigisub dashboard settings URL redirects to its
-login page. The public page does not provide the exact request fields and
-response semantics for every product. Do not guess an endpoint or mark a
-service live based on the category list alone.
+The public Bigisub documentation confirms route names and example contracts for
+the current core services, and lists additional endpoint families. The full
+authenticated dashboard documentation is still required to verify every
+request field and response/settlement semantic. Do not guess missing details or
+mark a service live based on the category list alone.
 
 The app has Edge Function adapters for Paystack wallet funding (checkout,
 server verification and signed webhook) and for airtime, data plans and
@@ -348,9 +358,9 @@ provider operation has been run. Paystack's callback is configured, and its
 unauthenticated initialization request reaches the authentication check. This
 does not validate the Paystack key or prove that wallet funding works. Neither
 integration has passed authenticated end-to-end transaction testing. The VTU
-adapter does not provide airtime PIN generation, result-checker PINs, bulk SMS,
-ISP subscriptions, betting, transactional email, or gift voucher
-issuance/redemption. Betting has been removed from the service menu;
+adapter does not provide recharge PINs, result-checker PINs, bulk SMS, ISP
+subscriptions, betting, Marketing Hub services, transactional email, or gift
+voucher issuance/redemption. Betting has been removed from the service menu;
 unintegrated services are shown as coming soon instead of reporting fake
 success.
 
