@@ -101,6 +101,7 @@ class _CableScreenState extends State<CableScreen> {
   }
 
   Future<void> _handleVerify() async {
+    if (_isVerifying) return;
     final card = _smartcardController.text.trim();
     if (card.length < 8) {
       TopNotification.showWarning(
@@ -391,6 +392,14 @@ class _CableScreenState extends State<CableScreen> {
                       const SizedBox(height: 18),
                       TextField(
                         controller: _smartcardController,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) {
+                          if (_verifiedCustomerName == null) {
+                            _handleVerify();
+                          } else {
+                            _handlePurchase();
+                          }
+                        },
                         keyboardType: TextInputType.number,
                         onChanged: (_) =>
                             setState(() => _verifiedCustomerName = null),

@@ -84,67 +84,76 @@ class _LoginScreenState extends State<LoginScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        scrollable: true,
-        insetPadding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 24,
-        ),
-        backgroundColor: isDark ? const Color(0xFF111827) : Colors.white,
-        title: Text(
-          'Reset your password',
-          style: GoogleFonts.plusJakartaSans(
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
-            fontWeight: FontWeight.w800,
+      builder: (dialogContext) {
+        var isSendingReset = false;
+        Future<void> sendResetLink() async {
+          if (isSendingReset) return;
+          final email = emailController.text.trim();
+          if (email.isEmpty || !email.contains('@')) {
+            _showSnackBar('Enter a valid email address.', AppColors.error);
+            return;
+          }
+          isSendingReset = true;
+          final auth = context.read<AuthProvider>();
+          final sent = await auth.sendPasswordResetEmail(email);
+          if (!mounted || !dialogContext.mounted) return;
+          if (sent) {
+            Navigator.pop(dialogContext);
+            _showSnackBar(
+              'Password reset link sent. Check your email.',
+              AppColors.success,
+            );
+          } else {
+            isSendingReset = false;
+            _showSnackBar(
+              auth.errorMessage ?? 'Could not send the password reset link.',
+              AppColors.error,
+            );
+          }
+        }
+        return AlertDialog(
+          scrollable: true,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
           ),
-        ),
-        content: TextField(
-          controller: emailController,
-          keyboardType: TextInputType.emailAddress,
-          textInputAction: TextInputAction.done,
-          style: GoogleFonts.plusJakartaSans(
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
-          ),
-          decoration: InputDecoration(
-            labelText: 'Email address',
-            labelStyle: TextStyle(
-              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+          backgroundColor: isDark ? const Color(0xFF111827) : Colors.white,
+          title: Text(
+            'Reset your password',
+            style: GoogleFonts.plusJakartaSans(
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              fontWeight: FontWeight.w800,
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+          content: TextField(
+            controller: emailController,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => sendResetLink(),
+            style: GoogleFonts.plusJakartaSans(
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
+            decoration: InputDecoration(
+              labelText: 'Email address',
+              labelStyle: TextStyle(
+                color: isDark
+                    ? const Color(0xFFCBD5E1)
+                    : const Color(0xFF475569),
+              ),
+            ),
           ),
-          FilledButton(
-            onPressed: () async {
-              final email = emailController.text.trim();
-              if (email.isEmpty || !email.contains('@')) {
-                _showSnackBar('Enter a valid email address.', AppColors.error);
-                return;
-              }
-              final auth = context.read<AuthProvider>();
-              final sent = await auth.sendPasswordResetEmail(email);
-              if (!mounted || !dialogContext.mounted) return;
-              if (sent) {
-                Navigator.pop(dialogContext);
-                _showSnackBar(
-                  'Password reset link sent. Check your email.',
-                  AppColors.success,
-                );
-              } else {
-                _showSnackBar(
-                  auth.errorMessage ??
-                      'Could not send the password reset link.',
-                  AppColors.error,
-                );
-              }
-            },
-            child: const Text('Send link'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: sendResetLink,
+              child: const Text('Send link'),
+            ),
+          ],
+        );
+      },
     ).whenComplete(emailController.dispose);
   }
 
@@ -851,6 +860,7 @@ class _LoginScreenState extends State<LoginScreen> {
               hint: 'Confirm Password',
               icon: Icons.lock_outline_rounded,
               obscureText: _obscureConfirmPassword,
+              textInputAction: TextInputAction.next,
               suffixWidget: IconButton(
                 icon: Icon(
                   _obscureConfirmPassword
@@ -869,6 +879,10 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: _referralController,
               hint: 'Referral Code (Optional)',
               icon: Icons.card_giftcard_rounded,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) {
+                if (!_isProcessing) _handleSignUp();
+              },
             ),
           ] else ...[
             _buildInputField(
@@ -882,6 +896,10 @@ class _LoginScreenState extends State<LoginScreen> {
               hint: 'Password',
               icon: Icons.lock_outline_rounded,
               obscureText: _obscurePassword,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) {
+                if (!_isProcessing) _handleSignIn();
+              },
               suffixWidget: IconButton(
                 icon: Icon(
                   _obscurePassword
@@ -1083,6 +1101,8 @@ class _LoginScreenState extends State<LoginScreen> {
     bool obscureText = false,
     Widget? suffixWidget,
     TextInputType keyboardType = TextInputType.text,
+    TextInputAction textInputAction = TextInputAction.next,
+    ValueChanged<String>? onSubmitted,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -1098,6 +1118,8 @@ class _LoginScreenState extends State<LoginScreen> {
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
+        textInputAction: textInputAction,
+        onSubmitted: onSubmitted,
         style: GoogleFonts.plusJakartaSans(
           fontSize: 14,
           fontWeight: FontWeight.w600,

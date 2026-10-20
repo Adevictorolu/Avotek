@@ -740,6 +740,7 @@ class _DataScreenState extends State<DataScreen> {
         TextField(
           controller: _phoneController,
           keyboardType: TextInputType.phone,
+          textInputAction: TextInputAction.next,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w700,
@@ -772,6 +773,10 @@ class _DataScreenState extends State<DataScreen> {
         TextField(
           controller: _pinController,
           keyboardType: TextInputType.number,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) {
+            if (!_isProcessing) _handlePurchase();
+          },
           obscureText: true,
           maxLength: 4,
           style: GoogleFonts.plusJakartaSans(

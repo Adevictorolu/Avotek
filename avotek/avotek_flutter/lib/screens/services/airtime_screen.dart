@@ -630,6 +630,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                 child: TextField(
                   controller: _amountController,
                   keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.next,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 22,
@@ -723,6 +724,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
               TextField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -777,6 +779,10 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                   obscureText: true,
                   maxLength: 4,
                   keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) {
+                    if (!_isProcessing) _handlePurchase();
+                  },
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,

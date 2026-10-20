@@ -343,6 +343,14 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                       TextField(
                         controller: _amountController,
                         keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) {
+                          if (!_isStartingPayment &&
+                              !_isCheckingPayment &&
+                              _authorizationUri == null) {
+                            _startPayment();
+                          }
+                        },
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                           LengthLimitingTextInputFormatter(7),

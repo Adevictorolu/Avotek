@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../core/theme/app_theme.dart';
 
 class PinModal extends StatefulWidget {
@@ -45,7 +46,7 @@ class _PinModalState extends State<PinModal> {
   String? _errorMessage;
 
   void _appendDigit(String digit) {
-    if (_pin.length < 4) {
+    if (!_isLoading && _pin.length < 4) {
       setState(() {
         _pin += digit;
         _errorMessage = null;
@@ -66,6 +67,7 @@ class _PinModalState extends State<PinModal> {
   }
 
   Future<void> _submitPin() async {
+    if (_isLoading || _pin.length != 4) return;
     setState(() => _isLoading = true);
     final isValid = await widget.onPinSubmit(_pin);
     if (!mounted) return;
@@ -85,7 +87,30 @@ class _PinModalState extends State<PinModal> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent || _isLoading) {
+          return KeyEventResult.ignored;
+        }
+        final key = event.logicalKey;
+        if (key == LogicalKeyboardKey.backspace) {
+          _backspace();
+          return KeyEventResult.handled;
+        }
+        final digit = key.keyLabel;
+        if (RegExp(r'^\d$').hasMatch(digit)) {
+          _appendDigit(digit);
+          return KeyEventResult.handled;
+        }
+        if (key == LogicalKeyboardKey.enter ||
+            key == LogicalKeyboardKey.numpadEnter) {
+          if (_pin.length == 4) _submitPin();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Container(
       padding: EdgeInsets.only(
         left: 24,
         right: 24,
@@ -184,6 +209,7 @@ class _PinModalState extends State<PinModal> {
             _buildKeypad(isDark),
           ],
         ],
+      ),
       ),
     );
   }

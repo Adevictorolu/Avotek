@@ -54,6 +54,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
   }
 
   Future<void> _handleVerify() async {
+    if (_isVerifying) return;
     final meter = _meterController.text.trim();
     if (meter.length < 8) {
       TopNotification.showWarning(context, 'Please enter a valid meter number');
@@ -438,6 +439,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                       TextField(
                         controller: _meterController,
                         keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) {
+                          if (!_isVerifying) _handleVerify();
+                        },
                         onChanged: (_) => setState(() {
                           _verifiedCustomerName = null;
                           _verificationDetails = null;
@@ -535,6 +540,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                       TextField(
                         controller: _amountController,
                         keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) {
+                          if (!_isVerifying) _handlePurchase();
+                        },
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
