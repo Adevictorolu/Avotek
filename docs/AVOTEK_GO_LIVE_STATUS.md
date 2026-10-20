@@ -16,9 +16,10 @@ not prove that a provider credential is valid or that a real transaction works.
   These checks verify routing and authentication boundaries only.
 - The app has server-side adapters for airtime, data, cable, electricity,
   result-checker PINs, bulk SMS, transaction requery, and Paystack
-  checkout/webhook handling. Result-checker PIN and SMS flows now have
-  authenticated service screens, server-side pricing and wallet reservation,
-  and a status-recheck path.
+  checkout/webhook handling. Result-checker PIN and SMS flows have service
+  screens, server-side pricing and wallet reservation, and a status-recheck
+  path; their hub cards remain disabled until authenticated settlement is
+  verified and the provider function is deployed.
 - ISP subscriptions, betting wallet funding, recharge PIN generation, and
   Marketing Hub services remain disabled until their provider contracts and
   server-authoritative pricing/settlement flows are implemented.

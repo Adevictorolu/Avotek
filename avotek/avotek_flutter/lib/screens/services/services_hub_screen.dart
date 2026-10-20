@@ -52,6 +52,20 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
     );
   }
 
+  void _showAwaitingProviderActivation(String serviceName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '$serviceName will be available after Bigisub settlement is verified '
+          'and the provider integration is deployed.',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: AppColors.primaryBlue,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -192,7 +206,9 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                   _ServiceCardData(
                     title: 'Bulk SMS',
                     icon: Icons.chat_bubble_outline_rounded,
-                    onTap: () => context.push('/services/bulk-sms'),
+                    isComingSoon: true,
+                    onTap: () =>
+                        _showAwaitingProviderActivation('Bulk SMS'),
                   ),
                   _ServiceCardData(
                     title: 'Airtime PIN Generation',
@@ -264,7 +280,10 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                   _ServiceCardData(
                     title: 'Result Checker PINs',
                     icon: Icons.school_rounded,
-                    onTap: () => context.push('/services/exam-pins'),
+                    isComingSoon: true,
+                    onTap: () => _showAwaitingProviderActivation(
+                      'Result Checker PINs',
+                    ),
                   ),
                 ],
               ),
