@@ -5,8 +5,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class VtuProviderRequestException implements Exception {
   final int statusCode;
   final String? message;
+  final String? reference;
 
-  const VtuProviderRequestException(this.statusCode, [this.message]);
+  const VtuProviderRequestException(
+    this.statusCode, [
+    this.message,
+    this.reference,
+  ]);
 
   @override
   String toString() => message ?? 'VTU provider request failed ($statusCode).';
@@ -29,10 +34,12 @@ class VtuApiService {
       'action': action,
       'payload': payload,
     };
+    String? reference;
     if (userPin != null) {
       body['user_pin'] = userPin;
-      body['reference'] =
+      reference =
           'AVO-${DateTime.now().microsecondsSinceEpoch}-${_random.nextInt(1 << 32)}';
+      body['reference'] = reference;
     }
     late final FunctionResponse response;
     try {
@@ -47,13 +54,17 @@ class VtuApiService {
     } on FunctionException catch (error) {
       final details = error.details;
       final message = details is Map ? details['message']?.toString() : null;
-      throw VtuProviderRequestException(error.status, message);
+      throw VtuProviderRequestException(error.status, message, reference);
     }
 
     if (response.status < 200 || response.status >= 300) {
       final data = response.data;
       final message = data is Map ? data['message']?.toString() : null;
-      throw VtuProviderRequestException(response.status, message);
+      throw VtuProviderRequestException(
+        response.status,
+        message,
+        reference,
+      );
     }
     if (response.data is! Map<String, dynamic>) {
       throw Exception('The VTU provider returned an invalid response.');
@@ -217,8 +228,53 @@ class VtuApiService {
     },
   );
 
+  Future<List<Map<String, dynamic>>> getExamPinPrices() async {
+    final response = await _invoke('education.prices');
+    final data = response['data'];
+    final prices = data is Map<String, dynamic> ? data['prices'] : null;
+    return prices is List
+        ? prices.whereType<Map<String, dynamic>>().toList()
+        : const [];
+  }
+
+  Future<Map<String, dynamic>> purchaseExamPins({
+    required String examCode,
+    required int quantity,
+    String? pin,
+  }) => _invoke(
+    'education.purchase',
+    userPin: pin,
+    payload: {'exam': examCode, 'quantity': quantity},
+  );
+
+  Future<Map<String, dynamic>> getSmsPricing() =>
+      _invoke('sms.pricing');
+
+  Future<Map<String, dynamic>> sendBulkSms({
+    required List<String> recipients,
+    required String message,
+    required String senderName,
+    String? pin,
+  }) => _invoke(
+    'sms.send',
+    userPin: pin,
+    payload: {
+      'recipients': recipients.map(_cleanPhoneNumber).toList(),
+      'message': message.trim(),
+      'sender_name': senderName.trim(),
+    },
+  );
+
   Future<Map<String, dynamic>> requeryTransaction(String tranxId) =>
       _invoke('transaction.requery', payload: {'transaction_id': tranxId});
+
+  static int estimateSmsPages(String message) {
+    final runes = message.runes;
+    final count = runes.length;
+    if (count == 0) return 0;
+    final isUnicode = runes.any((character) => character > 0x7f);
+    return (count / (isUnicode ? 70 : 160)).ceil();
+  }
 
   static int mapNetworkNameToId(String network) {
     switch (network.trim().toLowerCase()) {

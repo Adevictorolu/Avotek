@@ -497,11 +497,12 @@ class SupabaseService {
     required String plan,
     required double amount,
     String status = 'successful',
+    String? id,
     String? providerReference,
     String? token,
   }) async {
     final order = VtuOrder(
-      id: 'ORD-${DateTime.now().millisecondsSinceEpoch}',
+      id: id ?? 'ORD-${DateTime.now().millisecondsSinceEpoch}',
       userId: userId,
       serviceType: serviceType,
       network: network,

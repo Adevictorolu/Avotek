@@ -110,6 +110,7 @@ class OrderResult {
   final double balanceRemaining;
   final String? token;
   final String? units;
+  final List<String> issuedPins;
 
   const OrderResult({
     required this.success,
@@ -118,6 +119,7 @@ class OrderResult {
     this.balanceRemaining = 0.0,
     this.token,
     this.units,
+    this.issuedPins = const [],
   });
 }
 

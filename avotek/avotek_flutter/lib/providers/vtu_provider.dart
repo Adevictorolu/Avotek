@@ -236,9 +236,12 @@ class VtuProvider extends ChangeNotifier {
 
     var status = 'failed';
     var message = 'The purchase could not be completed.';
+    var chargedAmount = amount;
     String? providerReference;
     String? token;
     String? units;
+    String? localReference;
+    var issuedPins = const <String>[];
     try {
       final response = await dispatch();
       final data = response['data'] is Map<String, dynamic>
@@ -249,21 +252,37 @@ class VtuProvider extends ChangeNotifier {
           .toLowerCase();
       status = switch (providerStatus) {
         'success' || 'successful' || 'completed' => 'successful',
-        'pending' || 'processing' || 'queued' || 'initiated' => 'pending',
-        'failed' || 'failure' || 'error' || 'rejected' => 'failed',
+        'pending' || 'processing' || 'submitted' || 'in_progress' ||
+        'queued' || 'initiated' => 'pending',
+        'failed' || 'failure' || 'error' || 'rejected' || 'cancelled' ||
+        'refunded' || 'partial' => 'failed',
         _ => response['success'] == true ? 'successful' : 'failed',
       };
       if (response['success'] == false) status = 'failed';
+      final providerAmount = data['total_amount'] ?? data['total_cost'];
+      if (providerAmount is num &&
+          providerAmount > 0 &&
+          providerAmount.toDouble() == amount) {
+        chargedAmount = providerAmount.toDouble();
+      }
       providerReference =
           (data['transaction_id'] ??
-                  data['reference'] ??
-                  response['provider_reference'] ??
-                  response['reference'])
+                  data['tran_id'] ??
+                  data['tranx_id'] ??
+                  data['job_id'] ??
+                  response['provider_reference'])
               ?.toString();
+      localReference = response['local_reference']?.toString();
       token = data['token']?.toString();
       units = data['units']?.toString();
+      final pins = data['pins'];
+      if (pins is List) {
+        issuedPins = pins.map((pin) => pin.toString()).toList();
+        token = issuedPins.join('\n');
+      }
       message = response['message']?.toString() ?? message;
     } on VtuProviderRequestException catch (error) {
+      localReference = error.reference;
       final isAmbiguous = error.statusCode == 0 || error.statusCode >= 500;
       final isUnconfigured =
           error.message?.toLowerCase().contains('not configured') == true;
@@ -286,8 +305,9 @@ class VtuProvider extends ChangeNotifier {
       network: network,
       phone: recipient,
       plan: plan,
-      amount: amount,
+      amount: chargedAmount,
       status: status,
+      id: localReference,
       providerReference: providerReference,
       token: token,
     );
@@ -300,6 +320,7 @@ class VtuProvider extends ChangeNotifier {
       message: message,
       token: token,
       units: units,
+      issuedPins: issuedPins,
     );
   }
 
@@ -321,7 +342,7 @@ class VtuProvider extends ChangeNotifier {
       network: network,
       recipient: phone,
       plan: '₦${amount.toStringAsFixed(0)} Airtime',
-      amount: amount,
+      amount: chargedAmount,
       dispatch: () => VtuApiService.instance.purchaseAirtime(
         network: network,
         phone: phone,
@@ -357,6 +378,70 @@ class VtuProvider extends ChangeNotifier {
                 (size.isNotEmpty && variationCode.contains(size)))) {
           match = candidate;
           break;
+        }
+
+        Future<List<Map<String, dynamic>>> fetchExamPinPrices() =>
+            VtuApiService.instance.getExamPinPrices();
+
+        Future<OrderResult> buyExamPins({
+          required dynamic userId,
+          required String examCode,
+          required String examName,
+          required int quantity,
+          required double unitPrice,
+          String? userPin,
+        }) {
+          final amount = unitPrice * quantity;
+          return _purchase(
+            userId: userId,
+            serviceType: 'education',
+            network: examCode.toUpperCase(),
+            recipient: 'exam pins',
+            plan: '$examName x$quantity',
+            amount: amount,
+            dispatch: () => VtuApiService.instance.purchaseExamPins(
+              examCode: examCode,
+              quantity: quantity,
+              pin: userPin,
+            ),
+          );
+        }
+
+        Future<Map<String, dynamic>> fetchSmsPricing() =>
+            VtuApiService.instance.getSmsPricing();
+
+        Future<OrderResult> sendBulkSms({
+          required dynamic userId,
+          required List<String> recipients,
+          required String message,
+          required String senderName,
+          required String userPin,
+        }) async {
+          final pricing = await fetchSmsPricing();
+          final data = pricing['data'];
+          final costPerPage = data is Map<String, dynamic>
+              ? (data['cost_per_page'] as num?)?.toDouble()
+              : null;
+          if (costPerPage == null || costPerPage <= 0) {
+            throw StateError('The SMS provider returned invalid pricing.');
+          }
+          final pages = VtuApiService.estimateSmsPages(message);
+          final amount = costPerPage * pages * recipients.length;
+
+          return _purchase(
+            userId: userId,
+            serviceType: 'bulk_sms',
+            network: 'SMS',
+            recipient: 'Bulk SMS (${recipients.length} recipients)',
+            plan: senderName,
+            amount: amount,
+            dispatch: () => VtuApiService.instance.sendBulkSms(
+              recipients: recipients,
+              message: message,
+              senderName: senderName,
+              pin: userPin,
+            ),
+          );
         }
       }
       resolvedPlanId ??= (match?['id'] as num?)?.toInt();

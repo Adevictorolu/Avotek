@@ -23,6 +23,7 @@ import '../../screens/services/airtime_screen.dart';
 import '../../screens/services/cable_screen.dart';
 import '../../screens/services/data_screen.dart';
 import '../../screens/services/electricity_screen.dart';
+import '../../screens/services/extra_provider_services_screen.dart';
 import '../../screens/services/services_hub_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/stats/statistics_screen.dart';
@@ -321,6 +322,28 @@ class AppRouter {
             context,
             state,
             const CableScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/services/exam-pins',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            ExtraProviderServicesScreen(
+              service: ExtraProviderService.examPins,
+              onToggleTheme: themeToggle,
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/services/bulk-sms',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            ExtraProviderServicesScreen(
+              service: ExtraProviderService.bulkSms,
+              onToggleTheme: themeToggle,
+            ),
           ),
         ),
       ],

@@ -30,6 +30,14 @@ void main() {
       expect(VtuApiService.mapDiscoNameToCode('Eko Electric'), 'eko-electric');
     });
 
+    test('estimates normal and Unicode SMS page counts', () {
+      expect(VtuApiService.estimateSmsPages('a' * 160), 1);
+      expect(VtuApiService.estimateSmsPages('a' * 161), 2);
+      expect(VtuApiService.estimateSmsPages('é' * 70), 1);
+      expect(VtuApiService.estimateSmsPages('é' * 71), 2);
+      expect(VtuApiService.estimateSmsPages(''), 0);
+    });
+
     test('rejects unknown providers instead of silently selecting another', () {
       expect(
         () => VtuApiService.mapNetworkNameToId('unknown network'),

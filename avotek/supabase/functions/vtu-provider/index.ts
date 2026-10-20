@@ -20,6 +20,24 @@ const actions: Record<string, { method: string; path: string; purchase?: boolean
   "electricity.providers": { method: "GET", path: "/api/v2/bills/electricity/providers/" },
   "electricity.verify": { method: "POST", path: "/api/v2/bills/electricity/verify/" },
   "electricity.purchase": { method: "POST", path: "/api/v2/bills/electricity/pay/", purchase: true },
+  "education.prices": {
+    method: "GET",
+    path: "/api/v2/bills/result-checker/prices/",
+  },
+  "education.purchase": {
+    method: "POST",
+    path: "/api/v2/bills/result-checker/purchase/",
+    purchase: true,
+  },
+  "sms.pricing": {
+    method: "GET",
+    path: "/api/v2/communications/sms/pricing/",
+  },
+  "sms.send": {
+    method: "POST",
+    path: "/api/v2/communications/sms/send/",
+    purchase: true,
+  },
   "transaction.requery": { method: "GET", path: "" },
 };
 
@@ -132,6 +150,34 @@ function validatePayload(action: string, payload: JsonMap): void {
       throw new Error("Invalid data plan price.");
     }
   }
+  if (action === "education.purchase") {
+    const exam = String(payload.exam ?? "").trim();
+    const quantity = Number(payload.quantity);
+    if (!/^[A-Za-z0-9_-]{2,30}$/.test(exam)) {
+      throw new Error("Choose a valid examination.");
+    }
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
+      throw new Error("Choose between 1 and 10 exam pins.");
+    }
+  }
+  if (action === "sms.send") {
+    const recipients = payload.recipients;
+    if (!Array.isArray(recipients) || recipients.length < 1 || recipients.length > 500) {
+      throw new Error("Enter between 1 and 500 SMS recipients.");
+    }
+    if (recipients.some((recipient) => !/^0\d{10}$/.test(String(recipient)))) {
+      throw new Error("Every SMS recipient must be an 11-digit Nigerian number.");
+    }
+    const message = String(payload.message ?? "").trim();
+    const messageLength = Array.from(message).length;
+    if (messageLength < 1 || messageLength > 1000) {
+      throw new Error("SMS messages must contain between 1 and 1,000 characters.");
+    }
+    const sender = String(payload.sender_name ?? "").trim();
+    if (!/^[A-Za-z0-9 ]{3,11}$/.test(sender)) {
+      throw new Error("Sender name must be 3 to 11 letters, numbers, or spaces.");
+    }
+  }
   if (action === "cable.verify" || action === "cable.purchase") {
     const cable = String(payload.cable_type ?? payload.cable_name ?? "");
     if (!["dstv", "gotv", "startimes", "showmax"].includes(cable)) {
@@ -199,7 +245,7 @@ Deno.serve(async (request) => {
   if (!config) return jsonResponse({ message: "Unsupported VTU provider operation." }, 400);
 
   const payload = requestBody.payload as JsonMap;
-  let dataPurchaseAmount: number | null = null;
+  let purchaseAmount: number | null = null;
   try {
     validatePayload(action, payload);
   } catch (error) {
@@ -246,12 +292,86 @@ Deno.serve(async (request) => {
           message: "The selected data plan price changed. Refresh plans and try again.",
         });
       }
-      dataPurchaseAmount = currentPlanPrice;
+      purchaseAmount = currentPlanPrice;
     } catch {
       return jsonResponse({
         success: false,
         status: "failed",
         message: "Could not verify the current data plan price. Please try again.",
+      });
+    }
+  }
+
+  if (action === "education.purchase") {
+    try {
+      const pricesResponse = await fetch(
+        `${apiBaseUrl}/api/v2/bills/result-checker/prices/`,
+        {
+          headers: { Authorization: `Token ${token}` },
+          signal: AbortSignal.timeout(12000),
+        },
+      );
+      const pricesBody: unknown = await pricesResponse.json();
+      const pricesData = isRecord(pricesBody) && isRecord(pricesBody.data)
+        ? pricesBody.data
+        : {};
+      const prices = Array.isArray(pricesData.prices) ? pricesData.prices : [];
+      const examCode = String(payload.exam).toLowerCase();
+      const exam = prices.find((item) =>
+        isRecord(item) &&
+        String(item.code ?? item.exam_type ?? "").toLowerCase() === examCode
+      );
+      const unitPrice = isRecord(exam) ? Number(exam.amount) : Number.NaN;
+      if (!pricesResponse.ok || !Number.isFinite(unitPrice) || unitPrice <= 0) {
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: "The selected exam pin is unavailable. Refresh prices and try again.",
+        });
+      }
+      purchaseAmount = unitPrice * Number(payload.quantity);
+    } catch {
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: "Could not verify the current exam pin price. Please try again.",
+      });
+    }
+  }
+
+  if (action === "sms.send") {
+    try {
+      const pricingResponse = await fetch(
+        `${apiBaseUrl}/api/v2/communications/sms/pricing/`,
+        {
+          headers: { Authorization: `Token ${token}` },
+          signal: AbortSignal.timeout(12000),
+        },
+      );
+      const pricingBody: unknown = await pricingResponse.json();
+      const pricingData = isRecord(pricingBody) && isRecord(pricingBody.data)
+        ? pricingBody.data
+        : {};
+      const costPerPage = Number(pricingData.cost_per_page);
+      if (!pricingResponse.ok || !Number.isFinite(costPerPage) || costPerPage <= 0) {
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: "Could not verify current SMS pricing. Please try again.",
+        });
+      }
+      const message = String(payload.message);
+      const messageLength = Array.from(message).length;
+      const unicode = /[^\u0000-\u007f]/.test(message);
+      const charactersPerPage = unicode ? 70 : 160;
+      const pages = Math.ceil(messageLength / charactersPerPage);
+      purchaseAmount = costPerPage * pages *
+        (payload.recipients as unknown[]).length;
+    } catch {
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: "Could not verify current SMS pricing. Please try again.",
       });
     }
   }
@@ -328,6 +448,7 @@ Deno.serve(async (request) => {
 
   const query = queryFor(action, payload);
   let path = config.path;
+  let requeryOrder: JsonMap | null = null;
   if (action === "transaction.requery") {
     const transactionId = String(payload.transaction_id ?? "");
     if (!/^[A-Za-z0-9_-]{1,100}$/.test(transactionId)) {
@@ -335,19 +456,22 @@ Deno.serve(async (request) => {
     }
     const { data: order, error: orderError } = await userClient
       .from("vtu_orders")
-      .select("provider_reference")
+      .select("id,service_type,provider_reference")
       .eq("user_id", authData.user.id)
       .eq("provider_reference", transactionId)
       .maybeSingle();
     if (orderError || !order) {
       return jsonResponse({ message: "Transaction not found." }, 404);
     }
-    path = `/api/v2/anubis/transactions/${encodeURIComponent(transactionId)}/requery/`;
+    requeryOrder = order;
+    path = order.service_type === "bulk_sms"
+      ? `/api/v2/communications/sms/job/${encodeURIComponent(transactionId)}/status/`
+      : `/api/v2/anubis/transactions/${encodeURIComponent(transactionId)}/requery/`;
   }
 
   if (config.purchase) {
-    const amount = action === "data.purchase"
-      ? dataPurchaseAmount
+    const amount = ["data.purchase", "education.purchase", "sms.send"].includes(action)
+      ? purchaseAmount
       : Number(payload.amount);
     if (amount === null || !Number.isFinite(amount)) {
       return jsonResponse({
@@ -411,6 +535,13 @@ Deno.serve(async (request) => {
 
     if (config.purchase) {
       let status = normalizedProviderStatus(providerBody);
+      if (action === "sms.send" && status === "completed") {
+        const data = isRecord(providerBody.data) ? providerBody.data : {};
+        const actualCost = Number(data.total_cost);
+        if (!Number.isFinite(actualCost) || actualCost !== purchaseAmount) {
+          status = "pending";
+        }
+      }
       if (!upstream.ok && upstream.status < 500) status = "failed";
       if (!upstream.ok && upstream.status >= 500) status = "pending";
       if (status === "failed") {
@@ -435,16 +566,73 @@ Deno.serve(async (request) => {
         success: status !== "failed",
         status,
         reference,
+        local_reference: reference,
         provider_reference: isRecord(providerBody.data)
           ? providerBody.data.transaction_id ?? providerBody.data.tran_id ??
-            providerBody.data.tranx_id ?? null
+            providerBody.data.tranx_id ?? providerBody.data.job_id ?? null
           : providerBody.transaction_id ?? providerBody.tran_id ??
-            providerBody.tranx_id ?? null,
+            providerBody.tranx_id ?? providerBody.job_id ?? null,
         message: String(providerBody.message ?? (status === "pending"
           ? "Provider response pending confirmation."
           : status === "failed"
           ? "The provider rejected the purchase."
           : "Purchase completed.")),
+      });
+    }
+
+    if (action === "transaction.requery" && requeryOrder) {
+      if (!upstream.ok) {
+        return jsonResponse({
+          message: String(providerBody.message ?? "Could not requery this transaction."),
+        }, 502);
+      }
+      let status = normalizedProviderStatus(providerBody);
+      if (requeryOrder.service_type === "bulk_sms" && status === "completed") {
+        const data = isRecord(providerBody.data) ? providerBody.data : {};
+        const actualCost = Number(data.total_cost);
+        const { data: transaction } = await userClient
+          .from("transactions")
+          .select("amount")
+          .eq("user_id", authData.user.id)
+          .eq("reference", requeryOrder.id)
+          .maybeSingle();
+        if (
+          !Number.isFinite(actualCost) || !transaction ||
+          Number(transaction.amount) !== actualCost
+        ) {
+          status = "pending";
+        }
+      }
+      if (
+        typeof requeryOrder.id === "string" &&
+        /^AVO-[A-Za-z0-9_-]{12,120}$/.test(requeryOrder.id) &&
+        status !== "pending"
+      ) {
+        await finalizePurchase(
+          supabaseUrl,
+          requeryOrder.id,
+          status,
+          String(providerBody.message ?? "Provider transaction status updated."),
+          authData.user.id,
+        );
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (!serviceRoleKey) {
+          throw new Error("Missing Supabase service-role configuration.");
+        }
+        const admin = createClient(supabaseUrl, serviceRoleKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+        const { error } = await admin
+          .from("vtu_orders")
+          .update({ status: status === "completed" ? "successful" : "failed" })
+          .eq("id", requeryOrder.id)
+          .eq("user_id", authData.user.id);
+        if (error) throw error;
+      }
+      return jsonResponse({
+        ...providerBody,
+        success: status !== "failed",
+        status,
       });
     }
 

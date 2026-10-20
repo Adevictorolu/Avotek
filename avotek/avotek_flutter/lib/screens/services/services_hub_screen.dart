@@ -192,9 +192,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                   _ServiceCardData(
                     title: 'Bulk SMS',
                     icon: Icons.chat_bubble_outline_rounded,
-                    isComingSoon: true,
-                    onTap: () =>
-                        _showAwaitingProviderContract('Bulk SMS'),
+                    onTap: () => context.push('/services/bulk-sms'),
                   ),
                   _ServiceCardData(
                     title: 'Airtime PIN Generation',
@@ -266,10 +264,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                   _ServiceCardData(
                     title: 'Result Checker PINs',
                     icon: Icons.school_rounded,
-                    isComingSoon: true,
-                    onTap: () => _showAwaitingProviderContract(
-                      'Result Checker PINs',
-                    ),
+                    onTap: () => context.push('/services/exam-pins'),
                   ),
                 ],
               ),
