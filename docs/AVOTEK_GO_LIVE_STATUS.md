@@ -46,11 +46,11 @@ not prove that a provider credential is valid or that a real transaction works.
   delivery providers are separately configured and server-side event dispatch
   is implemented. The Settings page links to the supplied WhatsApp support
   contact for user-initiated support chats.
-- Following the Settings and receipt updates, targeted Flutter analysis passed,
-  all 21 Flutter tests passed, and `flutter build web --release --no-pub`
-  completed successfully on 2026-10-19. The Cable TV and Electricity screens
-  were restyled and targeted Dart analysis plus all 21 Flutter tests passed.
-  This verifies the local build, not a deployment or an end-to-end transaction.
+- The latest full Flutter analysis passed, all 22 Flutter tests passed, and
+  `flutter build web --release --no-pub` completed successfully on 2026-10-20.
+  Enter-key actions are supported in the login/signup, wallet funding, and
+  supported VTU forms. This verifies the local build, not provider credentials
+  or an end-to-end transaction.
 - No authenticated Bigisub service purchase has been completed. Paystack Test
   credentials have completed Test transactions, but exposed credentials must
   still be rotated before any Live activation.
