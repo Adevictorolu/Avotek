@@ -91,6 +91,12 @@ class PaystackPaymentService {
         body: body,
       );
     } on FunctionException catch (error) {
+      if (error.status == 0) {
+        throw const PaystackPaymentException(
+          "Could not connect to Avotek's payment service. Check your connection. "
+          'If you already tried to pay, check Transactions before retrying.',
+        );
+      }
       final details = error.details;
       final message = details is Map ? details['message']?.toString() : null;
       throw PaystackPaymentException(

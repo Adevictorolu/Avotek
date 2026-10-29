@@ -21,9 +21,16 @@ String buildWebAuthRedirectUrl(Uri currentUri, String route) {
 }
 
 class SupabaseService {
-  static const String supabaseUrl = 'https://gcixbqrridzgobkqnlfz.supabase.co';
-  static const String supabaseAnonKey =
-      'sb_publishable__KqtFYoV1zOBWx9oQCySBQ_pIbwAEMO';
+  static const String supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: 'https://gcixbqrridzgobkqnlfz.supabase.co',
+  );
+  static const String supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: 'sb_publishable__KqtFYoV1zOBWx9oQCySBQ_pIbwAEMO',
+  );
+  static String get supabaseProjectRef =>
+      Uri.parse(supabaseUrl).host.split('.').first;
 
   static final SupabaseService instance = SupabaseService._internal();
   SupabaseService._internal();

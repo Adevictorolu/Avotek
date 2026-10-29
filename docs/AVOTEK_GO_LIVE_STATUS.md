@@ -27,13 +27,16 @@ not prove that a provider credential is valid or that a real transaction works.
 ## Not yet verified or implemented
 
 - The Paystack Test payment and wallet-credit path has been verified.
-  No authenticated Bigisub purchase or Paystack Live payment has been
-  completed. The current deployment is **not certified ready for live
-  transactions**.
-- Live activation was not performed. The linked project contains simulated
-  Paystack Test credits and must not be switched to Live for real VTU purchases;
-  use a separate production Supabase project or obtain authorization for an
-  audited reversal first.
+  Paystack's dashboard currently has Live mode selected, but no authenticated
+  Live payment has been completed. The current Supabase project still contains
+  simulated Test wallet credits and must not be used for Live wallet funding
+  until those credits are isolated or reversed through an authorized, audited
+  ledger adjustment. A Paystack dashboard mode toggle does not change the
+  `PAYSTACK_SECRET_KEY` configured in Supabase.
+- The current deployment still targets the existing `gcixbqrridzgobkqnlfz`
+  Supabase project. A separate project named Avotek Production exists, but it
+  has not been verified or configured for the app. The current deployment is
+  **not certified ready for live transactions**.
 - The documented result-checker and SMS contracts are now wired into the app.
   They have not been exercised with an authenticated provider account; SMS
   charges remain pending until provider status and cost are confirmed. ISP,
@@ -77,14 +80,12 @@ The latest check of the linked Supabase project found:
 - Migration `20261019235500_backfill_missing_wallets.sql` creates a zero-balance
   NGN wallet only for profiles that do not have one. The account's missing
   wallet has been repaired.
-- Four successful Paystack Test transactions (requested amounts ₦1,000, ₦100,
-  ₦100, and ₦200) were verified and credited once each. The Paystack dashboard
-  lists the ₦200 payment as ₦203.05 including fees. The Test wallet and ledger
-  balance is ₦1,400; these are simulated Test funds, not Live funds. The
-  smaller attempts were produced during checkout troubleshooting. This balance
-  must not be spent against a real VTU provider; reverse the simulated credits
-  with an audited ledger adjustment or isolate Test data before enabling Live
-  purchases.
+- Seven completed Paystack Test wallet-funding ledger records totaling ₦4,500
+  and one wallet balance totaling ₦4,500 were observed on 2026-10-29. They are
+  simulated Test funds, not Live funds, and must not be spent against a real
+  VTU provider. Isolate this data in a separate production project or obtain
+  explicit authorization for an audited ledger reversal before using the
+  current project for Live payments.
 - Migration `20261020010000_prevent_duplicate_wallet_funding.sql` is applied.
   It serializes funding initialization per wallet and returns the existing
   pending reference instead of creating another pending attempt.
@@ -97,17 +98,24 @@ The latest check of the linked Supabase project found:
   endpoint responds to CORS preflight and rejects unauthenticated requests;
   the Bigisub secret names are configured, but credentials and provider
   operations have not been validated with an authenticated account.
-- Paystack callback `PAYSTACK_CALLBACK_URL` is configured. The authenticated
-  Test transactions and wallet credits are verified, but the Live key and a
-  real payment have not been validated.
+- Paystack callback `PAYSTACK_CALLBACK_URL` and the Live webhook URL point to
+  the current Supabase project. The dashboard showed Live mode selected on
+  2026-10-29, but the Paystack Live secret was not rotated or installed in
+  Supabase and a Live payment was not validated. The dashboard's current-month
+  successful-transactions view showed no transactions at the time checked.
+- Paystack's `PAYSTACK_SECRET_KEY` secret exists in Supabase, but its value is
+  hidden and must not be inferred from its name or digest. Do not claim Live
+  wallet funding works until the correct rotated Live key is set directly in
+  the production project's Supabase secrets and a controlled Live payment is
+  verified end to end.
 - The Paystack amount verification now compares the exact requested amount and
-  currency while excluding fees passed through to the payer. All four
+  currency while excluding fees passed through to the payer. All seven
   successful Test transactions were credited through the idempotent RPC. No
   authenticated Bigisub purchase has been run. The provider endpoints and
   credentials still need verification before customer transactions are enabled.
 - The Paystack public key is not used by this server-created hosted-checkout
-  integration. The Live and Test secret values were previously exposed and
-  must be rotated before Live activation.
+  integration. Credentials previously shared in chat must be rotated before
+  further use; never copy key material into chat, source control, or logs.
 
 Credentials previously shared in chat, and any credential material returned
 by CLI secret-list output, should be treated as exposed and rotated before use.

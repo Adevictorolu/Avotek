@@ -2,6 +2,27 @@
 
 All platform secrets and configuration values reside on the backend. No secret keys or aggregator API credentials ever touch the Flutter client.
 
+## Supabase Flutter build configuration
+
+The Supabase URL and public anon/publishable key are compile-time application
+configuration, not secrets. To build for a different Supabase project, pass
+both values explicitly:
+
+```powershell
+cd avotek\avotek_flutter
+flutter build web --release `
+  --dart-define=SUPABASE_URL=https://your-project-ref.supabase.co `
+  --dart-define=SUPABASE_ANON_KEY=your-public-anon-or-publishable-key
+```
+
+GitHub Pages deployments read these values from the repository variables
+`SUPABASE_URL` and `SUPABASE_ANON_KEY`. Configure both under **Settings →
+Secrets and variables → Actions → Variables** before running the deployment
+workflow. The anonymous/publishable key is public and may be embedded in the
+client; never use a service-role key, Paystack secret, or provider token here.
+The existing project values remain defaults for local builds only and do not
+make that project suitable for production.
+
 ---
 
 ## Variable Reference Table

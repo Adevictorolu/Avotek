@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/shell/responsive_shell.dart';
+import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
@@ -13,8 +14,8 @@ import '../../widgets/avotek_loading_indicator.dart';
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
-  static const _projectUrl =
-      'https://supabase.com/dashboard/project/gcixbqrridzgobkqnlfz';
+  static String get _projectUrl =>
+      'https://supabase.com/dashboard/project/${SupabaseService.supabaseProjectRef}';
 
   @override
   Widget build(BuildContext context) {
@@ -279,7 +280,7 @@ class AdminDashboardScreen extends StatelessWidget {
         icon: Icons.payments_outlined,
         title: 'Paystack dashboard',
         description:
-            'Webhook: https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/'
+            'Webhook: ${SupabaseService.supabaseUrl}/functions/v1/'
             'paystack-payments. Callback: Avotek wallet/fund. Complete '
             'Test-mode checks before Live.',
         onTap: () => _openExternal(

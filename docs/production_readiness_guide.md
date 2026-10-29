@@ -78,7 +78,8 @@ Avotek's own limit; the amount sent to Paystack is in kobo. The current webhook
 endpoint is
 `https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/paystack-payments`.
 `PAYSTACK_CALLBACK_URL` is the customer's return URL, not the webhook, and no
-separate `PAYSTACK_WEBHOOK_SECRET` is used by this implementation.
+separate `PAYSTACK_WEBHOOK_SECRET` is used by this implementation. For browser
+checkout, Avotek navigates the current tab to avoid popup blockers.
 
 ### 2.1 Configure Paystack keys safely
 1. Log into your [Paystack Dashboard](https://dashboard.paystack.com).

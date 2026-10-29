@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -234,7 +235,10 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     try {
       final opened = await launchUrl(
         authorizationUri,
-        mode: LaunchMode.externalApplication,
+        mode: kIsWeb
+            ? LaunchMode.platformDefault
+            : LaunchMode.externalApplication,
+        webOnlyWindowName: kIsWeb ? '_self' : null,
       );
       if (!opened && mounted) {
         TopNotification.showError(

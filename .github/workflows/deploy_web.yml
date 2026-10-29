@@ -31,9 +31,26 @@ jobs:
         working-directory: avotek/avotek_flutter
         run: flutter pub get
 
+      - name: Validate Supabase web configuration
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Set the SUPABASE_URL and SUPABASE_ANON_KEY repository variables to the intended Supabase project before deploying."
+            exit 1
+          fi
+
       - name: Build Web Release
         working-directory: avotek/avotek_flutter
-        run: flutter build web --release --base-href /${{ github.event.repository.name }}/
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+        run: |
+          flutter build web --release \
+            --base-href "/${{ github.event.repository.name }}/" \
+            --dart-define="SUPABASE_URL=$SUPABASE_URL" \
+            --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
