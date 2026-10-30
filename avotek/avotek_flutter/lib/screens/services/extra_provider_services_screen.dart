@@ -11,6 +11,7 @@ import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/pin_modal.dart';
 import '../../widgets/top_notification.dart';
+import '../../widgets/pay_for_me_dialog.dart';
 import '../../widgets/transaction_success_dialog.dart';
 
 enum ExtraProviderService { examPins, bulkSms, airtimePins }
@@ -62,7 +63,7 @@ class _ExtraProviderServicesScreenState
       'amount': 1000.0,
       'badge': 'TECHNICAL',
       'subtitle': 'Official NBC / NTC verification e-PIN token',
-      'color': const Color(0xFFFF6D00),
+      'color': const Color(0xFF00D2FF),
       'logo': 'assets/images/brands/nabteb.png',
       'icon': Icons.engineering_rounded,
     },
@@ -234,6 +235,18 @@ class _ExtraProviderServicesScreenState
         TopNotification.showWarning(context, 'Choose between 1 and 10 PINs.');
         return;
       }
+    }
+
+    if (_isExam && _consentConfirmed) {
+      final examName = _selectedExam?['name']?.toString() ?? 'Result Checker';
+      final qty = _quantityController.text.trim();
+      await PayForMeDialog.show(
+        context,
+        serviceName: '$examName ($qty pin${qty != "1" ? "s" : ""})',
+        recipient: auth.user?.email ?? auth.user?.phone ?? 'Candidate',
+        amount: amount,
+      );
+      return;
     } else if (_isAirtimePins) {
       final quantity = int.tryParse(_quantityController.text.trim());
       if (quantity == null || quantity < 1 || quantity > 50) {
@@ -453,7 +466,7 @@ class _ExtraProviderServicesScreenState
                           color: (_isExam
                                   ? const Color(0xFF0052FF)
                                   : (_isAirtimePins
-                                      ? const Color(0xFFEA580C)
+                                      ? const Color(0xFF0052FF)
                                       : const Color(0xFF10B981)))
                               .withValues(alpha: 0.15),
                           shape: BoxShape.circle,
@@ -467,7 +480,7 @@ class _ExtraProviderServicesScreenState
                           color: _isExam
                               ? const Color(0xFF0052FF)
                               : (_isAirtimePins
-                                  ? const Color(0xFFEA580C)
+                                  ? const Color(0xFF0052FF)
                                   : const Color(0xFF10B981)),
                           size: 26,
                         ),
@@ -545,13 +558,13 @@ class _ExtraProviderServicesScreenState
                                 color: isDark ? const Color(0xFF141721) : Colors.white,
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: isSelected ? const Color(0xFFFF6600) : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
+                                  color: isSelected ? const Color(0xFF0052FF) : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
                                   width: isSelected ? 2.0 : 1.0,
                                 ),
                                 boxShadow: isSelected
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFFFF6600).withOpacity(0.2),
+                                          color: const Color(0xFF00D2FF).withOpacity(0.2),
                                           blurRadius: 10,
                                           spreadRadius: 1,
                                         ),
@@ -567,7 +580,7 @@ class _ExtraProviderServicesScreenState
                                     errorBuilder: (ctx, err, stack) => Icon(
                                       Icons.school_rounded,
                                       size: 28,
-                                      color: isSelected ? const Color(0xFFFF6600) : Colors.grey,
+                                      color: isSelected ? const Color(0xFF0052FF) : Colors.grey,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -586,7 +599,7 @@ class _ExtraProviderServicesScreenState
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w900,
-                                      color: const Color(0xFFFF6600),
+                                      color: const Color(0xFF00D2FF),
                                     ),
                                   ),
                                 ],
@@ -635,12 +648,12 @@ class _ExtraProviderServicesScreenState
                                     padding: const EdgeInsets.symmetric(vertical: 12),
                                     decoration: BoxDecoration(
                                       color: isSel
-                                          ? const Color(0xFFFF6600).withOpacity(0.18)
+                                          ? const Color(0xFF0052FF).withOpacity(0.18)
                                           : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
                                         color: isSel
-                                            ? const Color(0xFFFF6600)
+                                            ? const Color(0xFF0052FF)
                                             : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
                                         width: isSel ? 2 : 1,
                                       ),
@@ -651,7 +664,7 @@ class _ExtraProviderServicesScreenState
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 14,
                                           fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                                          color: isSel ? const Color(0xFFFF6600) : (isDark ? Colors.white : Colors.black87),
+                                          color: isSel ? const Color(0xFF0052FF) : (isDark ? Colors.white : Colors.black87),
                                         ),
                                       ),
                                     ),
@@ -1035,7 +1048,7 @@ class _ExtraProviderServicesScreenState
                       children: [
                         Checkbox(
                           value: _consentConfirmed,
-                          activeColor: const Color(0xFFFF6600),
+                          activeColor: const Color(0xFF0052FF),
                           onChanged: (val) => setState(() => _consentConfirmed = val ?? false),
                         ),
                         Expanded(
@@ -1115,7 +1128,7 @@ class _ExtraProviderServicesScreenState
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
-                              color: _isExam ? const Color(0xFFFF6600) : AppColors.primaryBlue,
+                              color: _isExam ? const Color(0xFF0052FF) : AppColors.primaryBlue,
                             ),
                           ),
                         ],
@@ -1132,7 +1145,7 @@ class _ExtraProviderServicesScreenState
                   child: ElevatedButton(
                     onPressed: _isPurchasing ? null : _purchase,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isExam ? const Color(0xFFFF6600) : AppColors.primaryBlue,
+                      backgroundColor: _isExam ? const Color(0xFF0052FF) : AppColors.primaryBlue,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

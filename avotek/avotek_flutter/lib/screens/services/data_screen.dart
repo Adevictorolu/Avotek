@@ -14,6 +14,7 @@ import '../../providers/wallet_provider.dart';
 import '../../widgets/pin_modal.dart';
 import '../../widgets/top_notification.dart';
 import '../../widgets/transaction_success_dialog.dart';
+import '../../widgets/pay_for_me_dialog.dart';
 
 class DataScreen extends StatefulWidget {
   const DataScreen({super.key});
@@ -222,6 +223,17 @@ class _DataScreenState extends State<DataScreen> {
       return;
     }
 
+    if (_activeMode == 0 && _payForMe) {
+      final phone = _phoneController.text.trim();
+      await PayForMeDialog.show(
+        context,
+        serviceName: '$_selectedNetwork Data ($planName)',
+        recipient: phone.isNotEmpty ? phone : 'My Phone',
+        amount: planPrice,
+      );
+      return;
+    }
+
     if (wallet.balance < planPrice) {
       TopNotification.showError(
         context,
@@ -423,12 +435,18 @@ class _DataScreenState extends State<DataScreen> {
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: _activeMode == 0 ? const Color(0xFFFF6600) : Colors.transparent,
+                                gradient: _activeMode == 0
+                                    ? const LinearGradient(
+                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : null,
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: _activeMode == 0
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFFFF6600).withOpacity(0.3),
+                                          color: const Color(0xFF0052FF).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -468,12 +486,18 @@ class _DataScreenState extends State<DataScreen> {
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: _activeMode == 1 ? const Color(0xFFFF6600) : Colors.transparent,
+                                gradient: _activeMode == 1
+                                    ? const LinearGradient(
+                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : null,
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: _activeMode == 1
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFFFF6600).withOpacity(0.3),
+                                          color: const Color(0xFF0052FF).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -516,7 +540,7 @@ class _DataScreenState extends State<DataScreen> {
                       'This creates a shareable gift link. The recipient redeems it themselves.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
-                        color: const Color(0xFFFF8533),
+                        color: const Color(0xFF00D2FF),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -572,14 +596,14 @@ class _DataScreenState extends State<DataScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSelected
-                                            ? const Color(0xFFFF6600)
+                                            ? const Color(0xFF0052FF)
                                             : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
                                         width: isSelected ? 2 : 1,
                                       ),
                                       boxShadow: isSelected
                                           ? [
                                               BoxShadow(
-                                                color: const Color(0xFFFF6600).withOpacity(0.2),
+                                                color: const Color(0xFF0052FF).withOpacity(0.2),
                                                 blurRadius: 10,
                                                 spreadRadius: 1,
                                               ),
@@ -599,7 +623,7 @@ class _DataScreenState extends State<DataScreen> {
                                                 errorBuilder: (ctx, err, stack) => Icon(
                                                   Icons.signal_cellular_alt,
                                                   size: 26,
-                                                  color: isSelected ? const Color(0xFFFF6600) : Colors.grey,
+                                                  color: isSelected ? const Color(0xFF0052FF) : Colors.grey,
                                                 ),
                                               ),
                                               const SizedBox(height: 6),
@@ -609,7 +633,7 @@ class _DataScreenState extends State<DataScreen> {
                                                   fontSize: 11,
                                                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                                                   color: isSelected
-                                                      ? const Color(0xFFFF6600)
+                                                      ? const Color(0xFF0052FF)
                                                       : (isDark ? Colors.white70 : const Color(0xFF334155)),
                                                 ),
                                               ),
@@ -624,7 +648,7 @@ class _DataScreenState extends State<DataScreen> {
                                               width: 14,
                                               height: 14,
                                               decoration: const BoxDecoration(
-                                                color: Color(0xFFFF6600),
+                                                color: Color(0xFF0052FF),
                                                 shape: BoxShape.circle,
                                               ),
                                               child: const Icon(Icons.check, size: 10, color: Colors.white),
@@ -691,12 +715,12 @@ class _DataScreenState extends State<DataScreen> {
                                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                                     decoration: BoxDecoration(
                                       color: isCatSel
-                                          ? const Color(0xFFFF6600)
+                                          ? const Color(0xFF0052FF)
                                           : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
                                         color: isCatSel
-                                            ? const Color(0xFFFF6600)
+                                            ? const Color(0xFF0052FF)
                                             : (isDark ? const Color(0xFF2A2E3D) : const Color(0xFFCBD5E1)),
                                       ),
                                     ),
@@ -722,7 +746,7 @@ class _DataScreenState extends State<DataScreen> {
                           const Center(
                             child: Padding(
                               padding: EdgeInsets.all(32),
-                              child: CircularProgressIndicator(color: Color(0xFFFF6600)),
+                              child: CircularProgressIndicator(color: Color(0xFF0052FF)),
                             ),
                           )
                         else if (_planLoadError != null)
@@ -740,7 +764,7 @@ class _DataScreenState extends State<DataScreen> {
                                   ElevatedButton(
                                     onPressed: _loadLivePlans,
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFFF6600),
+                                      backgroundColor: const Color(0xFF0052FF),
                                       foregroundColor: Colors.white,
                                     ),
                                     child: const Text('Retry Loading'),
@@ -791,14 +815,14 @@ class _DataScreenState extends State<DataScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: isSelected
-                                          ? const Color(0xFFFF6600)
+                                          ? const Color(0xFF0052FF)
                                           : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
                                       width: isSelected ? 2 : 1,
                                     ),
                                     boxShadow: isSelected
                                         ? [
                                             BoxShadow(
-                                              color: const Color(0xFFFF6600).withOpacity(0.2),
+                                              color: const Color(0xFF0052FF).withOpacity(0.2),
                                               blurRadius: 8,
                                               spreadRadius: 1,
                                             ),
@@ -825,7 +849,7 @@ class _DataScreenState extends State<DataScreen> {
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w900,
-                                          color: const Color(0xFFFF6600),
+                                          color: const Color(0xFF00D2FF),
                                           letterSpacing: 0.2,
                                         ),
                                       ),
@@ -935,7 +959,7 @@ class _DataScreenState extends State<DataScreen> {
                         children: [
                           Checkbox(
                             value: _payForMe,
-                            activeColor: const Color(0xFFFF6600),
+                            activeColor: const Color(0xFF0052FF),
                             onChanged: (val) => setState(() => _payForMe = val ?? false),
                           ),
                           Expanded(
@@ -1052,19 +1076,38 @@ class _DataScreenState extends State<DataScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Action Button
-                  SizedBox(
+                  // Action Button with Avotek Blue/Cyan Gradient
+                  Container(
                     width: double.infinity,
                     height: 52,
+                    decoration: BoxDecoration(
+                      gradient: isReady && !_isProcessing
+                          ? const LinearGradient(
+                              colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isReady && !_isProcessing ? null : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: isReady && !_isProcessing
+                          ? [
+                              BoxShadow(
+                                color: const Color(0xFF0052FF).withOpacity(0.35),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
+                    ),
                     child: ElevatedButton(
                       onPressed: isReady && !_isProcessing ? _handleSubmit : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6600),
-                        disabledBackgroundColor: const Color(0xFF4A3423),
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
                         foregroundColor: Colors.white,
                         disabledForegroundColor: Colors.white38,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: isReady ? 4 : 0,
                       ),
                       child: _isProcessing
                           ? const SizedBox(
