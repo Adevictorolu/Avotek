@@ -328,20 +328,14 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     final wallet = context.read<WalletProvider>();
     final user = auth.user;
     if (user == null) return;
-    final res = await wallet.ensureDedicatedAccount(
-      user.id,
-      amountNaira: amt,
-      force: true,
-    );
+    final res = await wallet.createTransferAccount(amt);
     if (!mounted) return;
-    await auth.refreshWallet();
-    if (!mounted) return;
-    if (res != null && res.isAssigned) {
-      final exactAmt = res.transferAmountNaira ?? amt.toDouble();
-      TopNotification.showSuccess(
+    if (res == null || !res.isAssigned) {
+      TopNotification.showError(
         context,
-        'Transfer ₦${exactAmt.toStringAsFixed(2)} to ${res.bankName} (${res.accountNumber}) above — no need to leave this screen!',
-        title: 'In-App Transfer Account Ready',
+        wallet.dedicatedAccountMessage ??
+            'Could not generate a transfer account right now.',
+        title: 'Transfer account unavailable',
       );
     }
   }
@@ -499,7 +493,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Text(
-                  hasDedicated ? 'ACTIVE' : 'IN-APP',
+                  hasDedicated ? 'ACTIVE' : (wallet.dedicatedAccountUnavailable ? 'ACTIVATING' : 'IN-APP'),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w800,
@@ -712,6 +706,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
               ),
               const SizedBox(height: 14),
             ],
+            if (!wallet.dedicatedAccountUnavailable)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -866,10 +861,10 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: wallet.isProvisioningDedicatedAccount
+                          onPressed: wallet.isCreatingTransfer
                               ? null
                               : _generateAmountTransferAccount,
-                          icon: wallet.isProvisioningDedicatedAccount
+                          icon: wallet.isCreatingTransfer
                               ? const SizedBox(
                                   width: 18,
                                   height: 18,
@@ -880,9 +875,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                 )
                               : const Icon(Icons.account_balance_rounded),
                           label: Text(
-                            wallet.isProvisioningDedicatedAccount
-                                ? 'Generating in-app transfer account...'
-                                : 'Generate In-App Transfer Account for Amount',
+                            wallet.isCreatingTransfer
+                                ? 'Generating transfer account...'
+                                : 'Pay by Bank Transfer (shows account here)',
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF10B981),
@@ -894,8 +889,77 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      SizedBox(
+                      if (wallet.activeTransfer != null) ...[
+                        const SizedBox(height: 14),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFF10B981)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Transfer exactly ₦${(wallet.activeTransfer!.transferAmountNaira ?? wallet.activeTransfer!.amountNaira ?? 0).toStringAsFixed(2)}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              SelectableText(
+                                '${wallet.activeTransfer!.bankName}  •  ${wallet.activeTransfer!.accountNumber}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 20,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Account name: ${wallet.activeTransfer!.accountName}. This is a temporary account for this payment only and expires in 8 hours. Your wallet is credited automatically; then tap "I\'ve sent the money".',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  height: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  OutlinedButton.icon(
+                                    onPressed: () {
+                                      Clipboard.setData(
+                                        ClipboardData(
+                                          text: wallet.activeTransfer!.accountNumber!,
+                                        ),
+                                      );
+                                      TopNotification.showSuccess(
+                                        context,
+                                        'Account number copied.',
+                                        title: 'Copied',
+                                      );
+                                    },
+                                    icon: const Icon(Icons.copy_rounded, size: 16),
+                                    label: const Text('Copy number'),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  TextButton.icon(
+                                    onPressed: _isRefreshingTransfer
+                                        ? null
+                                        : _refreshTransferBalance,
+                                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                                    label: const Text("I've sent the money"),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 10),                      SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed:

@@ -816,6 +816,27 @@ Deno.serve(async (request) => {
         message: "Could not verify the current service price. Refresh and try again.",
       }, 409);
     }
+    // Never debit a customer for a purchase our provider wallet cannot fund.
+    try {
+      const balanceResponse = await fetch(`${apiBaseUrl}/api/v2/financial/wallet/balance/`, {
+        headers: { Authorization: `Token ${token}` },
+        signal: AbortSignal.timeout(8000),
+      });
+      const balanceBody: unknown = await balanceResponse.json();
+      const providerBalance = isRecord(balanceBody) && isRecord(balanceBody.data)
+        ? Number(balanceBody.data.balance)
+        : Number.NaN;
+      if (balanceResponse.ok && Number.isFinite(providerBalance) && providerBalance < amount) {
+        console.error(`Provider wallet too low: balance ${providerBalance}, needed ${amount}. Fund the Bigisub wallet.`);
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: "This service is temporarily unavailable. You have not been charged. Please try again shortly.",
+        }, 503);
+      }
+    } catch {
+      // If the balance check itself is unreachable, continue and let the purchase decide.
+    }
     reservedAmount = amount;
     const category = action.split(".")[0];
     const narration = String(payload.narration ?? `${category} purchase`);
@@ -849,7 +870,7 @@ Deno.serve(async (request) => {
   const providerPayload = buildProviderPayload(action, payload, aggregatorPin);
 
   try {
-    let upstream = await fetch(`${apiBaseUrl}${path}${query}`, {
+    const upstream = await fetch(`${apiBaseUrl}${path}${query}`, {
       method: config.method,
       headers: {
         Authorization: `Token ${token}`,
@@ -868,32 +889,6 @@ Deno.serve(async (request) => {
       }
     } catch {
       providerBody = {};
-    }
-
-    if (
-      config.purchase &&
-      (!upstream.ok || providerBody.success === false) &&
-      aggregatorPin !== "1234" &&
-      /\bpin\b/i.test(extractProviderMessage(providerBody, ""))
-    ) {
-      const retryPayload = buildProviderPayload(action, payload, "1234");
-      upstream = await fetch(`${apiBaseUrl}${path}${query}`, {
-        method: config.method,
-        headers: {
-          Authorization: `Token ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(retryPayload),
-        signal: AbortSignal.timeout(25000),
-      });
-      try {
-        const parsedRetry: unknown = await upstream.json();
-        if (isRecord(parsedRetry)) {
-          providerBody = parsedRetry;
-        }
-      } catch {
-        // Keep previous body if retry response is not JSON
-      }
     }
 
     if (config.purchase) {

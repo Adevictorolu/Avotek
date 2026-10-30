@@ -11,8 +11,9 @@ class WalletProvider extends ChangeNotifier {
   bool _isProvisioningDedicatedAccount = false;
   bool _dedicatedAccountNeedsProfile = false;
   String? _dedicatedAccountMessage;
-  double? _activeTransferAmountNaira;
-  String? _activeTransferReference;
+  bool _dedicatedAccountUnavailable = false;
+  PaystackDedicatedAccountResult? _activeTransfer;
+  bool _isCreatingTransfer = false;
   bool _isBalanceVisible = true;
   String _selectedFilter = 'all';
   String? _errorMessage;
@@ -27,8 +28,9 @@ class WalletProvider extends ChangeNotifier {
   bool get isProvisioningDedicatedAccount => _isProvisioningDedicatedAccount;
   bool get dedicatedAccountNeedsProfile => _dedicatedAccountNeedsProfile;
   String? get dedicatedAccountMessage => _dedicatedAccountMessage;
-  double? get activeTransferAmountNaira => _activeTransferAmountNaira;
-  String? get activeTransferReference => _activeTransferReference;
+  bool get dedicatedAccountUnavailable => _dedicatedAccountUnavailable;
+  PaystackDedicatedAccountResult? get activeTransfer => _activeTransfer;
+  bool get isCreatingTransfer => _isCreatingTransfer;
   bool get hasDedicatedAccount => _walletSummary?.hasDedicatedAccount ?? false;
   bool get isBalanceVisible => _isBalanceVisible;
   String get selectedFilter => _selectedFilter;
@@ -75,15 +77,12 @@ class WalletProvider extends ChangeNotifier {
     dynamic userId, {
     String? fullName,
     String? phone,
-    int? amountNaira,
     bool force = false,
   }) async {
     final uid = userId?.toString() ?? '';
     if (uid.isEmpty) return null;
 
-    if (!force &&
-        amountNaira == null &&
-        _walletSummary?.hasDedicatedAccount == true) {
+    if (!force && _walletSummary?.hasDedicatedAccount == true) {
       return PaystackDedicatedAccountResult(
         status: 'assigned',
         accountNumber: _walletSummary!.virtualAccountNumber,
@@ -100,18 +99,11 @@ class WalletProvider extends ChangeNotifier {
 
     try {
       final result = await PaystackPaymentService.instance
-          .requestDedicatedAccount(
-            fullName: fullName,
-            phone: phone,
-            amountNaira: amountNaira,
-            forceNew: force && amountNaira != null,
-          );
+          .requestDedicatedAccount(fullName: fullName, phone: phone);
       if (result.isAssigned) {
         _dedicatedAccountNeedsProfile = false;
         _dedicatedAccountMessage = null;
-        _activeTransferAmountNaira =
-            result.transferAmountNaira ?? result.amountNaira;
-        _activeTransferReference = result.reference;
+        _dedicatedAccountUnavailable = false;
         _walletSummary = WalletSummary(
           balance: _walletSummary?.balance ?? 0.0,
           currency: _walletSummary?.currency ?? 'NGN',
@@ -125,6 +117,7 @@ class WalletProvider extends ChangeNotifier {
         await fetchWallet(uid);
       } else {
         _dedicatedAccountNeedsProfile = false;
+        _dedicatedAccountUnavailable = result.status == 'unavailable';
         _dedicatedAccountMessage =
             result.message ??
             'Your transfer account is being prepared. Refresh this page shortly.';
@@ -142,6 +135,35 @@ class WalletProvider extends ChangeNotifier {
       _isProvisioningDedicatedAccount = false;
       notifyListeners();
     }
+  }
+
+  Future<PaystackDedicatedAccountResult?> createTransferAccount(
+    int amountNaira,
+  ) async {
+    if (_isCreatingTransfer) return null;
+    _isCreatingTransfer = true;
+    _activeTransfer = null;
+    notifyListeners();
+    try {
+      _activeTransfer = await PaystackPaymentService.instance
+          .requestTransferAccount(amountNaira: amountNaira);
+      return _activeTransfer;
+    } on PaystackPaymentException catch (error) {
+      _dedicatedAccountMessage = error.message;
+      return null;
+    } catch (_) {
+      _dedicatedAccountMessage =
+          'Could not generate a transfer account right now. Please try again.';
+      return null;
+    } finally {
+      _isCreatingTransfer = false;
+      notifyListeners();
+    }
+  }
+
+  void clearActiveTransfer() {
+    _activeTransfer = null;
+    notifyListeners();
   }
 
   Future<void> fetchTransactions(dynamic userId) async {

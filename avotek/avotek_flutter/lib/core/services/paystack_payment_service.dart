@@ -32,6 +32,7 @@ class PaystackDedicatedAccountResult {
   final String? reference;
   final double? amountNaira;
   final double? transferAmountNaira;
+  final String? expiresAt;
   final String? message;
 
   const PaystackDedicatedAccountResult({
@@ -42,6 +43,7 @@ class PaystackDedicatedAccountResult {
     this.reference,
     this.amountNaira,
     this.transferAmountNaira,
+    this.expiresAt,
     this.message,
   });
 
@@ -83,19 +85,16 @@ class PaystackPaymentService {
   Future<PaystackDedicatedAccountResult> requestDedicatedAccount({
     String? fullName,
     String? phone,
-    int? amountNaira,
-    bool forceNew = false,
   }) async {
     final response = await _invoke({
       'action': 'dedicated_account',
       if (fullName != null && fullName.trim().isNotEmpty)
         'full_name': fullName.trim(),
       if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
-      if (amountNaira != null && amountNaira >= 100) 'amount': amountNaira,
-      if (forceNew) 'force_new': true,
     });
     final status = response['status'];
-    if (status is! String || (status != 'assigned' && status != 'pending')) {
+    if (status is! String ||
+        (status != 'assigned' && status != 'pending' && status != 'unavailable')) {
       throw const FormatException(
         'Payment service returned an invalid dedicated account response.',
       );
@@ -130,6 +129,41 @@ class PaystackPaymentService {
       transferAmountNaira:
           transferAmount is num ? transferAmount.toDouble() : null,
       message: message is String ? message.trim() : null,
+    );
+  }
+
+  /// Temporary, amount-specific bank transfer account. It expires and is not
+  /// the user's permanent dedicated account.
+  Future<PaystackDedicatedAccountResult> requestTransferAccount({
+    required int amountNaira,
+  }) async {
+    final response = await _invoke({
+      'action': 'transfer_account',
+      'amount': amountNaira,
+    });
+    final accountNumber = response['account_number'];
+    final bankName = response['bank_name'];
+    final accountName = response['account_name'];
+    if (accountNumber is! String ||
+        bankName is! String ||
+        accountName is! String ||
+        accountNumber.isEmpty) {
+      throw const FormatException(
+        'Payment service returned incomplete transfer account details.',
+      );
+    }
+    final amount = response['amount_naira'];
+    final transferAmount = response['transfer_amount_naira'];
+    return PaystackDedicatedAccountResult(
+      status: 'assigned',
+      accountNumber: accountNumber.trim(),
+      bankName: bankName.trim(),
+      accountName: accountName.trim(),
+      reference: response['reference']?.toString(),
+      amountNaira: amount is num ? amount.toDouble() : null,
+      transferAmountNaira:
+          transferAmount is num ? transferAmount.toDouble() : null,
+      expiresAt: response['expires_at']?.toString(),
     );
   }
 
