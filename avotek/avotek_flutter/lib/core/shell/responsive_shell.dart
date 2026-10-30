@@ -385,10 +385,10 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
             'your receipt history.',
       ),
       (
-        'How do I fund my wallet with a Dedicated Account Number?',
-        'Complete your phone and email verification on your Profile/KYC page. Once verified, '
-            'Avotek generates a permanent dedicated virtual account number in your name that you can '
-            'transfer to from any Nigerian bank for instant, automated wallet crediting.',
+        'How do I fund my Avotek wallet?',
+        'Navigate to Fund Wallet from your Dashboard or the Wallet menu. Enter the amount you wish to deposit, '
+            'then tap "Proceed with Instant Paystack Funding". You can complete payment seamlessly via Debit Card, '
+            'Direct Bank Transfer, or USSD code. Your wallet is credited instantly upon completion.',
       ),
       (
         'My transaction is pending or processing',

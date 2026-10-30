@@ -37,8 +37,10 @@ class AppTheme {
     final isDark = brightness == Brightness.dark;
     final primaryTextColor = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
     final secondaryTextColor = isDark ? AppColors.metallicLight : AppColors.slateGrey;
+    final base = isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme;
+    final baseFontTheme = GoogleFonts.plusJakartaSansTextTheme(base);
 
-    return TextTheme(
+    return baseFontTheme.copyWith(
       displayLarge: GoogleFonts.plusJakartaSans(
         fontSize: 34,
         fontWeight: FontWeight.w800,

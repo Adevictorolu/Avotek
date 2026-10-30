@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
 import '../providers/wallet_provider.dart';
@@ -13,10 +13,6 @@ class BalanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final wallet = context.watch<WalletProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // Dedicated virtual accounts are retired; funding is Paystack-only.
-    const String? accountNumber = null;
-    const String? bankName = null;
 
     return Container(
       width: double.infinity,
@@ -39,9 +35,9 @@ class BalanceCard extends StatelessWidget {
                 children: [
                   Text(
                     'Available Balance',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: isDark
                           ? AppColors.metallicLight
                           : AppColors.slateGrey,
@@ -77,7 +73,7 @@ class BalanceCard extends StatelessWidget {
                 ),
                 child: Text(
                   wallet.currency,
-                  style: TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: isDark
@@ -93,7 +89,7 @@ class BalanceCard extends StatelessWidget {
             wallet.isBalanceVisible
                 ? '₦${wallet.balance.toStringAsFixed(2)}'
                 : '₦ • • • • • •',
-            style: TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 32,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.5,
@@ -106,74 +102,47 @@ class BalanceCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: accountNumber != null && accountNumber.isNotEmpty
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Dedicated Virtual Account',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDark
-                                  ? AppColors.slateGrey
-                                  : const Color(0xFF94A3B8),
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Row(
-                            children: [
-                              Text(
-                                '${bankName ?? 'Verified bank'} • $accountNumber',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? Colors.white70
-                                      : const Color(0xFF334155),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              GestureDetector(
-                                onTap: () {
-                                  Clipboard.setData(
-                                    ClipboardData(text: accountNumber),
-                                  );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Virtual account number copied!',
-                                      ),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                },
-                                child: Icon(
-                                  Icons.copy_rounded,
-                                  size: 14,
-                                  color: isDark
-                                      ? AppColors.primaryCyan
-                                      : AppColors.primaryBlue,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      )
-                    : Text(
-                        'Instant funding via Paystack (card, transfer, USSD)',
-                        style: TextStyle(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        Icons.bolt_rounded,
+                        size: 16,
+                        color: Color(0xFF10B981),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Instant funding via Paystack (Cards • Transfer • USSD)',
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
+                          fontWeight: FontWeight.w600,
                           color: isDark
                               ? AppColors.metallicLight
                               : AppColors.slateGrey,
                         ),
                       ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: onFundPressed,
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Add Money'),
+                label: Text(
+                  'Add Money',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isDark
                       ? AppColors.primaryCyan
@@ -188,10 +157,6 @@ class BalanceCard extends StatelessWidget {
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),

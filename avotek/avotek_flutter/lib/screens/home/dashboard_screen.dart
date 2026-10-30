@@ -605,24 +605,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     bool isDark,
     bool isDesktop,
   ) {
-    final hasAssignedAccount =
-        wallet.hasDedicatedAccount ||
-        (auth.wallet?.hasDedicatedAccount ?? false);
-    final rawAcct = hasAssignedAccount
-        ? (wallet.walletSummary?.virtualAccountNumber ??
-              auth.wallet?.virtualAccountNumber ??
-              '')
-        : '';
-    // Format account into 816  700  2789
-    final spacedAcct = rawAcct.length >= 10
-        ? '${rawAcct.substring(0, 3)}  ${rawAcct.substring(3, 6)}  ${rawAcct.substring(6)}'
-        : rawAcct;
-
-    final bank = hasAssignedAccount
-        ? (wallet.walletSummary?.virtualAccountBank ??
-              auth.wallet?.virtualAccountBank ??
-              '')
-        : '';
     final formattedBalance = NumberFormat('#,##0.00', 'en_US').format(balance);
     final assignedHolderName =
         wallet.walletSummary?.virtualAccountName ??
@@ -634,6 +616,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ? auth.user!.name
               : (auth.user?.email.split('@').first ?? 'MEMBER'));
     final cardHolder = holderName.toUpperCase();
+    final avoId = auth.user?.avoId.isNotEmpty == true
+        ? auth.user!.avoId
+        : 'AVO-${auth.user?.id.substring(0, 8).toUpperCase() ?? '2026'}';
+    final spacedAvoId = avoId.length >= 8
+        ? '${avoId.substring(0, 3)}  ${avoId.substring(3, 7)}  ${avoId.substring(7)}'
+        : avoId;
 
     return Container(
       width: double.infinity,
@@ -744,19 +732,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 16),
 
-              if (auth.user?.avoId.isNotEmpty == true) ...[
-                Text(
-                  'AVOTEK ID  ${auth.user!.avoId}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.7,
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-
               // Available Balance Row
               Row(
                 children: [
@@ -810,166 +785,181 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 20),
 
-              if (rawAcct.isNotEmpty) ...[
-                // Card Chip & Spaced Account Number
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Gold EMV Chip Simulation
-                    Container(
-                      width: 34,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD4AF37),
-                        borderRadius: BorderRadius.circular(5),
-                        border: Border.all(color: const Color(0xFFB8860B)),
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 20,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black26),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
+              // Card Chip & Avotek ID
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Gold EMV Chip Simulation
+                  Container(
+                    width: 34,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD4AF37),
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: const Color(0xFFB8860B)),
                     ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.wifi_rounded,
-                      size: 18,
-                      color: Colors.white70,
-                    ),
-                    const Spacer(),
-                    Text(
-                      bank.toUpperCase(),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white70,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Large Spaced Account Number & Copy
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      spacedAcct,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: isDesktop ? 22 : 18,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2.5,
-                        color: Colors.white,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: rawAcct));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Account number copied! Transfer to fund instantly.',
-                            ),
-                            backgroundColor: AppColors.success,
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(8),
+                    child: Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
+                        width: 20,
+                        height: 14,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.copy_rounded,
-                              size: 13,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Copy',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
+                          border: Border.all(color: Colors.black26),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Divider(color: Colors.white12, height: 1),
-                const SizedBox(height: 10),
-
-                // Cardholder Name
-                Text(
-                  cardHolder,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.0,
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.wifi_rounded,
+                    size: 18,
                     color: Colors.white70,
                   ),
-                ),
-              ] else ...[
-                const Divider(color: Colors.white12, height: 1),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        wallet.isProvisioningDedicatedAccount
-                            ? 'Assigning your personal transfer account...'
-                            : 'Personal bank transfer account available',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white70,
-                        ),
-                      ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    const SizedBox(width: 10),
-                    InkWell(
-                      onTap: () => context.push('/wallet/fund'),
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          'Get Account No.',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.bolt_rounded, size: 14, color: AppColors.electricCyan),
+                        const SizedBox(width: 4),
+                        Text(
+                          'PAYSTACK INSTANT',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.5,
+                            fontSize: 10,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
+                            letterSpacing: 0.6,
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Large Spaced Avotek ID & Copy
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    spacedAvoId,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: isDesktop ? 22 : 18,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2.2,
+                      color: Colors.white,
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: avoId));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Avotek ID copied to clipboard!'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.copy_rounded,
+                            size: 13,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Copy ID',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(color: Colors.white12, height: 1),
+              const SizedBox(height: 10),
+
+              // Cardholder Name & Instant Fund Action
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      cardHolder,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.0,
+                        color: Colors.white70,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => context.push('/wallet/fund'),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF00D2FF), Color(0xFF0052FF)],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.add_rounded,
+                            size: 15,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Fund Wallet',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ],
