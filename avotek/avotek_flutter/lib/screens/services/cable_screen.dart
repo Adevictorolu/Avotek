@@ -940,7 +940,7 @@ class _CableScreenState extends State<CableScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'SELECT SUBSCRIPTION PLAN (SCROLL IN BOX)',
+                              'SELECT SUBSCRIPTION PLAN',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -992,9 +992,9 @@ class _CableScreenState extends State<CableScreen> {
                             ),
                           )
                         else
-                          // Compact scrollable widget container
+                          // Roomy scrollable widget container with enhanced typography
                           Container(
-                            height: 195,
+                            height: 255,
                             decoration: BoxDecoration(
                               color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(12),
@@ -1011,7 +1011,7 @@ class _CableScreenState extends State<CableScreen> {
                                   crossAxisCount: isDesktop ? 3 : 2,
                                   crossAxisSpacing: 8,
                                   mainAxisSpacing: 8,
-                                  childAspectRatio: isDesktop ? 2.4 : 1.7,
+                                  childAspectRatio: isDesktop ? 2.3 : 1.5,
                                 ),
                                 itemBuilder: (context, index) {
                                   final pkg = _livePackages[index];
@@ -1052,8 +1052,8 @@ class _CableScreenState extends State<CableScreen> {
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                             style: GoogleFonts.plusJakartaSans(
-                                              fontSize: 12,
-                                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                              fontSize: 13.5,
+                                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
                                               color: isDark ? Colors.white : const Color(0xFF0F172A),
                                             ),
                                           ),
@@ -1061,7 +1061,7 @@ class _CableScreenState extends State<CableScreen> {
                                           Text(
                                             '₦${price.toStringAsFixed(0)}',
                                             style: GoogleFonts.plusJakartaSans(
-                                              fontSize: 15,
+                                              fontSize: 17,
                                               fontWeight: FontWeight.w900,
                                               color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
                                               letterSpacing: 0.2,

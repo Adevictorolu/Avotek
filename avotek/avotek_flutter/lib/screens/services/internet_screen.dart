@@ -726,7 +726,7 @@ class _InternetScreenState extends State<InternetScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'SELECT SUBSCRIPTION PLAN (SCROLL IN BOX)',
+                              'SELECT SUBSCRIPTION PLAN',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -747,7 +747,7 @@ class _InternetScreenState extends State<InternetScreen> {
                         const SizedBox(height: 12),
 
                         Container(
-                          height: 195,
+                          height: 255,
                           decoration: BoxDecoration(
                             color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(12),
@@ -762,7 +762,7 @@ class _InternetScreenState extends State<InternetScreen> {
                               itemCount: currentPackages.length,
                               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: isDesktop ? 3 : 2,
-                                childAspectRatio: isDesktop ? 2.4 : 1.7,
+                                childAspectRatio: isDesktop ? 2.3 : 1.5,
                                 crossAxisSpacing: 8,
                                 mainAxisSpacing: 8,
                               ),
@@ -797,16 +797,16 @@ class _InternetScreenState extends State<InternetScreen> {
                                           overflow: TextOverflow.ellipsis,
                                           textAlign: TextAlign.center,
                                           style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w800,
                                             color: isDark ? Colors.white : const Color(0xFF0F172A),
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
+                                        const SizedBox(height: 5),
                                         Text(
                                           '₦${price.toStringAsFixed(0)}',
                                           style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 15,
+                                            fontSize: 17,
                                             fontWeight: FontWeight.w900,
                                             color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
                                             letterSpacing: 0.2,

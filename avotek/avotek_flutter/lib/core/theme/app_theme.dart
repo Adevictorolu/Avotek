@@ -40,7 +40,7 @@ class AppTheme {
     final base = isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme;
     final baseFontTheme = GoogleFonts.plusJakartaSansTextTheme(base);
 
-    return baseFontTheme.copyWith(
+    return baseFontTheme.apply(fontFamily: 'Plus Jakarta Sans').copyWith(
       displayLarge: GoogleFonts.plusJakartaSans(
         fontSize: 34,
         fontWeight: FontWeight.w800,
@@ -140,8 +140,8 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
-      fontFamilyFallback: const ['Plus Jakarta Sans', 'Public Sans', 'sans-serif'],
+      fontFamily: 'Plus Jakarta Sans',
+      fontFamilyFallback: [GoogleFonts.plusJakartaSans().fontFamily ?? 'Plus Jakarta Sans', 'Public Sans', 'sans-serif'],
       textTheme: textTheme,
       primaryTextTheme: textTheme,
       pageTransitionsTheme: const PageTransitionsTheme(
@@ -269,8 +269,8 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
-      fontFamilyFallback: const ['Plus Jakarta Sans', 'Public Sans', 'sans-serif'],
+      fontFamily: 'Plus Jakarta Sans',
+      fontFamilyFallback: [GoogleFonts.plusJakartaSans().fontFamily ?? 'Plus Jakarta Sans', 'Public Sans', 'sans-serif'],
       textTheme: textTheme,
       primaryTextTheme: textTheme,
       pageTransitionsTheme: const PageTransitionsTheme(

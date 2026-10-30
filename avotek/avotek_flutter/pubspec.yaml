@@ -70,6 +70,12 @@ flutter:
     - assets/config.json
     - assets/images/
     - assets/images/brands/
+    - assets/fonts/
+
+  fonts:
+    - family: Plus Jakarta Sans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-Variable.ttf
 dependency_overrides:
   flutter_secure_storage: ^10.0.0
 

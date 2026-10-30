@@ -992,7 +992,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'SELECT ELECTRICITY COMPANY (SCROLL IN BOX)',
+                              'SELECT ELECTRICITY COMPANY',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -1014,7 +1014,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
 
                         // Compact scrollable widget container
                         Container(
-                          height: 185,
+                          height: 250,
                           decoration: BoxDecoration(
                             color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(12),
@@ -1031,7 +1031,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 crossAxisCount: isDesktop ? 3 : 2,
                                 crossAxisSpacing: 8,
                                 mainAxisSpacing: 8,
-                                childAspectRatio: isDesktop ? 2.6 : 2.0,
+                                childAspectRatio: isDesktop ? 2.5 : 1.9,
                               ),
                               itemBuilder: (context, index) {
                                 final disco = _discoList[index];
@@ -1069,8 +1069,8 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 11,
-                                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                          fontSize: 12.5,
+                                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
                                           color: isSelected
                                               ? const Color(0xFF0038B8)
                                               : (isDark ? Colors.white70 : const Color(0xFF334155)),

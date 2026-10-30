@@ -731,24 +731,12 @@ class _DataScreenState extends State<DataScreen> {
                               Expanded(
                                 child: GestureDetector(
                                   onTap: () => setState(() => _payForMe = !_payForMe),
-                                  child: RichText(
-                                    text: TextSpan(
-                                      text: 'Pay For Me ',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark ? Colors.white70 : const Color(0xFF334155),
-                                      ),
-                                      children: [
-                                        TextSpan(
-                                          text: '- get a shareable payment link',
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.normal,
-                                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                                          ),
-                                        ),
-                                      ],
+                                  child: Text(
+                                    'Pay For Me',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? Colors.white70 : const Color(0xFF334155),
                                     ),
                                   ),
                                 ),
@@ -863,10 +851,10 @@ class _DataScreenState extends State<DataScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'SELECT DATA PLAN (SCROLL IN BOX)',
+                              'SELECT DATA PLAN',
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
                                 letterSpacing: 0.8,
                                 color: isDark ? Colors.white70 : const Color(0xFF475569),
                               ),
@@ -978,9 +966,9 @@ class _DataScreenState extends State<DataScreen> {
                             ),
                           )
                         else
-                          // Compact scrollable widget container (does not extend whole page)
+                          // Roomy scrollable widget container with enhanced typography
                           Container(
-                            height: 195,
+                            height: 255,
                             decoration: BoxDecoration(
                               color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(12),
@@ -997,7 +985,7 @@ class _DataScreenState extends State<DataScreen> {
                                   crossAxisCount: isDesktop ? 3 : 2,
                                   crossAxisSpacing: 8,
                                   mainAxisSpacing: 8,
-                                  childAspectRatio: isDesktop ? 2.3 : 1.7,
+                                  childAspectRatio: isDesktop ? 2.3 : 1.48,
                                 ),
                                 itemBuilder: (context, index) {
                                   final plan = filteredPlans[index];
@@ -1033,29 +1021,29 @@ class _DataScreenState extends State<DataScreen> {
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: GoogleFonts.plusJakartaSans(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w800,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w900,
                                               color: isDark ? Colors.white : const Color(0xFF0F172A),
                                             ),
                                           ),
-                                          const SizedBox(height: 2),
+                                          const SizedBox(height: 3),
                                           Text(
                                             '₦${price.toStringAsFixed(0)}',
                                             style: GoogleFonts.plusJakartaSans(
-                                              fontSize: 15,
+                                              fontSize: 18,
                                               fontWeight: FontWeight.w900,
                                               color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
                                               letterSpacing: 0.2,
                                             ),
                                           ),
-                                          const SizedBox(height: 2),
+                                          const SizedBox(height: 3),
                                           Text(
                                             '$val • $type',
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: GoogleFonts.plusJakartaSans(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w600,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
                                               color: isDark ? Colors.white60 : const Color(0xFF64748B),
                                             ),
                                           ),

@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_theme.dart';
-import '../core/utils/text_file_download.dart';
 import '../models/transaction_model.dart';
-import 'top_notification.dart';
 
 class TransactionAuditDialog extends StatefulWidget {
   final List<TransactionModel> transactions;
@@ -82,52 +79,6 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
           ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
         return '${fmt.format(sorted.first.createdAt)} - ${fmt.format(now)}';
     }
-  }
-
-  String _statementCsv(List<TransactionModel> txs) {
-    String escape(String value) => '"${value.replaceAll('"', '""')}"';
-    final rows = <List<String>>[
-      [
-        'Date',
-        'Reference',
-        'Type',
-        'Category',
-        'Amount (NGN)',
-        'Status',
-        'Narration',
-      ],
-      ...txs.map(
-        (tx) => [
-          tx.createdAt.toIso8601String(),
-          tx.reference,
-          tx.type,
-          tx.category,
-          tx.amount.toStringAsFixed(2),
-          tx.status,
-          tx.narration ?? '',
-        ],
-      ),
-    ];
-    return rows.map((row) => row.map(escape).join(',')).join('\r\n');
-  }
-
-  Future<void> _exportCsv(BuildContext context) async {
-    final txs = _filteredTransactions;
-    final csv = _statementCsv(txs.isNotEmpty ? txs : widget.transactions);
-    final fileName =
-        'avotek-audit-${_selectedFilter.toLowerCase()}-${DateTime.now().millisecondsSinceEpoch}.csv';
-    final downloaded = await downloadTextFile(fileName, csv);
-    if (!downloaded) {
-      await Clipboard.setData(ClipboardData(text: csv));
-    }
-    if (!mounted) return;
-    TopNotification.showSuccess(
-      context,
-      downloaded
-          ? 'Transaction audit statement downloaded successfully.'
-          : 'Audit statement copied to clipboard; paste into a file to save.',
-      title: 'Audit Statement Exported',
-    );
   }
 
   @override
@@ -757,56 +708,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                     ),
                   ),
 
-                  // --- 7. MODAL FOOTER ---
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(22, 12, 22, 18),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.download_rounded, size: 16),
-                            label: Text(
-                              'Export CSV Statement',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF0052FF),
-                              side: const BorderSide(color: Color(0xFF0052FF)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            onPressed: () => _exportCsv(context),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0052FF),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Text(
-                            'Close',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(height: 12),
                 ],
               ),
             ),

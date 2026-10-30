@@ -978,6 +978,9 @@ class _LoginScreenState extends State<LoginScreen> {
               hint: 'Password (min 6 characters)',
               icon: Icons.lock_outline_rounded,
               obscureText: _obscurePassword,
+              enableSuggestions: false,
+              autocorrect: false,
+              autofillHints: const [],
               suffixWidget: IconButton(
                 icon: Icon(
                   _obscurePassword
@@ -996,6 +999,9 @@ class _LoginScreenState extends State<LoginScreen> {
               hint: 'Confirm Password',
               icon: Icons.lock_outline_rounded,
               obscureText: _obscureConfirmPassword,
+              enableSuggestions: false,
+              autocorrect: false,
+              autofillHints: const [],
               textInputAction: TextInputAction.next,
               suffixWidget: IconButton(
                 icon: Icon(
@@ -1235,6 +1241,9 @@ class _LoginScreenState extends State<LoginScreen> {
     required String hint,
     IconData? icon,
     bool obscureText = false,
+    bool? enableSuggestions,
+    bool? autocorrect,
+    Iterable<String>? autofillHints,
     Widget? suffixWidget,
     TextInputType keyboardType = TextInputType.text,
     TextInputAction textInputAction = TextInputAction.next,
@@ -1253,6 +1262,9 @@ class _LoginScreenState extends State<LoginScreen> {
       child: TextField(
         controller: controller,
         obscureText: obscureText,
+        enableSuggestions: enableSuggestions ?? (obscureText ? false : true),
+        autocorrect: autocorrect ?? (obscureText ? false : true),
+        autofillHints: autofillHints,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
         onSubmitted: onSubmitted,

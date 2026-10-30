@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'core/database/app_database.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -11,6 +12,7 @@ import 'core/supabase/supabase_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = true;
 
   await SupabaseService.instance.initialize();
   await AppDatabaseService.instance.init();
