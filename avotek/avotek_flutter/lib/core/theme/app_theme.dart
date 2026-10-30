@@ -227,9 +227,21 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
         ),
-        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13),
-        labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF475569), fontSize: 13),
-        floatingLabelStyle: GoogleFonts.plusJakartaSans(color: AppColors.primaryBlue, fontSize: 14, fontWeight: FontWeight.w600),
+        hintStyle: GoogleFonts.plusJakartaSans(
+          color: const Color(0xFF94A3B8),
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+        labelStyle: GoogleFonts.plusJakartaSans(
+          color: const Color(0xFF475569),
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        floatingLabelStyle: GoogleFonts.plusJakartaSans(
+          color: AppColors.primaryBlue,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -356,9 +368,21 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.primaryCyan, width: 1.5),
         ),
-        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
-        labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13),
-        floatingLabelStyle: GoogleFonts.plusJakartaSans(color: AppColors.primaryCyan, fontSize: 14, fontWeight: FontWeight.w600),
+        hintStyle: GoogleFonts.plusJakartaSans(
+          color: const Color(0xFF64748B),
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+        labelStyle: GoogleFonts.plusJakartaSans(
+          color: const Color(0xFF94A3B8),
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        floatingLabelStyle: GoogleFonts.plusJakartaSans(
+          color: AppColors.primaryCyan,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

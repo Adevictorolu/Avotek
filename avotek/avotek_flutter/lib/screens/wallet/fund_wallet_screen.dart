@@ -588,14 +588,34 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           FilteringTextInputFormatter.digitsOnly,
                           LengthLimitingTextInputFormatter(7),
                         ],
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Amount (NGN)',
+                          labelStyle: GoogleFonts.plusJakartaSans(
+                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                          ),
                           hintText: 'Enter custom amount e.g. 1000',
+                          hintStyle: GoogleFonts.plusJakartaSans(
+                            color: isDark ? Colors.white38 : Colors.black38,
+                          ),
                           prefixText: '₦ ',
+                          prefixStyle: GoogleFonts.plusJakartaSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? AppColors.electricCyan : const Color(0xFF0038B8),
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           helperText: 'Minimum ₦100; maximum ₦1,000,000 • 100% Instant Credit',
+                          helperStyle: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),

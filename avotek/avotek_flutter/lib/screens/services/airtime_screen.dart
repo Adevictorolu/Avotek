@@ -815,6 +815,10 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                           ),
                           decoration: InputDecoration(
                             hintText: 'Enter amount e.g. 500',
+                            hintStyle: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: isDark ? Colors.white38 : Colors.black38,
+                            ),
                             prefixIcon: Padding(
                               padding: const EdgeInsets.only(left: 14, right: 6),
                               child: Text(
@@ -827,10 +831,6 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                               ),
                             ),
                             prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                            hintStyle: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              color: isDark ? Colors.white38 : Colors.black38,
-                            ),
                             filled: true,
                             fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

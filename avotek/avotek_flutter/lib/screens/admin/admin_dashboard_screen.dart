@@ -811,8 +811,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     width: 220,
                     child: TextField(
                       onChanged: (val) => setState(() => _userSearchQuery = val),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12),
                       decoration: InputDecoration(
                         hintText: 'Search users...',
+                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey),
                         prefixIcon: const Icon(Icons.search_rounded, size: 16),
                         contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -1195,7 +1197,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   style: GoogleFonts.plusJakartaSans(fontSize: 13),
                   decoration: InputDecoration(
                     labelText: 'Add Co-Admin Email Address',
+                    labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13),
                     hintText: 'admin@avotek.com',
+                    hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey),
                     prefixIcon: const Icon(Icons.email_outlined, size: 18),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -1633,7 +1637,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             style: GoogleFonts.plusJakartaSans(fontSize: 13),
             decoration: InputDecoration(
               labelText: 'Direct APK Download URL / Release Link',
+              labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13),
               hintText: 'https://...',
+              hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey),
               prefixIcon: const Icon(Icons.link_rounded, size: 18),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -1646,7 +1652,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             style: GoogleFonts.plusJakartaSans(fontSize: 13),
             decoration: InputDecoration(
               labelText: 'Release Version',
+              labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13),
               hintText: 'v1.2.0',
+              hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey),
               prefixIcon: const Icon(Icons.tag_rounded, size: 18),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),

@@ -86,9 +86,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 20),
                 TextField(
                   controller: nameCtrl,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Full Name',
+                    labelStyle: GoogleFonts.plusJakartaSans(
+                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    ),
                     hintText: 'e.g. Victor Ademola',
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                      color: isDark ? Colors.white38 : Colors.black38,
+                    ),
                     prefixIcon: const Icon(Icons.person_outline_rounded, size: 18),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -97,9 +108,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 TextField(
                   controller: phoneCtrl,
                   keyboardType: TextInputType.phone,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
+                    labelStyle: GoogleFonts.plusJakartaSans(
+                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    ),
                     hintText: 'e.g. 08167002789',
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                      color: isDark ? Colors.white38 : Colors.black38,
+                    ),
                     prefixIcon: const Icon(Icons.phone_android_rounded, size: 18),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -648,7 +670,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   decoration: InputDecoration(
                     labelText: 'National Identity Number (NIN)',
+                    labelStyle: GoogleFonts.plusJakartaSans(
+                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    ),
                     hintText: '11 digits (e.g. 12345678901)',
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                      color: isDark ? Colors.white38 : Colors.black38,
+                    ),
                     prefixIcon: const Icon(Icons.badge_rounded, size: 20),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
