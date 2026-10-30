@@ -49,8 +49,16 @@ class UserModel {
   final DateTime createdAt;
   final String avoId;
   final String? username;
+  final String? nin;
+  final int kycTier;
 
   bool get isAdmin => isAdminEmail(email);
+  bool get isTier2Verified =>
+      kycStatus == 'verified' || kycStatus == 'tier2' || kycTier >= 2;
+  bool get isTier1Verified =>
+      isTier2Verified ||
+      kycStatus == 'tier1' ||
+      (phone.trim().isNotEmpty && phone != 'Not configured');
 
   const UserModel({
     required this.id,
@@ -66,6 +74,8 @@ class UserModel {
     required this.createdAt,
     this.avoId = '',
     this.username,
+    this.nin,
+    this.kycTier = 1,
   });
 
   UserModel copyWith({
@@ -82,6 +92,8 @@ class UserModel {
     DateTime? createdAt,
     String? avoId,
     String? username,
+    String? nin,
+    int? kycTier,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -97,6 +109,8 @@ class UserModel {
       createdAt: createdAt ?? this.createdAt,
       avoId: avoId ?? this.avoId,
       username: username ?? this.username,
+      nin: nin ?? this.nin,
+      kycTier: kycTier ?? this.kycTier,
     );
   }
 
@@ -114,6 +128,8 @@ class UserModel {
     'created_at': createdAt.toIso8601String(),
     'avo_id': avoId,
     'username': username,
+    'nin': nin,
+    'kyc_tier': kycTier,
   };
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -128,6 +144,14 @@ class UserModel {
         json['username'] as String? ??
         (rawEmail.contains('@') ? rawEmail.split('@').first : null);
     final isPrivileged = isAdminEmail(rawEmail);
+    final status = json['kyc_status'] as String? ?? 'tier1';
+    final rawTier = (json['kyc_tier'] as num?)?.toInt();
+    final phoneVal = json['phone'] as String? ?? '';
+    final ninVal = json['nin'] as String?;
+    final tier = rawTier ??
+        (status == 'verified' || status == 'tier2'
+            ? 2
+            : (phoneVal.trim().isNotEmpty ? 1 : 0));
 
     return UserModel(
       id: rawId,
@@ -136,9 +160,9 @@ class UserModel {
           json['name'] as String? ??
           json['full_name'] as String? ??
           'Avotek User',
-      phone: json['phone'] as String? ?? '',
+      phone: phoneVal,
       avatarUrl: json['avatar_url'] as String?,
-      kycStatus: json['kyc_status'] as String? ?? 'tier1',
+      kycStatus: status,
       referralCode: json['referral_code'] as String? ?? resolvedAvo,
       referredBy: json['referred_by'] as String?,
       transactionPinHash: json['transaction_pin_hash'] as String?,
@@ -148,6 +172,8 @@ class UserModel {
           DateTime.now(),
       avoId: resolvedAvo,
       username: rawUsername,
+      nin: ninVal,
+      kycTier: tier,
     );
   }
 }

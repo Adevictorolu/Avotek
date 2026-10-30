@@ -30,6 +30,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   double? _providerBalance;
   String _userSearchQuery = '';
 
+  final _apkUrlController = TextEditingController(
+    text: 'https://github.com/adevictorolu/Avotek/releases/latest/download/avotek.apk',
+  );
+  final _apkVersionController = TextEditingController(text: 'v1.2.0');
+  bool _isSavingApkSettings = false;
+
   @override
   void initState() {
     super.initState();
@@ -74,6 +80,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _isLoading = false;
         });
       }
+
+      // Load mobile APK settings
+      try {
+        final apkUrl = await SupabaseService.instance.getAppSetting('apk_download_url');
+        if (apkUrl != null && apkUrl.isNotEmpty) {
+          _apkUrlController.text = apkUrl;
+        }
+        final apkVer = await SupabaseService.instance.getAppSetting('apk_version');
+        if (apkVer != null && apkVer.isNotEmpty) {
+          _apkVersionController.text = apkVer;
+        }
+      } catch (_) {}
     } catch (e) {
       debugPrint('Error loading admin data: $e');
       if (mounted) {
@@ -327,6 +345,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                   // User Oversight & Management Table
                   _buildUsersManagementSection(filteredUsers, isDark),
+                  const SizedBox(height: 32),
+
+                  // Mobile APK Release Management
+                  _buildApkReleaseCard(isDark),
                   const SizedBox(height: 32),
 
                   // Developer & Server Direct Controls
@@ -876,6 +898,178 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 );
               },
             ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveApkSettings() async {
+    final url = _apkUrlController.text.trim();
+    final ver = _apkVersionController.text.trim();
+    if (url.isEmpty) {
+      TopNotification.showWarning(context, 'Please enter a valid APK download URL.');
+      return;
+    }
+    setState(() => _isSavingApkSettings = true);
+    try {
+      await SupabaseService.instance.setAppSetting('apk_download_url', url);
+      await SupabaseService.instance.setAppSetting(
+        'apk_version',
+        ver.isNotEmpty ? ver : 'v1.2.0',
+      );
+      if (mounted) {
+        TopNotification.showSuccess(
+          context,
+          'Mobile APK download settings saved successfully!',
+          title: 'APK Release Updated',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        TopNotification.showError(context, 'Could not save APK settings: $e');
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingApkSettings = false);
+    }
+  }
+
+  Widget _buildApkReleaseCard(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.android_rounded,
+                  color: Color(0xFF10B981),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Mobile App (APK) Release Management',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Set the Android APK download link and version string distributed to users from the sidebar and download modal.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _apkUrlController,
+            style: GoogleFonts.plusJakartaSans(fontSize: 13),
+            decoration: InputDecoration(
+              labelText: 'Direct APK Download URL / Release Link',
+              hintText: 'https://...',
+              prefixIcon: const Icon(Icons.link_rounded, size: 18),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _apkVersionController,
+            style: GoogleFonts.plusJakartaSans(fontSize: 13),
+            decoration: InputDecoration(
+              labelText: 'Release Version',
+              hintText: 'v1.2.0',
+              prefixIcon: const Icon(Icons.tag_rounded, size: 18),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              ElevatedButton.icon(
+                onPressed: _isSavingApkSettings ? null : _saveApkSettings,
+                icon: _isSavingApkSettings
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.save_rounded, size: 18),
+                label: Text(
+                  _isSavingApkSettings ? 'Saving...' : 'Save APK Release Settings',
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: () {
+                  final url = _apkUrlController.text.trim();
+                  if (url.isNotEmpty) {
+                    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                  }
+                },
+                icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                label: Text(
+                  'Test Download Link',
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

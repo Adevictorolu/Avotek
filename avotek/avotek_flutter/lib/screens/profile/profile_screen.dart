@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/top_notification.dart';
 
@@ -410,68 +414,317 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showOwnVtuWebsiteModal() {
+  Future<void> _showDownloadApkModal() async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    String apkUrl = 'https://github.com/adevictorolu/Avotek/releases/latest/download/avotek.apk';
+    String version = 'v1.2.0';
+
+    try {
+      final fetchedUrl = await SupabaseService.instance.getAppSetting('apk_download_url');
+      if (fetchedUrl != null && fetchedUrl.trim().isNotEmpty) {
+        apkUrl = fetchedUrl.trim();
+      }
+      final fetchedVer = await SupabaseService.instance.getAppSetting('apk_version');
+      if (fetchedVer != null && fetchedVer.trim().isNotEmpty) {
+        version = fetchedVer.trim();
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? const Color(0xFF141722) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(
+            color: isDark ? const Color(0xFF1E2638) : const Color(0xFFE2E8F0),
+            width: 1.5,
+          ),
+        ),
         title: Row(
           children: [
-            const Icon(Icons.rocket_launch_rounded, color: AppColors.electricCyan),
-            const SizedBox(width: 10),
-            Text('Start Your Own VTU Business', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Get a ready-made website connected to your account. Buy, launch, and start earning from ₦200,000.',
-              style: GoogleFonts.plusJakartaSans(fontSize: 13),
-            ),
-            const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                color: const Color(0xFF10B981).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.electricCyan.withValues(alpha: 0.3)),
               ),
+              child: const Icon(
+                Icons.android_rounded,
+                color: Color(0xFF10B981),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('• 100% White-Labeled with Your Domain', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Text('• 1 Year Premium Cloud Hosting Included', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Text('• Automated API Processing & Instant Wallet Funding', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                  Text(
+                    'Download Mobile App',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                  Text(
+                    'Official Android APK ($version)',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11.5,
+                      color: const Color(0xFF10B981),
+                    ),
+                  ),
                 ],
               ),
             ),
           ],
         ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Download the official Avotek mobile application directly to your Android device for lightning-fast recharge, biometric login, and push receipts.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  height: 1.5,
+                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.verified_rounded,
+                      color: Color(0xFF10B981),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Direct APK build verified for Android 8.0+',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Close', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
+            child: Text(
+              'Close',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
             ),
+          ),
+          OutlinedButton.icon(
             onPressed: () {
-              Navigator.pop(ctx);
+              Clipboard.setData(ClipboardData(text: apkUrl));
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Our VTU team will contact you shortly!'), backgroundColor: AppColors.success),
+                const SnackBar(
+                  content: Text('APK download link copied to clipboard!'),
+                  backgroundColor: Color(0xFF10B981),
+                ),
               );
             },
-            child: Text('Order Portal (₦200,000)', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+            icon: const Icon(Icons.copy_rounded, size: 16),
+            label: Text(
+              'Copy Link',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+            ),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final uri = Uri.parse(apkUrl);
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            },
+            icon: const Icon(Icons.download_rounded, size: 18),
+            label: Text(
+              'Download APK',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _openNinVerificationModal(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ninCtrl = TextEditingController();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF141928) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(
+              color: isDark ? const Color(0xFF1E2638) : const Color(0xFFE2E8F0),
+              width: 1.5,
+            ),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.shield_rounded,
+                  color: Color(0xFF10B981),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Tier 2 KYC (NIN)',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 19,
+                ),
+              ),
+            ],
+          ),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Enter your 11-digit National Identity Number (NIN). This upgrades your account to Tier 2 with unlimited daily limits.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    height: 1.45,
+                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                TextField(
+                  controller: ninCtrl,
+                  keyboardType: TextInputType.number,
+                  maxLength: 11,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 2.0,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: 'National Identity Number (NIN)',
+                    hintText: '11 digits (e.g. 12345678901)',
+                    prefixIcon: const Icon(Icons.badge_rounded, size: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting ? null : () => Navigator.pop(dialogCtx),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      final clean = ninCtrl.text.replaceAll(RegExp(r'\D'), '');
+                      if (clean.length != 11) {
+                        TopNotification.showWarning(
+                          context,
+                          'National Identity Number must be exactly 11 digits.',
+                        );
+                        return;
+                      }
+                      setDialogState(() => isSubmitting = true);
+                      try {
+                        final auth = context.read<AuthProvider>();
+                        await auth.submitNinKyc(clean);
+                        if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                        if (context.mounted) {
+                          TopNotification.showSuccess(
+                            context,
+                            'Congratulations! Your account is now Tier 2 KYC Verified (NIN Active 🛡️).',
+                            title: 'Tier 2 Verified',
+                          );
+                        }
+                      } catch (e) {
+                        setDialogState(() => isSubmitting = false);
+                        if (context.mounted) {
+                          TopNotification.showError(
+                            context,
+                            'Could not verify NIN: $e',
+                          );
+                        }
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: isSubmitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      'Verify NIN',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -535,12 +788,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _buildUserHeaderCard(isDark, fullName, email, phone, initials, isKycVerified, hasPhone),
                   const SizedBox(height: 20),
 
-                  // --- CARD 2: START YOUR OWN VTU BUSINESS ---
-                  _buildStartVtuBusinessCard(isDark),
+                  // --- CARD 2: DOWNLOAD OFFICIAL MOBILE APP (APK) ---
+                  _buildDownloadApkCard(isDark),
                   const SizedBox(height: 20),
 
                   // --- CARD 3: VERIFICATION / KYC STATUS CARD ---
-                  _buildKycStatusCard(isDark, fullName, email, phone, isKycVerified, hasPhone),
+                  _buildKycStatusCard(isDark, fullName, email, phone, user, hasPhone),
                   const SizedBox(height: 24),
 
                   // --- CARD 4: SIGN OUT ---
@@ -801,10 +1054,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 2. START YOUR OWN VTU BUSINESS PROMO CARD
-  Widget _buildStartVtuBusinessCard(bool isDark) {
+  // 2. DOWNLOAD OFFICIAL MOBILE APP (APK) PROMO CARD
+  Widget _buildDownloadApkCard(bool isDark) {
     return InkWell(
-      onTap: _showOwnVtuWebsiteModal,
+      onTap: _showDownloadApkModal,
       borderRadius: BorderRadius.circular(24),
       child: Container(
         width: double.infinity,
@@ -813,7 +1066,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           color: isDark ? AppColors.darkCard : AppColors.lightCard,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: AppColors.primaryCyan.withValues(alpha: 0.5),
+            color: const Color(0xFF10B981).withValues(alpha: 0.5),
             width: 1.5,
           ),
           gradient: isDark
@@ -835,10 +1088,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.electricCyan.withValues(alpha: 0.15),
+                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.rocket_launch_rounded, color: AppColors.electricCyan, size: 20),
+                  child: const Icon(
+                    Icons.android_rounded,
+                    color: Color(0xFF10B981),
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -846,7 +1103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Start Your Own VTU Business',
+                        'Download Official Mobile App (APK)',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -861,7 +1118,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Get a ready-made website connected to your account. Buy, launch, and start earning - from ₦200,000.',
+              'Get the official Avotek mobile application directly on your Android phone for ultra-fast transactions, biometric security, and push receipts.',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w500,
@@ -873,9 +1130,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _buildTagPill('WHITE-LABELED', isDark),
-                _buildTagPill('1YR HOSTING', isDark),
-                _buildTagPill('AUTO-PROCESS', isDark),
+                _buildTagPill('OFFICIAL ANDROID APK', isDark),
+                _buildTagPill('FAST RECHARGE', isDark),
+                _buildTagPill('PUSH RECEIPTS', isDark),
               ],
             ),
           ],
@@ -903,15 +1160,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 3. KYC STATUS / VERIFICATION CARD
+  // 3. KYC STATUS / TIERED VERIFICATION CARD
   Widget _buildKycStatusCard(
     bool isDark,
     String fullName,
     String email,
     String phone,
-    bool isKycVerified,
+    UserModel? user,
     bool hasPhone,
   ) {
+    final isTier2 = user?.isTier2Verified ?? false;
+    final isTier1 = isTier2 || (user?.isTier1Verified ?? hasPhone);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -919,9 +1179,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: isDark ? AppColors.darkCard : AppColors.lightCard,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isKycVerified
-              ? AppColors.success.withValues(alpha: 0.3)
-              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+          color: isTier2
+              ? AppColors.success.withValues(alpha: 0.4)
+              : (isTier1
+                  ? const Color(0xFF0052FF).withValues(alpha: 0.4)
+                  : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
+          width: 1.5,
         ),
       ),
       child: Column(
@@ -930,83 +1193,100 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             children: [
               Icon(
-                isKycVerified ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
-                color: isKycVerified ? AppColors.success : AppColors.warning,
-                size: 22,
+                isTier2
+                    ? Icons.check_circle_rounded
+                    : (isTier1
+                        ? Icons.verified_user_rounded
+                        : Icons.pending_actions_rounded),
+                color: isTier2
+                    ? AppColors.success
+                    : (isTier1 ? const Color(0xFF0052FF) : AppColors.warning),
+                size: 24,
               ),
               const SizedBox(width: 10),
-              Text(
-                isKycVerified ? 'Fully KYC Verified' : (hasPhone ? 'KYC Under Review' : 'KYC Verification Required'),
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: isKycVerified ? AppColors.success : (isDark ? Colors.white : const Color(0xFF0F172A)),
+              Expanded(
+                child: Text(
+                  isTier2
+                      ? 'Tier 2 KYC Verified (NIN Verified 🛡️)'
+                      : (isTier1
+                          ? 'Tier 1 KYC Verified (Phone Active ✅)'
+                          : 'Tier 0 (Phone Verification Required ⚠️)'),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: isTier2
+                        ? AppColors.success
+                        : (isTier1
+                            ? (isDark ? Colors.white : const Color(0xFF0052FF))
+                            : (isDark ? Colors.white : const Color(0xFF0F172A))),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
-            isKycVerified
-                ? 'Your identity and Nigerian phone number have been verified successfully.'
-                : (hasPhone
-                    ? 'Your phone number is recorded. Our team verifies accounts in batches.'
-                    : 'Add your phone number and complete your details to qualify for higher daily limits.'),
+            isTier2
+                ? 'Your identity, Nigerian phone number, and National Identity Number (NIN) have been fully verified. Enjoy maximum daily transaction limits.'
+                : (isTier1
+                    ? 'Your Nigerian phone number is recorded. Upgrade to Tier 2 by providing your 11-digit NIN for unlimited transactions and priority service.'
+                    : 'Add your Nigerian phone number to complete Tier 1 KYC and activate automated transfer funding.'),
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12.5,
               fontWeight: FontWeight.w500,
+              height: 1.5,
               color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
             ),
           ),
           const SizedBox(height: 20),
 
-          // Action buttons: Update Profile & View Profile
-          Row(
+          // Action buttons: Upgrade to Tier 2 / Update Phone / View Profile
+          Wrap(
+            spacing: 12,
+            runSpacing: 10,
             children: [
-              if (!isKycVerified) ...[
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _openEditProfileModal(context, fullName, phone),
-                    icon: const Icon(Icons.edit_rounded, size: 15),
-                    label: const Text('Update Phone'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
+              if (!isTier2)
+                ElevatedButton.icon(
+                  onPressed: () => _openNinVerificationModal(context),
+                  icon: const Icon(Icons.shield_rounded, size: 16),
+                  label: const Text('Upgrade to Tier 2 (Add NIN)'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-                const SizedBox(width: 12),
-              ],
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _openViewProfileModal(
-                    context,
-                    fullName,
-                    email,
-                    phone,
-                    isKycVerified,
-                    hasPhone,
-                  ),
-                  icon: const Icon(Icons.person_outline_rounded, size: 16),
-                  label: const Text('View Profile'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
-                    foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                      ),
-                    ),
-                    textStyle: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
+              ElevatedButton.icon(
+                onPressed: () => _openEditProfileModal(context, fullName, phone),
+                icon: const Icon(Icons.edit_rounded, size: 15),
+                label: Text(hasPhone ? 'Update Phone' : 'Add Phone (Tier 1)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryBlue,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _openViewProfileModal(
+                  context,
+                  fullName,
+                  email,
+                  phone,
+                  isTier2,
+                  hasPhone,
+                ),
+                icon: const Icon(Icons.person_outline_rounded, size: 16),
+                label: const Text('View Profile'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  textStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

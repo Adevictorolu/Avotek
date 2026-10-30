@@ -395,9 +395,16 @@ class AuthProvider extends ChangeNotifier {
   /// Update User Profile details
   Future<void> updateProfile({String? name, String? phone}) async {
     if (_user == null) return;
+    final hasValidPhone = phone != null &&
+        phone.trim().isNotEmpty &&
+        phone.trim() != 'Not configured';
     _user = _user!.copyWith(
       name: name ?? _user!.name,
       phone: phone ?? _user!.phone,
+      kycStatus: hasValidPhone
+          ? (_user!.isTier2Verified ? 'verified' : 'tier1')
+          : _user!.kycStatus,
+      kycTier: hasValidPhone ? (_user!.isTier2Verified ? 2 : 1) : _user!.kycTier,
     );
     AppDatabaseService.instance.cacheUser(_user!);
     try {
@@ -408,6 +415,22 @@ class AuthProvider extends ChangeNotifier {
       );
     } catch (_) {}
     notifyListeners();
+  }
+
+  /// Submit 11-digit National Identity Number (NIN) for Tier 2 KYC
+  Future<Map<String, dynamic>> submitNinKyc(String nin) async {
+    if (_user == null) {
+      throw Exception('User is not logged in.');
+    }
+    final res = await SupabaseService.instance.submitNinKyc(nin);
+    _user = _user!.copyWith(
+      kycStatus: 'verified',
+      kycTier: 2,
+      nin: nin.replaceAll(RegExp(r'\D'), ''),
+    );
+    AppDatabaseService.instance.cacheUser(_user!);
+    notifyListeners();
+    return res;
   }
 
   /// Send Password Reset Email via Supabase Auth

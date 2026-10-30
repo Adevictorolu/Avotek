@@ -673,4 +673,38 @@ class SupabaseService {
     }
     return [];
   }
+
+  /// Submit 11-digit NIN for Tier 2 KYC verification
+  Future<Map<String, dynamic>> submitNinKyc(String nin) async {
+    final res = await client.rpc('submit_nin_kyc', params: {
+      'p_nin': nin.trim(),
+    });
+    return Map<String, dynamic>.from(res as Map);
+  }
+
+  /// Retrieve global app setting (e.g. apk_download_url, apk_version)
+  Future<String?> getAppSetting(String key, {String? defaultValue}) async {
+    try {
+      final res = await client
+          .from('app_settings')
+          .select('value')
+          .eq('key', key)
+          .maybeSingle();
+      if (res != null && res['value'] != null) {
+        return res['value'].toString();
+      }
+    } catch (e) {
+      debugPrint('Error reading app_setting $key: $e');
+    }
+    return defaultValue;
+  }
+
+  /// Update global app setting (admin only)
+  Future<void> setAppSetting(String key, String value) async {
+    await client.from('app_settings').upsert({
+      'key': key,
+      'value': value,
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+  }
 }

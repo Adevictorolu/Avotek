@@ -122,8 +122,8 @@ class _CouponsScreenState extends State<CouponsScreen> {
             width: 1.5,
           ),
         ),
-        content: SizedBox(
-          width: 520,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 580),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(

@@ -117,20 +117,41 @@ function getDedicatedAccount(value: unknown): {
   accountName: string;
 } | null {
   if (!isRecord(value)) return null;
-  const accountNumber = value.account_number;
-  const accountName = value.account_name;
+  const rawNum = value.account_number ??
+    (isRecord(value.bank) ? value.bank.account_number : null) ??
+    (isRecord(value.assignment) ? value.assignment.account_number : null);
+  const accountNumber = rawNum != null ? String(rawNum).trim() : "";
+
   const bank = value.bank;
-  const bankName = isRecord(bank) ? bank.name : value.bank_name;
+  let bankName = typeof bank === "string"
+    ? bank
+    : isRecord(bank) && typeof bank.name === "string"
+    ? bank.name
+    : typeof value.bank_name === "string"
+    ? value.bank_name
+    : "";
+
+  let accountName = typeof value.account_name === "string" ? value.account_name.trim() : "";
+
+  // Normalize Paystack Titan Trust Bank naming for seamless recognition in Nigerian banking apps
   if (
-    typeof accountNumber !== "string" ||
-    !/^[0-9]{10,20}$/.test(accountNumber) ||
-    typeof accountName !== "string" ||
-    !accountName.trim() ||
-    typeof bankName !== "string" ||
-    !bankName.trim()
+    bankName === "Paystack-Titan" ||
+    bankName.toLowerCase() === "titan paystack" ||
+    bankName.toLowerCase().includes("titan")
+  ) {
+    bankName = "Titan Trust Bank (Paystack)";
+  }
+
+  if (
+    !accountNumber ||
+    !/^[0-9]{10,20}$/.test(accountNumber)
   ) {
     return null;
   }
+
+  if (!bankName) bankName = "Titan Trust Bank (Paystack)";
+  if (!accountName) accountName = "Avotek Customer / Paystack Checkout";
+
   return {
     accountNumber,
     accountName: accountName.trim(),
@@ -953,9 +974,18 @@ async function handleDedicatedAccount(
   );
   console.log("Paystack /dedicated_account/available_providers:", JSON.stringify(providers));
 
-  if (providers.ok && customerCode) {
+  const cleanName = effectiveFullName && effectiveFullName.toLowerCase() !== "avotek user"
+    ? effectiveFullName
+    : email.split("@")[0].replace(/[._-]+/g, " ").trim() || "Avotek Customer";
+  const parts = cleanName.split(/\s+/).filter(Boolean);
+  const firstName = parts[0] || "Avotek";
+  const lastName = parts.length > 1 ? parts.slice(1).join(" ") : "Customer";
+  const phone = normalizeNigerianPhone(effectivePhoneRaw) ?? "+2348000000000";
+
+  let assignedAccount: ReturnType<typeof getDedicatedAccount> = null;
+
+  if (providers.ok) {
     const providerList = Array.isArray(providers.body?.data) ? providers.body.data : [];
-    console.log("Paystack providerList:", JSON.stringify(providerList));
     const wema = providerList.find((item) => isRecord(item) && item.provider_slug === "wema-bank");
     const firstProvider = providerList.find((item) =>
       isRecord(item) && typeof item.provider_slug === "string"
@@ -966,53 +996,62 @@ async function handleDedicatedAccount(
       ? String(firstProvider.provider_slug)
       : "wema-bank";
 
-    const cleanName = effectiveFullName && effectiveFullName.toLowerCase() !== "avotek user"
-      ? effectiveFullName
-      : email.split("@")[0].replace(/[._-]+/g, " ").trim() || "Avotek Customer";
-    const parts = cleanName.split(/\s+/).filter(Boolean);
-    const firstName = parts[0] || "Avotek";
-    const lastName = parts.length > 1 ? parts.slice(1).join(" ") : "Customer";
-    const phone = normalizeNigerianPhone(effectivePhoneRaw) ?? "+2348000000000";
-
-    let assignedAccount = await findDedicatedAccount(config.paystackSecretKey, customerCode).catch(
-      () => null,
+    // A. Single-step Dedicated Account Assignment
+    const directAssign = await paystackApiRequest(
+      config.paystackSecretKey,
+      "/dedicated_account/assign",
+      "POST",
+      {
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        preferred_bank: preferredBank,
+        country: "NG",
+      },
     );
-    console.log("Existing assignedAccount from Paystack:", JSON.stringify(assignedAccount));
-    let assignmentResult: unknown = null;
-    if (!assignedAccount) {
-      const assignment = await paystackApiRequest(
-        config.paystackSecretKey,
-        "/dedicated_account",
-        "POST",
-        {
-          customer: customerCode,
-          preferred_bank: preferredBank,
-          first_name: firstName,
-          last_name: lastName,
-          phone,
-        },
+    console.log("Paystack /dedicated_account/assign response:", JSON.stringify(directAssign));
+    if (directAssign.ok && directAssign.body) {
+      assignedAccount = getDedicatedAccount(directAssign.body.data ?? directAssign.body);
+    }
+
+    // B. If not assigned, try via customer code
+    if (!assignedAccount && customerCode) {
+      assignedAccount = await findDedicatedAccount(config.paystackSecretKey, customerCode).catch(
+        () => null,
       );
-      assignmentResult = assignment;
-      console.log("Paystack /dedicated_account POST response:", JSON.stringify(assignment));
-      if (assignment.ok && assignment.body) {
-        assignedAccount = getDedicatedAccount(assignment.body.data);
+      if (!assignedAccount) {
+        const assignment = await paystackApiRequest(
+          config.paystackSecretKey,
+          "/dedicated_account",
+          "POST",
+          {
+            customer: customerCode,
+            preferred_bank: preferredBank,
+          },
+        );
+        console.log("Paystack /dedicated_account POST response:", JSON.stringify(assignment));
+        if (assignment.ok && assignment.body) {
+          assignedAccount = getDedicatedAccount(assignment.body.data);
+        }
       }
     }
-    if (assignedAccount) {
-      await admin.rpc("save_paystack_dedicated_wallet_account", {
-        p_user_id: user.id,
-        p_customer_code: customerCode,
-        p_account_number: assignedAccount.accountNumber,
-        p_bank_name: assignedAccount.bankName,
-        p_account_name: assignedAccount.accountName,
-      });
-      return jsonResponse({
-        status: "assigned",
-        account_number: assignedAccount.accountNumber,
-        bank_name: assignedAccount.bankName,
-        account_name: assignedAccount.accountName,
-      });
-    }
+  }
+
+  if (assignedAccount) {
+    await admin.rpc("save_paystack_dedicated_wallet_account", {
+      p_user_id: user.id,
+      p_customer_code: customerCode ?? "",
+      p_account_number: assignedAccount.accountNumber,
+      p_bank_name: assignedAccount.bankName,
+      p_account_name: assignedAccount.accountName,
+    });
+    return jsonResponse({
+      status: "assigned",
+      account_number: assignedAccount.accountNumber,
+      bank_name: assignedAccount.bankName,
+      account_name: assignedAccount.accountName,
+    });
   }
 
   // 5. Automatic Default Paystack-Titan Bank Transfer Account Strategy:

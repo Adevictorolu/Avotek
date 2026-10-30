@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../responsive/responsive_layout.dart';
+import '../supabase/supabase_service.dart';
 import '../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
@@ -69,68 +71,122 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     }
   }
 
-  void _showOwnVtuWebsiteModal() {
+  Future<void> _showDownloadApkModal() async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    String apkUrl = 'https://github.com/adevictorolu/Avotek/releases/latest/download/avotek.apk';
+    String version = 'v1.2.0';
+
+    try {
+      final fetchedUrl = await SupabaseService.instance.getAppSetting('apk_download_url');
+      if (fetchedUrl != null && fetchedUrl.trim().isNotEmpty) {
+        apkUrl = fetchedUrl.trim();
+      }
+      final fetchedVer = await SupabaseService.instance.getAppSetting('apk_version');
+      if (fetchedVer != null && fetchedVer.trim().isNotEmpty) {
+        version = fetchedVer.trim();
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? const Color(0xFF141722) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(
+            color: isDark ? const Color(0xFF1E2638) : const Color(0xFFE2E8F0),
+            width: 1.5,
+          ),
+        ),
         title: Row(
           children: [
-            const Icon(
-              Icons.rocket_launch_rounded,
-              color: AppColors.electricCyan,
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'Own a VTU Website',
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Get a fully branded automated VTU portal with your own domain, customized theme, and direct aggregator API connection in 24 hours.',
-              style: GoogleFonts.plusJakartaSans(fontSize: 13),
-            ),
-            const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                color: const Color(0xFF10B981).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.electricCyan.withValues(alpha: 0.3),
-                ),
               ),
-              child: Row(
+              child: const Icon(
+                Icons.android_rounded,
+                color: Color(0xFF10B981),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.verified_rounded,
-                    color: AppColors.electricCyan,
-                    size: 20,
+                  Text(
+                    'Download Mobile App',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Includes Mobile App + Web Admin + Supabase DB',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
+                  Text(
+                    'Android APK Package ($version)',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11.5,
+                      color: const Color(0xFF10B981),
                     ),
                   ),
                 ],
               ),
             ),
           ],
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Get the official Avotek Android app directly on your mobile device for lightning-fast recharge, biometric login, and instant push receipts.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  height: 1.5,
+                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.verified_rounded,
+                      color: Color(0xFF10B981),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Direct APK build verified for Android 8.0+',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -140,22 +196,39 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
               style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
             ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
-            ),
+          OutlinedButton.icon(
             onPressed: () {
-              Navigator.pop(ctx);
+              Clipboard.setData(ClipboardData(text: apkUrl));
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Our VTU team will contact you shortly!'),
-                  backgroundColor: AppColors.success,
+                  content: Text('APK download link copied to clipboard!'),
+                  backgroundColor: Color(0xFF10B981),
                 ),
               );
             },
-            child: Text(
-              'Get Started',
+            icon: const Icon(Icons.copy_rounded, size: 16),
+            label: Text(
+              'Copy Link',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+            ),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final uri = Uri.parse(apkUrl);
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            },
+            icon: const Icon(Icons.download_rounded, size: 18),
+            label: Text(
+              'Download APK',
               style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
             ),
           ),
@@ -441,11 +514,11 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
             ),
           ),
 
-          // 2. Promotional Card: "Own a VTU Website - Buy & start selling ↗"
+          // 2. Promotional Card: "Download Mobile App - Install Android APK ↗"
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             child: InkWell(
-              onTap: _showOwnVtuWebsiteModal,
+              onTap: _showDownloadApkModal,
               borderRadius: BorderRadius.circular(14),
               child: Container(
                 padding: const EdgeInsets.symmetric(
@@ -469,12 +542,12 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     Container(
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
-                        color: AppColors.electricCyan.withValues(alpha: 0.15),
+                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
-                        Icons.rocket_launch_rounded,
-                        color: AppColors.electricCyan,
+                        Icons.android_rounded,
+                        color: Color(0xFF10B981),
                         size: 16,
                       ),
                     ),
@@ -484,7 +557,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Own a VTU Website',
+                            'Download Mobile App',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w800,
@@ -494,7 +567,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                             ),
                           ),
                           Text(
-                            'Buy & start selling',
+                            'Install Android APK',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,

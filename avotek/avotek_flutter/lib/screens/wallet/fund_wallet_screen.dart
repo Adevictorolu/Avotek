@@ -67,13 +67,13 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     await wallet.fetchWallet(user.id);
     if (!mounted) return;
     if (!wallet.hasDedicatedAccount) {
-      final cleanPhone = user.phone.replaceAll(RegExp(r'\D'), '');
-      final isRealName = user.name.trim().isNotEmpty && user.name.toLowerCase() != 'avotek user';
-      if (cleanPhone.length >= 10 && isRealName) {
-        await wallet.ensureDedicatedAccount(user.id);
-        if (mounted) {
-          await auth.refreshWallet();
-        }
+      await wallet.ensureDedicatedAccount(
+        user.id,
+        fullName: user.name.isNotEmpty ? user.name : null,
+        phone: user.phone.isNotEmpty ? user.phone : null,
+      );
+      if (mounted) {
+        await auth.refreshWallet();
       }
     }
   }
@@ -530,16 +530,53 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    (summary.virtualAccountBank ?? 'DEDICATED BANK')
-                        .toUpperCase(),
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                      color: const Color(0xFF0052FF),
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        (summary.virtualAccountBank != null &&
+                                (summary.virtualAccountBank!.toLowerCase().contains('titan') ||
+                                    summary.virtualAccountBank!.toLowerCase().contains('paystack')))
+                            ? 'TITAN TRUST BANK (PAYSTACK)'
+                            : (summary.virtualAccountBank ?? 'DEDICATED BANK')
+                                .toUpperCase(),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                          color: const Color(0xFF0052FF),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'ACTIVE',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF10B981),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  if (summary.virtualAccountBank != null &&
+                      (summary.virtualAccountBank!.toLowerCase().contains('titan') ||
+                          summary.virtualAccountBank!.toLowerCase().contains('paystack'))) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      'Tip: Select "Titan Trust Bank" in your bank app transfer list',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

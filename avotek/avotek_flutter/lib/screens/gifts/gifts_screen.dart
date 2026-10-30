@@ -53,7 +53,14 @@ class _GiftsScreenState extends State<GiftsScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchGifts());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchGifts();
+      final auth = context.read<AuthProvider>();
+      if (auth.user?.id != null) {
+        context.read<WalletProvider>().fetchWallet(auth.user!.id);
+        auth.refreshWallet();
+      }
+    });
   }
 
   Future<void> _fetchGifts() async {
@@ -96,6 +103,12 @@ class _GiftsScreenState extends State<GiftsScreen> {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return StatefulBuilder(
           builder: (dialogCtx, setDialogState) {
+            final authState = context.watch<AuthProvider>();
+            final walletState = context.watch<WalletProvider>();
+            final availableBal = walletState.balance > 0
+                ? walletState.balance
+                : (authState.wallet?.balance ?? 0.0);
+
             return AlertDialog(
               backgroundColor: isDark ? const Color(0xFF141928) : Colors.white,
               shape: RoundedRectangleBorder(
@@ -123,27 +136,73 @@ class _GiftsScreenState extends State<GiftsScreen> {
                   Text(
                     'Create Gift Voucher',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 20,
+                      fontSize: 21,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
                   ),
                 ],
               ),
-              content: SingleChildScrollView(
-                child: SizedBox(
-                  width: 520,
+              content: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 580),
+                child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Gift voucher codes are funded directly from your Avotek wallet and can be redeemed by any user.',
+                        'Gift voucher codes are funded directly from your Avotek wallet and can be redeemed instantly by any user.',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
+                          fontSize: 13.5,
+                          height: 1.45,
                           color: isDark
                               ? AppColors.metallicLight
                               : AppColors.slateGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Available Balance Badge
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 11,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.28),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.account_balance_wallet_rounded,
+                              color: Color(0xFF10B981),
+                              size: 19,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Available Wallet Balance: ',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? Colors.white70
+                                    : const Color(0xFF334155),
+                              ),
+                            ),
+                            Text(
+                              '₦${availableBal.toStringAsFixed(2)}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 18),
@@ -191,7 +250,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                             label: Text(
                               '₦$amt',
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11.5,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -223,6 +282,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         style: GoogleFonts.plusJakartaSans(),
                         decoration: InputDecoration(
                           hintText: 'e.g. 08123456789 or Adewale',
+                          hintStyle: GoogleFonts.plusJakartaSans(
+                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                          ),
                           filled: true,
                           fillColor: isDark
                               ? const Color(0xFF1B2236)
@@ -254,7 +316,10 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         maxLines: 2,
                         style: GoogleFonts.plusJakartaSans(),
                         decoration: InputDecoration(
-                          hintText: 'Happy Birthday! Enjoy your airtime/data.',
+                          hintText: 'Happy Birthday! Enjoy your recharge.',
+                          hintStyle: GoogleFonts.plusJakartaSans(
+                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                          ),
                           filled: true,
                           fillColor: isDark
                               ? AppColors.darkCardVariant
@@ -293,11 +358,17 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       );
                       return;
                     }
-                    final wallet = context.read<WalletProvider>();
-                    if (wallet.balance < amt) {
+
+                    final curWallet = context.read<WalletProvider>();
+                    final curAuth = context.read<AuthProvider>();
+                    final curBalance = curWallet.balance > 0
+                        ? curWallet.balance
+                        : (curAuth.wallet?.balance ?? 0.0);
+
+                    if (curBalance < amt) {
                       TopNotification.showError(
                         context,
-                        'Insufficient wallet balance. Available: ₦${wallet.balance.toStringAsFixed(2)}.',
+                        'Insufficient wallet balance. Available: ₦${curBalance.toStringAsFixed(2)}.',
                       );
                       return;
                     }
@@ -325,7 +396,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       if (!mounted) return;
                       await auth.refreshWallet();
                       if (auth.user != null) {
-                        await wallet.fetchWallet(auth.user!.id);
+                        await curWallet.fetchWallet(auth.user!.id);
                       }
                       _fetchGifts();
                       final code = (res['code'] ?? 'AVOGIFT').toString();
@@ -349,7 +420,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 22,
+                      horizontal: 24,
                       vertical: 14,
                     ),
                     shape: RoundedRectangleBorder(
@@ -392,8 +463,8 @@ class _GiftsScreenState extends State<GiftsScreen> {
             width: 1.5,
           ),
         ),
-        content: SizedBox(
-          width: 520,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 580),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(
