@@ -16,8 +16,24 @@
   -->
   <base href="$FLUTTER_BASE_HREF">
 
-  <!-- GitHub Pages SPA redirect decoder -->
+  <!-- GitHub Pages SPA redirect decoder & stale Service Worker cleanup -->
   <script type="text/javascript">
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var i = 0; i < registrations.length; i++) {
+          registrations[i].unregister();
+        }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (var i = 0; i < names.length; i++) {
+          if (names[i].indexOf('flutter-app-manifest') !== -1 || names[i].indexOf('flutter-temp-cache') !== -1) {
+            caches.delete(names[i]);
+          }
+        }
+      });
+    }
     (function(l) {
       if (l.search[1] === '/' ) {
         var decoded = l.search.slice(1).split('&').map(function(s) { 

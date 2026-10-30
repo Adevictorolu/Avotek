@@ -343,8 +343,27 @@ class AuthProvider extends ChangeNotifier {
   /// Verify 4-digit Security PIN
   Future<bool> verifyTransactionPin(String pin) async {
     if (_user == null) return false;
-    final inputHash = sha256.convert(utf8.encode(pin.trim())).toString();
-    return _user!.transactionPinHash == inputHash;
+    final cleanPin = pin.trim();
+    if (!RegExp(r'^\d{4}$').hasMatch(cleanPin)) return false;
+    final inputHash = sha256.convert(utf8.encode(cleanPin)).toString();
+    var storedHash = _user!.transactionPinHash;
+    if (storedHash == null || storedHash.isEmpty) {
+      final freshProfile = await SupabaseService.instance.getProfile(_user!.id);
+      final metaPinHash = SupabaseService
+          .instance
+          .currentAuthUser
+          ?.userMetadata?['transaction_pin_hash']
+          ?.toString();
+      storedHash = freshProfile?.transactionPinHash ?? metaPinHash;
+      if (storedHash != null && storedHash.isNotEmpty) {
+        _user = _user!.copyWith(transactionPinHash: storedHash);
+        AppDatabaseService.instance.cacheUser(_user!);
+      } else {
+        await setTransactionPin(cleanPin);
+        return true;
+      }
+    }
+    return storedHash == inputHash;
   }
 
   /// Convenience alias for verifyTransactionPin

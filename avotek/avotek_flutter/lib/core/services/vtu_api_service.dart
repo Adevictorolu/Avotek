@@ -26,6 +26,13 @@ class VtuApiService {
   VtuApiService._internal();
   static final Random _random = Random.secure();
 
+  /// Generates a web-safe purchase reference without 32-bit JS bitshift overflow.
+  static String generatePurchaseReference() {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final suffix = 100000000 + _random.nextInt(900000000);
+    return 'AVO-$timestamp-$suffix';
+  }
+
   Future<Map<String, dynamic>> _invoke(
     String action, {
     Map<String, dynamic> payload = const {},
@@ -38,8 +45,7 @@ class VtuApiService {
     String? reference;
     if (userPin != null) {
       body['user_pin'] = userPin;
-      reference =
-          'AVO-${DateTime.now().microsecondsSinceEpoch}-${_random.nextInt(1 << 32)}';
+      reference = generatePurchaseReference();
       body['reference'] = reference;
     }
     late final FunctionResponse response;
@@ -76,10 +82,19 @@ class VtuApiService {
         reference,
       );
     }
-    if (response.data is! Map<String, dynamic>) {
-      throw Exception('The VTU provider returned an invalid response.');
+    final rawData = response.data;
+    if (rawData is Map) {
+      return Map<String, dynamic>.from(rawData);
     }
-    return response.data as Map<String, dynamic>;
+    if (rawData is String && rawData.trim().startsWith('{')) {
+      try {
+        final decoded = jsonDecode(rawData);
+        if (decoded is Map) {
+          return Map<String, dynamic>.from(decoded);
+        }
+      } catch (_) {}
+    }
+    throw Exception('The VTU provider returned an invalid response.');
   }
 
   Future<Map<String, dynamic>> getWalletBalance() => _invoke('wallet.balance');

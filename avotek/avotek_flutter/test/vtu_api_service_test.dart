@@ -48,5 +48,13 @@ void main() {
         throwsArgumentError,
       );
     });
+
+    test(
+      'generates web-safe purchase references without 32-bit shift overflow',
+      () {
+        final ref = VtuApiService.generatePurchaseReference();
+        expect(ref, matches(RegExp(r'^AVO-\d{13}-\d{9}$')));
+      },
+    );
   });
 }

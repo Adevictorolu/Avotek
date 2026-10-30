@@ -111,7 +111,10 @@ void main() {
       });
 
       expect(assignedWallet.hasDedicatedAccount, isTrue);
-      expect(WalletSummary.fromWallet(assignedWallet).hasDedicatedAccount, isTrue);
+      expect(
+        WalletSummary.fromWallet(assignedWallet).hasDedicatedAccount,
+        isTrue,
+      );
       expect(unassignedWallet.hasDedicatedAccount, isFalse);
       expect(
         WalletSummary.fromWallet(unassignedWallet).hasDedicatedAccount,
@@ -125,6 +128,15 @@ void main() {
     () async {
       await expectLater(
         VtuApiService.instance.getWalletBalance(),
+        throwsA(isA<StateError>()),
+      );
+      await expectLater(
+        VtuApiService.instance.purchaseAirtime(
+          network: 'MTN',
+          phone: '08167002789',
+          amount: 50,
+          pin: '1234',
+        ),
         throwsA(isA<StateError>()),
       );
     },
