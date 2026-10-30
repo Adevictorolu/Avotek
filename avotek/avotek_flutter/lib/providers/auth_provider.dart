@@ -12,7 +12,8 @@ String friendlyAuthError(Object error) {
   final normalized = message.toLowerCase();
 
   if (normalized.contains('invalid login credentials') ||
-      normalized == 'invalid credentials.') {
+      normalized == 'invalid credentials.' ||
+      normalized.contains('invalid_credentials')) {
     return 'The email, username, Avotek ID, or password is incorrect.';
   }
   if (normalized.contains('user already registered') ||
@@ -40,8 +41,34 @@ String friendlyAuthError(Object error) {
   if (normalized.contains('socketexception') ||
       normalized.contains('failed host lookup') ||
       normalized.contains('network is unreachable') ||
-      normalized.contains('clientexception')) {
-    return 'Could not reach Avotek servers. Check your internet connection and retry.';
+      normalized.contains('clientexception') ||
+      normalized.contains('connection refused') ||
+      normalized.contains('connection timed out') ||
+      normalized.contains('network error') ||
+      normalized.contains('offline')) {
+    return 'Network connection issue. Please check your internet and try again.';
+  }
+  if (normalized.contains('session expired') ||
+      normalized.contains('jwt expired') ||
+      normalized.contains('token expired') ||
+      normalized.contains('invalid token') ||
+      normalized.contains('unauthorized')) {
+    return 'Your session has expired. Please sign in again.';
+  }
+  if (normalized.contains('postgres') ||
+      normalized.contains('sql') ||
+      normalized.contains('database') ||
+      normalized.contains('relation') ||
+      normalized.contains('column') ||
+      normalized.contains('syntax error') ||
+      normalized.contains('internal server error') ||
+      normalized.contains('500') ||
+      normalized.contains('502') ||
+      normalized.contains('503') ||
+      normalized.contains('functionexception') ||
+      normalized.contains('null check operator') ||
+      normalized.contains('rangeerror')) {
+    return 'Could not complete this request right now. Please try again in a moment.';
   }
   return message.isEmpty
       ? 'Authentication could not be completed. Please try again.'
@@ -195,6 +222,12 @@ class AuthProvider extends ChangeNotifier {
       _user = user;
       AppDatabaseService.instance.cacheUser(user);
       await refreshWallet();
+      SupabaseService.instance.recordSecurityNotification(
+        user.id,
+        'security',
+        'New Sign-in Detected',
+        'Secure sign-in from your device.',
+      );
       _isLoading = false;
       notifyListeners();
       return true;
@@ -242,6 +275,12 @@ class AuthProvider extends ChangeNotifier {
       _user = user;
       AppDatabaseService.instance.cacheUser(user);
       await refreshWallet();
+      SupabaseService.instance.recordSecurityNotification(
+        user.id,
+        'security',
+        'New Sign-in Detected',
+        'Secure sign-in from your device.',
+      );
       _isLoading = false;
       notifyListeners();
       return true;
@@ -289,6 +328,12 @@ class AuthProvider extends ChangeNotifier {
       _user = user;
       AppDatabaseService.instance.cacheUser(user);
       await refreshWallet();
+      SupabaseService.instance.recordSecurityNotification(
+        user.id,
+        'security',
+        'New Sign-in Detected',
+        'Secure sign-in from your device.',
+      );
       _isLoading = false;
       notifyListeners();
       return true;
@@ -385,6 +430,15 @@ class AuthProvider extends ChangeNotifier {
 
   /// Log out
   Future<void> logout() async {
+    final userId = _user?.id;
+    if (userId != null) {
+      SupabaseService.instance.recordSecurityNotification(
+        userId,
+        'security',
+        'Signed Out',
+        'Your session ended safely.',
+      );
+    }
     await SupabaseService.instance.signOut();
     _user = null;
     _wallet = null;

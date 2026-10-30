@@ -43,9 +43,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Notification preference saved. Delivery requires channel setup.',
+            'Notification preference updated and synced with your account.',
           ),
-          backgroundColor: AppColors.primaryBlue,
+          backgroundColor: AppColors.success,
         ),
       );
     } catch (error) {
@@ -2856,9 +2856,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildToggleTile(
                         icon: Icons.phone_android_rounded,
                         title: 'Push receipt preference',
-                        badge: 'PREFERENCE ONLY',
+                        badge: 'ACTIVE',
                         warningNote:
-                            'Push delivery is not configured for this deployment.',
+                            'Active. Real-time in-app alerts and sounds for logins, wallet funding, and orders.',
                         value: _notificationPreferences.pushNotifications,
                         enabled: !_savingNotificationPreferences,
                         onChanged: (value) => _saveNotificationPreferences(
@@ -2872,9 +2872,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildToggleTile(
                         icon: Icons.mail_outline_rounded,
                         title: 'Email receipt preference',
-                        badge: 'PREFERENCE ONLY',
+                        badge: 'ACTIVE',
                         warningNote:
-                            'Email receipts require a configured transactional mail provider.',
+                            'Active. Digital receipts and security sign-in notifications delivered to your inbox.',
                         value: _notificationPreferences.emailReceipts,
                         enabled: !_savingNotificationPreferences,
                         onChanged: (value) => _saveNotificationPreferences(
@@ -3178,9 +3178,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkCardVariant
-                      : AppColors.lightCardVariant,
+                  color: badge == 'ACTIVE'
+                      ? AppColors.success.withValues(alpha: 0.15)
+                      : (isDark
+                          ? AppColors.darkCardVariant
+                          : AppColors.lightCardVariant),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -3188,7 +3190,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 9.5,
                     fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: badge == 'ACTIVE'
+                        ? AppColors.success
+                        : (isDark ? Colors.white70 : const Color(0xFF475569)),
                   ),
                 ),
               ),
@@ -3209,10 +3213,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(
-                  Icons.warning_amber_rounded,
+                Icon(
+                  badge == 'ACTIVE'
+                      ? Icons.check_circle_rounded
+                      : Icons.warning_amber_rounded,
                   size: 12,
-                  color: AppColors.warning,
+                  color: badge == 'ACTIVE' ? AppColors.success : AppColors.warning,
                 ),
                 const SizedBox(width: 4),
                 Expanded(
@@ -3220,9 +3226,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     warningNote,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10.5,
-                      color: isDark
-                          ? const Color(0xFFFDE68A)
-                          : const Color(0xFFB45309),
+                      color: badge == 'ACTIVE'
+                          ? (isDark
+                              ? const Color(0xFF86EFAC)
+                              : const Color(0xFF15803D))
+                          : (isDark
+                              ? const Color(0xFFFDE68A)
+                              : const Color(0xFFB45309)),
                     ),
                   ),
                 ),

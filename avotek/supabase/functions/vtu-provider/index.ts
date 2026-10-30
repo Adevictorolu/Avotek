@@ -38,6 +38,11 @@ const actions: Record<string, { method: string; path: string; purchase?: boolean
     path: "/api/v2/communications/sms/send/",
     purchase: true,
   },
+  "airtime_pin.purchase": {
+    method: "POST",
+    path: "/api/v2/vtu/airtime-pin/purchase/",
+    purchase: true,
+  },
   "transaction.requery": { method: "GET", path: "" },
 };
 
@@ -388,6 +393,17 @@ function validatePayload(action: string, payload: JsonMap): void {
       throw new Error("Choose between 1 and 10 exam pins.");
     }
   }
+  if (action === "airtime_pin.purchase") {
+    if (!networkIds.has(Number(payload.network))) throw new Error("Choose a valid network.");
+    const amount = Number(payload.amount ?? payload.value);
+    if (!Number.isInteger(amount) || amount < 50 || amount > 50000) {
+      throw new Error("Airtime PIN denomination must be between ₦50 and ₦50,000.");
+    }
+    const quantity = Number(payload.quantity ?? 1);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 50) {
+      throw new Error("Choose between 1 and 50 recharge pins.");
+    }
+  }
   if (action === "sms.send") {
     const recipients = payload.recipients;
     if (!Array.isArray(recipients) || recipients.length < 1 || recipients.length > 500) {
@@ -533,6 +549,21 @@ function buildProviderPayload(
       pin: aggregatorPin,
     };
   }
+  if (action === "airtime_pin.purchase") {
+    const businessName = String(payload.business_name ?? payload.name_on_card ?? "Avotek").trim();
+    const denomination = Number(payload.amount ?? payload.value);
+    const quantity = Number(payload.quantity ?? 1);
+    return {
+      network: Number(payload.network),
+      amount: denomination,
+      value: denomination,
+      quantity: quantity,
+      business_name: businessName,
+      name_on_card: businessName,
+      pin: aggregatorPin,
+      pin_code: aggregatorPin,
+    };
+  }
 
   const copy: JsonMap = { ...payload };
   delete copy.sell_price;
@@ -604,6 +635,35 @@ async function dispatchBigisubRequest(
       retryPayload.pin_code = altPin;
     }
     result = await sendOnce(retryPayload);
+  }
+
+  // If airtime-pin returns 404, fallback to recharge-pin endpoint
+  if (!result.upstream.ok && result.upstream.status === 404 && url.includes("airtime-pin")) {
+    const fallbackUrl = url.replace("airtime-pin", "recharge-pin");
+    try {
+      const altUpstream = await fetch(fallbackUrl, {
+        method,
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: method === "GET" || !payload ? undefined : JSON.stringify(payload),
+        signal: AbortSignal.timeout(25000),
+      });
+      let altBody: JsonMap = {};
+      try {
+        const parsed: unknown = await altUpstream.json();
+        if (isRecord(parsed)) altBody = parsed;
+        else if (Array.isArray(parsed)) altBody = { success: altUpstream.ok, data: parsed };
+      } catch {
+        altBody = {};
+      }
+      if (altUpstream.ok || altUpstream.status !== 404) {
+        result = { upstream: altUpstream, providerBody: altBody };
+      }
+    } catch {
+      // Keep original result if fallback network fails
+    }
   }
 
   return result;
@@ -779,6 +839,12 @@ Deno.serve(async (request) => {
     }
   }
 
+  if (action === "airtime_pin.purchase") {
+    const denomination = Number(payload.amount ?? payload.value);
+    const quantity = Number(payload.quantity ?? 1);
+    purchaseAmount = denomination * quantity;
+  }
+
   if (action === "cable.purchase") {
     try {
       const cable = String(payload.cable_type ?? payload.cable_name ?? "").trim().toLowerCase();
@@ -942,7 +1008,7 @@ Deno.serve(async (request) => {
   }
 
   if (config.purchase) {
-    const amount = ["data.purchase", "education.purchase", "sms.send"].includes(action)
+    const amount = ["data.purchase", "education.purchase", "sms.send", "airtime_pin.purchase"].includes(action)
       ? purchaseAmount
       : Number(payload.amount);
     if (amount === null || !Number.isFinite(amount)) {

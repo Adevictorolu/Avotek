@@ -197,30 +197,12 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                   _ServiceCardData(
                     title: 'Airtime PIN Generation',
                     icon: Icons.print_rounded,
-                    isComingSoon: true,
-                    onTap: () => _showAwaitingProviderContract(
-                      'Airtime PIN generation',
-                    ),
+                    onTap: () => context.push('/services/airtime-pins'),
                   ),
                 ],
               ),
 
-              // 2. ENTERTAINMENT
-              _buildCategorySection(
-                title: 'ENTERTAINMENT',
-                count: 1,
-                isDark: isDark,
-                cards: [
-                  _ServiceCardData(
-                    title: 'Social Boost',
-                    icon: Icons.trending_up_rounded,
-                    isComingSoon: true,
-                    onTap: () => _showComingSoon('Social Boost Marketing'),
-                  ),
-                ],
-              ),
-
-              // 3. TV & INTERNET
+              // 2. TV & INTERNET
               _buildCategorySection(
                 title: 'TV & INTERNET',
                 count: 2,

@@ -534,6 +534,33 @@ class VtuProvider extends ChangeNotifier {
     );
   }
 
+  Future<OrderResult> buyAirtimePins({
+    required dynamic userId,
+    required int networkId,
+    required String networkName,
+    required double denomination,
+    required int quantity,
+    String? businessName,
+    String? userPin,
+  }) {
+    final amount = denomination * quantity;
+    return _purchase(
+      userId: userId,
+      serviceType: 'airtime_pin',
+      network: networkName.toUpperCase(),
+      recipient: '${quantity}x ₦${denomination.toInt()} PINs',
+      plan: businessName ?? 'Avotek',
+      amount: amount,
+      dispatch: () => VtuApiService.instance.purchaseAirtimePins(
+        networkId: networkId,
+        amount: denomination,
+        quantity: quantity,
+        businessName: businessName,
+        pin: userPin,
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> fetchSmsPricing() =>
       VtuApiService.instance.getSmsPricing();
 

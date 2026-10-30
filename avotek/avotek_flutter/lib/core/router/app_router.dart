@@ -339,6 +339,17 @@ class AppRouter {
           ),
         ),
         GoRoute(
+          path: '/services/airtime-pins',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            ExtraProviderServicesScreen(
+              service: ExtraProviderService.airtimePins,
+              onToggleTheme: themeToggle,
+            ),
+          ),
+        ),
+        GoRoute(
           path: '/services/bulk-sms',
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,

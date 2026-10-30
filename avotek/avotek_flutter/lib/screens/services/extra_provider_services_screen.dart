@@ -13,7 +13,7 @@ import '../../widgets/pin_modal.dart';
 import '../../widgets/top_notification.dart';
 import '../../widgets/transaction_success_dialog.dart';
 
-enum ExtraProviderService { examPins, bulkSms }
+enum ExtraProviderService { examPins, bulkSms, airtimePins }
 
 class ExtraProviderServicesScreen extends StatefulWidget {
   final ExtraProviderService service;
@@ -65,11 +65,48 @@ class _ExtraProviderServicesScreenState
     },
   ];
 
+  static final List<Map<String, dynamic>> _airtimePinNetworks = [
+    {
+      'id': 1,
+      'code': 'MTN',
+      'name': 'MTN',
+      'color': const Color(0xFFFFCC00),
+      'textColor': const Color(0xFF0F172A),
+    },
+    {
+      'id': 2,
+      'code': 'AIRTEL',
+      'name': 'Airtel',
+      'color': const Color(0xFFE50914),
+      'textColor': Colors.white,
+    },
+    {
+      'id': 3,
+      'code': 'GLO',
+      'name': 'Glo',
+      'color': const Color(0xFF00A859),
+      'textColor': Colors.white,
+    },
+    {
+      'id': 4,
+      'code': '9MOBILE',
+      'name': '9mobile',
+      'color': const Color(0xFF006838),
+      'textColor': Colors.white,
+    },
+  ];
+
+  static const List<int> _airtimePinDenominations = [100, 200, 500, 1000];
+
   final _quantityController = TextEditingController(text: '1');
   final _recipientController = TextEditingController();
   final _messageController = TextEditingController();
   final _senderController = TextEditingController();
   final _candidatePhoneController = TextEditingController();
+  final _businessNameController = TextEditingController(text: 'Avotek');
+
+  int _selectedNetworkId = 1;
+  int _selectedDenomination = 100;
 
   late List<Map<String, dynamic>> _examPrices = List.from(_defaultExamPrices);
   late Map<String, dynamic>? _selectedExam = _examPrices.first;
@@ -80,8 +117,13 @@ class _ExtraProviderServicesScreenState
   String? _loadError;
 
   bool get _isExam => widget.service == ExtraProviderService.examPins;
-  String get _title => _isExam ? 'Result Checker PINs' : 'Bulk SMS';
-  String get _route => _isExam ? '/services/exam-pins' : '/services/bulk-sms';
+  bool get _isAirtimePins => widget.service == ExtraProviderService.airtimePins;
+  String get _title => _isExam
+      ? 'Result Checker PINs'
+      : (_isAirtimePins ? 'Airtime PIN Generation' : 'Bulk SMS');
+  String get _route => _isExam
+      ? '/services/exam-pins'
+      : (_isAirtimePins ? '/services/airtime-pins' : '/services/bulk-sms');
 
   @override
   void initState() {
@@ -96,6 +138,7 @@ class _ExtraProviderServicesScreenState
     _messageController.dispose();
     _senderController.dispose();
     _candidatePhoneController.dispose();
+    _businessNameController.dispose();
     super.dispose();
   }
 
@@ -155,6 +198,10 @@ class _ExtraProviderServicesScreenState
       final quantity = int.tryParse(_quantityController.text.trim()) ?? 1;
       return unit != null && quantity > 0 ? unit * quantity : null;
     }
+    if (_isAirtimePins) {
+      final quantity = int.tryParse(_quantityController.text.trim()) ?? 1;
+      return quantity > 0 ? (_selectedDenomination * quantity).toDouble() : null;
+    }
     final cost = _smsCostPerPage;
     final message = _messageController.text.trim();
     final recipients = _recipients();
@@ -182,6 +229,12 @@ class _ExtraProviderServicesScreenState
       final quantity = int.tryParse(_quantityController.text.trim());
       if (quantity == null || quantity < 1 || quantity > 10) {
         TopNotification.showWarning(context, 'Choose between 1 and 10 PINs.');
+        return;
+      }
+    } else if (_isAirtimePins) {
+      final quantity = int.tryParse(_quantityController.text.trim());
+      if (quantity == null || quantity < 1 || quantity > 50) {
+        TopNotification.showWarning(context, 'Choose between 1 and 50 recharge PINs.');
         return;
       }
     } else {
@@ -220,13 +273,19 @@ class _ExtraProviderServicesScreenState
 
     setState(() => _isPurchasing = true);
     String? transactionPin;
+    final networkObj = _airtimePinNetworks.firstWhere(
+      (n) => n['id'] == _selectedNetworkId,
+      orElse: () => _airtimePinNetworks.first,
+    );
     final confirmed = await PinModal.show(
       context,
       title: 'Confirm $_title',
       amount: amount,
       description: _isExam
           ? '${_selectedExam?['name'] ?? 'Exam PIN'} × ${_quantityController.text}'
-          : '${_recipients().length} recipients • ${_senderController.text.trim()}',
+          : (_isAirtimePins
+              ? '${networkObj['code']} ₦$_selectedDenomination PIN × ${_quantityController.text}'
+              : '${_recipients().length} recipients • ${_senderController.text.trim()}'),
       onPinSubmit: (pin) async {
         transactionPin = pin;
         return auth.verifyPin(pin);
@@ -254,13 +313,25 @@ class _ExtraProviderServicesScreenState
               unitPrice: (_selectedExam?['amount'] as num).toDouble(),
               userPin: transactionPin,
             )
-          : await vtu.sendBulkSms(
-              userId: user.id,
-              recipients: _recipients(),
-              message: _messageController.text.trim(),
-              senderName: _senderController.text.trim(),
-              userPin: transactionPin!,
-            );
+          : (_isAirtimePins
+              ? await vtu.buyAirtimePins(
+                  userId: user.id,
+                  networkId: _selectedNetworkId,
+                  networkName: networkObj['code'] as String,
+                  denomination: _selectedDenomination.toDouble(),
+                  quantity: int.parse(_quantityController.text.trim()),
+                  businessName: _businessNameController.text.trim().isNotEmpty
+                      ? _businessNameController.text.trim()
+                      : 'Avotek',
+                  userPin: transactionPin,
+                )
+              : await vtu.sendBulkSms(
+                  userId: user.id,
+                  recipients: _recipients(),
+                  message: _messageController.text.trim(),
+                  senderName: _senderController.text.trim(),
+                  userPin: transactionPin!,
+                ));
 
       await auth.refreshWallet();
       await wallet.fetchWallet(user.id);
@@ -276,13 +347,21 @@ class _ExtraProviderServicesScreenState
       } else {
         await TransactionSuccessDialog.show(
           context,
-          title: _isExam ? 'Exam PIN(s) Ready!' : 'Bulk SMS Sent!',
+          title: _isExam
+              ? 'Exam PIN(s) Ready!'
+              : (_isAirtimePins ? 'Airtime PIN(s) Ready!' : 'Bulk SMS Sent!'),
           serviceType: _isExam
               ? '${_selectedExam?['name'] ?? 'Result Checker'} × ${_quantityController.text}'
-              : 'Bulk SMS (${_recipients().length} recipients)',
+              : (_isAirtimePins
+                  ? '${networkObj['code']} ₦$_selectedDenomination PIN × ${_quantityController.text}'
+                  : 'Bulk SMS (${_recipients().length} recipients)'),
           recipient: candidatePhone.isNotEmpty
               ? candidatePhone
-              : (_isExam ? 'Candidate / Self' : _recipients().join(', ')),
+              : (_isExam
+                  ? 'Candidate / Self'
+                  : (_isAirtimePins
+                      ? '${_businessNameController.text.trim()} / Self'
+                      : _recipients().join(', '))),
           amount: amount,
           reference: result.order.id,
           providerReference: result.order.providerReference,
@@ -290,9 +369,11 @@ class _ExtraProviderServicesScreenState
           issuedPins: result.issuedPins,
           message: _isExam
               ? 'Your examination PIN(s) have been generated successfully.'
-              : 'Bulk SMS submitted successfully.',
+              : (_isAirtimePins
+                  ? 'Your recharge PINs are generated and ready to print or load.'
+                  : 'Bulk SMS submitted successfully.'),
         );
-        if (!_isExam) {
+        if (!_isExam && !_isAirtimePins) {
           _messageController.clear();
           _recipientController.clear();
         }
@@ -366,13 +447,25 @@ class _ExtraProviderServicesScreenState
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: (_isExam ? const Color(0xFF0052FF) : const Color(0xFF10B981))
+                          color: (_isExam
+                                  ? const Color(0xFF0052FF)
+                                  : (_isAirtimePins
+                                      ? const Color(0xFFEA580C)
+                                      : const Color(0xFF10B981)))
                               .withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          _isExam ? Icons.verified_user_rounded : Icons.sms_rounded,
-                          color: _isExam ? const Color(0xFF0052FF) : const Color(0xFF10B981),
+                          _isExam
+                              ? Icons.verified_user_rounded
+                              : (_isAirtimePins
+                                  ? Icons.print_rounded
+                                  : Icons.sms_rounded),
+                          color: _isExam
+                              ? const Color(0xFF0052FF)
+                              : (_isAirtimePins
+                                  ? const Color(0xFFEA580C)
+                                  : const Color(0xFF10B981)),
                           size: 26,
                         ),
                       ),
@@ -382,7 +475,11 @@ class _ExtraProviderServicesScreenState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _isExam ? 'Instant Result Checker e-PINs' : 'Instant Bulk SMS Delivery',
+                              _isExam
+                                  ? 'Instant Result Checker e-PINs'
+                                  : (_isAirtimePins
+                                      ? 'Airtime PIN & Recharge Cards'
+                                      : 'Instant Bulk SMS Delivery'),
                               style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 16,
@@ -393,10 +490,14 @@ class _ExtraProviderServicesScreenState
                             Text(
                               _isExam
                                   ? 'Official verification tokens with instant display, copy & PDF receipt.'
-                                  : 'High-speed SMS routing across all Nigerian telecom networks.',
+                                  : (_isAirtimePins
+                                      ? 'Generate printable recharge PIN cards instantly with serial numbers.'
+                                      : 'High-speed SMS routing across all Nigerian telecom networks.'),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12.5,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF64748B),
                               ),
                             ),
                           ],
@@ -596,6 +697,269 @@ class _ExtraProviderServicesScreenState
                       ),
                     ),
                   ),
+                ] else if (_isAirtimePins) ...[
+                  // Step 1: Select Telecom Network
+                  Text(
+                    '1 · SELECT TELECOM NETWORK',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: _airtimePinNetworks.map((net) {
+                      final id = net['id'] as int;
+                      final isSelected = _selectedNetworkId == id;
+                      final cardColor = net['color'] as Color;
+                      final code = net['code'] as String;
+
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: InkWell(
+                            onTap: () => setState(() => _selectedNetworkId = id),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? (isSelected ? const Color(0xFF131F38) : const Color(0xFF0F172A))
+                                    : (isSelected ? const Color(0xFFEFF6FF) : Colors.white),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? cardColor
+                                      : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                                  width: isSelected ? 2.2 : 1.0,
+                                ),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: cardColor.withValues(alpha: 0.25),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: cardColor.withValues(alpha: 0.2),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.phone_android_rounded,
+                                        color: cardColor,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    code,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w900,
+                                      color: foreground,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Step 2: Choose Denomination
+                  Text(
+                    '2 · SELECT CARD DENOMINATION',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: _airtimePinDenominations.map((denom) {
+                      final isSelected = _selectedDenomination == denom;
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: InkWell(
+                            onTap: () => setState(() => _selectedDenomination = denom),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.primaryBlue
+                                    : (isDark ? const Color(0xFF0F172A) : Colors.white),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.primaryBlue
+                                      : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                                  width: isSelected ? 1.8 : 1.0,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '₦$denom',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : (isDark ? Colors.white70 : const Color(0xFF0F172A)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Step 3: Choose Quantity (1-50 cards)
+                  Text(
+                    '3 · NUMBER OF RECHARGE CARDS',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Quantity (1 to 50 cards)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: foreground,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    final current = int.tryParse(_quantityController.text.trim()) ?? 1;
+                                    if (current > 1) {
+                                      setState(() => _quantityController.text = (current - 1).toString());
+                                    }
+                                  },
+                                  icon: const Icon(Icons.remove_circle_outline_rounded),
+                                  color: AppColors.primaryBlue,
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    _quantityController.text,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: foreground,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    final current = int.tryParse(_quantityController.text.trim()) ?? 1;
+                                    if (current < 50) {
+                                      setState(() => _quantityController.text = (current + 1).toString());
+                                    }
+                                  },
+                                  icon: const Icon(Icons.add_circle_outline_rounded),
+                                  color: AppColors.primaryBlue,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          children: [1, 2, 5, 10, 20, 50].map((qty) {
+                            final isCur = _quantityController.text == qty.toString();
+                            return ChoiceChip(
+                              label: Text('$qty cards'),
+                              selected: isCur,
+                              onSelected: (_) => setState(() => _quantityController.text = qty.toString()),
+                              selectedColor: AppColors.primaryBlue.withValues(alpha: 0.15),
+                              labelStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: isCur
+                                    ? AppColors.primaryBlue
+                                    : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Step 4: Brand / Business Name on Card
+                  Text(
+                    '4 · NAME ON RECHARGE CARD (OPTIONAL)',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _businessNameController,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Avotek Telecom or My Business Name',
+                      prefixIcon: const Icon(Icons.business_rounded),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                    ),
+                  ),
                 ] else ...[
                   // Bulk SMS UI
                   TextField(
@@ -727,7 +1091,9 @@ class _ExtraProviderServicesScreenState
                         : Text(
                             _isExam
                                 ? 'Purchase ${_selectedExam?['code'] ?? 'Exam'} PIN (${_quantityController.text})'
-                                : 'Send Bulk SMS',
+                                : (_isAirtimePins
+                                    ? 'Generate ${_airtimePinNetworks.firstWhere((n) => n['id'] == _selectedNetworkId)['code']} ₦$_selectedDenomination PIN (${_quantityController.text})'
+                                    : 'Send Bulk SMS'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,

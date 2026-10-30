@@ -315,6 +315,23 @@ class VtuApiService {
     payload: {'exam': examCode, 'quantity': quantity},
   );
 
+  Future<Map<String, dynamic>> purchaseAirtimePins({
+    required int networkId,
+    required double amount,
+    required int quantity,
+    String? businessName,
+    String? pin,
+  }) => _invoke(
+    'airtime_pin.purchase',
+    userPin: pin,
+    payload: {
+      'network': networkId,
+      'amount': amount.toInt(),
+      'quantity': quantity,
+      'business_name': businessName ?? 'Avotek',
+    },
+  );
+
   Future<Map<String, dynamic>> getSmsPricing() => _invoke('sms.pricing');
 
   Future<Map<String, dynamic>> sendBulkSms({

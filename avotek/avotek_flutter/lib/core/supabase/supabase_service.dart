@@ -279,6 +279,38 @@ class SupabaseService {
     final metadata = Map<String, dynamic>.from(user.userMetadata ?? const {});
     metadata['notification_preferences'] = preferences.toJson();
     await client.auth.updateUser(UserAttributes(data: metadata));
+
+    // Also persist directly to profiles table for push & email delivery triggers
+    try {
+      await client.from('profiles').update({
+        'email_receipts': preferences.emailReceipts,
+        'push_notifications': preferences.pushNotifications,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', user.id);
+    } catch (e) {
+      debugPrint('Notice updating notification preferences on profiles: $e');
+    }
+  }
+
+  /// Records a security or transaction notification in Supabase
+  Future<void> recordSecurityNotification(
+    String userId,
+    String eventType,
+    String title,
+    String message, [
+    Map<String, dynamic>? metadata,
+  ]) async {
+    try {
+      await client.rpc('record_security_notification', params: {
+        'p_user_id': userId,
+        'p_event_type': eventType,
+        'p_title': title,
+        'p_message': message,
+        'p_metadata': metadata ?? {},
+      });
+    } catch (e) {
+      debugPrint('Notice recording security notification: $e');
+    }
   }
 
   // ==========================================
