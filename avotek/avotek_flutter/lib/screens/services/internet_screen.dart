@@ -30,6 +30,7 @@ class _InternetScreenState extends State<InternetScreen> {
 
   final _accountController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _giftMessageController = TextEditingController();
 
   static final List<Map<String, dynamic>> _providers = [
     {
@@ -108,6 +109,7 @@ class _InternetScreenState extends State<InternetScreen> {
   void dispose() {
     _accountController.dispose();
     _phoneController.dispose();
+    _giftMessageController.dispose();
     super.dispose();
   }
 
@@ -215,6 +217,16 @@ class _InternetScreenState extends State<InternetScreen> {
     final currentPackages = _packageData[_selectedProvider] ?? [];
     final activeProvObj = _providers.firstWhere((p) => p['id'] == _selectedProvider);
 
+    final validationErrors = <String>[];
+    if (_selectedPackage == null) {
+      validationErrors.add('Please select an internet bundle below');
+    }
+    if (_activeMode == 0 && _accountController.text.trim().length < 5) {
+      validationErrors.add('Enter a valid router / account / phone number');
+    }
+    final isReady = validationErrors.isEmpty;
+    final isProcessing = _isPurchasing;
+
     return ResponsiveShell(
       currentRoute: '/services/internet',
       onToggleTheme: widget.onToggleTheme,
@@ -300,7 +312,7 @@ class _InternetScreenState extends State<InternetScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 0
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -309,7 +321,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                 boxShadow: _activeMode == 0
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                                          color: const Color(0xFF0038B8).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -351,7 +363,7 @@ class _InternetScreenState extends State<InternetScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 1
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -360,7 +372,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                 boxShadow: _activeMode == 1
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                                          color: const Color(0xFF0038B8).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -518,116 +530,364 @@ class _InternetScreenState extends State<InternetScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Plans Grid Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141721) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'SELECT SUBSCRIPTION PLAN',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
-                          ),
+                  // Account & Phone Number Inputs (PLACED ABOVE INITIATE BUTTON & PLANS)
+                  if (_activeMode == 0) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF141721) : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
                         ),
-                        const SizedBox(height: 16),
-                        ConstrainedBox(
-                         constraints: const BoxConstraints(maxHeight: 250),
-                         child: GridView.builder(
-                          shrinkWrap: true,
-                          primary: false,
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: isDesktop ? 3 : 2,
-                            childAspectRatio: isDesktop ? 2.3 : 1.9,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'ROUTER / ACCOUNT / PHONE NUMBER',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            ),
                           ),
-                          itemCount: currentPackages.length,
-                          itemBuilder: (context, index) {
-                            final pkg = currentPackages[index];
-                            final isSel = _selectedPackage?['code'] == pkg['code'];
-                            final price = (pkg['price'] as num).toDouble();
-
-                            return InkWell(
-                              onTap: () => setState(() => _selectedPackage = pkg),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isSel
-                                        ? const Color(0xFF0052FF)
-                                        : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
-                                    width: isSel ? 2 : 1,
-                                  ),
-                                  boxShadow: isSel
-                                      ? [
-                                          BoxShadow(
-                                            color: const Color(0xFF0052FF).withOpacity(0.25),
-                                            blurRadius: 8,
-                                          ),
-                                        ]
-                                      : null,
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _accountController,
+                            keyboardType: TextInputType.text,
+                            onChanged: (_) => setState(() {}),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'e.g. 08012345678 or Device ID',
+                              hintStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: Checkbox(
+                                  value: _payForMe,
+                                  activeColor: const Color(0xFF0038B8),
+                                  onChanged: (val) => setState(() => _payForMe = val ?? false),
                                 ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      pkg['name'] as String,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _payForMe = !_payForMe),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: 'Pay For Me ',
                                       style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12,
+                                        fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                         color: isDark ? Colors.white70 : const Color(0xFF334155),
                                       ),
+                                      children: [
+                                        TextSpan(
+                                          text: '- get a shareable payment link',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.normal,
+                                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '₦${price.toStringAsFixed(0)}',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w900,
-                                        color: isSel ? const Color(0xFF00D2FF) : foreground,
-                                      ),
-                                    ),
-                                    Text(
-                                      pkg['validity'] as String,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 11,
-                                        color: isDark ? Colors.white38 : const Color(0xFF64748B),
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ),
-                            );
-                          },
-                         ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF141721) : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
                         ),
-                       ],
-                     ),
-                   ),
-                   const SizedBox(height: 20),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'RECIPIENT PHONE (OPTIONAL)',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _accountController,
+                            keyboardType: TextInputType.text,
+                            onChanged: (_) => setState(() {}),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'e.g. 08012345678 or Device ID',
+                              hintStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'GIFT MESSAGE (OPTIONAL)',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _giftMessageController,
+                            maxLength: 200,
+                            maxLines: 2,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Enjoy your internet bundle!',
+                              hintStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.all(12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
 
-                  // Account / Device Input Card
+                  // INITIATE PAYMENT ACTION CARD (ABOVE THE PLANS LIST)
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isReady
+                            ? const Color(0xFF0038B8)
+                            : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
+                        width: isReady ? 1.5 : 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'SELECTED INTERNET PLAN',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.8,
+                                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _selectedPackage != null
+                                        ? '${_selectedPackage!['name']}'
+                                        : 'Choose an internet bundle below',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (_selectedPackage != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF1E2638) : const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: const Color(0xFF0038B8).withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  '₦${((_selectedPackage!['price'] as num).toDouble()).toStringAsFixed(0)}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Initiate Payment Button
+                        Container(
+                          width: double.infinity,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: isReady && !isProcessing
+                                ? const LinearGradient(
+                                    colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  )
+                                : null,
+                            color: isReady && !isProcessing
+                                ? null
+                                : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: isReady && !isProcessing
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF0038B8).withOpacity(0.35),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: ElevatedButton(
+                            onPressed: isReady && !isProcessing ? _handlePurchase : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              disabledForegroundColor: Colors.white38,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: isProcessing
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        _activeMode == 1
+                                            ? Icons.card_giftcard
+                                            : (_payForMe ? Icons.share : Icons.wifi_rounded),
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _activeMode == 1
+                                            ? 'Create Gift Voucher'
+                                            : (_payForMe
+                                                ? 'Generate Pay For Me Link'
+                                                : (_selectedPackage != null
+                                                    ? 'Buy Internet Bundle • ₦${((_selectedPackage!['price'] as num).toDouble()).toStringAsFixed(0)}'
+                                                    : 'Buy Internet Bundle')),
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.3,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+
+                        if (!isReady && validationErrors.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.info_outline, size: 14, color: Color(0xFFF59E0B)),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  validationErrors.first,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFFF59E0B),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Plans Grid Card (COMPACT WIDGET WITH INTERNAL SCROLL)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF141721) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -638,254 +898,108 @@ class _InternetScreenState extends State<InternetScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'ACCOUNT / DEVICE NUMBER',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        TextField(
-                          controller: _accountController,
-                          keyboardType: TextInputType.text,
-                          style: GoogleFonts.plusJakartaSans(color: foreground),
-                          decoration: InputDecoration(
-                            hintText: activeProvObj['accountHint'] as String,
-                            hintStyle: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              color: isDark ? Colors.white38 : Colors.black38,
-                            ),
-                            prefixIcon: const Icon(Icons.wifi_rounded, color: Color(0xFF00D2FF)),
-                            filled: true,
-                            fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'PHONE NUMBER',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        TextField(
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          style: GoogleFonts.plusJakartaSans(color: foreground),
-                          decoration: InputDecoration(
-                            hintText: 'e.g. 08012345678',
-                            hintStyle: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              color: isDark ? Colors.white38 : Colors.black38,
-                            ),
-                            prefixIcon: const Icon(Icons.phone_iphone_rounded, color: Color(0xFF00D2FF)),
-                            filled: true,
-                            fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-
-                  // Auto renew & Pay For Me Checkboxes
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141721) : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Checkbox(
-                              value: _autoRenew,
-                              activeColor: const Color(0xFF0052FF),
-                              onChanged: (val) => setState(() => _autoRenew = val ?? false),
+                            Text(
+                              'SELECT SUBSCRIPTION PLAN (SCROLL IN BOX)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              ),
                             ),
-                            Expanded(
-                              child: Text(
-                                'Auto-renew subscription monthly',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : const Color(0xFF334155),
-                                ),
+                            Text(
+                              '${currentPackages.length} plans',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                               ),
                             ),
                           ],
                         ),
-                        const Divider(height: 1),
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: _payForMe,
-                              activeColor: const Color(0xFF0052FF),
-                              onChanged: (val) => setState(() => _payForMe = val ?? false),
+                        const SizedBox(height: 12),
+
+                        Container(
+                          height: 195,
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
                             ),
-                            Expanded(
-                              child: RichText(
-                                text: TextSpan(
-                                  text: 'Pay For Me ',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white70 : const Color(0xFF334155),
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: '- get a shareable payment link',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.normal,
-                                        color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                          ),
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            child: GridView.builder(
+                              padding: const EdgeInsets.all(8),
+                              itemCount: currentPackages.length,
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: isDesktop ? 3 : 2,
+                                childAspectRatio: isDesktop ? 2.4 : 1.7,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                              ),
+                              itemBuilder: (context, index) {
+                                final pkg = currentPackages[index];
+                                final isSel = _selectedPackage?['code'] == pkg['code'];
+                                final price = (pkg['price'] as num).toDouble();
+
+                                return InkWell(
+                                  onTap: () => setState(() => _selectedPackage = pkg),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: isSel
+                                          ? (isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE))
+                                          : (isDark ? const Color(0xFF1B1E29) : Colors.white),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isSel
+                                            ? const Color(0xFF0038B8)
+                                            : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
+                                        width: isSel ? 2 : 1,
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          pkg['name'] as String,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '₦${price.toStringAsFixed(0)}',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w900,
+                                            color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                            letterSpacing: 0.2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 18),
-
-                  // Order Summary Card
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141721) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Wallet Balance',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
-                                color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                              ),
-                            ),
-                            Text(
-                              '₦${wallet.balance.toStringAsFixed(2)}',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: foreground,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Total Amount',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                color: foreground,
-                              ),
-                            ),
-                            Text(
-                              _totalAmount() != null
-                                  ? '₦${_totalAmount()!.toStringAsFixed(2)}'
-                                  : '--',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                color: const Color(0xFF00D2FF),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-
-                  // Action Button
-                  Container(
-                    width: double.infinity,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF0052FF).withOpacity(0.35),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: _isPurchasing ? null : _handlePurchase,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: _isPurchasing
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(
-                              _payForMe
-                                  ? 'Generate Shareable Payment Link'
-                                  : 'Pay for Internet (${_selectedPackage != null ? '₦${(_selectedPackage!['price'] as num).toStringAsFixed(0)}' : ''})',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

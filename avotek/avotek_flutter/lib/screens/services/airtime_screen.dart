@@ -374,7 +374,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 0
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -383,7 +383,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                 boxShadow: _activeMode == 0
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                                          color: const Color(0xFF0038B8).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -425,7 +425,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 1
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -434,7 +434,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                 boxShadow: _activeMode == 1
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                                          color: const Color(0xFF0038B8).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -601,165 +601,11 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // AMOUNT Input matching Screenshot 3
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141721) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'AMOUNT',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _amountController,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : Colors.black87,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Enter amount e.g. 500',
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.only(left: 14, right: 6),
-                              child: Text(
-                                '₦',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  color: const Color(0xFF0052FF),
-                                ),
-                              ),
-                            ),
-                            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                            hintStyle: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              color: isDark ? Colors.white38 : Colors.black38,
-                            ),
-                            filled: true,
-                            fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        // Quick amounts
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _quickAmounts.map((q) {
-                            final isSel = _amount == q;
-                            return InkWell(
-                              onTap: () => _setPresetAmount(q),
-                              borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: isSel
-                                      ? const Color(0xFF0052FF).withOpacity(0.2)
-                                      : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: isSel
-                                        ? const Color(0xFF0052FF)
-                                        : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
-                                  ),
-                                ),
-                                child: Text(
-                                  '₦${q.toInt()}',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12,
-                                    fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                                    color: isSel
-                                        ? const Color(0xFF0052FF)
-                                        : (isDark ? Colors.white70 : const Color(0xFF334155)),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Instant Cashback Banner
-                  if (_amount >= 50 && _cashbackPercent > 0) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0052FF).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFF00D2FF).withOpacity(0.4)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF0052FF),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.bolt_rounded, color: Color(0xFF00D2FF), size: 16),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '🎉 Instant ${_cashbackPercent.toStringAsFixed(1)}% Cashback Applied!',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF00D2FF),
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'You save ₦${_cashbackAmount.toStringAsFixed(2)}. You only pay ₦${_netCharge.toStringAsFixed(2)}!',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white70 : const Color(0xFF334155),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-
-                  // Mode-specific inputs
+                  // Phone Number & Inputs (PLACED ABOVE INITIATE BUTTON & AMOUNT SELECTOR)
                   if (_activeMode == 0) ...[
-                    // Buy Now Mode: PHONE NUMBER
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -796,64 +642,60 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                               ),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Pay For Me Checkbox
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF141721) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Checkbox(
-                            value: _payForMe,
-                            activeColor: const Color(0xFF0052FF),
-                            onChanged: (val) => setState(() => _payForMe = val ?? false),
-                          ),
-                          Expanded(
-                            child: RichText(
-                              text: TextSpan(
-                                text: 'Pay For Me ',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: Checkbox(
+                                  value: _payForMe,
+                                  activeColor: const Color(0xFF0038B8),
+                                  onChanged: (val) => setState(() => _payForMe = val ?? false),
                                 ),
-                                children: [
-                                  TextSpan(
-                                    text: '- get a shareable payment link',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.normal,
-                                      color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _payForMe = !_payForMe),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: 'Pay For Me ',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: '- get a shareable payment link',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.normal,
+                                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
                     ),
                   ] else ...[
-                    // Gift Voucher Mode: GIFT MESSAGE (OPTIONAL) matching Screenshot 3
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -864,6 +706,40 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(
+                            'RECIPIENT PHONE (OPTIONAL)',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'e.g. 08012345678',
+                              hintStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           Text(
                             'GIFT MESSAGE (OPTIONAL)',
                             style: GoogleFonts.plusJakartaSans(
@@ -877,7 +753,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                           TextField(
                             controller: _giftMessageController,
                             maxLength: 200,
-                            maxLines: 3,
+                            maxLines: 2,
                             onChanged: (_) => setState(() {}),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
@@ -891,7 +767,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                               ),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.all(16),
+                              contentPadding: const EdgeInsets.all(12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
@@ -902,40 +778,283 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 14),
 
-                  const SizedBox(height: 24),
-
-                  // Action Button
-                  SizedBox(
+                  // INITIATE PAYMENT ACTION CARD (ABOVE THE AMOUNT SELECTOR)
+                  Container(
                     width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: isReady && !_isProcessing ? _handleSubmit : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0052FF),
-                        disabledBackgroundColor: const Color(0xFF26324D),
-                        foregroundColor: Colors.white,
-                        disabledForegroundColor: Colors.white38,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: isReady ? 4 : 0,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isReady
+                            ? const Color(0xFF0038B8)
+                            : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
+                        width: isReady ? 1.5 : 1,
                       ),
-                      child: _isProcessing
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : Text(
-                              _activeMode == 1 ? 'Create Gift Voucher' : 'Buy Airtime',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'AIRTIME AMOUNT',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.8,
+                                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _amount >= 50 && _cashbackPercent > 0
+                                        ? 'Save ₦${_cashbackAmount.toStringAsFixed(2)} (${_cashbackPercent.toStringAsFixed(1)}% Cashback)'
+                                        : 'Select or enter amount below',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: _amount >= 50 && _cashbackPercent > 0
+                                          ? const Color(0xFF10B981)
+                                          : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E2638) : const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFF0038B8).withOpacity(0.3),
+                                ),
+                              ),
+                              child: Text(
+                                _amount > 0 ? '₦${_amount.toStringAsFixed(0)}' : '₦0',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Initiate Payment Button
+                        Container(
+                          width: double.infinity,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: isReady && !_isProcessing
+                                ? const LinearGradient(
+                                    colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  )
+                                : null,
+                            color: isReady && !_isProcessing
+                                ? null
+                                : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: isReady && !_isProcessing
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF0038B8).withOpacity(0.35),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: ElevatedButton(
+                            onPressed: isReady && !_isProcessing ? _handleSubmit : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              disabledForegroundColor: Colors.white38,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: _isProcessing
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        _activeMode == 1
+                                            ? Icons.card_giftcard
+                                            : (_payForMe ? Icons.share : Icons.phone_android_rounded),
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _activeMode == 1
+                                            ? 'Create Gift Voucher'
+                                            : (_payForMe
+                                                ? 'Generate Pay For Me Link'
+                                                : (_amount >= 50
+                                                    ? 'Buy Airtime Now • ₦${_netCharge.toStringAsFixed(0)}'
+                                                    : 'Buy Airtime Now')),
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.3,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+
+                        if (!isReady && validationErrors.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.info_outline, size: 14, color: Color(0xFFF59E0B)),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  validationErrors.first,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFFF59E0B),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 14),
+
+                  // AMOUNT SELECTION WIDGET (COMPACT & CONTAINED)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ENTER OR SELECT AMOUNT',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _amountController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Enter amount e.g. 500',
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.only(left: 14, right: 6),
+                              child: Text(
+                                '₦',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: const Color(0xFF0038B8),
+                                ),
+                              ),
+                            ),
+                            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                            hintStyle: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: isDark ? Colors.white38 : Colors.black38,
+                            ),
+                            filled: true,
+                            fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _quickAmounts.map((q) {
+                            final isSel = _amount == q;
+                            return InkWell(
+                              onTap: () => _setPresetAmount(q),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isSel
+                                      ? const Color(0xFF0038B8).withOpacity(0.2)
+                                      : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isSel
+                                        ? const Color(0xFF0038B8)
+                                        : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                  ),
+                                ),
+                                child: Text(
+                                  '₦${q.toInt()}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                                    color: isSel
+                                        ? const Color(0xFF0038B8)
+                                        : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

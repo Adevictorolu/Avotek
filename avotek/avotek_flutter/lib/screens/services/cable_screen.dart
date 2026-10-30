@@ -423,7 +423,7 @@ class _CableScreenState extends State<CableScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 0
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -432,7 +432,7 @@ class _CableScreenState extends State<CableScreen> {
                                 boxShadow: _activeMode == 0
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                                          color: const Color(0xFF0038B8).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -474,7 +474,7 @@ class _CableScreenState extends State<CableScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 1
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -483,7 +483,7 @@ class _CableScreenState extends State<CableScreen> {
                                 boxShadow: _activeMode == 1
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                                          color: const Color(0xFF0038B8).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -653,152 +653,11 @@ class _CableScreenState extends State<CableScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Plans Grid Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141721) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'SELECT SUBSCRIPTION PLAN',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        if (_isLoadingPackages)
-                          const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(32),
-                              child: CircularProgressIndicator(color: Color(0xFF00D2FF)),
-                            ),
-                          )
-                        else if (_packageLoadError != null)
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    _packageLoadError!,
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.plusJakartaSans(color: Colors.redAccent, fontSize: 13),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  ElevatedButton(
-                                    onPressed: _loadLivePackages,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primaryBlue,
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    child: const Text('Retry Loading'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        else
-                          ConstrainedBox(
-                           constraints: const BoxConstraints(maxHeight: 250),
-                           child: GridView.builder(
-                            shrinkWrap: true,
-                            primary: false,
-                            itemCount: _livePackages.length,
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: isDesktop ? 3 : 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: isDesktop ? 2.3 : 1.7,
-                            ),
-                            itemBuilder: (context, index) {
-                              final pkg = _livePackages[index];
-                              final code = pkg['code'] as String;
-                              final name = pkg['name'] as String;
-                              final price = pkg['price'] as double;
-                              final isSelected = _selectedPackage == code;
-
-                              return InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedPackage = code;
-                                    _packageAmount = price;
-                                    _selectedPackageName = name;
-                                  });
-                                },
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? const Color(0xFF0052FF)
-                                          : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
-                                      width: isSelected ? 2 : 1,
-                                    ),
-                                    boxShadow: isSelected
-                                        ? [
-                                            BoxShadow(
-                                              color: const Color(0xFF0052FF).withOpacity(0.2),
-                                              blurRadius: 8,
-                                              spreadRadius: 1,
-                                            ),
-                                          ]
-                                        : null,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        name,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: isDark ? Colors.white70 : const Color(0xFF334155),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        '₦${price.toStringAsFixed(0)}',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w900,
-                                          color: const Color(0xFF00D2FF),
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                           ),
-                          ),
-                       ],
-                     ),
-                   ),
-                   const SizedBox(height: 20),
-
-                  // Smartcard & Phone Inputs (Buy Now Mode)
+                  // Smartcard & Phone Inputs (PLACED ABOVE INITIATE BUTTON & PACKAGES)
                   if (_activeMode == 0) ...[
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -843,7 +702,7 @@ class _CableScreenState extends State<CableScreen> {
                                     ),
                                     filled: true,
                                     fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10),
                                       borderSide: BorderSide.none,
@@ -851,49 +710,45 @@ class _CableScreenState extends State<CableScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              ElevatedButton(
-                                onPressed: _isVerifying ? null : _handleVerifySmartcard,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primaryBlue,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                height: 44,
+                                child: ElevatedButton(
+                                  onPressed: _isVerifying ? null : _handleVerifySmartcard,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF0038B8),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  child: _isVerifying
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                        )
+                                      : const Text('Verify', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                                 ),
-                                child: _isVerifying
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                      )
-                                    : Text(
-                                        'Verify',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
                               ),
                             ],
                           ),
                           if (_verifiedCustomerName != null) ...[
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF10B981).withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.verified, size: 18, color: Color(0xFF10B981)),
-                                  const SizedBox(width: 8),
+                                  const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 16),
+                                  const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
-                                      'Subscriber: $_verifiedCustomerName',
+                                      'Account Name: $_verifiedCustomerName',
                                       style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 13,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFF10B981),
                                       ),
@@ -903,8 +758,7 @@ class _CableScreenState extends State<CableScreen> {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 20),
-
+                          const SizedBox(height: 12),
                           Text(
                             'PHONE NUMBER',
                             style: GoogleFonts.plusJakartaSans(
@@ -919,7 +773,6 @@ class _CableScreenState extends State<CableScreen> {
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            onChanged: (_) => setState(() {}),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
@@ -932,93 +785,60 @@ class _CableScreenState extends State<CableScreen> {
                               ),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Checkboxes: Auto-renew and Pay For Me
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF141721) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Checkbox(
-                            value: _autoRenew,
-                            activeColor: AppColors.primaryBlue,
-                            onChanged: (val) => setState(() => _autoRenew = val ?? false),
-                          ),
-                          Text(
-                            'Auto-renew subscription monthly',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white70 : const Color(0xFF334155),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF141721) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Checkbox(
-                            value: _payForMe,
-                            activeColor: AppColors.primaryBlue,
-                            onChanged: (val) => setState(() => _payForMe = val ?? false),
-                          ),
-                          Expanded(
-                            child: RichText(
-                              text: TextSpan(
-                                text: 'Pay For Me ',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: Checkbox(
+                                  value: _payForMe,
+                                  activeColor: const Color(0xFF0038B8),
+                                  onChanged: (val) => setState(() => _payForMe = val ?? false),
                                 ),
-                                children: [
-                                  TextSpan(
-                                    text: '- get a shareable payment link',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.normal,
-                                      color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _payForMe = !_payForMe),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: 'Pay For Me ',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: '- get a shareable payment link',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.normal,
+                                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
                     ),
                   ] else ...[
-                    // Gift Voucher Inputs
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -1055,14 +875,14 @@ class _CableScreenState extends State<CableScreen> {
                               ),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
                           Text(
                             'GIFT MESSAGE (OPTIONAL)',
                             style: GoogleFonts.plusJakartaSans(
@@ -1076,20 +896,20 @@ class _CableScreenState extends State<CableScreen> {
                           TextField(
                             controller: _giftMessageController,
                             maxLength: 200,
-                            maxLines: 3,
+                            maxLines: 2,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Enjoy your subscription! Valid on any decoder.',
+                              hintText: 'Enjoy your subscription!',
                               hintStyle: GoogleFonts.plusJakartaSans(
                                 fontSize: 13,
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.all(16),
+                              contentPadding: const EdgeInsets.all(12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
@@ -1100,107 +920,339 @@ class _CableScreenState extends State<CableScreen> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 14),
 
-                  const SizedBox(height: 20),
-
-                  // Validation Alert Box
-                  if (!isReadyToPay) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F1E36) : const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF00D2FF).withOpacity(0.5)),
+                  // INITIATE PAYMENT ACTION CARD (ABOVE THE PACKAGES LIST)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isReadyToPay
+                            ? const Color(0xFF0038B8)
+                            : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
+                        width: isReadyToPay ? 1.5 : 1,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'SELECTED SUBSCRIPTION',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.8,
+                                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _selectedPackageName.isNotEmpty ? _selectedPackageName : 'Choose a package below',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (_packageAmount > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF1E2638) : const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: const Color(0xFF0038B8).withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  '₦${_packageAmount.toStringAsFixed(0)}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Initiate Payment Button
+                        Container(
+                          width: double.infinity,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: isReadyToPay && !_isProcessing
+                                ? const LinearGradient(
+                                    colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  )
+                                : null,
+                            color: isReadyToPay && !_isProcessing
+                                ? null
+                                : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: isReadyToPay && !_isProcessing
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF0038B8).withOpacity(0.35),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: ElevatedButton(
+                            onPressed: isReadyToPay && !_isProcessing ? _handleSubmit : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              disabledForegroundColor: Colors.white38,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: _isProcessing
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        _activeMode == 1
+                                            ? Icons.card_giftcard
+                                            : (_payForMe ? Icons.share : Icons.tv_rounded),
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _activeMode == 1
+                                            ? 'Create Gift Voucher'
+                                            : (_payForMe
+                                                ? 'Generate Pay For Me Link'
+                                                : (_packageAmount > 0
+                                                    ? 'Pay Subscription • ₦${_packageAmount.toStringAsFixed(0)}'
+                                                    : 'Pay Subscription')),
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.3,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+
+                        if (!isReadyToPay && validationErrors.isNotEmpty) ...[
+                          const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF00D2FF)),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Please complete the following:',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF00D2FF),
+                              const Icon(Icons.info_outline, size: 14, color: Color(0xFFF59E0B)),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  validationErrors.first,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFFF59E0B),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          ...validationErrors.map(
-                            (err) => Padding(
-                              padding: const EdgeInsets.only(left: 26, bottom: 4),
-                              child: Text(
-                                err,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12,
-                                  color: isDark ? const Color(0xFFBAE6FD) : const Color(0xFF0369A1),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // SELECT SUBSCRIPTION PLAN Card (COMPACT WIDGET WITH INTERNAL SCROLL)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'SELECT SUBSCRIPTION PLAN (SCROLL IN BOX)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              ),
+                            ),
+                            Text(
+                              '${_livePackages.length} packages',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        if (_isLoadingPackages)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: CircularProgressIndicator(color: Color(0xFF0038B8)),
+                            ),
+                          )
+                        else if (_packageLoadError != null)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    _packageLoadError!,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.plusJakartaSans(color: Colors.redAccent, fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  ElevatedButton(
+                                    onPressed: _loadLivePackages,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF0038B8),
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: const Text('Retry Loading'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          // Compact scrollable widget container
+                          Container(
+                            height: 195,
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            child: Scrollbar(
+                              thumbVisibility: true,
+                              child: GridView.builder(
+                                padding: const EdgeInsets.all(8),
+                                itemCount: _livePackages.length,
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: isDesktop ? 3 : 2,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8,
+                                  childAspectRatio: isDesktop ? 2.4 : 1.7,
                                 ),
+                                itemBuilder: (context, index) {
+                                  final pkg = _livePackages[index];
+                                  final code = pkg['code'] as String;
+                                  final name = pkg['name'] as String;
+                                  final price = pkg['price'] as double;
+                                  final isSelected = _selectedPackage == code;
+
+                                  return InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedPackage = code;
+                                        _packageAmount = price;
+                                        _selectedPackageName = name;
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? (isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE))
+                                            : (isDark ? const Color(0xFF1B1E29) : Colors.white),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? const Color(0xFF0038B8)
+                                              : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
+                                          width: isSelected ? 2 : 1,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            name,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 12,
+                                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '₦${price.toStringAsFixed(0)}',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w900,
+                                              color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                              letterSpacing: 0.2,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-
-                  // Action Button with Avotek Blue Gradient
-                  Container(
-                    width: double.infinity,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      gradient: isReadyToPay && !_isProcessing
-                          ? const LinearGradient(
-                              colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isReadyToPay && !_isProcessing ? null : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: isReadyToPay && !_isProcessing
-                          ? [
-                              BoxShadow(
-                                color: const Color(0xFF0052FF).withOpacity(0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: ElevatedButton(
-                      onPressed: isReadyToPay && !_isProcessing ? _handleSubmit : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        disabledForegroundColor: Colors.white38,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: _isProcessing
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : Text(
-                              _payForMe && _activeMode == 0
-                                  ? 'Generate Pay For Me Link'
-                                  : (_activeMode == 1 ? 'Create Gift Voucher' : 'Pay Subscription'),
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

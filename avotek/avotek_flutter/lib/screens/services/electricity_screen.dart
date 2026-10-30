@@ -381,7 +381,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 0
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -390,7 +390,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 boxShadow: _activeMode == 0
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                                          color: const Color(0xFF0038B8).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -432,7 +432,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 1
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -441,7 +441,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 boxShadow: _activeMode == 1
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                                          color: const Color(0xFF0038B8).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -491,106 +491,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                   ],
                   const SizedBox(height: 20),
 
-                  // DisCo Grid matching user's uploaded image
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141721) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'ELECTRICITY COMPANY (DISCO)',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ConstrainedBox(
-                         constraints: const BoxConstraints(maxHeight: 230),
-                         child: GridView.builder(
-                          shrinkWrap: true,
-                          primary: false,
-                          itemCount: _discoList.length,
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: isDesktop ? 3 : 2,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
-                            childAspectRatio: isDesktop ? 2.8 : 2.2,
-                          ),
-                          itemBuilder: (context, index) {
-                            final disco = _discoList[index];
-                            final id = disco['id']!;
-                            final name = disco['name']!;
-                            final isSelected = _selectedDisco == id;
-
-                            return InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _selectedDisco = id;
-                                  _verifiedCustomerName = null;
-                                  _verificationDetails = null;
-                                });
-                              },
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? const Color(0xFF0052FF)
-                                        : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
-                                    width: isSelected ? 2 : 1,
-                                  ),
-                                  boxShadow: isSelected
-                                      ? [
-                                          BoxShadow(
-                                            color: const Color(0xFF0052FF).withOpacity(0.2),
-                                            blurRadius: 8,
-                                          ),
-                                        ]
-                                      : null,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    name,
-                                    textAlign: TextAlign.center,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 11.5,
-                                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                      color: isSelected
-                                          ? const Color(0xFF00D2FF)
-                                          : (isDark ? Colors.white70 : const Color(0xFF334155)),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                         ),
-                        ),
-                       ],
-                     ),
-                   ),
-                   const SizedBox(height: 20),
-
                   // Meter Type: Prepaid vs Postpaid
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF141721) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -610,23 +514,23 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                             color: isDark ? Colors.white70 : const Color(0xFF475569),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         Row(
                           children: [
                             Expanded(
                               child: InkWell(
                                 onTap: () => setState(() => _selectedMeterType = 'prepaid'),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(10),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
                                   decoration: BoxDecoration(
                                     color: _selectedMeterType == 'prepaid'
-                                        ? const Color(0xFF0052FF).withOpacity(0.18)
+                                        ? const Color(0xFF0038B8).withOpacity(0.18)
                                         : (isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9)),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: _selectedMeterType == 'prepaid'
-                                          ? const Color(0xFF0052FF)
+                                          ? const Color(0xFF0038B8)
                                           : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
                                       width: _selectedMeterType == 'prepaid' ? 2 : 1,
                                     ),
@@ -636,19 +540,19 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                     children: [
                                       Icon(
                                         Icons.bolt_rounded,
-                                        size: 18,
+                                        size: 16,
                                         color: _selectedMeterType == 'prepaid'
-                                            ? const Color(0xFF00D2FF)
+                                            ? const Color(0xFF0038B8)
                                             : (isDark ? Colors.white60 : const Color(0xFF64748B)),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 6),
                                       Text(
                                         'Prepaid (Token)',
                                         style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 13,
+                                          fontSize: 12.5,
                                           fontWeight: FontWeight.w700,
                                           color: _selectedMeterType == 'prepaid'
-                                              ? const Color(0xFF00D2FF)
+                                              ? const Color(0xFF0038B8)
                                               : (isDark ? Colors.white70 : const Color(0xFF334155)),
                                         ),
                                       ),
@@ -657,21 +561,21 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: InkWell(
                                 onTap: () => setState(() => _selectedMeterType = 'postpaid'),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(10),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
                                   decoration: BoxDecoration(
                                     color: _selectedMeterType == 'postpaid'
-                                        ? const Color(0xFF0052FF).withOpacity(0.18)
+                                        ? const Color(0xFF0038B8).withOpacity(0.18)
                                         : (isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9)),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: _selectedMeterType == 'postpaid'
-                                          ? const Color(0xFF0052FF)
+                                          ? const Color(0xFF0038B8)
                                           : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
                                       width: _selectedMeterType == 'postpaid' ? 2 : 1,
                                     ),
@@ -681,19 +585,19 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                     children: [
                                       Icon(
                                         Icons.receipt_long_rounded,
-                                        size: 18,
+                                        size: 16,
                                         color: _selectedMeterType == 'postpaid'
-                                            ? const Color(0xFF00D2FF)
+                                            ? const Color(0xFF0038B8)
                                             : (isDark ? Colors.white60 : const Color(0xFF64748B)),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 6),
                                       Text(
                                         'Postpaid (Bill)',
                                         style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 13,
+                                          fontSize: 12.5,
                                           fontWeight: FontWeight.w700,
                                           color: _selectedMeterType == 'postpaid'
-                                              ? const Color(0xFF00D2FF)
+                                              ? const Color(0xFF0038B8)
                                               : (isDark ? Colors.white70 : const Color(0xFF334155)),
                                         ),
                                       ),
@@ -707,13 +611,13 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
 
                   // Meter Number & Inputs
                   if (_activeMode == 0) ...[
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -751,14 +655,14 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                     color: isDark ? Colors.white : Colors.black87,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: 'Enter your meter number',
+                                    hintText: 'Enter your 11-digit meter number',
                                     hintStyle: GoogleFonts.plusJakartaSans(
                                       fontSize: 13,
                                       color: isDark ? Colors.white38 : Colors.black38,
                                     ),
                                     filled: true,
                                     fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10),
                                       borderSide: BorderSide.none,
@@ -766,75 +670,229 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              ElevatedButton(
-                                onPressed: _isVerifying ? null : _handleVerifyMeter,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primaryBlue,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                height: 44,
+                                child: ElevatedButton(
+                                  onPressed: _isVerifying ? null : _handleVerifyMeter,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF0038B8),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  child: _isVerifying
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                        )
+                                      : const Text('Verify', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                                 ),
-                                child: _isVerifying
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                      )
-                                    : Text(
-                                        'Verify',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
                               ),
                             ],
                           ),
                           if (_verifiedCustomerName != null) ...[
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF10B981).withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.verified, size: 20, color: Color(0xFF10B981)),
-                                  const SizedBox(width: 10),
+                                  const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 16),
+                                  const SizedBox(width: 6),
                                   Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Customer: $_verifiedCustomerName',
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF10B981),
-                                          ),
-                                        ),
-                                        if (_verificationDetails != null && _verificationDetails!.isNotEmpty)
-                                          Text(
-                                            _verificationDetails!,
-                                            style: GoogleFonts.plusJakartaSans(
-                                              fontSize: 11.5,
-                                              color: isDark ? Colors.white70 : const Color(0xFF475569),
-                                            ),
-                                          ),
-                                      ],
+                                    child: Text(
+                                      'Meter Account: $_verifiedCustomerName',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF10B981),
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                           ],
-                          const SizedBox(height: 20),
-
+                          const SizedBox(height: 12),
                           Text(
-                            'AMOUNT (₦)',
+                            'AMOUNT',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _amountController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            onChanged: (_) => setState(() {}),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Enter amount e.g. 2000',
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.only(left: 14, right: 6),
+                                child: Text(
+                                  '₦',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: const Color(0xFF0038B8),
+                                  ),
+                                ),
+                              ),
+                              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                              hintStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: _quickAmounts.map((amt) {
+                              final isSel = (double.tryParse(_amountController.text.trim()) ?? 0.0) == amt;
+                              return InkWell(
+                                onTap: () => setState(() => _amountController.text = amt.toInt().toString()),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: isSel
+                                        ? const Color(0xFF0038B8).withOpacity(0.2)
+                                        : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isSel
+                                          ? const Color(0xFF0038B8)
+                                          : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    '₦${amt.toInt()}',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11.5,
+                                      fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                                      color: isSel ? const Color(0xFF0038B8) : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'PHONE NUMBER',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'e.g. 08012345678',
+                              hintStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: Checkbox(
+                                  value: _payForMe,
+                                  activeColor: const Color(0xFF0038B8),
+                                  onChanged: (val) => setState(() => _payForMe = val ?? false),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _payForMe = !_payForMe),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: 'Pay For Me ',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: '- get a shareable payment link',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.normal,
+                                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF141721) : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'VOUCHER AMOUNT',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -862,18 +920,14 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
-                                    color: const Color(0xFF00D2FF),
+                                    color: const Color(0xFF0038B8),
                                   ),
                                 ),
                               ),
                               prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                              hintStyle: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
-                                color: isDark ? Colors.white38 : Colors.black38,
-                              ),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
@@ -881,205 +935,6 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          // Quick amounts
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: _quickAmounts.map((q) {
-                              return InkWell(
-                                onTap: () => setState(() => _amountController.text = q.toInt().toString()),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    '₦${q.toInt()}',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark ? Colors.white70 : const Color(0xFF334155),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 20),
-
-                          Text(
-                            'PHONE NUMBER (FOR TOKEN RECEIPT)',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'e.g. 08012345678',
-                              hintStyle: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
-                                color: isDark ? Colors.white38 : Colors.black38,
-                              ),
-                              filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Pay For Me Checkbox
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF141721) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Checkbox(
-                            value: _payForMe,
-                            activeColor: AppColors.primaryBlue,
-                            onChanged: (val) => setState(() => _payForMe = val ?? false),
-                          ),
-                          Expanded(
-                            child: RichText(
-                              text: TextSpan(
-                                text: 'Pay For Me ',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : const Color(0xFF334155),
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: '- get a shareable payment link',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.normal,
-                                      color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ] else ...[
-                    // Gift Voucher Inputs
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF141721) : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AMOUNT (₦)',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _amountController,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Enter amount e.g. 5000',
-                              prefixIcon: Padding(
-                                padding: const EdgeInsets.only(left: 14, right: 6),
-                                child: Text(
-                                  '₦',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                    color: const Color(0xFF00D2FF),
-                                  ),
-                                ),
-                              ),
-                              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                              filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'RECIPIENT PHONE (OPTIONAL)',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'e.g. 08012345678',
-                              filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
                           Text(
                             'GIFT MESSAGE (OPTIONAL)',
                             style: GoogleFonts.plusJakartaSans(
@@ -1093,16 +948,20 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           TextField(
                             controller: _giftMessageController,
                             maxLength: 200,
-                            maxLines: 3,
+                            maxLines: 2,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Enjoy your electricity voucher! Redeemable on any meter.',
+                              hintText: 'Enjoy your electricity voucher!',
+                              hintStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.all(16),
+                              contentPadding: const EdgeInsets.all(12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
@@ -1113,61 +972,296 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 14),
 
-                  const SizedBox(height: 24),
-
-                  // Action Button with Avotek Blue Gradient
+                  // INITIATE PAYMENT ACTION CARD (ABOVE THE DISCO SELECTION)
                   Container(
                     width: double.infinity,
-                    height: 52,
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      gradient: isReady && !_isProcessing
-                          ? const LinearGradient(
-                              colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isReady && !_isProcessing ? null : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: isReady && !_isProcessing
-                          ? [
-                              BoxShadow(
-                                color: const Color(0xFF0052FF).withOpacity(0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: ElevatedButton(
-                      onPressed: isReady && !_isProcessing ? _handleSubmit : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        disabledForegroundColor: Colors.white38,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isReady
+                            ? const Color(0xFF0038B8)
+                            : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
+                        width: isReady ? 1.5 : 1,
                       ),
-                      child: _isProcessing
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : Text(
-                              _payForMe && _activeMode == 0
-                                  ? 'Generate Pay For Me Link'
-                                  : (_activeMode == 1 ? 'Create Gift Voucher' : 'Pay Electricity Bill'),
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'SELECTED DISCO & PLAN',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.8,
+                                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${_selectedDisco.replaceAll("-", " ").toUpperCase()} ($_selectedMeterType)',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E2638) : const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFF0038B8).withOpacity(0.3),
+                                ),
+                              ),
+                              child: Text(
+                                _amountController.text.trim().isNotEmpty
+                                    ? '₦${_amountController.text.trim()}'
+                                    : '₦0',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Initiate Payment Button
+                        Container(
+                          width: double.infinity,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: isReady && !_isProcessing
+                                ? const LinearGradient(
+                                    colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  )
+                                : null,
+                            color: isReady && !_isProcessing
+                                ? null
+                                : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: isReady && !_isProcessing
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF0038B8).withOpacity(0.35),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: ElevatedButton(
+                            onPressed: isReady && !_isProcessing ? _handleSubmit : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              disabledForegroundColor: Colors.white38,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: _isProcessing
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        _activeMode == 1
+                                            ? Icons.card_giftcard
+                                            : (_payForMe ? Icons.share : Icons.bolt_rounded),
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _activeMode == 1
+                                            ? 'Create Gift Voucher'
+                                            : (_payForMe
+                                                ? 'Generate Pay For Me Link'
+                                                : (_amountController.text.trim().isNotEmpty
+                                                    ? 'Pay Electricity Bill • ₦${_amountController.text.trim()}'
+                                                    : 'Pay Electricity Bill')),
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.3,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+
+                        if (!isReady && validationErrors.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.info_outline, size: 14, color: Color(0xFFF59E0B)),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  validationErrors.first,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFFF59E0B),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 14),
+
+                  // ELECTRICITY COMPANY (DISCO) Card (COMPACT WIDGET WITH INTERNAL SCROLL)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'SELECT ELECTRICITY COMPANY (SCROLL IN BOX)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              ),
+                            ),
+                            Text(
+                              '${_discoList.length} companies',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Compact scrollable widget container
+                        Container(
+                          height: 185,
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                            ),
+                          ),
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            child: GridView.builder(
+                              padding: const EdgeInsets.all(8),
+                              itemCount: _discoList.length,
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: isDesktop ? 3 : 2,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                                childAspectRatio: isDesktop ? 2.6 : 2.0,
+                              ),
+                              itemBuilder: (context, index) {
+                                final disco = _discoList[index];
+                                final id = disco['id']!;
+                                final name = disco['name']!;
+                                final isSelected = _selectedDisco == id;
+
+                                return InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedDisco = id;
+                                      _verifiedCustomerName = null;
+                                      _verificationDetails = null;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? (isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE))
+                                          : (isDark ? const Color(0xFF1B1E29) : Colors.white),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? const Color(0xFF0038B8)
+                                            : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
+                                        width: isSelected ? 2 : 1,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        name,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 11,
+                                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                          color: isSelected
+                                              ? const Color(0xFF0038B8)
+                                              : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

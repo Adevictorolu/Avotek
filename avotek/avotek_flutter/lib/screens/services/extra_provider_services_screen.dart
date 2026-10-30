@@ -549,7 +549,7 @@ class _ExtraProviderServicesScreenState
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 0
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -558,7 +558,7 @@ class _ExtraProviderServicesScreenState
                                 boxShadow: _activeMode == 0
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                                          color: const Color(0xFF0038B8).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -602,7 +602,7 @@ class _ExtraProviderServicesScreenState
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 1
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -611,7 +611,7 @@ class _ExtraProviderServicesScreenState
                                 boxShadow: _activeMode == 1
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                                          color: const Color(0xFF0038B8).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -1667,14 +1667,14 @@ class _ExtraProviderServicesScreenState
                     height: 54,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                       ),
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                          color: const Color(0xFF0038B8).withOpacity(0.35),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),

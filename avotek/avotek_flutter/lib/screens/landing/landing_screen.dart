@@ -395,12 +395,12 @@ class _LandingScreenState extends State<LandingScreen>
           Container(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
               ),
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0052FF).withValues(alpha: 0.35),
+                  color: const Color(0xFF0038B8).withValues(alpha: 0.35),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -542,7 +542,7 @@ class _LandingScreenState extends State<LandingScreen>
                     width: double.infinity,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -655,15 +655,15 @@ class _LandingScreenState extends State<LandingScreen>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.bolt_rounded,
-                  color: Color(0xFF00D2FF), size: 16),
+              Icon(Icons.bolt_rounded,
+                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8), size: 16),
               const SizedBox(width: 6),
               Text(
                 '100% Automated VTU & Instant Payment Gateway',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF00D2FF),
+                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
                   letterSpacing: 0.2,
                 ),
               ),
@@ -689,8 +689,10 @@ class _LandingScreenState extends State<LandingScreen>
                 alignment: PlaceholderAlignment.baseline,
                 baseline: TextBaseline.alphabetic,
                 child: ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                  shaderCallback: (bounds) => LinearGradient(
+                    colors: isDark
+                        ? [const Color(0xFF60A5FA), const Color(0xFF38BDF8)]
+                        : [const Color(0xFF0038B8), const Color(0xFF0052FF)],
                   ).createShader(bounds),
                   child: Text(
                     'Instant Bills',
@@ -732,12 +734,12 @@ class _LandingScreenState extends State<LandingScreen>
             Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                  colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                 ),
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0052FF).withValues(alpha: 0.40),
+                    color: const Color(0xFF0038B8).withValues(alpha: 0.40),
                     blurRadius: 16,
                     offset: const Offset(0, 5),
                   ),
@@ -1439,7 +1441,7 @@ class _LandingScreenState extends State<LandingScreen>
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 32,
                               fontWeight: FontWeight.w900,
-                              color: const Color(0xFF00D2FF),
+                              color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
                               letterSpacing: -1.0,
                             ),
                           ),
@@ -1602,7 +1604,7 @@ class _LandingScreenState extends State<LandingScreen>
                                       ),
                                       child: Icon(
                                         s.$3,
-                                        color: const Color(0xFF00D2FF),
+                                        color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
                                         size: 24,
                                       ),
                                     ),
@@ -1738,7 +1740,7 @@ class _LandingScreenState extends State<LandingScreen>
                                 ),
                                 child: Icon(
                                   f.$3,
-                                  color: const Color(0xFF00D2FF),
+                                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
                                   size: 24,
                                 ),
                               ),
@@ -1851,7 +1853,7 @@ class _LandingScreenState extends State<LandingScreen>
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 34,
                                   fontWeight: FontWeight.w900,
-                                  color: const Color(0xFF00D2FF),
+                                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
                                 ),
                               ),
                               const SizedBox(height: 12),
@@ -2063,14 +2065,14 @@ class _LandingScreenState extends State<LandingScreen>
             padding: EdgeInsets.all(isDesktop ? 44 : 26),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0030B8), Color(0xFF0052FF), Color(0xFF00D2FF)],
+                colors: [Color(0xFF071B3E), Color(0xFF002F9E), Color(0xFF0047FF)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0052FF).withValues(alpha: 0.40),
+                  color: const Color(0xFF0038B8).withValues(alpha: 0.40),
                   blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),
@@ -2594,7 +2596,7 @@ class _LandingScreenState extends State<LandingScreen>
               fontSize: 10.5,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.0,
-              color: const Color(0xFF00D2FF),
+              color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
             ),
           ),
         ),

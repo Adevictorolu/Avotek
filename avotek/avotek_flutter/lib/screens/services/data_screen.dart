@@ -416,7 +416,7 @@ class _DataScreenState extends State<DataScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Mode Switcher Bar matching Screenshot 4
+                  // Mode Switcher Bar
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
@@ -437,7 +437,7 @@ class _DataScreenState extends State<DataScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 0
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -446,7 +446,7 @@ class _DataScreenState extends State<DataScreen> {
                                 boxShadow: _activeMode == 0
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                                          color: const Color(0xFF0038B8).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -488,7 +488,7 @@ class _DataScreenState extends State<DataScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 1
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -497,7 +497,7 @@ class _DataScreenState extends State<DataScreen> {
                                 boxShadow: _activeMode == 1
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0052FF).withOpacity(0.35),
+                                          color: const Color(0xFF0038B8).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -540,8 +540,8 @@ class _DataScreenState extends State<DataScreen> {
                       'This creates a shareable gift link. The recipient redeems it themselves.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
-                        color: const Color(0xFF00D2FF),
-                        fontWeight: FontWeight.w500,
+                        color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -667,240 +667,11 @@ class _DataScreenState extends State<DataScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // SELECT DATA PLAN Card matching Screenshot 4
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141721) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'SELECT DATA PLAN',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Plan Category Filters (ALL, SME, DATATRANSFER, CGIFTING, etc.)
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: _filterCategories.map((cat) {
-                              final isCatSel = _selectedFilter == cat;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedFilter = cat;
-                                      final filtered = _getFilteredPlans();
-                                      if (filtered.isNotEmpty && !_getFilteredPlans().contains(_selectedPlan)) {
-                                        _selectedPlan = filtered.first;
-                                      }
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                                    decoration: BoxDecoration(
-                                      color: isCatSel
-                                          ? const Color(0xFF0052FF)
-                                          : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: isCatSel
-                                            ? const Color(0xFF0052FF)
-                                            : (isDark ? const Color(0xFF2A2E3D) : const Color(0xFFCBD5E1)),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      cat,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12,
-                                        fontWeight: isCatSel ? FontWeight.w800 : FontWeight.w600,
-                                        color: isCatSel
-                                            ? Colors.white
-                                            : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        if (_isLoadingPlans)
-                          const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(32),
-                              child: CircularProgressIndicator(color: Color(0xFF0052FF)),
-                            ),
-                          )
-                        else if (_planLoadError != null)
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    _planLoadError!,
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.plusJakartaSans(color: Colors.redAccent, fontSize: 13),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  ElevatedButton(
-                                    onPressed: _loadLivePlans,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF0052FF),
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    child: const Text('Retry Loading'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        else if (filteredPlans.isEmpty)
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Text(
-                                'No plans found for category $_selectedFilter.',
-                                style: GoogleFonts.plusJakartaSans(
-                                  color: isDark ? Colors.white60 : Colors.black54,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          )
-                        else
-                          ConstrainedBox(
-                           constraints: const BoxConstraints(maxHeight: 250),
-                           child: GridView.builder(
-                            shrinkWrap: true,
-                            primary: false,
-                            itemCount: filteredPlans.length,
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: isDesktop ? 3 : 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: isDesktop ? 2.2 : 1.6,
-                            ),
-                            itemBuilder: (context, index) {
-                              final plan = filteredPlans[index];
-                              final vol = plan['volume'] as String;
-                              final price = plan['price'] as double;
-                              final val = plan['validity'] as String;
-                              final type = plan['plantype'] as String;
-                              final isSelected = _selectedPlan?['id'] == plan['id'];
-
-                              return InkWell(
-                                onTap: () => setState(() => _selectedPlan = plan),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? const Color(0xFF0052FF)
-                                          : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
-                                      width: isSelected ? 2 : 1,
-                                    ),
-                                    boxShadow: isSelected
-                                        ? [
-                                            BoxShadow(
-                                              color: const Color(0xFF0052FF).withOpacity(0.2),
-                                              blurRadius: 8,
-                                              spreadRadius: 1,
-                                            ),
-                                          ]
-                                        : null,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        vol,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w800,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 3),
-                                      Text(
-                                        '₦${price.toStringAsFixed(0)}',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w900,
-                                          color: const Color(0xFF00D2FF),
-                                          letterSpacing: 0.2,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        val,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w500,
-                                          color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: isDark ? const Color(0xFF262C3D) : const Color(0xFFE2E8F0),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          type,
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 9.5,
-                                            fontWeight: FontWeight.w700,
-                                            letterSpacing: 0.5,
-                                            color: isDark ? Colors.white70 : const Color(0xFF475569),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                           ),
-                          ),
-                       ],
-                     ),
-                   ),
-                   const SizedBox(height: 20),
-
-                   // Mode-specific inputs
+                  // Phone Number & Mode inputs (PLACED ABOVE INITIATE BUTTON & PRICING TABLE)
                   if (_activeMode == 0) ...[
-                    // Buy Now Mode: PHONE NUMBER
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -937,64 +708,60 @@ class _DataScreenState extends State<DataScreen> {
                               ),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Pay For Me Checkbox
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF141721) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Checkbox(
-                            value: _payForMe,
-                            activeColor: const Color(0xFF0052FF),
-                            onChanged: (val) => setState(() => _payForMe = val ?? false),
-                          ),
-                          Expanded(
-                            child: RichText(
-                              text: TextSpan(
-                                text: 'Pay For Me ',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: Checkbox(
+                                  value: _payForMe,
+                                  activeColor: const Color(0xFF0038B8),
+                                  onChanged: (val) => setState(() => _payForMe = val ?? false),
                                 ),
-                                children: [
-                                  TextSpan(
-                                    text: '- get a shareable payment link',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.normal,
-                                      color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _payForMe = !_payForMe),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: 'Pay For Me ',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: '- get a shareable payment link',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.normal,
+                                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
                     ),
                   ] else ...[
-                    // Gift Voucher Mode
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -1031,14 +798,14 @@ class _DataScreenState extends State<DataScreen> {
                               ),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
                           Text(
                             'GIFT MESSAGE (OPTIONAL)',
                             style: GoogleFonts.plusJakartaSans(
@@ -1052,7 +819,7 @@ class _DataScreenState extends State<DataScreen> {
                           TextField(
                             controller: _giftMessageController,
                             maxLength: 200,
-                            maxLines: 3,
+                            maxLines: 2,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
@@ -1065,7 +832,7 @@ class _DataScreenState extends State<DataScreen> {
                               ),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.all(16),
+                              contentPadding: const EdgeInsets.all(12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
@@ -1076,59 +843,410 @@ class _DataScreenState extends State<DataScreen> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 14),
 
-                  const SizedBox(height: 24),
-
-                  // Action Button with Avotek Blue/Cyan Gradient
+                  // INITIATE PAYMENT ACTION CARD (ABOVE THE PRICING TABLE)
                   Container(
                     width: double.infinity,
-                    height: 52,
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      gradient: isReady && !_isProcessing
-                          ? const LinearGradient(
-                              colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isReady && !_isProcessing ? null : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: isReady && !_isProcessing
-                          ? [
-                              BoxShadow(
-                                color: const Color(0xFF0052FF).withOpacity(0.35),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: ElevatedButton(
-                      onPressed: isReady && !_isProcessing ? _handleSubmit : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        disabledForegroundColor: Colors.white38,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isReady
+                            ? const Color(0xFF0038B8)
+                            : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
+                        width: isReady ? 1.5 : 1,
                       ),
-                      child: _isProcessing
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : Text(
-                              _activeMode == 1 ? 'Create Gift Voucher' : 'Buy Data',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'SELECTED BUNDLE',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.8,
+                                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _selectedPlan != null
+                                        ? '${_selectedPlan!['volume']} (${_selectedPlan!['plantype']}) • ${_selectedPlan!['validity']}'
+                                        : 'Select a data plan below',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+                            if (_selectedPlan != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF1E2638) : const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: const Color(0xFF0038B8).withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  '₦${(_selectedPlan!['price'] as double).toStringAsFixed(0)}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Initiate Payment Button
+                        Container(
+                          width: double.infinity,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: isReady && !_isProcessing
+                                ? const LinearGradient(
+                                    colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  )
+                                : null,
+                            color: isReady && !_isProcessing
+                                ? null
+                                : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: isReady && !_isProcessing
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF0038B8).withOpacity(0.35),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: ElevatedButton(
+                            onPressed: isReady && !_isProcessing ? _handleSubmit : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              disabledForegroundColor: Colors.white38,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: _isProcessing
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        _activeMode == 1
+                                            ? Icons.card_giftcard
+                                            : (_payForMe ? Icons.share : Icons.flash_on_rounded),
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _activeMode == 1
+                                            ? 'Create Gift Voucher'
+                                            : (_payForMe
+                                                ? 'Generate Pay For Me Link'
+                                                : (_selectedPlan != null
+                                                    ? 'Buy Data Now • ₦${(_selectedPlan!['price'] as double).toStringAsFixed(0)}'
+                                                    : 'Buy Data Now')),
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.3,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+
+                        if (!isReady && validationErrors.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.info_outline, size: 14, color: Color(0xFFF59E0B)),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  validationErrors.first,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFFF59E0B),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 14),
+
+                  // SELECT DATA PLAN Card (COMPACT WIDGET WITH INTERNAL SCROLL)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'SELECT DATA PLAN (SCROLL IN BOX)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              ),
+                            ),
+                            Text(
+                              '${filteredPlans.length} plans',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+
+                        // Plan Category Filters
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: _filterCategories.map((cat) {
+                              final isCatSel = _selectedFilter == cat;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedFilter = cat;
+                                      final filtered = _getFilteredPlans();
+                                      if (filtered.isNotEmpty && !_getFilteredPlans().contains(_selectedPlan)) {
+                                        _selectedPlan = filtered.first;
+                                      }
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: isCatSel
+                                          ? const Color(0xFF0038B8)
+                                          : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: isCatSel
+                                            ? const Color(0xFF0038B8)
+                                            : (isDark ? const Color(0xFF2A2E3D) : const Color(0xFFCBD5E1)),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      cat,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11.5,
+                                        fontWeight: isCatSel ? FontWeight.w800 : FontWeight.w600,
+                                        color: isCatSel
+                                            ? Colors.white
+                                            : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        if (_isLoadingPlans)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: CircularProgressIndicator(color: Color(0xFF0038B8)),
+                            ),
+                          )
+                        else if (_planLoadError != null)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    _planLoadError!,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.plusJakartaSans(color: Colors.redAccent, fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  ElevatedButton(
+                                    onPressed: _loadLivePlans,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF0038B8),
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: const Text('Retry Loading'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else if (filteredPlans.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Text(
+                                'No plans found for category $_selectedFilter.',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: isDark ? Colors.white60 : Colors.black54,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          // Compact scrollable widget container (does not extend whole page)
+                          Container(
+                            height: 195,
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            child: Scrollbar(
+                              thumbVisibility: true,
+                              child: GridView.builder(
+                                padding: const EdgeInsets.all(8),
+                                itemCount: filteredPlans.length,
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: isDesktop ? 3 : 2,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8,
+                                  childAspectRatio: isDesktop ? 2.3 : 1.7,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final plan = filteredPlans[index];
+                                  final vol = plan['volume'] as String;
+                                  final price = plan['price'] as double;
+                                  final val = plan['validity'] as String;
+                                  final type = plan['plantype'] as String;
+                                  final isSelected = _selectedPlan?['id'] == plan['id'];
+
+                                  return InkWell(
+                                    onTap: () => setState(() => _selectedPlan = plan),
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? (isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE))
+                                            : (isDark ? const Color(0xFF1B1E29) : Colors.white),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? const Color(0xFF0038B8)
+                                              : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
+                                          width: isSelected ? 2 : 1,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            vol,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w800,
+                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '₦${price.toStringAsFixed(0)}',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w900,
+                                              color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                              letterSpacing: 0.2,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '$val • $type',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w600,
+                                              color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
