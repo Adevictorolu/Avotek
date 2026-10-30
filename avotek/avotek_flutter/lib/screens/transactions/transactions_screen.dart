@@ -15,6 +15,7 @@ import '../../core/services/vtu_api_service.dart';
 import '../../models/transaction_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
+import '../../widgets/transaction_audit_dialog.dart';
 
 class TransactionsScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -95,89 +96,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   void _showAuditModal(List<TransactionModel> transactions) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF141722) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.analytics_rounded, color: AppColors.electricCyan),
-            const SizedBox(width: 8),
-            Text(
-              'Account Statement & Audit',
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Export the transactions currently loaded in your account history '
-              'as a CSV file for reconciliation.',
-              style: GoogleFonts.plusJakartaSans(fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.download_rounded, size: 18),
-                label: Text(
-                  'Download CSV Statement',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryBlue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                onPressed: () async {
-                  final csv = _statementCsv(transactions);
-                  Navigator.pop(ctx);
-                  final downloaded = await downloadTextFile(
-                    'avotek-statement-${DateTime.now().millisecondsSinceEpoch}.csv',
-                    csv,
-                  );
-                  if (!downloaded) {
-                    await Clipboard.setData(ClipboardData(text: csv));
-                  }
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        downloaded
-                            ? 'Statement downloaded.'
-                            : 'Statement copied to clipboard; paste it into a file to save.',
-                      ),
-                      backgroundColor: downloaded
-                          ? AppColors.success
-                          : AppColors.primaryBlue,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Close',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
-      ),
-    );
+    TransactionAuditDialog.show(context, transactions);
   }
 
   String _statementCsv(List<TransactionModel> transactions) {

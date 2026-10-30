@@ -22,7 +22,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  static const _whatsAppSupportNumber = '2348167002799';
+  static const _whatsAppSupportNumber = '2348167002789';
   late NotificationPreferences _notificationPreferences;
   bool _savingNotificationPreferences = false;
 
@@ -1194,7 +1194,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Contact Avotek Developer Desk on WhatsApp (+2348167002799) to get dedicated API keys and discounted corporate pricing.',
+                              'Contact Avotek Developer Desk on WhatsApp (+2348167002789) to get dedicated API keys and discounted corporate pricing.',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11.5,
                                 color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -2901,7 +2901,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.success,
                         iconBg: AppColors.success.withValues(alpha: 0.15),
                         title: 'WhatsApp Live Support',
-                        subtitle: '+234 816 700 2799 · 24/7 instant chat & resolution',
+                        subtitle: '+234 816 700 2789 · 24/7 instant chat & resolution',
                         trailing: const Icon(
                           Icons.open_in_new_rounded,
                           color: AppColors.success,

@@ -126,18 +126,19 @@ class _ExtraProviderServicesScreenState
 
   bool get _isExam => widget.service == ExtraProviderService.examPins;
 
-  /// Official exam-board logo by code. Live price payloads carry no logo,
-  /// so this must never depend on server data.
+  /// Official exam-board logo by code. Distinct logos for WAEC, NECO & NABTEB.
   String _examLogoFor(String code) {
-    switch (code.toUpperCase()) {
-      case 'NECO':
-        return 'assets/images/brands/neco.png';
-      case 'NABTEB':
-        return 'assets/images/brands/nabteb.png';
-      case 'WAEC':
-      default:
-        return 'assets/images/brands/waec.png';
+    final clean = code.toUpperCase();
+    if (clean.contains('NECO')) {
+      return 'assets/images/brands/neco.png';
     }
+    if (clean.contains('NABTEB')) {
+      return 'assets/images/brands/nabteb.png';
+    }
+    if (clean.contains('WAEC') || clean.contains('WASSCE')) {
+      return 'assets/images/brands/waec.png';
+    }
+    return 'assets/images/brands/waec.png';
   }
 
   static const List<String> _brandLogoAssets = [
@@ -199,7 +200,14 @@ class _ExtraProviderServicesScreenState
             return (p['code'] ?? p['exam_type']) != null && amt is num && amt > 0;
             }).toList();
           if (valid.isNotEmpty) {
-            _examPrices = valid;
+            _examPrices = valid.map((p) {
+              final code = (p['code'] ?? p['exam_type'] ?? '').toString();
+              return {
+                ...p,
+                'code': code.toUpperCase(),
+                'logo': _examLogoFor(code),
+              };
+            }).toList();
             final currentCode = (_selectedExam?['code'] ?? '').toString().toUpperCase();
             _selectedExam = _examPrices.firstWhere(
               (p) => (p['code'] ?? '').toString().toUpperCase() == currentCode,

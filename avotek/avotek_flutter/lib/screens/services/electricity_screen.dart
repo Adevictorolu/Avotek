@@ -974,7 +974,121 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                   ],
                   const SizedBox(height: 14),
 
-                  // INITIATE PAYMENT ACTION CARD (ABOVE THE DISCO SELECTION)
+                  // ELECTRICITY COMPANY (DISCO) Card (COMPACT WIDGET WITH INTERNAL SCROLL)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'SELECT ELECTRICITY COMPANY (SCROLL IN BOX)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              ),
+                            ),
+                            Text(
+                              '${_discoList.length} companies',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Compact scrollable widget container
+                        Container(
+                          height: 185,
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                            ),
+                          ),
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            child: GridView.builder(
+                              padding: const EdgeInsets.all(8),
+                              itemCount: _discoList.length,
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: isDesktop ? 3 : 2,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                                childAspectRatio: isDesktop ? 2.6 : 2.0,
+                              ),
+                              itemBuilder: (context, index) {
+                                final disco = _discoList[index];
+                                final id = disco['id']!;
+                                final name = disco['name']!;
+                                final isSelected = _selectedDisco == id;
+
+                                return InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedDisco = id;
+                                      _verifiedCustomerName = null;
+                                      _verificationDetails = null;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? (isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE))
+                                          : (isDark ? const Color(0xFF1B1E29) : Colors.white),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? const Color(0xFF0038B8)
+                                            : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
+                                        width: isSelected ? 2 : 1,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        name,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 11,
+                                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                          color: isSelected
+                                              ? const Color(0xFF0038B8)
+                                              : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // INITIATE PAYMENT ACTION CARD (BELOW THE DISCO SELECTION)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -1149,118 +1263,6 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  // ELECTRICITY COMPANY (DISCO) Card (COMPACT WIDGET WITH INTERNAL SCROLL)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141721) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'SELECT ELECTRICITY COMPANY (SCROLL IN BOX)',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
-                              ),
-                            ),
-                            Text(
-                              '${_discoList.length} companies',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Compact scrollable widget container
-                        Container(
-                          height: 185,
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
-                            ),
-                          ),
-                          child: Scrollbar(
-                            thumbVisibility: true,
-                            child: GridView.builder(
-                              padding: const EdgeInsets.all(8),
-                              itemCount: _discoList.length,
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: isDesktop ? 3 : 2,
-                                crossAxisSpacing: 8,
-                                mainAxisSpacing: 8,
-                                childAspectRatio: isDesktop ? 2.6 : 2.0,
-                              ),
-                              itemBuilder: (context, index) {
-                                final disco = _discoList[index];
-                                final id = disco['id']!;
-                                final name = disco['name']!;
-                                final isSelected = _selectedDisco == id;
-
-                                return InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedDisco = id;
-                                      _verifiedCustomerName = null;
-                                      _verificationDetails = null;
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? (isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE))
-                                          : (isDark ? const Color(0xFF1B1E29) : Colors.white),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? const Color(0xFF0038B8)
-                                            : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
-                                        width: isSelected ? 2 : 1,
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        name,
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 11,
-                                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                          color: isSelected
-                                              ? const Color(0xFF0038B8)
-                                              : (isDark ? Colors.white70 : const Color(0xFF334155)),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   const SizedBox(height: 24),
                 ],
               ),

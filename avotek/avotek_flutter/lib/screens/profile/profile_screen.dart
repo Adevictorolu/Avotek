@@ -99,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
-                    hintText: 'e.g. 08167002799',
+                    hintText: 'e.g. 08167002789',
                     prefixIcon: const Icon(Icons.phone_android_rounded, size: 18),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -1383,7 +1383,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: ElevatedButton.icon(
               icon: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 20),
               label: Text(
-                'Chat on WhatsApp Support (+234 816 700 2799)',
+                'Chat on WhatsApp Support (+234 816 700 2789)',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
@@ -1392,14 +1392,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               onPressed: () async {
                 final uri = Uri.parse(
-                  'https://wa.me/2348167002799?text=${Uri.encodeComponent("Hello Avotek Support, I need help with my account/transaction.")}',
+                  'https://wa.me/2348167002789?text=${Uri.encodeComponent("Hello Avotek Support, I need help with my account/transaction.")}',
                 );
                 final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
                 if (!opened && mounted) {
-                  Clipboard.setData(const ClipboardData(text: '+2348167002799'));
+                  Clipboard.setData(const ClipboardData(text: '+2348167002789'));
                   TopNotification.showSuccess(
                     context,
-                    'WhatsApp number +2348167002799 copied to clipboard.',
+                    'WhatsApp number +2348167002789 copied to clipboard.',
                     title: 'Copied',
                   );
                 }

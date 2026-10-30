@@ -29,6 +29,18 @@ class TransactionModel {
 
   bool get isCredit => type.toLowerCase() == 'credit';
   bool get isDebit => type.toLowerCase() == 'debit';
+  bool get isCompleted =>
+      status.toLowerCase() == 'completed' ||
+      status.toLowerCase() == 'successful' ||
+      status.toLowerCase() == 'delivered';
+  bool get isFailed =>
+      status.toLowerCase() == 'failed' ||
+      status.toLowerCase() == 'fail' ||
+      status.toLowerCase() == 'cancelled' ||
+      status.toLowerCase() == 'canceled';
+  bool get isPending =>
+      status.toLowerCase() == 'pending' ||
+      status.toLowerCase() == 'processing';
 
   Map<String, dynamic> toJson() => {
         'id': id,

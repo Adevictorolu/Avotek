@@ -1143,20 +1143,19 @@ Deno.serve(async (request) => {
         if (
           status === "pending" &&
           upstream.ok &&
-          providerBody.success !== false &&
-          action !== "sms.send"
+          providerBody.success !== false
         ) {
           status = "completed";
         }
       }
 
-      if (action === "sms.send" && status === "completed") {
-        const data = isRecord(providerBody.data) ? providerBody.data : {};
-        const actualCost = Number(data.total_cost ?? purchaseAmount);
-        if (!Number.isFinite(actualCost) || Math.abs(actualCost - (purchaseAmount ?? 0)) > 0.5) {
-          status = "pending";
-          settlementMessage =
-            "SMS cost did not match the quote. The debit remains pending for reconciliation.";
+      if (action === "sms.send") {
+        if (upstream.ok && providerBody.success !== false) {
+          status = "completed";
+          settlementMessage = "Bulk SMS dispatched successfully to all recipients.";
+        } else {
+          status = "failed";
+          settlementMessage = "Bulk SMS delivery failed. Your wallet has been refunded automatically.";
         }
       }
 

@@ -780,7 +780,108 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                   ],
                   const SizedBox(height: 14),
 
-                  // INITIATE PAYMENT ACTION CARD (ABOVE THE AMOUNT SELECTOR)
+                  // AMOUNT SELECTION WIDGET (COMPACT & CONTAINED)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ENTER OR SELECT AMOUNT',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _amountController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Enter amount e.g. 500',
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.only(left: 14, right: 6),
+                              child: Text(
+                                '₦',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: const Color(0xFF0038B8),
+                                ),
+                              ),
+                            ),
+                            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                            hintStyle: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: isDark ? Colors.white38 : Colors.black38,
+                            ),
+                            filled: true,
+                            fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _quickAmounts.map((q) {
+                            final isSel = _amount == q;
+                            return InkWell(
+                              onTap: () => _setPresetAmount(q),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isSel
+                                      ? const Color(0xFF0038B8).withOpacity(0.2)
+                                      : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isSel
+                                        ? const Color(0xFF0038B8)
+                                        : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                  ),
+                                ),
+                                child: Text(
+                                  '₦${q.toInt()}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                                    color: isSel
+                                        ? const Color(0xFF0038B8)
+                                        : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // INITIATE PAYMENT ACTION CARD (BELOW THE AMOUNT SELECTOR)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -955,105 +1056,6 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  // AMOUNT SELECTION WIDGET (COMPACT & CONTAINED)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141721) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'ENTER OR SELECT AMOUNT',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        TextField(
-                          controller: _amountController,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : Colors.black87,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Enter amount e.g. 500',
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.only(left: 14, right: 6),
-                              child: Text(
-                                '₦',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  color: const Color(0xFF0038B8),
-                                ),
-                              ),
-                            ),
-                            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                            hintStyle: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              color: isDark ? Colors.white38 : Colors.black38,
-                            ),
-                            filled: true,
-                            fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _quickAmounts.map((q) {
-                            final isSel = _amount == q;
-                            return InkWell(
-                              onTap: () => _setPresetAmount(q),
-                              borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: isSel
-                                      ? const Color(0xFF0038B8).withOpacity(0.2)
-                                      : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: isSel
-                                        ? const Color(0xFF0038B8)
-                                        : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
-                                  ),
-                                ),
-                                child: Text(
-                                  '₦${q.toInt()}',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12,
-                                    fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                                    color: isSel
-                                        ? const Color(0xFF0038B8)
-                                        : (isDark ? Colors.white70 : const Color(0xFF334155)),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                  ),
                   const SizedBox(height: 24),
                 ],
               ),

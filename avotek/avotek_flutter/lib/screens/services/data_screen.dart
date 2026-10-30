@@ -845,182 +845,6 @@ class _DataScreenState extends State<DataScreen> {
                   ],
                   const SizedBox(height: 14),
 
-                  // INITIATE PAYMENT ACTION CARD (ABOVE THE PRICING TABLE)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141721) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isReady
-                            ? const Color(0xFF0038B8)
-                            : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
-                        width: isReady ? 1.5 : 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'SELECTED BUNDLE',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.8,
-                                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _selectedPlan != null
-                                        ? '${_selectedPlan!['volume']} (${_selectedPlan!['plantype']}) • ${_selectedPlan!['validity']}'
-                                        : 'Select a data plan below',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (_selectedPlan != null)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF1E2638) : const Color(0xFFEFF6FF),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: const Color(0xFF0038B8).withOpacity(0.3),
-                                  ),
-                                ),
-                                child: Text(
-                                  '₦${(_selectedPlan!['price'] as double).toStringAsFixed(0)}',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                    color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Initiate Payment Button
-                        Container(
-                          width: double.infinity,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            gradient: isReady && !_isProcessing
-                                ? const LinearGradient(
-                                    colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  )
-                                : null,
-                            color: isReady && !_isProcessing
-                                ? null
-                                : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: isReady && !_isProcessing
-                                ? [
-                                    BoxShadow(
-                                      color: const Color(0xFF0038B8).withOpacity(0.35),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: ElevatedButton(
-                            onPressed: isReady && !_isProcessing ? _handleSubmit : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              foregroundColor: Colors.white,
-                              disabledForegroundColor: Colors.white38,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: _isProcessing
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  )
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        _activeMode == 1
-                                            ? Icons.card_giftcard
-                                            : (_payForMe ? Icons.share : Icons.flash_on_rounded),
-                                        size: 18,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _activeMode == 1
-                                            ? 'Create Gift Voucher'
-                                            : (_payForMe
-                                                ? 'Generate Pay For Me Link'
-                                                : (_selectedPlan != null
-                                                    ? 'Buy Data Now • ₦${(_selectedPlan!['price'] as double).toStringAsFixed(0)}'
-                                                    : 'Buy Data Now')),
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 14.5,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 0.3,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                          ),
-                        ),
-
-                        if (!isReady && validationErrors.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.info_outline, size: 14, color: Color(0xFFF59E0B)),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  validationErrors.first,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFFF59E0B),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
                   // SELECT DATA PLAN Card (COMPACT WIDGET WITH INTERNAL SCROLL)
                   Container(
                     width: double.infinity,
@@ -1246,6 +1070,184 @@ class _DataScreenState extends State<DataScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 14),
+
+                  // INITIATE PAYMENT ACTION CARD (BELOW THE PRICING TABLE)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isReady
+                            ? const Color(0xFF0038B8)
+                            : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
+                        width: isReady ? 1.5 : 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'SELECTED BUNDLE',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.8,
+                                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _selectedPlan != null
+                                        ? '${_selectedPlan!['volume']} (${_selectedPlan!['plantype']}) • ${_selectedPlan!['validity']}'
+                                        : 'Select a data plan below',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (_selectedPlan != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF1E2638) : const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: const Color(0xFF0038B8).withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  '₦${(_selectedPlan!['price'] as double).toStringAsFixed(0)}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Initiate Payment Button
+                        Container(
+                          width: double.infinity,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            gradient: isReady && !_isProcessing
+                                ? const LinearGradient(
+                                    colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  )
+                                : null,
+                            color: isReady && !_isProcessing
+                                ? null
+                                : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: isReady && !_isProcessing
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF0038B8).withOpacity(0.35),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: ElevatedButton(
+                            onPressed: isReady && !_isProcessing ? _handleSubmit : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              disabledForegroundColor: Colors.white38,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: _isProcessing
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        _activeMode == 1
+                                            ? Icons.card_giftcard
+                                            : (_payForMe ? Icons.share : Icons.flash_on_rounded),
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _activeMode == 1
+                                            ? 'Create Gift Voucher'
+                                            : (_payForMe
+                                                ? 'Generate Pay For Me Link'
+                                                : (_selectedPlan != null
+                                                    ? 'Buy Data Now • ₦${(_selectedPlan!['price'] as double).toStringAsFixed(0)}'
+                                                    : 'Buy Data Now')),
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.3,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+
+                        if (!isReady && validationErrors.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.info_outline, size: 14, color: Color(0xFFF59E0B)),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  validationErrors.first,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFFF59E0B),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
                   const SizedBox(height: 24),
                 ],
               ),

@@ -240,72 +240,72 @@ class ServiceBrandLogo extends StatelessWidget {
     );
   }
 
-  // --- WAEC Official Exam Board Badge ---
+  // --- WAEC Official Exam Board Logo ---
   Widget _buildWaecLogo() {
     return Container(
       width: size,
       height: size,
+      padding: EdgeInsets.all(size * 0.12),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B2545),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+        border: Border.all(color: const Color(0xFF0F9D58).withValues(alpha: 0.3), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0B2545).withValues(alpha: 0.35),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.school_rounded, color: const Color(0xFFFFD700), size: size * 0.38),
-          Text(
+      child: Image.asset(
+        'assets/images/brands/waec.png',
+        fit: BoxFit.contain,
+        errorBuilder: (ctx, err, stack) => Center(
+          child: Text(
             'WAEC',
             style: GoogleFonts.plusJakartaSans(
-              color: Colors.white,
+              color: const Color(0xFF0F9D58),
               fontWeight: FontWeight.w900,
               fontSize: size * 0.22,
-              letterSpacing: 0.5,
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  // --- NECO Official Exam Board Badge ---
+  // --- NECO Official Exam Board Logo ---
   Widget _buildNecoLogo() {
     return Container(
       width: size,
       height: size,
+      padding: EdgeInsets.all(size * 0.12),
       decoration: BoxDecoration(
-        color: const Color(0xFF005E38),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: const Color(0xFF88D49E), width: 1.5),
+        border: Border.all(color: const Color(0xFF0052FF).withValues(alpha: 0.3), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF005E38).withValues(alpha: 0.35),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.workspace_premium_rounded, color: const Color(0xFF88D49E), size: size * 0.38),
-          Text(
+      child: Image.asset(
+        'assets/images/brands/neco.png',
+        fit: BoxFit.contain,
+        errorBuilder: (ctx, err, stack) => Center(
+          child: Text(
             'NECO',
             style: GoogleFonts.plusJakartaSans(
-              color: Colors.white,
+              color: const Color(0xFF0052FF),
               fontWeight: FontWeight.w900,
               fontSize: size * 0.22,
-              letterSpacing: 0.5,
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -345,29 +345,37 @@ class ServiceBrandLogo extends StatelessWidget {
     );
   }
 
-  // --- NABTEB Official Exam Board Badge ---
+  // --- NABTEB Official Exam Board Logo ---
   Widget _buildNabtebLogo() {
     return Container(
       width: size,
       height: size,
+      padding: EdgeInsets.all(size * 0.12),
       decoration: BoxDecoration(
-        color: const Color(0xFF8B0000),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: const Color(0xFFFFB703), width: 1.5),
+        border: Border.all(color: const Color(0xFF8B0000).withValues(alpha: 0.3), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.build_circle_rounded, color: const Color(0xFFFFB703), size: size * 0.36),
-          Text(
+      child: Image.asset(
+        'assets/images/brands/nabteb.png',
+        fit: BoxFit.contain,
+        errorBuilder: (ctx, err, stack) => Center(
+          child: Text(
             'NABTEB',
             style: GoogleFonts.plusJakartaSans(
-              color: Colors.white,
+              color: const Color(0xFF8B0000),
               fontWeight: FontWeight.w900,
               fontSize: size * 0.18,
             ),
           ),
-        ],
+        ),
       ),
     );
   }

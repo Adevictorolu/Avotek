@@ -100,7 +100,7 @@ class TransactionSuccessDialog extends StatelessWidget {
       }
     }
     buffer.writeln('====================================');
-    buffer.writeln('Support WhatsApp: +2348167002799');
+    buffer.writeln('Support WhatsApp: +2348167002789');
     buffer.writeln('Thank you for choosing Avotek!');
     buffer.writeln('====================================');
     return buffer.toString();
@@ -210,7 +210,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                             ),
                             pw.SizedBox(height: 3),
                             pw.Text(
-                              'support@avotek.ng • WhatsApp: +234 816 700 2799',
+                              'support@avotek.ng • WhatsApp: +234 816 700 2789',
                               style: const pw.TextStyle(
                                 fontSize: 8.5,
                                 color: PdfColor.fromInt(0xFF64748B),

@@ -922,7 +922,165 @@ class _CableScreenState extends State<CableScreen> {
                   ],
                   const SizedBox(height: 14),
 
-                  // INITIATE PAYMENT ACTION CARD (ABOVE THE PACKAGES LIST)
+                  // SELECT SUBSCRIPTION PLAN Card (COMPACT WIDGET WITH INTERNAL SCROLL)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'SELECT SUBSCRIPTION PLAN (SCROLL IN BOX)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              ),
+                            ),
+                            Text(
+                              '${_livePackages.length} packages',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        if (_isLoadingPackages)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: CircularProgressIndicator(color: Color(0xFF0038B8)),
+                            ),
+                          )
+                        else if (_packageLoadError != null)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    _packageLoadError!,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.plusJakartaSans(color: Colors.redAccent, fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  ElevatedButton(
+                                    onPressed: _loadLivePackages,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF0038B8),
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: const Text('Retry Loading'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          // Compact scrollable widget container
+                          Container(
+                            height: 195,
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            child: Scrollbar(
+                              thumbVisibility: true,
+                              child: GridView.builder(
+                                padding: const EdgeInsets.all(8),
+                                itemCount: _livePackages.length,
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: isDesktop ? 3 : 2,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8,
+                                  childAspectRatio: isDesktop ? 2.4 : 1.7,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final pkg = _livePackages[index];
+                                  final code = pkg['code'] as String;
+                                  final name = pkg['name'] as String;
+                                  final price = pkg['price'] as double;
+                                  final isSelected = _selectedPackage == code;
+
+                                  return InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedPackage = code;
+                                        _packageAmount = price;
+                                        _selectedPackageName = name;
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? (isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE))
+                                            : (isDark ? const Color(0xFF1B1E29) : Colors.white),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? const Color(0xFF0038B8)
+                                              : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
+                                          width: isSelected ? 2 : 1,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            name,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 12,
+                                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '₦${price.toStringAsFixed(0)}',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w900,
+                                              color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                              letterSpacing: 0.2,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // INITIATE PAYMENT ACTION CARD (BELOW THE PACKAGES LIST)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -1096,162 +1254,6 @@ class _CableScreenState extends State<CableScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  // SELECT SUBSCRIPTION PLAN Card (COMPACT WIDGET WITH INTERNAL SCROLL)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141721) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'SELECT SUBSCRIPTION PLAN (SCROLL IN BOX)',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
-                              ),
-                            ),
-                            Text(
-                              '${_livePackages.length} packages',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        if (_isLoadingPackages)
-                          const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(24),
-                              child: CircularProgressIndicator(color: Color(0xFF0038B8)),
-                            ),
-                          )
-                        else if (_packageLoadError != null)
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    _packageLoadError!,
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.plusJakartaSans(color: Colors.redAccent, fontSize: 13),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  ElevatedButton(
-                                    onPressed: _loadLivePackages,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF0038B8),
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    child: const Text('Retry Loading'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        else
-                          // Compact scrollable widget container
-                          Container(
-                            height: 195,
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
-                              ),
-                            ),
-                            child: Scrollbar(
-                              thumbVisibility: true,
-                              child: GridView.builder(
-                                padding: const EdgeInsets.all(8),
-                                itemCount: _livePackages.length,
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: isDesktop ? 3 : 2,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                  childAspectRatio: isDesktop ? 2.4 : 1.7,
-                                ),
-                                itemBuilder: (context, index) {
-                                  final pkg = _livePackages[index];
-                                  final code = pkg['code'] as String;
-                                  final name = pkg['name'] as String;
-                                  final price = pkg['price'] as double;
-                                  final isSelected = _selectedPackage == code;
-
-                                  return InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedPackage = code;
-                                        _packageAmount = price;
-                                        _selectedPackageName = name;
-                                      });
-                                    },
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? (isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE))
-                                            : (isDark ? const Color(0xFF1B1E29) : Colors.white),
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? const Color(0xFF0038B8)
-                                              : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
-                                          width: isSelected ? 2 : 1,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            name,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: GoogleFonts.plusJakartaSans(
-                                              fontSize: 12,
-                                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            '₦${price.toStringAsFixed(0)}',
-                                            style: GoogleFonts.plusJakartaSans(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w900,
-                                              color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
-                                              letterSpacing: 0.2,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
                   const SizedBox(height: 24),
                 ],
               ),

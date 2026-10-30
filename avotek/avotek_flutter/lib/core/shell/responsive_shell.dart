@@ -535,7 +535,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 20),
                   label: Text(
-                    'Chat on WhatsApp Support (+234 816 700 2799)',
+                    'Chat on WhatsApp Support (+234 816 700 2789)',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w800,
@@ -543,13 +543,13 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     ),
                   ),
                   onPressed: () async {
-                    final uri = Uri.parse('https://wa.me/2348167002799?text=${Uri.encodeComponent("Hello Avotek Support, I need help with my account/transaction.")}');
+                    final uri = Uri.parse('https://wa.me/2348167002789?text=${Uri.encodeComponent("Hello Avotek Support, I need help with my account/transaction.")}');
                     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
                     if (!opened && sheetContext.mounted) {
-                      Clipboard.setData(const ClipboardData(text: '+2348167002799'));
+                      Clipboard.setData(const ClipboardData(text: '+2348167002789'));
                       ScaffoldMessenger.of(sheetContext).showSnackBar(
                         const SnackBar(
-                          content: Text('WhatsApp number +2348167002799 copied to clipboard!'),
+                          content: Text('WhatsApp number +2348167002789 copied to clipboard!'),
                         ),
                       );
                     }
