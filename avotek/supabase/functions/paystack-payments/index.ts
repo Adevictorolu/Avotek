@@ -18,8 +18,9 @@ function isRecord(value: unknown): value is JsonMap {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function hasLivePaystackKey(secretKey: string): boolean {
-  return secretKey.trim().startsWith("sk_live_");
+function hasValidPaystackKey(secretKey: string): boolean {
+  const trimmed = secretKey.trim();
+  return trimmed.startsWith("sk_live_") || trimmed.startsWith("sk_test_");
 }
 
 function getServerConfig(): {
@@ -521,9 +522,9 @@ async function handleWebhook(
   suppliedSignature: string,
   config: NonNullable<ReturnType<typeof getServerConfig>>,
 ): Promise<Response> {
-  if (!hasLivePaystackKey(config.paystackSecretKey)) {
-    console.error("Paystack webhook blocked because the configured key is not Live.");
-    return jsonResponse({ message: "Live wallet funding is not configured." }, 503);
+  if (!hasValidPaystackKey(config.paystackSecretKey)) {
+    console.error("Paystack webhook blocked because the configured key is not valid.");
+    return jsonResponse({ message: "Paystack wallet funding is not configured." }, 503);
   }
 
   const expectedSignature = await sha512HmacHex(config.paystackSecretKey, rawBody);
@@ -739,9 +740,9 @@ async function handleInitialize(
   user: { id: string; email: string },
   body: JsonMap,
 ): Promise<Response> {
-  if (!hasLivePaystackKey(config.paystackSecretKey)) {
-    console.error("Paystack initialization blocked because the configured key is not Live.");
-    return jsonResponse({ message: "Live wallet funding is not configured." }, 503);
+  if (!hasValidPaystackKey(config.paystackSecretKey)) {
+    console.error("Paystack initialization blocked because the configured key is not valid.");
+    return jsonResponse({ message: "Paystack wallet funding is not configured." }, 503);
   }
 
   const amount = Number(body.amount);
@@ -858,9 +859,9 @@ async function handleDedicatedAccount(
   user: { id: string; email: string },
   body: JsonMap,
 ): Promise<Response> {
-  if (!hasLivePaystackKey(config.paystackSecretKey)) {
-    console.error("Dedicated account assignment blocked because the configured key is not Live.");
-    return jsonResponse({ message: "Live wallet funding is not configured." }, 503);
+  if (!hasValidPaystackKey(config.paystackSecretKey)) {
+    console.error("Dedicated account assignment blocked because the configured key is not valid.");
+    return jsonResponse({ message: "Paystack wallet funding is not configured." }, 503);
   }
 
   const { data: profile } = await admin
@@ -1112,8 +1113,8 @@ async function handleTransferAccount(
   user: { id: string; email: string },
   body: JsonMap,
 ): Promise<Response> {
-  if (!hasLivePaystackKey(config.paystackSecretKey)) {
-    return jsonResponse({ message: "Live wallet funding is not configured." }, 503);
+  if (!hasValidPaystackKey(config.paystackSecretKey)) {
+    return jsonResponse({ message: "Paystack wallet funding is not configured." }, 503);
   }
   const amount = Number(body.amount);
   if (!Number.isInteger(amount) || amount < 100 || amount > 1000000) {
@@ -1320,9 +1321,9 @@ async function handleVerify(
   user: { id: string; email: string },
   body: JsonMap,
 ): Promise<Response> {
-  if (!hasLivePaystackKey(config.paystackSecretKey)) {
+  if (!hasValidPaystackKey(config.paystackSecretKey)) {
     console.error("Paystack verification blocked because the configured key is not Live.");
-    return jsonResponse({ message: "Live wallet funding is not configured." }, 503);
+    return jsonResponse({ message: "Paystack wallet funding is not configured." }, 503);
   }
 
   const reference = String(body.reference ?? "").trim();

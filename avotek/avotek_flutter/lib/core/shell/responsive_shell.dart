@@ -11,6 +11,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/avotek_logo.dart';
+import '../../widgets/logout_dialog.dart';
 
 class ResponsiveShell extends StatefulWidget {
   final Widget child;
@@ -787,9 +788,12 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   children: [
                     Expanded(
                       child: InkWell(
-                        onTap: () {
-                          auth.signOut();
-                          context.go('/login');
+                        onTap: () async {
+                          final confirmed = await showLogoutConfirmationDialog(context);
+                          if (confirmed && context.mounted) {
+                            await auth.signOut();
+                            if (context.mounted) context.go('/login');
+                          }
                         },
                         borderRadius: BorderRadius.circular(8),
                         child: Padding(

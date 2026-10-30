@@ -29,9 +29,15 @@ class UserModel {
     'ademolavictor869@gmail.com',
   };
 
+  static Set<String> _dynamicAdminEmails = {};
+
+  static void setAdminEmails(Iterable<String> emails) {
+    _dynamicAdminEmails = emails.map((e) => e.trim().toLowerCase()).where((e) => e.isNotEmpty).toSet();
+  }
+
   static bool isAdminEmail(String? email) {
     final normalized = (email ?? '').trim().toLowerCase();
-    return normalized.isNotEmpty && adminEmails.contains(normalized);
+    return normalized.isNotEmpty && (adminEmails.contains(normalized) || _dynamicAdminEmails.contains(normalized));
   }
 
   static String avoIdFor(String userId) => avotekIdFor(userId);

@@ -41,6 +41,7 @@ class _ExtraProviderServicesScreenState
       'badge': 'WEST AFRICA',
       'subtitle': 'Official e-PIN for WASSCE / WAEC exams',
       'color': const Color(0xFF0F9D58),
+      'logo': 'assets/images/brands/waec.png',
       'icon': Icons.school_rounded,
     },
     {
@@ -51,6 +52,7 @@ class _ExtraProviderServicesScreenState
       'badge': 'NATIONAL',
       'subtitle': 'Token for June/July & Nov/Dec NECO exams',
       'color': const Color(0xFF0052FF),
+      'logo': 'assets/images/brands/neco.png',
       'icon': Icons.menu_book_rounded,
     },
     {
@@ -61,6 +63,7 @@ class _ExtraProviderServicesScreenState
       'badge': 'TECHNICAL',
       'subtitle': 'Official NBC / NTC verification e-PIN token',
       'color': const Color(0xFFFF6D00),
+      'logo': 'assets/images/brands/nabteb.png',
       'icon': Icons.engineering_rounded,
     },
   ];
@@ -509,14 +512,14 @@ class _ExtraProviderServicesScreenState
                 const SizedBox(height: 22),
 
                 if (_isExam) ...[
-                  // Step 1: Select Examination Card Selector
+                  // Step 1: Select Examination Card Selector (Screenshot 5)
                   Text(
-                    '1 · SELECT EXAMINATION BOARD',
+                    'EXAM TYPE',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      color: isDark ? Colors.white70 : const Color(0xFF475569),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -528,70 +531,62 @@ class _ExtraProviderServicesScreenState
                               .toUpperCase() ==
                           code;
                       final amount = (exam['amount'] as num?)?.toDouble() ?? 0.0;
-                      final cardColor = exam['color'] as Color? ??
-                          (code == 'WAEC'
-                              ? const Color(0xFF0F9D58)
-                              : (code == 'NECO' ? const Color(0xFF0052FF) : const Color(0xFFFF6D00)));
+                      final logoPath = exam['logo'] as String? ?? 'assets/images/brands/waec.png';
 
                       return Expanded(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: InkWell(
                             onTap: () => setState(() => _selectedExam = exam),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
                               decoration: BoxDecoration(
-                                color: isDark
-                                    ? (isSelected ? const Color(0xFF131F38) : const Color(0xFF0F172A))
-                                    : (isSelected ? const Color(0xFFEFF6FF) : Colors.white),
-                                borderRadius: BorderRadius.circular(16),
+                                color: isDark ? const Color(0xFF141721) : Colors.white,
+                                borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: isSelected ? cardColor : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
-                                  width: isSelected ? 2.2 : 1.0,
+                                  color: isSelected ? const Color(0xFFFF6600) : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
+                                  width: isSelected ? 2.0 : 1.0,
                                 ),
                                 boxShadow: isSelected
                                     ? [
                                         BoxShadow(
-                                          color: cardColor.withValues(alpha: 0.25),
+                                          color: const Color(0xFFFF6600).withOpacity(0.2),
                                           blurRadius: 10,
-                                          offset: const Offset(0, 3),
+                                          spreadRadius: 1,
                                         ),
                                       ]
                                     : null,
                               ),
                               child: Column(
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: cardColor.withValues(alpha: 0.15),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      code == 'WAEC'
-                                          ? Icons.school_rounded
-                                          : (code == 'NECO' ? Icons.menu_book_rounded : Icons.engineering_rounded),
-                                      color: cardColor,
-                                      size: 22,
+                                  Image.asset(
+                                    logoPath,
+                                    height: 32,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (ctx, err, stack) => Icon(
+                                      Icons.school_rounded,
+                                      size: 28,
+                                      color: isSelected ? const Color(0xFFFF6600) : Colors.grey,
                                     ),
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 8),
                                   Text(
-                                    code,
+                                    '$code Result Checker',
+                                    textAlign: TextAlign.center,
                                     style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w900,
-                                      color: foreground,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '₦${amount.toStringAsFixed(0)}',
+                                    '₦${amount.toStringAsFixed(0)} per pin',
                                     style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                      color: cardColor,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                      color: const Color(0xFFFF6600),
                                     ),
                                   ),
                                 ],
@@ -604,65 +599,83 @@ class _ExtraProviderServicesScreenState
                   ),
                   const SizedBox(height: 22),
 
-                  // Step 2: Quantity Selector (+ / - buttons and quick chips)
+                  // Step 2: Quantity Selector (Screenshot 5)
                   Text(
-                    '2 · CHOOSE QUANTITY',
+                    'QUANTITY',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      color: isDark ? Colors.white70 : const Color(0xFF475569),
                     ),
                   ),
                   const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Number of Tokens',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: foreground,
-                          ),
-                        ),
                         Row(
-                          children: [
-                            IconButton(
-                              onPressed: () => _updateQuantity(-1),
-                              icon: const Icon(Icons.remove_circle_outline_rounded),
-                              color: AppColors.primaryBlue,
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                _quantityController.text,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                  color: foreground,
+                          children: [1, 2, 5].map((q) {
+                            final isSel = _quantityController.text == q.toString();
+                            return Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: InkWell(
+                                  onTap: () => setState(() => _quantityController.text = q.toString()),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: isSel
+                                          ? const Color(0xFFFF6600).withOpacity(0.18)
+                                          : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isSel
+                                            ? const Color(0xFFFF6600)
+                                            : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                        width: isSel ? 2 : 1,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '$q pin${q > 1 ? 's' : ''}',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 14,
+                                          fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                                          color: isSel ? const Color(0xFFFF6600) : (isDark ? Colors.white : Colors.black87),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            'Only 1, 2, or 5 pins allowed per purchase. For other amounts, make multiple purchases.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: isDark ? Colors.white54 : const Color(0xFF64748B),
                             ),
-                            IconButton(
-                              onPressed: () => _updateQuantity(1),
-                              icon: const Icon(Icons.add_circle_outline_rounded),
-                              color: AppColors.primaryBlue,
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -1006,6 +1019,53 @@ class _ExtraProviderServicesScreenState
                 ],
                 const SizedBox(height: 24),
 
+                if (_isExam) ...[
+                  const SizedBox(height: 12),
+                  // Pay For Me Checkbox (Screenshot 5)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: _consentConfirmed,
+                          activeColor: const Color(0xFFFF6600),
+                          onChanged: (val) => setState(() => _consentConfirmed = val ?? false),
+                        ),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              text: 'Pay For Me ',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white70 : const Color(0xFF334155),
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: '- get a shareable payment link',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.normal,
+                                    color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+
                 // Order summary card
                 Container(
                   padding: const EdgeInsets.all(18),
@@ -1055,7 +1115,7 @@ class _ExtraProviderServicesScreenState
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
-                              color: AppColors.primaryBlue,
+                              color: _isExam ? const Color(0xFFFF6600) : AppColors.primaryBlue,
                             ),
                           ),
                         ],
@@ -1068,14 +1128,14 @@ class _ExtraProviderServicesScreenState
                 // Purchase button
                 SizedBox(
                   width: double.infinity,
+                  height: 52,
                   child: ElevatedButton(
                     onPressed: _isPurchasing ? null : _purchase,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
+                      backgroundColor: _isExam ? const Color(0xFFFF6600) : AppColors.primaryBlue,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 0,
                     ),
@@ -1090,7 +1150,7 @@ class _ExtraProviderServicesScreenState
                           )
                         : Text(
                             _isExam
-                                ? 'Purchase ${_selectedExam?['code'] ?? 'Exam'} PIN (${_quantityController.text})'
+                                ? 'Buy Result Checker (${_quantityController.text} pin${_quantityController.text != "1" ? "s" : ""})'
                                 : (_isAirtimePins
                                     ? 'Generate ${_airtimePinNetworks.firstWhere((n) => n['id'] == _selectedNetworkId)['code']} ₦$_selectedDenomination PIN (${_quantityController.text})'
                                     : 'Send Bulk SMS'),

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../core/theme/app_theme.dart';
 import '../widgets/top_notification.dart';
 
@@ -119,6 +122,310 @@ class TransactionSuccessDialog extends StatelessWidget {
       'Receipt queued for email dispatch to your account address.',
       title: 'Receipt Emailed',
     );
+  }
+
+  pw.TableRow _buildPdfTableRow(String label, String value) {
+    return pw.TableRow(
+      children: [
+        pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: pw.Text(
+            label,
+            style: pw.TextStyle(
+              fontSize: 10,
+              fontWeight: pw.FontWeight.bold,
+              color: const PdfColor.fromInt(0xFF475569),
+            ),
+          ),
+        ),
+        pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: pw.Text(
+            value,
+            style: const pw.TextStyle(
+              fontSize: 10,
+              color: PdfColor.fromInt(0xFF0F172A),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _downloadPdfReceipt(BuildContext context) async {
+    try {
+      final doc = pw.Document();
+      pw.MemoryImage? logoImage;
+      try {
+        final byteData = await rootBundle.load('assets/images/logo.png');
+        logoImage = pw.MemoryImage(byteData.buffer.asUint8List());
+      } catch (_) {}
+
+      final now = DateFormat('MMMM dd, yyyy • hh:mm a').format(DateTime.now());
+      final formattedAmount = 'NGN ${NumberFormat('#,##0.00').format(amount)}';
+      final displayToken = token ?? (issuedPins.isNotEmpty ? issuedPins.join('\n') : null);
+
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(36),
+          build: (pw.Context ctx) {
+            return pw.Stack(
+              children: [
+                // Watermark across the page
+                if (logoImage != null)
+                  pw.Center(
+                    child: pw.Opacity(
+                      opacity: 0.06,
+                      child: pw.Image(logoImage, width: 360, height: 360),
+                    ),
+                  ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    // Header with Branding
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(
+                              'AVOTEK',
+                              style: pw.TextStyle(
+                                fontSize: 24,
+                                fontWeight: pw.FontWeight.bold,
+                                color: const PdfColor.fromInt(0xFF0052FF),
+                              ),
+                            ),
+                            pw.Text(
+                              'FINANCIAL TECHNOLOGIES',
+                              style: pw.TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: pw.FontWeight.bold,
+                                letterSpacing: 1.5,
+                                color: const PdfColor.fromInt(0xFF475569),
+                              ),
+                            ),
+                            pw.SizedBox(height: 3),
+                            pw.Text(
+                              'support@avotek.ng • WhatsApp: +234 816 700 2799',
+                              style: const pw.TextStyle(
+                                fontSize: 8.5,
+                                color: PdfColor.fromInt(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                        pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          decoration: pw.BoxDecoration(
+                            color: const PdfColor.fromInt(0xFFECFDF5),
+                            borderRadius: pw.BorderRadius.circular(8),
+                            border: pw.Border.all(color: const PdfColor.fromInt(0xFF10B981)),
+                          ),
+                          child: pw.Text(
+                            'TRANSACTION SUCCESSFUL',
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                              color: const PdfColor.fromInt(0xFF047857),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    pw.SizedBox(height: 20),
+                    pw.Divider(thickness: 1, color: const PdfColor.fromInt(0xFFE2E8F0)),
+                    pw.SizedBox(height: 14),
+
+                    // Amount Banner
+                    pw.Container(
+                      width: double.infinity,
+                      padding: const pw.EdgeInsets.all(16),
+                      decoration: pw.BoxDecoration(
+                        color: const PdfColor.fromInt(0xFFF8FAFC),
+                        borderRadius: pw.BorderRadius.circular(12),
+                        border: pw.Border.all(color: const PdfColor.fromInt(0xFFE2E8F0)),
+                      ),
+                      child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                'TOTAL AMOUNT SETTLED',
+                                style: pw.TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: pw.FontWeight.bold,
+                                  letterSpacing: 1.1,
+                                  color: const PdfColor.fromInt(0xFF64748B),
+                                ),
+                              ),
+                              pw.SizedBox(height: 4),
+                              pw.Text(
+                                formattedAmount,
+                                style: pw.TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: const PdfColor.fromInt(0xFF0F172A),
+                                ),
+                              ),
+                            ],
+                          ),
+                          pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.end,
+                            children: [
+                              pw.Text(
+                                'SETTLEMENT DATE',
+                                style: pw.TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: const PdfColor.fromInt(0xFF64748B),
+                                ),
+                              ),
+                              pw.SizedBox(height: 4),
+                              pw.Text(
+                                now,
+                                style: const pw.TextStyle(
+                                  fontSize: 10,
+                                  color: PdfColor.fromInt(0xFF1E293B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    pw.SizedBox(height: 18),
+
+                    // Token / Code Highlight (if tokens or PINs)
+                    if (displayToken != null && displayToken.isNotEmpty) ...[
+                      pw.Container(
+                        width: double.infinity,
+                        padding: const pw.EdgeInsets.all(12),
+                        decoration: pw.BoxDecoration(
+                          color: const PdfColor.fromInt(0xFFEFF6FF),
+                          borderRadius: pw.BorderRadius.circular(8),
+                          border: pw.Border.all(color: const PdfColor.fromInt(0xFF3B82F6)),
+                        ),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(
+                              'ISSUED TOKEN / SERVICE PIN(S)',
+                              style: pw.TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: pw.FontWeight.bold,
+                                color: const PdfColor.fromInt(0xFF1D4ED8),
+                              ),
+                            ),
+                            pw.SizedBox(height: 4),
+                            pw.Text(
+                              displayToken,
+                              style: pw.TextStyle(
+                                fontSize: 12,
+                                fontWeight: pw.FontWeight.bold,
+                                color: const PdfColor.fromInt(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      pw.SizedBox(height: 18),
+                    ],
+
+                    // Table Details
+                    pw.Text(
+                      'TRANSACTION DETAILS',
+                      style: pw.TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: pw.FontWeight.bold,
+                        letterSpacing: 0.8,
+                        color: const PdfColor.fromInt(0xFF475569),
+                      ),
+                    ),
+                    pw.SizedBox(height: 8),
+                    pw.Table(
+                      border: pw.TableBorder.all(
+                        color: const PdfColor.fromInt(0xFFE2E8F0),
+                        width: 0.8,
+                      ),
+                      children: [
+                        _buildPdfTableRow('Service Category', serviceType),
+                        _buildPdfTableRow('Recipient / Account / Phone', recipient),
+                        if (reference != null && reference!.isNotEmpty)
+                          _buildPdfTableRow('Transaction ID / Avotek Ref', reference!),
+                        if (providerReference != null && providerReference!.isNotEmpty)
+                          _buildPdfTableRow('Aggregator Reference', providerReference!),
+                        _buildPdfTableRow('Delivery Status', 'COMPLETED / DELIVERED'),
+                      ],
+                    ),
+                    pw.Spacer(),
+
+                    // Signature, Trademark & Footer
+                    pw.Divider(thickness: 1, color: const PdfColor.fromInt(0xFFE2E8F0)),
+                    pw.SizedBox(height: 10),
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(
+                              'Authorized Digital Settlement Voucher',
+                              style: pw.TextStyle(
+                                fontSize: 9,
+                                fontWeight: pw.FontWeight.bold,
+                                color: const PdfColor.fromInt(0xFF0F172A),
+                              ),
+                            ),
+                            pw.Text(
+                              'Copyright © 2023 - 2026 Avotek Financial Technologies. All Rights Reserved.',
+                              style: const pw.TextStyle(
+                                fontSize: 8,
+                                color: PdfColor.fromInt(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                        pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: pw.BoxDecoration(
+                            border: pw.Border.all(color: const PdfColor.fromInt(0xFF0052FF), width: 1),
+                            borderRadius: pw.BorderRadius.circular(6),
+                          ),
+                          child: pw.Text(
+                            'AVOTEK OFFICIAL',
+                            style: pw.TextStyle(
+                              fontSize: 7.5,
+                              fontWeight: pw.FontWeight.bold,
+                              color: const PdfColor.fromInt(0xFF0052FF),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => doc.save(),
+        name: 'Avotek_Receipt_${reference ?? DateTime.now().millisecondsSinceEpoch}.pdf',
+      );
+    } catch (e) {
+      if (context.mounted) {
+        TopNotification.showError(context, 'Could not generate PDF receipt: $e');
+      }
+    }
   }
 
   @override
@@ -346,7 +653,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => _copyReceipt(context),
+                          onPressed: () => _downloadPdfReceipt(context),
                           icon: const Icon(Icons.download_rounded, size: 16),
                           label: const Text('Download Receipt'),
                           style: OutlinedButton.styleFrom(

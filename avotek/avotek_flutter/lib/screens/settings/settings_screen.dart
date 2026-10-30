@@ -8,6 +8,7 @@ import '../../core/shell/responsive_shell.dart';
 import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/notification_preferences.dart';
+import '../../widgets/logout_dialog.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 
@@ -2996,10 +2997,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           size: 14,
                         ),
                         onTap: () async {
-                          final auth = context.read<AuthProvider>();
-                          await auth.signOut();
-                          if (context.mounted) {
-                            context.go('/login');
+                          final confirmed = await showLogoutConfirmationDialog(context);
+                          if (confirmed && context.mounted) {
+                            final auth = context.read<AuthProvider>();
+                            await auth.signOut();
+                            if (context.mounted) {
+                              context.go('/login');
+                            }
                           }
                         },
                         isDark: isDark,

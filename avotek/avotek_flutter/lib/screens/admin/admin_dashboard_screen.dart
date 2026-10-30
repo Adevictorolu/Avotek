@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../models/user_model.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +14,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/avotek_loading_indicator.dart';
 import '../../widgets/top_notification.dart';
+import '../../widgets/logout_dialog.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -35,6 +38,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   );
   final _apkVersionController = TextEditingController(text: 'v1.2.0');
   bool _isSavingApkSettings = false;
+
+  List<String> _coAdmins = [];
+  final _newCoAdminController = TextEditingController();
+  bool _isSavingCoAdmins = false;
+
+  final _pricingWaecController = TextEditingController(text: '5250');
+  final _pricingNecoController = TextEditingController(text: '2500');
+  final _pricingNabtebController = TextEditingController(text: '1000');
+  final _dataMarginController = TextEditingController(text: '5');
+  bool _isSavingPricing = false;
 
   @override
   void initState() {
@@ -90,6 +103,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         final apkVer = await SupabaseService.instance.getAppSetting('apk_version');
         if (apkVer != null && apkVer.isNotEmpty) {
           _apkVersionController.text = apkVer;
+        }
+
+        // Load co-admins and pricing overrides
+        final coAdminsStr = await SupabaseService.instance.getAppSetting('admin_emails');
+        if (coAdminsStr != null && coAdminsStr.isNotEmpty && mounted) {
+          setState(() {
+            _coAdmins = coAdminsStr.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+          });
+        }
+        final pricingStr = await SupabaseService.instance.getAppSetting('pricing_overrides');
+        if (pricingStr != null && pricingStr.isNotEmpty) {
+          final decoded = jsonDecode(pricingStr);
+          if (decoded is Map) {
+            if (decoded['waec'] != null) _pricingWaecController.text = decoded['waec'].toString();
+            if (decoded['neco'] != null) _pricingNecoController.text = decoded['neco'].toString();
+            if (decoded['nabteb'] != null) _pricingNabtebController.text = decoded['nabteb'].toString();
+            if (decoded['data_margin'] != null) _dataMarginController.text = decoded['data_margin'].toString();
+          }
         }
       } catch (_) {}
     } catch (e) {
@@ -347,6 +378,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   _buildUsersManagementSection(filteredUsers, isDark),
                   const SizedBox(height: 32),
 
+                  // Co-Administrator Management
+                  _buildCoAdminManagementCard(isDark),
+                  const SizedBox(height: 32),
+
+                  // Service Pricing & Margins Control
+                  _buildPricingControlCard(isDark),
+                  const SizedBox(height: 32),
+
                   // Mobile APK Release Management
                   _buildApkReleaseCard(isDark),
                   const SizedBox(height: 32),
@@ -447,8 +486,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(width: 8),
             OutlinedButton.icon(
               onPressed: () async {
-                await context.read<AuthProvider>().logout();
-                if (context.mounted) context.go('/login');
+                final confirmed = await showLogoutConfirmationDialog(context);
+                if (confirmed && context.mounted) {
+                  await context.read<AuthProvider>().logout();
+                  if (context.mounted) context.go('/login');
+                }
               },
               icon: const Icon(Icons.logout_rounded, size: 16),
               label: const Text('Sign out'),
@@ -743,17 +785,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ],
               ),
-              SizedBox(
-                width: 240,
-                child: TextField(
-                  onChanged: (val) => setState(() => _userSearchQuery = val),
-                  decoration: InputDecoration(
-                    hintText: 'Search users...',
-                    prefixIcon: const Icon(Icons.search_rounded, size: 16),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _openAddUserDialog,
+                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
+                    label: const Text('Add User'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 220,
+                    child: TextField(
+                      onChanged: (val) => setState(() => _userSearchQuery = val),
+                      decoration: InputDecoration(
+                        hintText: 'Search users...',
+                        prefixIcon: const Icon(Icons.search_rounded, size: 16),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -894,10 +952,452 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       icon: const Icon(Icons.account_balance_wallet_outlined, size: 18),
                       onPressed: () => _openAdjustWalletDialog(id, email, walletBal),
                     ),
+                    IconButton(
+                      tooltip: 'Suspend / Delete User',
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
+                      onPressed: () => _confirmDeleteUser(id, email),
+                    ),
                   ],
                 );
               },
             ),
+        ],
+      ),
+    );
+  }
+
+  void _openAddUserDialog() {
+    final emailCtrl = TextEditingController();
+    final nameCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Provision New User',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: 'User Email Address',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: nameCtrl,
+              decoration: InputDecoration(
+                labelText: 'Full Name',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: phoneCtrl,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: 'Phone Number (11 digits)',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final email = emailCtrl.text.trim();
+              final name = nameCtrl.text.trim();
+              final phone = phoneCtrl.text.trim();
+              if (email.isEmpty || !email.contains('@')) {
+                TopNotification.showWarning(context, 'Please enter a valid email address.');
+                return;
+              }
+              Navigator.pop(dialogCtx);
+              try {
+                await SupabaseService.instance.client.from('profiles').insert({
+                  'email': email,
+                  'full_name': name.isNotEmpty ? name : 'Avotek User',
+                  'phone': phone,
+                  'kyc_status': 'verified',
+                  'role': 'user',
+                  'created_at': DateTime.now().toIso8601String(),
+                });
+                if (mounted) {
+                  TopNotification.showSuccess(context, 'User $email provisioned successfully!');
+                  _loadAdminData();
+                }
+              } catch (e) {
+                if (mounted) {
+                  TopNotification.showError(context, 'Failed to provision user: $e');
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Provision User'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteUser(String userId, String userEmail) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Suspend / Remove User',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18),
+        ),
+        content: Text(
+          'Are you sure you want to suspend or remove user $userEmail?\n\nTheir login credentials and wallet access will be immediately revoked.',
+          style: GoogleFonts.plusJakartaSans(fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              try {
+                await SupabaseService.instance.adminSetUserKyc(
+                  targetUserId: userId,
+                  newStatus: 'suspended',
+                );
+                if (mounted) {
+                  TopNotification.showSuccess(context, 'User $userEmail suspended successfully.');
+                  _loadAdminData();
+                }
+              } catch (e) {
+                if (mounted) {
+                  TopNotification.showError(context, 'Could not suspend user: $e');
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Suspend User'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveCoAdmins() async {
+    setState(() => _isSavingCoAdmins = true);
+    try {
+      final joined = _coAdmins.join(',');
+      await SupabaseService.instance.setAppSetting('admin_emails', joined);
+      UserModel.setAdminEmails(_coAdmins);
+      if (mounted) {
+        TopNotification.showSuccess(context, 'Co-Administrator list updated successfully.');
+      }
+    } catch (e) {
+      if (mounted) {
+        TopNotification.showError(context, 'Could not update co-admins: $e');
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingCoAdmins = false);
+    }
+  }
+
+  Widget _buildCoAdminManagementCard(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBlue.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.admin_panel_settings_rounded,
+                  color: AppColors.primaryBlue,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Co-Administrator Management',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Super admin (ademolavictor869@gmail.com) can authorize other email addresses to access this admin oversight console.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _newCoAdminController,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 13),
+                  decoration: InputDecoration(
+                    labelText: 'Add Co-Admin Email Address',
+                    hintText: 'admin@avotek.com',
+                    prefixIcon: const Icon(Icons.email_outlined, size: 18),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: () {
+                  final email = _newCoAdminController.text.trim().toLowerCase();
+                  if (email.isEmpty || !email.contains('@')) {
+                    TopNotification.showWarning(context, 'Please enter a valid email.');
+                    return;
+                  }
+                  if (_coAdmins.contains(email)) {
+                    TopNotification.showWarning(context, 'This email is already a co-admin.');
+                    return;
+                  }
+                  setState(() {
+                    _coAdmins.add(email);
+                    _newCoAdminController.clear();
+                  });
+                  _saveCoAdmins();
+                },
+                icon: const Icon(Icons.person_add_rounded, size: 16),
+                label: const Text('Add Co-Admin'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_coAdmins.isEmpty)
+            Text(
+              'No additional co-administrators added. Only root Super Admin has console access.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12.5,
+                color: isDark ? Colors.white54 : AppColors.slateGrey,
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _coAdmins.map((admin) {
+                return Chip(
+                  avatar: const Icon(Icons.security_rounded, size: 16, color: AppColors.primaryBlue),
+                  label: Text(admin, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
+                  deleteIcon: const Icon(Icons.close_rounded, size: 14),
+                  onDeleted: () {
+                    setState(() => _coAdmins.remove(admin));
+                    _saveCoAdmins();
+                  },
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _savePricingOverrides() async {
+    setState(() => _isSavingPricing = true);
+    try {
+      final pricingMap = {
+        'waec': double.tryParse(_pricingWaecController.text.trim()) ?? 5250.0,
+        'neco': double.tryParse(_pricingNecoController.text.trim()) ?? 2500.0,
+        'nabteb': double.tryParse(_pricingNabtebController.text.trim()) ?? 1000.0,
+        'data_margin': double.tryParse(_dataMarginController.text.trim()) ?? 5.0,
+      };
+      await SupabaseService.instance.setAppSetting('pricing_overrides', jsonEncode(pricingMap));
+      if (mounted) {
+        TopNotification.showSuccess(context, 'Service pricing and margin settings saved successfully.');
+      }
+    } catch (e) {
+      if (mounted) {
+        TopNotification.showError(context, 'Failed to save pricing: $e');
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingPricing = false);
+    }
+  }
+
+  Widget _buildPricingControlCard(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6600).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.price_change_rounded,
+                  color: Color(0xFFFF6600),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Service Pricing & Margins Control',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Set custom customer-facing retail prices for examination PINs and profit margins for data bundles.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _pricingWaecController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'WAEC PIN Price (₦)',
+                    prefixText: '₦ ',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _pricingNecoController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'NECO PIN Price (₦)',
+                    prefixText: '₦ ',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _pricingNabtebController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'NABTEB PIN Price (₦)',
+                    prefixText: '₦ ',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _dataMarginController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Data Margin (%)',
+                    suffixText: '%',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          ElevatedButton.icon(
+            onPressed: _isSavingPricing ? null : _savePricingOverrides,
+            icon: _isSavingPricing
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.save_rounded, size: 18),
+            label: Text(
+              _isSavingPricing ? 'Saving...' : 'Save Pricing Overrides',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6600),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
         ],
       ),
     );

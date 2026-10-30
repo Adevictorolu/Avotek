@@ -104,6 +104,15 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _initSession() async {
     await AppDatabaseService.instance.init();
 
+    // Load dynamic co-admin authorizations from app settings
+    try {
+      final coAdmins = await SupabaseService.instance.getAppSetting('admin_emails');
+      if (coAdmins != null && coAdmins.isNotEmpty) {
+        final list = coAdmins.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty);
+        UserModel.setAdminEmails(list);
+      }
+    } catch (_) {}
+
     // Check if Supabase has an active authenticated session
     final authUser = SupabaseService.instance.currentAuthUser;
     if (authUser != null) {

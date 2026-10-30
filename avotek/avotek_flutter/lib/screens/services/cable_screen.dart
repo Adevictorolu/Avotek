@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
@@ -20,9 +22,20 @@ class CableScreen extends StatefulWidget {
 
 class _CableScreenState extends State<CableScreen> {
   final _smartcardController = TextEditingController();
-  String _selectedProvider = 'DSTV';
+  final _phoneController = TextEditingController();
+  final _giftMessageController = TextEditingController();
+
+  // Mode: 0 = Buy Now, 1 = Gift Voucher
+  int _activeMode = 0;
+
+  // Options
+  bool _autoRenew = false;
+  bool _payForMe = false;
+
+  String _selectedProvider = 'GOTV';
   String? _selectedPackage;
-  double _packageAmount = 0;
+  double _packageAmount = 0.0;
+  String _selectedPackageName = '';
 
   bool _isVerifying = false;
   String? _verifiedCustomerName;
@@ -31,10 +44,45 @@ class _CableScreenState extends State<CableScreen> {
   bool _isLoadingPackages = false;
   String? _packageLoadError;
 
+  final List<Map<String, String>> _cableProviders = [
+    {
+      'id': 'GOTV',
+      'label': 'GOTV',
+      'logo': 'assets/images/brands/gotv.png',
+    },
+    {
+      'id': 'STARTIMES',
+      'label': 'StarTime',
+      'logo': 'assets/images/brands/startimes.png',
+    },
+    {
+      'id': 'DSTV',
+      'label': 'DSTV',
+      'logo': 'assets/images/brands/dstv.png',
+    },
+    {
+      'id': 'SHOWMAX',
+      'label': 'Showmax',
+      'logo': 'assets/images/brands/showmax.png',
+    },
+  ];
+
   @override
   void initState() {
     super.initState();
+    final auth = context.read<AuthProvider>();
+    if (auth.user?.phone != null && auth.user!.phone!.isNotEmpty) {
+      _phoneController.text = auth.user!.phone!;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadLivePackages());
+  }
+
+  @override
+  void dispose() {
+    _smartcardController.dispose();
+    _phoneController.dispose();
+    _giftMessageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadLivePackages() async {
@@ -44,7 +92,8 @@ class _CableScreenState extends State<CableScreen> {
       _packageLoadError = null;
       _livePackages = [];
       _selectedPackage = null;
-      _packageAmount = 0;
+      _packageAmount = 0.0;
+      _selectedPackageName = '';
     });
     try {
       final vtu = context.read<VtuProvider>();
@@ -62,122 +111,154 @@ class _CableScreenState extends State<CableScreen> {
               'price': amt,
             };
           })
-          .where((package) {
-            return (package['code'] as String).isNotEmpty &&
-                (package['price'] as double) > 0;
-          })
+          .where((p) => (p['code'] as String).isNotEmpty && (p['price'] as double) > 0)
           .toList();
 
       setState(() {
         _livePackages = formatted;
         _isLoadingPackages = false;
         if (formatted.isEmpty) {
-          _packageLoadError =
-              'No packages are currently available. Try again later.';
+          _packageLoadError = 'No live packages found for $provider. Please retry.';
         } else {
           _selectedPackage = formatted.first['code'] as String;
           _packageAmount = formatted.first['price'] as double;
+          _selectedPackageName = formatted.first['name'] as String;
         }
       });
-    } catch (error) {
+    } catch (e) {
       if (!mounted || provider != _selectedProvider) return;
       setState(() {
         _isLoadingPackages = false;
-        _packageLoadError =
-            'Could not load live packages. Check your connection and retry.';
+        _packageLoadError = 'Failed to load packages: $e';
       });
-      TopNotification.showError(
-        context,
-        'Could not load cable packages: $error',
-      );
     }
   }
 
-  List<Map<String, dynamic>> _getCurrentPackages() => _livePackages;
-
-  @override
-  void dispose() {
-    _smartcardController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleVerify() async {
-    if (_isVerifying) return;
+  Future<void> _handleVerifySmartcard() async {
     final card = _smartcardController.text.trim();
     if (card.length < 8) {
-      TopNotification.showWarning(
-        context,
-        'Please enter a valid smartcard/IUC number',
-      );
+      TopNotification.showWarning(context, 'Please enter a valid smartcard/IUC number (at least 8 digits).');
       return;
     }
-
     setState(() {
       _isVerifying = true;
       _verifiedCustomerName = null;
     });
-    final vtu = context.read<VtuProvider>();
-    final result = await vtu.verifySmartcard(
-      provider: _selectedProvider,
-      smartcardNumber: card,
-    );
 
-    if (!mounted) return;
-    setState(() {
-      _isVerifying = false;
-      if (result.isValid) {
-        _verifiedCustomerName = result.customerName;
-      }
-    });
-
-    if (!result.isValid) {
-      TopNotification.showError(
-        context,
-        'Could not verify smartcard number. Please check.',
+    try {
+      final vtu = context.read<VtuProvider>();
+      final res = await vtu.verifySmartcard(
+        provider: _selectedProvider,
+        smartcardNumber: card,
       );
+      if (!mounted) return;
+      setState(() {
+        _isVerifying = false;
+        if (res.isValid && res.customerName.isNotEmpty) {
+          _verifiedCustomerName = res.customerName;
+        } else {
+          _verifiedCustomerName = null;
+        }
+      });
+
+      if (res.isValid && res.customerName.isNotEmpty) {
+        TopNotification.showSuccess(context, 'Smartcard verified: ${res.customerName}');
+      } else {
+        TopNotification.showError(context, 'Could not verify decoder number. Please confirm and retry.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isVerifying = false);
+      TopNotification.showError(context, 'Verification error: $e');
     }
   }
 
-  Future<void> _handlePurchase() async {
-    if (_selectedPackage == null || _livePackages.isEmpty) {
-      TopNotification.showWarning(
-        context,
-        'Live packages are not available. Refresh and try again.',
-      );
-      return;
+  List<String> _getValidationErrors() {
+    final errors = <String>[];
+    if (_selectedPackage == null) {
+      errors.add('Select a subscription plan');
     }
-    final card = _smartcardController.text.trim();
-    if (card.length < 8) {
-      TopNotification.showWarning(context, 'Please enter smartcard number');
-      return;
+    if (_activeMode == 0) {
+      final card = _smartcardController.text.trim();
+      if (card.length < 8) {
+        errors.add('Enter your IUC/Smart card number (10+ digits)');
+      }
+      if (_verifiedCustomerName == null) {
+        errors.add('Decoder number must be verified first');
+      }
+      final phone = _phoneController.text.trim();
+      if (phone.length < 10) {
+        errors.add('Enter a valid 11-digit phone number');
+      }
     }
-    if (_verifiedCustomerName == null) {
-      TopNotification.showWarning(
-        context,
-        'Verify this smartcard before purchasing.',
-      );
+    return errors;
+  }
+
+  Future<void> _handleSubmit() async {
+    final errors = _getValidationErrors();
+    if (errors.isNotEmpty) {
+      TopNotification.showWarning(context, errors.first);
       return;
     }
 
     final auth = context.read<AuthProvider>();
     final wallet = context.read<WalletProvider>();
-    final vtu = context.read<VtuProvider>();
-
     if (wallet.balance < _packageAmount) {
       TopNotification.showError(
         context,
-        'Insufficient balance (₦${wallet.balance.toStringAsFixed(2)} available).',
+        'Insufficient balance (₦${wallet.balance.toStringAsFixed(2)} available). Please fund your wallet.',
       );
       return;
     }
 
+    if (_activeMode == 1) {
+      // Gift Voucher Mode
+      final message = _giftMessageController.text.trim();
+      final confirmed = await PinModal.show(
+        context,
+        title: 'Create Cable Gift Voucher',
+        amount: _packageAmount,
+        description: 'Voucher for $_selectedProvider - $_selectedPackageName\nRecipient can redeem via coupons.',
+        onPinSubmit: (pin) async => auth.verifyPin(pin),
+      );
+      if (confirmed == true && mounted) {
+        try {
+          final res = await SupabaseService.instance.createGiftVoucher(
+            amount: _packageAmount,
+            recipient: _phoneController.text.trim(),
+            note: 'Cable TV ($_selectedProvider: $_selectedPackageName) ${message.isNotEmpty ? "• $message" : ""}',
+          );
+          await auth.refreshWallet();
+          await wallet.fetchWallet(auth.user!.id);
+
+          if (!mounted) return;
+          final voucherCode = res['code']?.toString() ?? 'GIFT-CODE';
+          await TransactionSuccessDialog.show(
+            context,
+            title: 'Gift Voucher Created!',
+            serviceType: 'Cable TV Gift Voucher',
+            recipient: _phoneController.text.isNotEmpty ? _phoneController.text : 'Shareable Link',
+            amount: _packageAmount,
+            reference: voucherCode,
+            token: voucherCode,
+            message: 'Gift voucher created successfully! Share the voucher code with the recipient.',
+          );
+        } catch (e) {
+          if (!mounted) return;
+          TopNotification.showError(context, 'Failed to create gift voucher: $e');
+        }
+      }
+      return;
+    }
+
+    // Direct Purchase Mode
+    final card = _smartcardController.text.trim();
     String? transactionPin;
     final confirmed = await PinModal.show(
       context,
       title: 'Confirm Cable TV Subscription',
       amount: _packageAmount,
-      description:
-          '$_selectedProvider • $card\nSubscriber: ${_verifiedCustomerName ?? "Customer"}',
+      description: '$_selectedProvider • $card\nSubscriber: $_verifiedCustomerName',
       onPinSubmit: (pin) async {
         transactionPin = pin;
         return auth.verifyPin(pin);
@@ -186,6 +267,7 @@ class _CableScreenState extends State<CableScreen> {
 
     if (confirmed == true && mounted) {
       try {
+        final vtu = context.read<VtuProvider>();
         final result = await vtu.payCableTV(
           userId: auth.user!.id,
           provider: _selectedProvider,
@@ -193,7 +275,9 @@ class _CableScreenState extends State<CableScreen> {
           variationCode: _selectedPackage!,
           amount: _packageAmount,
           customerName: _verifiedCustomerName,
-          phone: auth.user?.phone,
+          phone: _phoneController.text.trim().isNotEmpty
+              ? _phoneController.text.trim()
+              : auth.user?.phone,
           userPin: transactionPin,
         );
 
@@ -202,26 +286,15 @@ class _CableScreenState extends State<CableScreen> {
 
         if (!mounted) return;
         if (!result.success || result.order.status == 'failed') {
-          TopNotification.showError(
-            context,
-            result.message,
-            title: 'Subscription Failed',
-          );
+          TopNotification.showError(context, result.message, title: 'Subscription Failed');
           return;
         }
-        if (result.order.status == 'pending') {
-          TopNotification.showWarning(
-            context,
-            result.message,
-            title: 'Subscription Pending',
-          );
-          return;
-        }
+
         await TransactionSuccessDialog.show(
           context,
           title: 'Cable Subscription Active!',
-          serviceType: '$_selectedProvider (${_selectedPackage ?? "Package"})',
-          recipient: 'Smartcard: $card',
+          serviceType: '$_selectedProvider - $_selectedPackageName',
+          recipient: 'Smartcard: $card ($_verifiedCustomerName)',
           amount: _packageAmount,
           reference: result.order.id,
           providerReference: result.order.providerReference,
@@ -240,403 +313,833 @@ class _CableScreenState extends State<CableScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final vtu = context.watch<VtuProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDesktop = ResponsiveLayout.isDesktop(context);
-
-    final currentPackages = _getCurrentPackages();
-    Map<String, dynamic>? selectedPackage;
-    for (final package in currentPackages) {
-      if (package['code'] == _selectedPackage) {
-        selectedPackage = package;
-        break;
-      }
-    }
-    final canPurchase =
-        !vtu.isLoading &&
-        !_isLoadingPackages &&
-        selectedPackage != null &&
-        _verifiedCustomerName != null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final validationErrors = _getValidationErrors();
+    final isReadyToPay = validationErrors.isEmpty;
 
     return ResponsiveShell(
-      currentRoute: '/services/tv',
+      currentRoute: '/services/cable',
       child: Scaffold(
-        backgroundColor: isDark
-            ? const Color(0xFF0A0D14)
-            : const Color(0xFFF8FAFC),
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: ListView(
-              padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 32 : 16,
-                vertical: 24,
-              ),
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primaryBlue, AppColors.primaryCyan],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.live_tv_rounded,
-                          color: Colors.white,
-                          size: 28,
-                        ),
+        backgroundColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
+        body: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: isDesktop ? 32 : 16,
+            vertical: 24,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 860),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Back button
+                  InkWell(
+                    onTap: () => Navigator.of(context).maybePop(),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Cable TV',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 23,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.chevron_left, size: 18, color: isDark ? Colors.white70 : Colors.black87),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Back',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white70 : Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Header
+                  Text(
+                    'Cable Subscriptions',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Quick and secure cable subscription payment',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Mode Switcher Bar: [ Buy Now ] | [ Gift Voucher ]
+                  Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF161922) : const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF262A38) : const Color(0xFFCBD5E1),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _activeMode = 0),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: _activeMode == 0 ? const Color(0xFFFF6600) : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: _activeMode == 0
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(0xFFFF6600).withOpacity(0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.shopping_cart_outlined,
+                                    size: 18,
+                                    color: _activeMode == 0
+                                        ? Colors.white
+                                        : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Buy Now',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: _activeMode == 0
+                                          ? Colors.white
+                                          : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Verify your decoder, choose a plan, and pay from your wallet.',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
-                                height: 1.4,
-                                color: Colors.white.withValues(alpha: 0.88),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _activeMode = 1),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: _activeMode == 1 ? const Color(0xFFFF6600) : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: _activeMode == 1
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(0xFFFF6600).withOpacity(0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.card_giftcard,
+                                    size: 18,
+                                    color: _activeMode == 1
+                                        ? Colors.white
+                                        : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Gift Voucher',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: _activeMode == 1
+                                          ? Colors.white
+                                          : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  if (_activeMode == 1) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      'This creates a shareable gift link. The recipient redeems it themselves.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: const Color(0xFFFF8533),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+
+                  // Provider selection card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SELECT CABLE PROVIDER',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: _cableProviders.map((prov) {
+                            final isSelected = _selectedProvider == prov['id'];
+                            return Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: InkWell(
+                                  onTap: () {
+                                    if (_selectedProvider != prov['id']) {
+                                      setState(() {
+                                        _selectedProvider = prov['id']!;
+                                        _verifiedCustomerName = null;
+                                      });
+                                      _loadLivePackages();
+                                    }
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    height: 78,
+                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? const Color(0xFFFF6600)
+                                            : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                        width: isSelected ? 2 : 1,
+                                      ),
+                                      boxShadow: isSelected
+                                          ? [
+                                              BoxShadow(
+                                                color: const Color(0xFFFF6600).withOpacity(0.2),
+                                                blurRadius: 10,
+                                                spreadRadius: 1,
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        Center(
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Image.asset(
+                                                prov['logo']!,
+                                                height: 28,
+                                                fit: BoxFit.contain,
+                                                errorBuilder: (ctx, err, stack) => Icon(
+                                                  Icons.tv,
+                                                  size: 26,
+                                                  color: isSelected ? const Color(0xFFFF6600) : Colors.grey,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Text(
+                                                prov['label']!,
+                                                style: GoogleFonts.plusJakartaSans(
+                                                  fontSize: 11,
+                                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                                  color: isSelected
+                                                      ? const Color(0xFFFF6600)
+                                                      : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (isSelected)
+                                          Positioned(
+                                            top: 2,
+                                            right: 2,
+                                            child: Container(
+                                              width: 14,
+                                              height: 14,
+                                              decoration: const BoxDecoration(
+                                                color: Color(0xFFFF6600),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(Icons.check, size: 10, color: Colors.white),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Plans Grid Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141721) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SELECT SUBSCRIPTION PLAN',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (_isLoadingPackages)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(32),
+                              child: CircularProgressIndicator(color: Color(0xFFFF6600)),
+                            ),
+                          )
+                        else if (_packageLoadError != null)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    _packageLoadError!,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.plusJakartaSans(color: Colors.redAccent, fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  ElevatedButton(
+                                    onPressed: _loadLivePackages,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFFF6600),
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: const Text('Retry Loading'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _livePackages.length,
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: isDesktop ? 3 : 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: isDesktop ? 2.3 : 1.7,
+                            ),
+                            itemBuilder: (context, index) {
+                              final pkg = _livePackages[index];
+                              final code = pkg['code'] as String;
+                              final name = pkg['name'] as String;
+                              final price = pkg['price'] as double;
+                              final isSelected = _selectedPackage == code;
+
+                              return InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedPackage = code;
+                                    _packageAmount = price;
+                                    _selectedPackageName = name;
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? const Color(0xFFFF6600)
+                                          : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
+                                      width: isSelected ? 2 : 1,
+                                    ),
+                                    boxShadow: isSelected
+                                        ? [
+                                            BoxShadow(
+                                              color: const Color(0xFFFF6600).withOpacity(0.18),
+                                              blurRadius: 8,
+                                              spreadRadius: 1,
+                                            ),
+                                          ]
+                                        : null,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        name,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        '₦${price.toStringAsFixed(0)}',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w900,
+                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Smartcard & Phone Inputs (Buy Now Mode)
+                  if (_activeMode == 0) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF141721) : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'IUC / SMART CARD NUMBER',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _smartcardController,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                  onChanged: (_) {
+                                    if (_verifiedCustomerName != null) {
+                                      setState(() => _verifiedCustomerName = null);
+                                    }
+                                  },
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    color: isDark ? Colors.white : Colors.black87,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: 'Enter your decoder / smart card number',
+                                    hintStyle: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      color: isDark ? Colors.white38 : Colors.black38,
+                                    ),
+                                    filled: true,
+                                    fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              ElevatedButton(
+                                onPressed: _isVerifying ? null : _handleVerifySmartcard,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFF6600),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                                child: _isVerifying
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                      )
+                                    : Text(
+                                        'Verify',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                              ),
+                            ],
+                          ),
+                          if (_verifiedCustomerName != null) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.verified, size: 18, color: Color(0xFF10B981)),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Subscriber: $_verifiedCustomerName',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF10B981),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkBorder
-                          : AppColors.lightBorder,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Choose your TV provider',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: ['DSTV', 'GOTV', 'STARTIMES'].map((p) {
-                          final isSelected = p == _selectedProvider;
-                          return Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                              ),
-                              child: ChoiceChip(
-                                label: Center(child: Text(p)),
-                                selected: isSelected,
-                                onSelected: (val) {
-                                  if (val) {
-                                    setState(() {
-                                      _selectedProvider = p;
-                                      _verifiedCustomerName = null;
-                                      _selectedPackage = null;
-                                      _packageAmount = 0;
-                                    });
-                                    _loadLivePackages();
-                                  }
-                                },
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 18),
-                      TextField(
-                        controller: _smartcardController,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) {
-                          if (_verifiedCustomerName == null) {
-                            _handleVerify();
-                          } else {
-                            _handlePurchase();
-                          }
-                        },
-                        keyboardType: TextInputType.number,
-                        onChanged: (_) =>
-                            setState(() => _verifiedCustomerName = null),
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF0F172A),
-                        ),
-                        decoration: InputDecoration(
-                          labelText: 'Smartcard / IUC number',
-                          hintText: 'Enter the decoder number',
-                          prefixIcon: const Icon(Icons.credit_card_rounded),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 20,
-                          ),
-                          suffixIcon: Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: TextButton(
-                              onPressed: _isVerifying ? null : _handleVerify,
-                              child: _isVerifying
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text('Verify'),
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (_verifiedCustomerName != null) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppColors.success.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: AppColors.success.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.verified_user_rounded,
-                                color: AppColors.success,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  'Subscriber: $_verifiedCustomerName',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.success,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
+                          const SizedBox(height: 20),
+
                           Text(
-                            'Subscription plan',
+                            'PHONE NUMBER',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            onChanged: (_) => setState(() {}),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF334155),
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'e.g. 08012345678',
+                              hintStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
                             ),
                           ),
-                          if (_isLoadingPackages)
-                            const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        initialValue:
-                            currentPackages.any(
-                              (package) => package['code'] == _selectedPackage,
-                            )
-                            ? _selectedPackage
-                            : null,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          hintText: _isLoadingPackages
-                              ? 'Loading live plans...'
-                              : 'Select a subscription plan',
-                          prefixIcon: const Icon(Icons.subscriptions_rounded),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 18,
-                          ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Checkboxes: Auto-renew and Pay For Me
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF141721) : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
                         ),
-                        items: currentPackages.map((package) {
-                          final code = package['code'] as String;
-                          return DropdownMenuItem<String>(
-                            value: code,
-                            child: Text(
-                              '${package['name']}  •  ₦${(package['price'] as double).toStringAsFixed(0)}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: currentPackages.isEmpty
-                            ? null
-                            : (code) {
-                                if (code == null) return;
-                                final plan = currentPackages.firstWhere(
-                                  (package) => package['code'] == code,
-                                );
-                                setState(() {
-                                  _selectedPackage = code;
-                                  _packageAmount = (plan['price'] as num)
-                                      .toDouble();
-                                });
-                              },
                       ),
-                      if (_packageLoadError != null && !_isLoadingPackages) ...[
-                        const SizedBox(height: 10),
-                        Text(
-                          _packageLoadError!,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: isDark ? AppColors.warning : AppColors.error,
-                            fontSize: 13,
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: _autoRenew,
+                            activeColor: const Color(0xFFFF6600),
+                            onChanged: (val) => setState(() => _autoRenew = val ?? false),
                           ),
-                        ),
-                      ],
-                      if (selectedPackage != null) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: isDark
-                                  ? const [
-                                      Color(0xFF102A50),
-                                      Color(0xFF123846),
-                                    ]
-                                  : const [
-                                      Color(0xFFEAF3FF),
-                                      Color(0xFFE7F9FA),
-                                    ],
+                          Text(
+                            'Auto-renew subscription monthly',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white70 : const Color(0xFF334155),
                             ),
-                            borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  selectedPackage['name'] as String,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF0F172A),
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                '₦${_packageAmount.toStringAsFixed(0)}',
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF141721) : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: _payForMe,
+                            activeColor: const Color(0xFFFF6600),
+                            onChanged: (val) => setState(() => _payForMe = val ?? false),
+                          ),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                text: 'Pay For Me ',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w900,
-                                  color: isDark
-                                      ? AppColors.primaryCyan
-                                      : AppColors.primaryBlue,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: '- get a shareable payment link',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.normal,
+                                      color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    // Gift Voucher Inputs
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF141721) : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'RECIPIENT PHONE (OPTIONAL)',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'e.g. 08012345678',
+                              hintStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'GIFT MESSAGE (OPTIONAL)',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _giftMessageController,
+                            maxLength: 200,
+                            maxLines: 3,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Enjoy your subscription! Valid on any decoder.',
+                              hintStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.all(16),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 20),
+
+                  // Validation Alert Box (Screenshot 2)
+                  if (!isReadyToPay) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A1C14),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF804212)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.warning_amber_rounded, size: 18, color: Color(0xFFF59E0B)),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Please complete the following:',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFFF59E0B),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 58,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: canPurchase
-                                  ? const [
-                                      AppColors.primaryBlue,
-                                      AppColors.primaryCyan,
-                                    ]
-                                  : const [
-                                      Color(0xFF64748B),
-                                      Color(0xFF475569),
-                                    ],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: canPurchase ? _handlePurchase : null,
-                              child: Center(
-                                child: vtu.isLoading
-                                    ? const SizedBox(
-                                        width: 22,
-                                        height: 22,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : Text(
-                                        selectedPackage == null
-                                            ? 'Verify and select a plan'
-                                            : 'Pay ₦${_packageAmount.toStringAsFixed(0)}',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          color: Colors.white,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
+                          const SizedBox(height: 8),
+                          ...validationErrors.map(
+                            (err) => Padding(
+                              padding: const EdgeInsets.only(left: 26, bottom: 4),
+                              child: Text(
+                                err,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  color: const Color(0xFFFDE68A),
+                                ),
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Action Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: isReadyToPay ? _handleSubmit : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6600),
+                        disabledBackgroundColor: const Color(0xFF4A3423),
+                        foregroundColor: Colors.white,
+                        disabledForegroundColor: Colors.white38,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: isReadyToPay ? 4 : 0,
+                      ),
+                      child: Text(
+                        _activeMode == 1 ? 'Create Gift Voucher' : 'Pay Subscription',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
         ),

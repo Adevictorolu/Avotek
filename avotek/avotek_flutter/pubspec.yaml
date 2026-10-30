@@ -69,6 +69,7 @@ flutter:
   assets:
     - assets/config.json
     - assets/images/
+    - assets/images/brands/
 dependency_overrides:
   flutter_secure_storage: ^10.0.0
 

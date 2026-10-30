@@ -11,6 +11,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/top_notification.dart';
+import '../../widgets/logout_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -844,10 +845,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 16),
                         ElevatedButton.icon(
                           onPressed: () async {
-                            final auth = context.read<AuthProvider>();
-                            await auth.signOut();
-                            if (context.mounted) {
-                              context.go('/login');
+                            final confirmed = await showLogoutConfirmationDialog(context);
+                            if (confirmed && context.mounted) {
+                              final auth = context.read<AuthProvider>();
+                              await auth.signOut();
+                              if (context.mounted) {
+                                context.go('/login');
+                              }
                             }
                           },
                           icon: const Icon(Icons.logout_rounded, size: 16),
