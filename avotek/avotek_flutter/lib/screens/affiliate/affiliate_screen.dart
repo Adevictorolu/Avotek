@@ -725,7 +725,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 Expanded(
                   child: Text(
                     referralLink,
-                    style: GoogleFonts.firaCode(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),

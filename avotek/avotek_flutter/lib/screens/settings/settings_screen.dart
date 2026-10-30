@@ -1119,7 +1119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 8),
                       SelectableText(
                         'https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/vtu-provider',
-                        style: GoogleFonts.jetBrainsMono(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.white70 : const Color(0xFF0F172A),
@@ -1137,7 +1137,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 4),
                       SelectableText(
                         'Authorization: Bearer <YOUR_AVOTEK_API_KEY>',
-                        style: GoogleFonts.jetBrainsMono(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           color: AppColors.primaryBlue,
                         ),
@@ -1244,7 +1244,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: Text(
               method,
-              style: GoogleFonts.jetBrainsMono(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 color: isPost ? AppColors.primaryBlue : AppColors.success,
@@ -1254,7 +1254,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(width: 10),
           Text(
             path,
-            style: GoogleFonts.jetBrainsMono(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: isDark ? Colors.white : const Color(0xFF0F172A),

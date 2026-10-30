@@ -93,7 +93,7 @@ class ServiceBrandLogo extends StatelessWidget {
           ),
           child: Text(
             'MTN',
-            style: GoogleFonts.rubik(
+            style: GoogleFonts.plusJakartaSans(
               color: Colors.black,
               fontWeight: FontWeight.w900,
               fontSize: size * 0.32,
@@ -132,7 +132,7 @@ class ServiceBrandLogo extends StatelessWidget {
             ),
             Text(
               'airtel',
-              style: GoogleFonts.comfortaa(
+              style: GoogleFonts.plusJakartaSans(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: size * 0.22,
@@ -173,7 +173,7 @@ class ServiceBrandLogo extends StatelessWidget {
           child: Center(
             child: Text(
               'glo',
-              style: GoogleFonts.nunito(
+              style: GoogleFonts.plusJakartaSans(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: size * 0.36,
@@ -216,7 +216,7 @@ class ServiceBrandLogo extends StatelessWidget {
               child: Center(
                 child: Text(
                   '9',
-                  style: GoogleFonts.rubik(
+                  style: GoogleFonts.plusJakartaSans(
                     color: Colors.black,
                     fontWeight: FontWeight.w900,
                     fontSize: size * 0.28,
@@ -227,7 +227,7 @@ class ServiceBrandLogo extends StatelessWidget {
             SizedBox(width: size * 0.04),
             Text(
               '9mobile',
-              style: GoogleFonts.rubik(
+              style: GoogleFonts.plusJakartaSans(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
                 fontSize: size * 0.17,
@@ -393,7 +393,7 @@ class ServiceBrandLogo extends StatelessWidget {
       child: Center(
         child: Text(
           'DStv',
-          style: GoogleFonts.rubik(
+          style: GoogleFonts.plusJakartaSans(
             color: const Color(0xFF00A3E0),
             fontWeight: FontWeight.w900,
             fontSize: size * 0.32,
@@ -417,7 +417,7 @@ class ServiceBrandLogo extends StatelessWidget {
       child: Center(
         child: Text(
           'GOtv',
-          style: GoogleFonts.rubik(
+          style: GoogleFonts.plusJakartaSans(
             color: const Color(0xFF70FF00),
             fontWeight: FontWeight.w900,
             fontSize: size * 0.32,
@@ -445,7 +445,7 @@ class ServiceBrandLogo extends StatelessWidget {
             Icon(Icons.star_rounded, color: const Color(0xFFFFAB00), size: size * 0.3),
             Text(
               'Star',
-              style: GoogleFonts.rubik(
+              style: GoogleFonts.plusJakartaSans(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: size * 0.28,

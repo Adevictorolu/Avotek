@@ -187,7 +187,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Code: $code',
-                        style: GoogleFonts.firaCode(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           color: isDark
                               ? const Color(0xFFCBD5E1)
@@ -537,7 +537,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
           child: TextField(
             controller: _codeController,
             textCapitalization: TextCapitalization.characters,
-            style: GoogleFonts.jetBrainsMono(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               letterSpacing: 2,
@@ -545,7 +545,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
             ),
             decoration: InputDecoration(
               hintText: 'ENTER CODE (E.G., AVOGIFT-8K392)',
-              hintStyle: GoogleFonts.jetBrainsMono(
+              hintStyle: GoogleFonts.plusJakartaSans(
                 fontSize: 12.5,
                 color: isDark
                     ? AppColors.metallicLight.withValues(alpha: 0.6)
@@ -674,7 +674,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
           ),
           title: Text(
             item['code'] as String,
-            style: GoogleFonts.jetBrainsMono(
+            style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w800,
               fontSize: 14,
             ),

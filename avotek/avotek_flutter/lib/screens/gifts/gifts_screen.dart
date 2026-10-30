@@ -529,7 +529,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       const SizedBox(height: 6),
                       Text(
                         code,
-                        style: GoogleFonts.jetBrainsMono(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 24,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 2,
@@ -944,7 +944,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       children: [
                         Text(
                           gift.code,
-                          style: GoogleFonts.firaCode(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: isDark

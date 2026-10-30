@@ -600,7 +600,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                           const SizedBox(height: 6),
                           SelectableText(
                             displayToken,
-                            style: GoogleFonts.sourceCodePro(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w800,
                               color: isDark ? Colors.white : const Color(0xFF0F172A),

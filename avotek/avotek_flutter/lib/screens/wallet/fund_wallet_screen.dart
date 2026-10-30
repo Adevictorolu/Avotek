@@ -394,10 +394,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  'Fund your wallet instantly and securely with Paystack: card, bank transfer, or USSD.',
+                  'Instant credit via Bank Transfer or Card.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.5,
-                    height: 1.5,
                     color: isDark
                         ? const Color(0xFF94A3B8)
                         : const Color(0xFF64748B),
@@ -488,7 +487,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Instant Online Funding (Paystack Direct)',
+                                  'Instant Wallet Funding',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
@@ -496,7 +495,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                   ),
                                 ),
                                 Text(
-                                  'Cards (Visa/Mastercard/Verve), Bank App, USSD & Apple Pay',
+                                  'Bank Transfer, Card, or USSD',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11.5,
                                     color: isDark
@@ -514,7 +513,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              '⚡ RECOMMENDED',
+                              '⚡ 100% INSTANT',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
@@ -788,44 +787,6 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                 const SizedBox(height: 24),
                 // 2. Dedicated Virtual Account Card
                 _buildDedicatedAccountSection(context, wallet, isDark),
-
-                const SizedBox(height: 18),
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF141720)
-                        : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF26334D)
-                          : const Color(0xFFE2E8F0),
-                    ),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.verified_user_outlined,
-                        color: Color(0xFF10B981),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Never send your card details or passwords to anyone. Paystack checkout handles Cards, Direct Bank Transfers, and USSD with zero delay and instant automated wallet credit upon confirmation.',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.5,
-                            height: 1.55,
-                            color: isDark
-                                ? const Color(0xFFCBD5E1)
-                                : const Color(0xFF475569),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),

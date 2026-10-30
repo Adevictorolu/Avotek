@@ -525,10 +525,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        tx.narration ??
-                                            (isCredit
-                                                ? 'Wallet Funding'
-                                                : tx.category.toUpperCase()),
+                                        tx.displayTitle,
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w700,
@@ -541,7 +538,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        '${DateFormat('dd MMM yyyy • hh:mm a').format(tx.createdAt)} • Ref: ${tx.reference}',
+                                        DateFormat('dd MMM yyyy • hh:mm a').format(tx.createdAt),
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 11.5,
                                           color: isDark

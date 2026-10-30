@@ -215,8 +215,7 @@ function calculateNetFunding(payment: JsonMap): {
   const grossNaira = Math.round(grossKobo) / 100;
   const feeNaira = Math.round(feeKobo) / 100;
   const netNaira = Math.round(netKobo) / 100;
-  const narration =
-    `Paystack wallet funding (₦${grossNaira.toFixed(2)} paid - ₦${feeNaira.toFixed(2)} Paystack fee = ₦${netNaira.toFixed(2)} credited)`;
+  const narration = "Paystack Wallet Funding";
 
   return { grossNaira, feeNaira, netNaira, narration };
 }

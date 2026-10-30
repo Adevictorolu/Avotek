@@ -252,36 +252,6 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                 ],
               ),
 
-              // 6. BUSINESS & TRADE
-              _buildCategorySection(
-                title: 'BUSINESS & TRADE',
-                count: 1,
-                isDark: isDark,
-                cards: [
-                  _ServiceCardData(
-                    title: 'Corporate Affairs',
-                    icon: Icons.business_center_rounded,
-                    isComingSoon: true,
-                    onTap: () => _showComingSoon('CAC Business Registration'),
-                  ),
-                ],
-              ),
-
-              // 7. TRAVEL
-              _buildCategorySection(
-                title: 'TRAVEL',
-                count: 1,
-                isDark: isDark,
-                cards: [
-                  _ServiceCardData(
-                    title: 'Flight Tickets',
-                    icon: Icons.flight_takeoff_rounded,
-                    isComingSoon: true,
-                    onTap: () => _showComingSoon('Flight Bookings'),
-                  ),
-                ],
-              ),
-
               const SizedBox(height: 60),
             ],
           ),

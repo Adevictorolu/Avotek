@@ -42,6 +42,18 @@ class TransactionModel {
       status.toLowerCase() == 'pending' ||
       status.toLowerCase() == 'processing';
 
+  String get displayTitle {
+    final narr = (narration ?? '').trim();
+    if (narr.isNotEmpty) {
+      if (narr.toLowerCase().startsWith('paystack wallet funding')) {
+        return 'Paystack Wallet Funding';
+      }
+      return narr;
+    }
+    if (category.toLowerCase() == 'wallet_fund') return 'Wallet Funding';
+    return category.toUpperCase();
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'user_id': userId,

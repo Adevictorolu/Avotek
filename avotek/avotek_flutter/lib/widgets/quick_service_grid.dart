@@ -81,13 +81,6 @@ class QuickServiceGrid extends StatelessWidget {
       color: Color(0xFF059669),
     ),
     ServiceItem(
-      id: 'cac',
-      title: 'CAC Register',
-      subtitle: 'Biz Name & LTD',
-      icon: Icons.corporate_fare_rounded,
-      color: Color(0xFF6366F1),
-    ),
-    ServiceItem(
       id: 'print_card',
       title: 'Recharge PIN',
       subtitle: 'Print VTU Cards',

@@ -56,14 +56,6 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
       'color': Color(0xFF8B5CF6),
     },
     {
-      'title': 'CAC Business Registration',
-      'category': 'Corporate',
-      'desc': 'Register Business Name, Ltd Company, NGO with CAC easily',
-      'route': '/services/cac',
-      'icon': Icons.corporate_fare_rounded,
-      'color': Color(0xFF6366F1),
-    },
-    {
       'title': 'Fund Wallet',
       'category': 'Finance',
       'desc': 'Automated dedicated virtual bank account & instant card funding',
