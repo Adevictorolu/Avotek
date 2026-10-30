@@ -217,8 +217,8 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                   _ServiceCardData(
                     title: 'Internet',
                     icon: Icons.language_rounded,
-                    isComingSoon: true,
-                    onTap: () => _showComingSoon('Internet subscriptions'),
+                    isPopular: true,
+                    onTap: () => context.push('/services/internet'),
                   ),
                 ],
               ),

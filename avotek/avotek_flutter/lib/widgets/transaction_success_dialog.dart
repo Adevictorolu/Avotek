@@ -436,10 +436,10 @@ class TransactionSuccessDialog extends StatelessWidget {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
+          constraints: const BoxConstraints(maxWidth: 400),
           child: Container(
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF131722) : Colors.white,
@@ -449,105 +449,113 @@ class TransactionSuccessDialog extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.15),
-                  blurRadius: 36,
-                  offset: const Offset(0, 16),
+                  color: const Color(0xFF0052FF).withOpacity(isDark ? 0.25 : 0.12),
+                  blurRadius: 32,
+                  offset: const Offset(0, 12),
                 ),
               ],
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Animated Success Icon Header
+                  // Sleek Success Icon Header
                   Container(
-                    width: 72,
-                    height: 72,
+                    width: 58,
+                    height: 58,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.success.withValues(alpha: 0.14),
+                      color: AppColors.success.withValues(alpha: 0.15),
                       border: Border.all(
-                        color: AppColors.success.withValues(alpha: 0.35),
-                        width: 2,
+                        color: AppColors.success.withValues(alpha: 0.4),
+                        width: 1.5,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.success.withOpacity(0.2),
+                          blurRadius: 16,
+                        ),
+                      ],
                     ),
                     child: const Icon(
                       Icons.check_rounded,
                       color: AppColors.success,
-                      size: 40,
+                      size: 32,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   Text(
                     title,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
-                    message ?? 'Your request was processed and delivered successfully.',
+                    message ?? 'Transaction delivered successfully.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
+                      fontSize: 12.5,
                       color: isDark ? const Color(0xFFA5B0CD) : AppColors.slateGrey,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
-                  // Amount Callout
+                  // Amount & Service Header
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1A2234) : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(16),
+                      color: isDark ? const Color(0xFF182030) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF29354F) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF28344D) : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
                       children: [
                         Text(
-                          'AMOUNT PAID',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.1,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
                           '₦${NumberFormat('#,##0.00').format(amount)}',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 28,
+                            fontSize: 24,
                             fontWeight: FontWeight.w900,
-                            color: AppColors.electricCyan,
+                            color: const Color(0xFF00D2FF),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '$serviceType • $recipient',
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white70 : const Color(0xFF475569),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 14),
 
                   // Token / PIN Highlight (if Electricity or Exam PIN)
                   if (displayToken != null && displayToken.isNotEmpty) ...[
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryBlue.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(16),
+                        color: const Color(0xFF0052FF).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.primaryBlue.withValues(alpha: 0.4),
-                          width: 1.5,
+                          color: const Color(0xFF0052FF).withOpacity(0.4),
+                          width: 1.2,
                         ),
                       ),
                       child: Column(
@@ -558,30 +566,30 @@ class TransactionSuccessDialog extends StatelessWidget {
                             children: [
                               Text(
                                 serviceType.toLowerCase().contains('electricity')
-                                    ? '⚡ PREPAID TOKEN'
+                                    ? '⚡ PREPAID METER TOKEN'
                                     : '🎓 EXAMINATION PIN(S)',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11,
+                                  fontSize: 10.5,
                                   fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.8,
-                                  color: AppColors.electricCyan,
+                                  letterSpacing: 0.6,
+                                  color: const Color(0xFF00D2FF),
                                 ),
                               ),
                               InkWell(
                                 onTap: () {
                                   Clipboard.setData(ClipboardData(text: displayToken));
-                                  TopNotification.showSuccess(context, 'Copied to clipboard!');
+                                  TopNotification.showSuccess(context, 'Token copied to clipboard!');
                                 },
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.copy_rounded, size: 14, color: AppColors.electricCyan),
+                                    const Icon(Icons.copy_rounded, size: 13, color: Color(0xFF00D2FF)),
                                     const SizedBox(width: 4),
                                     Text(
                                       'Copy',
                                       style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12,
+                                        fontSize: 11.5,
                                         fontWeight: FontWeight.w700,
-                                        color: AppColors.electricCyan,
+                                        color: const Color(0xFF00D2FF),
                                       ),
                                     ),
                                   ],
@@ -589,22 +597,22 @@ class TransactionSuccessDialog extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           SelectableText(
                             displayToken,
                             style: GoogleFonts.sourceCodePro(
-                              fontSize: 16,
+                              fontSize: 14.5,
                               fontWeight: FontWeight.w800,
                               color: isDark ? Colors.white : const Color(0xFF0F172A),
-                              letterSpacing: 1.2,
+                              letterSpacing: 1.1,
                             ),
                           ),
                           if (units != null && units!.isNotEmpty) ...[
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 4),
                             Text(
                               'Units: $units',
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
+                                fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
                                 color: isDark ? Colors.white70 : Colors.black87,
                               ),
@@ -613,107 +621,86 @@ class TransactionSuccessDialog extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 14),
                   ],
 
-                  // Receipt Breakdown Table
+                  // Compact Details Summary
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F141F) : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(16),
+                      color: isDark ? const Color(0xFF0E131E) : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF202B42) : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
                       children: [
-                        _buildReceiptRow('Service', serviceType, isDark),
-                        const Divider(height: 16),
-                        _buildReceiptRow('Recipient', recipient, isDark),
-                        const Divider(height: 16),
-                        _buildReceiptRow('Date & Time', now, isDark),
+                        _buildReceiptRow('Date', now, isDark),
                         if (reference != null && reference!.isNotEmpty) ...[
-                          const Divider(height: 16),
+                          const Divider(height: 12),
                           _buildReceiptRow('Reference', reference!, isDark, isCopyable: true, context: context),
                         ],
-                        if (providerReference != null && providerReference!.isNotEmpty) ...[
-                          const Divider(height: 16),
-                          _buildReceiptRow('Provider Ref', providerReference!, isDark, isCopyable: true, context: context),
-                        ],
-                        const Divider(height: 16),
+                        const Divider(height: 12),
                         _buildReceiptRow('Status', 'Delivered', isDark, statusColor: AppColors.success),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 18),
 
-                  // Actions: Download Receipt & Email Receipt
+                  // Actions: Download Receipt & Done in Avotek Gradient
                   Row(
                     children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _downloadPdfReceipt(context),
-                          icon: const Icon(Icons.download_rounded, size: 16),
-                          label: const Text('Download Receipt'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            side: BorderSide(
-                              color: isDark ? const Color(0xFF23304B) : const Color(0xFFCBD5E1),
-                            ),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            textStyle: GoogleFonts.plusJakartaSans(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                            ),
+                      OutlinedButton.icon(
+                        onPressed: () => _downloadPdfReceipt(context),
+                        icon: const Icon(Icons.download_rounded, size: 15),
+                        label: const Text('Receipt'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          side: BorderSide(
+                            color: isDark ? const Color(0xFF28344D) : const Color(0xFFCBD5E1),
+                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          textStyle: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _sendReceiptEmail(context),
-                          icon: const Icon(Icons.email_outlined, size: 16),
-                          label: const Text('Email Receipt'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            side: BorderSide(
-                              color: isDark ? const Color(0xFF23304B) : const Color(0xFFCBD5E1),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            textStyle: GoogleFonts.plusJakartaSans(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              onDone?.call();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              textStyle: GoogleFonts.plusJakartaSans(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
+                            child: const Text('Done'),
                           ),
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Primary Dismiss Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        onDone?.call();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        textStyle: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      child: const Text('Done'),
-                    ),
                   ),
                 ],
               ),

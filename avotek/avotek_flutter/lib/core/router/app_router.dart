@@ -24,6 +24,7 @@ import '../../screens/services/cable_screen.dart';
 import '../../screens/services/data_screen.dart';
 import '../../screens/services/electricity_screen.dart';
 import '../../screens/services/extra_provider_services_screen.dart';
+import '../../screens/services/internet_screen.dart';
 import '../../screens/services/services_hub_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/stats/statistics_screen.dart';
@@ -356,6 +357,16 @@ class AppRouter {
             state,
             ExtraProviderServicesScreen(
               service: ExtraProviderService.bulkSms,
+              onToggleTheme: themeToggle,
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/services/internet',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            InternetScreen(
               onToggleTheme: themeToggle,
             ),
           ),

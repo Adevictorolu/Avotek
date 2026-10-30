@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -36,6 +37,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
   double _amount = 0.0;
   bool _payForMe = false;
   bool _isProcessing = false;
+  double _cashbackPercent = 2.0; // 2% default instant cashback
+  double get _cashbackAmount => (_amount * _cashbackPercent / 100);
+  double get _netCharge => (_amount - _cashbackAmount).clamp(0.0, double.infinity);
 
   final List<Map<String, String>> _networks = [
     {
@@ -72,6 +76,22 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     if (auth.user?.phone != null && auth.user!.phone!.isNotEmpty) {
       _phoneController.text = auth.user!.phone!;
     }
+    _loadCashbackRate();
+  }
+
+  Future<void> _loadCashbackRate() async {
+    try {
+      final pricingStr = await SupabaseService.instance.getAppSetting('pricing_overrides');
+      if (pricingStr != null && pricingStr.isNotEmpty) {
+        final decoded = jsonDecode(pricingStr);
+        if (decoded is Map && decoded['airtime_cashback'] != null) {
+          final rate = double.tryParse(decoded['airtime_cashback'].toString());
+          if (rate != null && rate >= 0 && mounted) {
+            setState(() => _cashbackPercent = rate);
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   @override
@@ -154,10 +174,11 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
       return;
     }
 
-    if (wallet.balance < _amount) {
+    final charge = _netCharge;
+    if (wallet.balance < charge) {
       TopNotification.showError(
         context,
-        'Insufficient balance (₦${wallet.balance.toStringAsFixed(2)} available). Please fund your wallet.',
+        'Insufficient balance (₦${wallet.balance.toStringAsFixed(2)} available, ₦${charge.toStringAsFixed(2)} needed). Please fund your wallet.',
       );
       return;
     }
@@ -212,8 +233,8 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     final confirmed = await PinModal.show(
       context,
       title: 'Confirm Airtime Purchase',
-      amount: _amount,
-      description: '$_selectedNetwork • $phone\nInstant Delivery',
+      amount: charge,
+      description: '$_selectedNetwork • $phone\nValue: ₦${_amount.toStringAsFixed(0)} (Cashback Discount: ₦${_cashbackAmount.toStringAsFixed(2)})',
       onPinSubmit: (pin) async {
         transactionPin = pin;
         return auth.verifyPin(pin);
@@ -228,7 +249,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           userId: user.id,
           network: _selectedNetwork,
           phone: phone,
-          amount: _amount,
+          amount: charge,
           userPin: transactionPin,
           airtimeType: 'vtu',
         );
@@ -680,6 +701,57 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                       ],
                     ),
                   ),
+
+                  // Instant Cashback Banner
+                  if (_amount >= 50 && _cashbackPercent > 0) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0052FF).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFF00D2FF).withOpacity(0.4)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF0052FF),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.bolt_rounded, color: Color(0xFF00D2FF), size: 16),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '🎉 Instant ${_cashbackPercent.toStringAsFixed(1)}% Cashback Applied!',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF00D2FF),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'You save ₦${_cashbackAmount.toStringAsFixed(2)}. You only pay ₦${_netCharge.toStringAsFixed(2)}!',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 20),
 
                   // Mode-specific inputs

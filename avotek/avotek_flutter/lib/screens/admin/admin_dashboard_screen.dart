@@ -47,6 +47,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final _pricingNecoController = TextEditingController(text: '2500');
   final _pricingNabtebController = TextEditingController(text: '1000');
   final _dataMarginController = TextEditingController(text: '5');
+  final _airtimeCashbackController = TextEditingController(text: '2.0');
+  final _cableFeeController = TextEditingController(text: '50');
+  final _electricityFeeController = TextEditingController(text: '100');
+  final _smsCostController = TextEditingController(text: '4.50');
   bool _isSavingPricing = false;
 
   @override
@@ -120,6 +124,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             if (decoded['neco'] != null) _pricingNecoController.text = decoded['neco'].toString();
             if (decoded['nabteb'] != null) _pricingNabtebController.text = decoded['nabteb'].toString();
             if (decoded['data_margin'] != null) _dataMarginController.text = decoded['data_margin'].toString();
+            if (decoded['airtime_cashback'] != null) _airtimeCashbackController.text = decoded['airtime_cashback'].toString();
+            if (decoded['cable_fee'] != null) _cableFeeController.text = decoded['cable_fee'].toString();
+            if (decoded['electricity_fee'] != null) _electricityFeeController.text = decoded['electricity_fee'].toString();
+            if (decoded['sms_cost'] != null) _smsCostController.text = decoded['sms_cost'].toString();
           }
         }
       } catch (_) {}
@@ -1260,10 +1268,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         'neco': double.tryParse(_pricingNecoController.text.trim()) ?? 2500.0,
         'nabteb': double.tryParse(_pricingNabtebController.text.trim()) ?? 1000.0,
         'data_margin': double.tryParse(_dataMarginController.text.trim()) ?? 5.0,
+        'airtime_cashback': double.tryParse(_airtimeCashbackController.text.trim()) ?? 2.0,
+        'cable_fee': double.tryParse(_cableFeeController.text.trim()) ?? 50.0,
+        'electricity_fee': double.tryParse(_electricityFeeController.text.trim()) ?? 100.0,
+        'sms_cost': double.tryParse(_smsCostController.text.trim()) ?? 4.50,
       };
       await SupabaseService.instance.setAppSetting('pricing_overrides', jsonEncode(pricingMap));
       if (mounted) {
-        TopNotification.showSuccess(context, 'Service pricing and margin settings saved successfully.');
+        TopNotification.showSuccess(context, 'Service pricing, cashback rates, and margin settings saved successfully.');
       }
     } catch (e) {
       if (mounted) {
@@ -1275,6 +1287,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildPricingControlCard(bool isDark) {
+    final foreground = isDark ? Colors.white : const Color(0xFF0F172A);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -1309,16 +1323,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Service Pricing & Margins Control',
+                      'Service Pricing, Cashback & Profit Margins Control',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: foreground,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Set custom customer-facing retail prices for examination PINs and profit margins for data bundles.',
+                      'Manage customer-facing prices, airtime cashback discounts, data profit margins, and utility service fees in real-time.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5,
                         color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -1329,7 +1343,138 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
+
+          // Section 1: Telecom & Data Pricing
+          Text(
+            'TELECOM & AIRTIME / DATA MARGINS',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              color: const Color(0xFF00D2FF),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _airtimeCashbackController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'Airtime Cashback (%)',
+                    helperText: 'Discount given to user on recharge',
+                    suffixText: '%',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _dataMarginController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'Data Bundle Margin (%)',
+                    helperText: 'Profit added on provider cost',
+                    suffixText: '%',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _smsCostController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'Bulk SMS (₦/page)',
+                    helperText: 'Price per 160-char SMS page',
+                    prefixText: '₦ ',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Text(
+                'Quick Data Presets: ',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white60 : Colors.black54,
+                ),
+              ),
+              Wrap(
+                spacing: 6,
+                children: ['3.0', '5.0', '8.0', '10.0'].map((p) {
+                  return ActionChip(
+                    label: Text('+$p%', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700)),
+                    onPressed: () => setState(() => _dataMarginController.text = p),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+
+          // Section 2: Bills & Cable Fees
+          Text(
+            'BILLS & CABLE TV CONVENIENCE FEES',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              color: const Color(0xFF00D2FF),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _cableFeeController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Cable TV Fee (₦)',
+                    helperText: 'Convenience charge per renewal',
+                    prefixText: '₦ ',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _electricityFeeController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Electricity Fee (₦)',
+                    helperText: 'Token generation processing fee',
+                    prefixText: '₦ ',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+
+          // Section 3: Examination PINs
+          Text(
+            'EXAMINATION RESULT CHECKER PIN PRICES',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              color: const Color(0xFF00D2FF),
+            ),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -1337,7 +1482,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   controller: _pricingWaecController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'WAEC PIN Price (₦)',
+                    labelText: 'WAEC PIN (₦)',
+                    helperText: 'Default: ₦5,250',
                     prefixText: '₦ ',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -1349,7 +1495,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   controller: _pricingNecoController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'NECO PIN Price (₦)',
+                    labelText: 'NECO PIN (₦)',
+                    helperText: 'Default: ₦2,500',
                     prefixText: '₦ ',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -1361,41 +1508,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   controller: _pricingNabtebController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'NABTEB PIN Price (₦)',
+                    labelText: 'NABTEB PIN (₦)',
+                    helperText: 'Default: ₦1,000',
                     prefixText: '₦ ',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _dataMarginController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Data Margin (%)',
-                    suffixText: '%',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 24),
+
+          // Save Button
           ElevatedButton.icon(
             onPressed: _isSavingPricing ? null : _savePricingOverrides,
             icon: _isSavingPricing
                 ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.save_rounded, size: 18),
             label: Text(
-              _isSavingPricing ? 'Saving...' : 'Save Pricing Overrides',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+              _isSavingPricing ? 'Saving Changes...' : 'Save All Pricing & Margins Overrides',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0052FF),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
             ),
           ),
         ],

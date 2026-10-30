@@ -2885,13 +2885,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         isDark: isDark,
                       ),
-                      _buildDivider(isDark),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // --- SECTION 5: HELP & SUPPORT ---
+                  _buildSectionContainer(
+                    isDark: isDark,
+                    icon: Icons.help_outline_rounded,
+                    title: 'Help & Support',
+                    children: [
                       _buildSettingTile(
                         icon: Icons.support_agent_rounded,
                         iconColor: AppColors.success,
                         iconBg: AppColors.success.withValues(alpha: 0.15),
-                        title: 'WhatsApp Support',
-                        subtitle: '+234 816 700 2799 · opens WhatsApp',
+                        title: 'WhatsApp Live Support',
+                        subtitle: '+234 816 700 2799 · 24/7 instant chat & resolution',
                         trailing: const Icon(
                           Icons.open_in_new_rounded,
                           color: AppColors.success,
@@ -2901,7 +2911,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         isDark: isDark,
                       ),
                       _buildDivider(isDark),
-                      const SizedBox(height: 8),
+                      _buildSettingTile(
+                        icon: Icons.quiz_outlined,
+                        iconColor: AppColors.electricCyan,
+                        iconBg: AppColors.electricCyan.withValues(alpha: 0.15),
+                        title: 'FAQs & Service Guides',
+                        subtitle: 'Learn about Pay For Me, Affiliate commissions & vouchers',
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.grey,
+                        ),
+                        onTap: () {
+                          // Trigger Avotek Help Modal
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Tap the floating Help button at bottom-right for instant FAQs.'),
+                              backgroundColor: AppColors.primaryBlue,
+                            ),
+                          );
+                        },
+                        isDark: isDark,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),

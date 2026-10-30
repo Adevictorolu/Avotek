@@ -357,24 +357,50 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final faqs = <(String, String)>[
       (
-        'My transaction is pending',
-        'Check Transactions before trying again. Do not repeat a pending purchase; '
-            'contact support with its reference if the status does not update.',
+        'How does "Pay For Me" (Shareable Link) work?',
+        'Tick "Pay For Me" on any service (Airtime, Data, Cable TV, Electricity, or Result Checker) '
+            'and tap the button to generate a secure shareable link. You can send this link via WhatsApp '
+            'or copy it for a friend, family member, or sponsor to settle the bill for you.',
       ),
       (
-        'How do I reset my password?',
-        'Sign out if needed, open Sign in, and use “Forgot password” with the '
-            'email address on your account.',
+        'How do I earn with the Affiliate Programme?',
+        'Visit the Affiliate section in your dashboard or menu to copy your unique referral link. '
+            'You earn automatic lifetime commission on every VTU transaction, airtime recharge, and '
+            'bill payment performed by users registered through your link. Payouts can be withdrawn '
+            'directly into your bank or wallet.',
       ),
       (
-        'How do I fund my wallet?',
-        'Only use a funding method shown as available inside Avotek. Never send '
-            'money to an account number from an old screenshot or message.',
+        'How does Airtime Cashback work?',
+        'When you recharge airtime on Avotek, you receive an instant cashback discount credited '
+            'back to your balance or deducted from your total bill immediately upon checkout.',
       ),
       (
-        'How can I contact a person?',
-        'Email support@avotek.ng and include your account email and transaction '
-            'reference. Do not send your password, transaction PIN, or API token.',
+        'How do I create and redeem Gift Vouchers?',
+        'Switch to the "Gift Voucher" tab on any service screen to generate a redeemable code. '
+            'Anyone can redeem the voucher code on the Coupons page to instantly receive the value '
+            'in their wallet balance.',
+      ),
+      (
+        'How fast are Data, Electricity, and Cable TV delivered?',
+        'All Avotek transactions are 100% automated with instant direct telecom & DisCo routing. '
+            'Electricity meter tokens and exam PINs are immediately displayed on your screen and saved in '
+            'your receipt history.',
+      ),
+      (
+        'How do I fund my wallet with a Dedicated Account Number?',
+        'Complete your phone and email verification on your Profile/KYC page. Once verified, '
+            'Avotek generates a permanent dedicated virtual account number in your name that you can '
+            'transfer to from any Nigerian bank for instant, automated wallet crediting.',
+      ),
+      (
+        'My transaction is pending or processing',
+        'Check Transactions. If your transaction shows pending, our automated system continuously '
+            'requeries the provider. If it does not update within 2 minutes, reach out to our WhatsApp support team.',
+      ),
+      (
+        'How do I reset my password or transaction PIN?',
+        'For passwords, use "Forgot password" on the Sign In page. For transaction PINs, navigate to '
+            'Settings > Security > Change Transaction PIN to verify via email OTP and set a new 4-digit code.',
       ),
     ];
 
@@ -403,73 +429,139 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                'Avotek help',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Avotek Help & FAQs',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF25D366).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF25D366),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '24/7 Active',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF25D366),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
-                'Quick answers',
+                'Frequently asked questions & instant live assistance',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                 ),
               ),
-              const SizedBox(height: 8),
-              ...faqs.map(
-                (faq) => ExpansionTile(
-                  tilePadding: EdgeInsets.zero,
-                  childrenPadding: const EdgeInsets.only(bottom: 12),
-                  title: Text(
-                    faq.$1,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        faq.$2,
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 340),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: faqs.length,
+                  itemBuilder: (ctx, i) {
+                    final faq = faqs[i];
+                    return ExpansionTile(
+                      tilePadding: EdgeInsets.zero,
+                      childrenPadding: const EdgeInsets.only(bottom: 12),
+                      title: Text(
+                        faq.$1,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          height: 1.45,
-                          color: isDark
-                              ? AppColors.metallicLight
-                              : AppColors.slateGrey,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            faq.$2,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5,
+                              height: 1.45,
+                              color: isDark
+                                  ? AppColors.metallicLight
+                                  : AppColors.slateGrey,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Prominent WhatsApp Support Button
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF25D366), Color(0xFF128C7E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF25D366).withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.email_outlined),
-                  label: const Text('Email support'),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 20),
+                  label: Text(
+                    'Chat on WhatsApp Support (+234 816 700 2799)',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
                   onPressed: () async {
-                    final uri = Uri(
-                      scheme: 'mailto',
-                      path: 'support@avotek.ng',
-                      queryParameters: {'subject': 'Avotek support request'},
-                    );
-                    final opened = await launchUrl(uri);
+                    final uri = Uri.parse('https://wa.me/2348167002799?text=${Uri.encodeComponent("Hello Avotek Support, I need help with my account/transaction.")}');
+                    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
                     if (!opened && sheetContext.mounted) {
+                      Clipboard.setData(const ClipboardData(text: '+2348167002799'));
                       ScaffoldMessenger.of(sheetContext).showSnackBar(
                         const SnackBar(
-                          content: Text(
-                            'No email app is available on this device.',
-                          ),
+                          content: Text('WhatsApp number +2348167002799 copied to clipboard!'),
                         ),
                       );
                     }
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
               ),
             ],
