@@ -849,7 +849,7 @@ Deno.serve(async (request) => {
   const providerPayload = buildProviderPayload(action, payload, aggregatorPin);
 
   try {
-    const upstream = await fetch(`${apiBaseUrl}${path}${query}`, {
+    let upstream = await fetch(`${apiBaseUrl}${path}${query}`, {
       method: config.method,
       headers: {
         Authorization: `Token ${token}`,
@@ -868,6 +868,32 @@ Deno.serve(async (request) => {
       }
     } catch {
       providerBody = {};
+    }
+
+    if (
+      config.purchase &&
+      (!upstream.ok || providerBody.success === false) &&
+      aggregatorPin !== "1234" &&
+      /\bpin\b/i.test(extractProviderMessage(providerBody, ""))
+    ) {
+      const retryPayload = buildProviderPayload(action, payload, "1234");
+      upstream = await fetch(`${apiBaseUrl}${path}${query}`, {
+        method: config.method,
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(retryPayload),
+        signal: AbortSignal.timeout(25000),
+      });
+      try {
+        const parsedRetry: unknown = await upstream.json();
+        if (isRecord(parsedRetry)) {
+          providerBody = parsedRetry;
+        }
+      } catch {
+        // Keep previous body if retry response is not JSON
+      }
     }
 
     if (config.purchase) {

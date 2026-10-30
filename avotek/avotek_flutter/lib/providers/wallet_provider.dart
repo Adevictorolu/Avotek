@@ -11,6 +11,8 @@ class WalletProvider extends ChangeNotifier {
   bool _isProvisioningDedicatedAccount = false;
   bool _dedicatedAccountNeedsProfile = false;
   String? _dedicatedAccountMessage;
+  double? _activeTransferAmountNaira;
+  String? _activeTransferReference;
   bool _isBalanceVisible = true;
   String _selectedFilter = 'all';
   String? _errorMessage;
@@ -25,6 +27,8 @@ class WalletProvider extends ChangeNotifier {
   bool get isProvisioningDedicatedAccount => _isProvisioningDedicatedAccount;
   bool get dedicatedAccountNeedsProfile => _dedicatedAccountNeedsProfile;
   String? get dedicatedAccountMessage => _dedicatedAccountMessage;
+  double? get activeTransferAmountNaira => _activeTransferAmountNaira;
+  String? get activeTransferReference => _activeTransferReference;
   bool get hasDedicatedAccount => _walletSummary?.hasDedicatedAccount ?? false;
   bool get isBalanceVisible => _isBalanceVisible;
   String get selectedFilter => _selectedFilter;
@@ -71,12 +75,15 @@ class WalletProvider extends ChangeNotifier {
     dynamic userId, {
     String? fullName,
     String? phone,
+    int? amountNaira,
     bool force = false,
   }) async {
     final uid = userId?.toString() ?? '';
     if (uid.isEmpty) return null;
 
-    if (!force && _walletSummary?.hasDedicatedAccount == true) {
+    if (!force &&
+        amountNaira == null &&
+        _walletSummary?.hasDedicatedAccount == true) {
       return PaystackDedicatedAccountResult(
         status: 'assigned',
         accountNumber: _walletSummary!.virtualAccountNumber,
@@ -93,10 +100,18 @@ class WalletProvider extends ChangeNotifier {
 
     try {
       final result = await PaystackPaymentService.instance
-          .requestDedicatedAccount(fullName: fullName, phone: phone);
+          .requestDedicatedAccount(
+            fullName: fullName,
+            phone: phone,
+            amountNaira: amountNaira,
+            forceNew: force && amountNaira != null,
+          );
       if (result.isAssigned) {
         _dedicatedAccountNeedsProfile = false;
         _dedicatedAccountMessage = null;
+        _activeTransferAmountNaira =
+            result.transferAmountNaira ?? result.amountNaira;
+        _activeTransferReference = result.reference;
         _walletSummary = WalletSummary(
           balance: _walletSummary?.balance ?? 0.0,
           currency: _walletSummary?.currency ?? 'NGN',

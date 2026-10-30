@@ -142,6 +142,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     final previousBalance = wallet.balance;
     setState(() => _isRefreshingTransfer = true);
     try {
+      try {
+        await PaystackPaymentService.instance.verifyLatest();
+      } catch (_) {}
       await Future.wait([
         auth.refreshWallet(),
         wallet.fetchWallet(userId),
@@ -309,6 +312,37 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
       if (mounted) {
         setState(() => _isCheckingPayment = false);
       }
+    }
+  }
+
+  Future<void> _generateAmountTransferAccount() async {
+    final amt = int.tryParse(_amountController.text.trim());
+    if (amt == null || amt < 100 || amt > 1000000) {
+      TopNotification.showWarning(
+        context,
+        'Enter an amount between ₦100 and ₦1,000,000.',
+      );
+      return;
+    }
+    final auth = context.read<AuthProvider>();
+    final wallet = context.read<WalletProvider>();
+    final user = auth.user;
+    if (user == null) return;
+    final res = await wallet.ensureDedicatedAccount(
+      user.id,
+      amountNaira: amt,
+      force: true,
+    );
+    if (!mounted) return;
+    await auth.refreshWallet();
+    if (!mounted) return;
+    if (res != null && res.isAssigned) {
+      final exactAmt = res.transferAmountNaira ?? amt.toDouble();
+      TopNotification.showSuccess(
+        context,
+        'Transfer ₦${exactAmt.toStringAsFixed(2)} to ${res.bankName} (${res.accountNumber}) above — no need to leave this screen!',
+        title: 'In-App Transfer Account Ready',
+      );
     }
   }
 
@@ -829,6 +863,38 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         ),
                       ),
                       const SizedBox(height: 18),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: wallet.isProvisioningDedicatedAccount
+                              ? null
+                              : _generateAmountTransferAccount,
+                          icon: wallet.isProvisioningDedicatedAccount
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.account_balance_rounded),
+                          label: Text(
+                            wallet.isProvisioningDedicatedAccount
+                                ? 'Generating in-app transfer account...'
+                                : 'Generate In-App Transfer Account for Amount',
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF10B981),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(

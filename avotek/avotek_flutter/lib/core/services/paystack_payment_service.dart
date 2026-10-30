@@ -29,6 +29,9 @@ class PaystackDedicatedAccountResult {
   final String? accountNumber;
   final String? bankName;
   final String? accountName;
+  final String? reference;
+  final double? amountNaira;
+  final double? transferAmountNaira;
   final String? message;
 
   const PaystackDedicatedAccountResult({
@@ -36,6 +39,9 @@ class PaystackDedicatedAccountResult {
     this.accountNumber,
     this.bankName,
     this.accountName,
+    this.reference,
+    this.amountNaira,
+    this.transferAmountNaira,
     this.message,
   });
 
@@ -77,12 +83,16 @@ class PaystackPaymentService {
   Future<PaystackDedicatedAccountResult> requestDedicatedAccount({
     String? fullName,
     String? phone,
+    int? amountNaira,
+    bool forceNew = false,
   }) async {
     final response = await _invoke({
       'action': 'dedicated_account',
       if (fullName != null && fullName.trim().isNotEmpty)
         'full_name': fullName.trim(),
       if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+      if (amountNaira != null && amountNaira >= 100) 'amount': amountNaira,
+      if (forceNew) 'force_new': true,
     });
     final status = response['status'];
     if (status is! String || (status != 'assigned' && status != 'pending')) {
@@ -93,6 +103,9 @@ class PaystackPaymentService {
     final accountNumber = response['account_number'];
     final bankName = response['bank_name'];
     final accountName = response['account_name'];
+    final reference = response['reference'];
+    final amount = response['amount_naira'];
+    final transferAmount = response['transfer_amount_naira'];
     final message = response['message'];
 
     if (status == 'assigned' &&
@@ -112,6 +125,10 @@ class PaystackPaymentService {
       accountNumber: accountNumber is String ? accountNumber.trim() : null,
       bankName: bankName is String ? bankName.trim() : null,
       accountName: accountName is String ? accountName.trim() : null,
+      reference: reference is String ? reference.trim() : null,
+      amountNaira: amount is num ? amount.toDouble() : null,
+      transferAmountNaira:
+          transferAmount is num ? transferAmount.toDouble() : null,
       message: message is String ? message.trim() : null,
     );
   }
@@ -147,6 +164,22 @@ class PaystackPaymentService {
       reference: verifiedReference is String ? verifiedReference : reference,
       amountNaira: amount is num ? amount.toDouble() : null,
       currency: currency is String ? currency : null,
+    );
+  }
+
+  Future<PaystackPaymentVerification> verifyLatest() async {
+    final response = await _invoke({
+      'action': 'verify_latest',
+    });
+    final status = response['status']?.toString() ?? 'none';
+    final verifiedReference = response['reference']?.toString() ?? '';
+    final amount = response['amount'];
+    final currency = response['currency']?.toString();
+    return PaystackPaymentVerification(
+      status: status,
+      reference: verifiedReference,
+      amountNaira: amount is num ? amount.toDouble() : null,
+      currency: currency,
     );
   }
 

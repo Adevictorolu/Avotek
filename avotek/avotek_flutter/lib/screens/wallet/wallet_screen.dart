@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
+import '../../core/services/paystack_payment_service.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
@@ -42,6 +43,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final auth = context.read<AuthProvider>();
     final wallet = context.read<WalletProvider>();
     if (auth.user?.id != null) {
+      try { await PaystackPaymentService.instance.verifyLatest(); } catch (_) {}
       await auth.refreshWallet();
       await wallet.fetchWallet(auth.user!.id);
       await wallet.fetchTransactions(auth.user!.id);
