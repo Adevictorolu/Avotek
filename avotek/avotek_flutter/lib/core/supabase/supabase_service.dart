@@ -544,4 +544,94 @@ class SupabaseService {
 
     return order;
   }
+
+  // --- REFERRAL & REWARDS RPCs ---
+
+  /// Get referral summary for current user
+  Future<Map<String, dynamic>> getReferralSummary() async {
+    try {
+      final res = await client.rpc('get_user_referral_summary');
+      if (res is Map) {
+        return Map<String, dynamic>.from(res);
+      }
+    } catch (e) {
+      debugPrint('Error getting referral summary: $e');
+    }
+    return {
+      'referral_code': '',
+      'referral_count': 0,
+      'avo_points': 0,
+      'total_earned': 0.0,
+      'redeemed_points': 0,
+    };
+  }
+
+  /// Get referral leaderboard
+  Future<List<Map<String, dynamic>>> getReferralLeaderboard() async {
+    try {
+      final res = await client.rpc('get_referral_leaderboard');
+      if (res is List) {
+        return res.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+      }
+    } catch (e) {
+      debugPrint('Error getting referral leaderboard: $e');
+    }
+    return [];
+  }
+
+  /// Redeem AVO Points to wallet balance
+  Future<Map<String, dynamic>> redeemAvoPoints(int pointsToRedeem) async {
+    final res = await client.rpc('redeem_avo_points', params: {
+      'points_to_redeem': pointsToRedeem,
+    });
+    return Map<String, dynamic>.from(res as Map);
+  }
+
+  // --- ADMIN DASHBOARD RPCs ---
+
+  /// Get high-level system statistics (super admin only)
+  Future<Map<String, dynamic>> adminGetSystemStats() async {
+    final res = await client.rpc('admin_get_system_stats');
+    return Map<String, dynamic>.from(res as Map);
+  }
+
+  /// List users with profile, wallet, and KYC metadata (super admin only)
+  Future<List<Map<String, dynamic>>> adminListUsers() async {
+    final res = await client.rpc('admin_list_users');
+    if (res is List) {
+      return res.map((u) => Map<String, dynamic>.from(u as Map)).toList();
+    }
+    return [];
+  }
+
+  /// Update user KYC status (super admin only)
+  Future<bool> adminSetUserKyc({
+    required String targetUserId,
+    required String newStatus,
+  }) async {
+    try {
+      await client.rpc('admin_set_user_kyc', params: {
+        'target_user_id': targetUserId,
+        'new_status': newStatus,
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Error setting user KYC: $e');
+      return false;
+    }
+  }
+
+  /// Credit or debit user wallet (super admin only)
+  Future<double> adminAdjustUserWallet({
+    required String targetUserId,
+    required double deltaAmount,
+    required String reason,
+  }) async {
+    final res = await client.rpc('admin_adjust_user_wallet', params: {
+      'target_user_id': targetUserId,
+      'delta_amount': deltaAmount,
+      'reason': reason,
+    });
+    return (res as num).toDouble();
+  }
 }

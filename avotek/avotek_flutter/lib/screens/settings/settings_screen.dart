@@ -21,7 +21,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  static const _whatsAppSupportNumber = '2348167002789';
+  static const _whatsAppSupportNumber = '2348167002799';
   late NotificationPreferences _notificationPreferences;
   bool _savingNotificationPreferences = false;
 
@@ -595,17 +595,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ],
                           ),
                           child: ElevatedButton(
-                            onPressed: () {
-                              if (newPinCtrl.text.length != 4) {
+                            onPressed: () async {
+                              final currentPin = currentPinCtrl.text.trim();
+                              final newPin = newPinCtrl.text.trim();
+                              final confirmPin = confirmPinCtrl.text.trim();
+
+                              if (newPin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(newPin)) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('PIN must be 4 digits.'),
+                                    content: Text('New PIN must be exactly 4 digits.'),
                                     backgroundColor: AppColors.error,
                                   ),
                                 );
                                 return;
                               }
-                              if (newPinCtrl.text != confirmPinCtrl.text) {
+                              if (newPin != confirmPin) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('New PINs do not match.'),
@@ -614,15 +618,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 );
                                 return;
                               }
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Transaction PIN updated successfully!',
+
+                              final auth = context.read<AuthProvider>();
+                              // If user already has a PIN, verify current PIN first
+                              if (!auth.needsPinSetup) {
+                                if (currentPin.length != 4) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Please enter your 4-digit current PIN.'),
+                                      backgroundColor: AppColors.error,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                final isValid = await auth.verifyPin(currentPin);
+                                if (!isValid) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Current PIN is incorrect. Please try again.'),
+                                      backgroundColor: AppColors.error,
+                                    ),
+                                  );
+                                  return;
+                                }
+                              }
+
+                              final success = await auth.setTransactionPin(newPin);
+                              if (!context.mounted) return;
+                              if (success) {
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Transaction PIN updated successfully!'),
+                                    backgroundColor: AppColors.success,
                                   ),
-                                  backgroundColor: AppColors.success,
-                                ),
-                              );
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(auth.errorMessage ?? 'Could not update transaction PIN.'),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryBlue,
@@ -1013,25 +1052,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Connected service routes',
+                  'Avotek Developer API Routes',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'The deployed adapter exposes wallet.balance, '
-                  'airtime.purchase, data.plans/data.purchase, '
-                  'cable.plans/cable.verify/cable.purchase, '
-                  'electricity.providers/electricity.verify/'
-                  'electricity.purchase, and transaction.requery through '
-                  'the server-side vtu-provider function. Result-checker '
-                  'PINs, bulk SMS, and airtime PIN generation are not wired '
-                  'because their authenticated endpoint contracts are not '
-                  'available. These routes have not passed authenticated '
-                  'live transaction tests.',
+                  'Automate your VTU, utility bills, and exam e-PIN purchases with Avotek\'s high-speed REST API. All requests use JSON payloads and require your Avotek Bearer token.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     height: 1.45,
@@ -1040,79 +1070,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         : AppColors.slateGrey,
                   ),
                 ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: () => _openProviderResource(
-                    Uri.parse('https://rif.africa/technotronics/api/bigisub'),
-                  ),
-                  icon: const Icon(Icons.open_in_new_rounded, size: 17),
-                  label: const Text('Open Bigisub API documentation'),
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
-                // Provider credentials are managed server-side.
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'VTU Provider',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _openApiTokenModal();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark
-                            ? AppColors.darkCardVariant
-                            : const Color(0xFFF1F5F9),
-                        foregroundColor: isDark
-                            ? Colors.white
-                            : const Color(0xFF0F172A),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 9,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(
-                            color: isDark
-                                ? AppColors.darkBorder
-                                : const Color(0xFFCBD5E1),
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        'Details',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // IP Whitelist Card
+                // API Key & Base URL Card
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkCardVariant
-                        : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(16),
+                    color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isDark
-                          ? AppColors.darkBorder
-                          : AppColors.lightBorder,
+                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                     ),
                   ),
                   child: Column(
@@ -1121,144 +1089,124 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.shield_outlined,
-                                size: 16,
-                                color: AppColors.slateGrey,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Provider IP allowlist',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: isDark
-                                      ? Colors.white
-                                      : const Color(0xFF0F172A),
-                                ),
-                              ),
-                            ],
+                          Text(
+                            'BASE ENDPOINT',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                              color: AppColors.electricCyan,
+                            ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.darkCard
-                                  : const Color(0xFFE2E8F0),
+                              color: AppColors.success.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: isDark
-                                    ? AppColors.darkBorder
-                                    : const Color(0xFFCBD5E1),
-                              ),
                             ),
                             child: Text(
-                              'Managed externally',
+                              'v1.0 ACTIVE',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
-                                color: isDark
-                                    ? Colors.white70
-                                    : const Color(0xFF475569),
+                                color: AppColors.success,
                               ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        'Avotek cannot read or change the Bigisub IP allowlist. '
-                        'Use the provider dashboard to manage this setting.',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          color: isDark
-                              ? AppColors.metallicLight
-                              : AppColors.slateGrey,
+                      SelectableText(
+                        'https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/vtu-provider',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white70 : const Color(0xFF0F172A),
                         ),
                       ),
-                      const SizedBox(height: 14),
-
-                      // Warning: No IP restriction
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkCard
-                              : const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.darkBorder
-                                : const Color(0xFFFDE68A),
-                          ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Authorization Header:',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                         ),
-                        child: Row(
+                      ),
+                      const SizedBox(height: 4),
+                      SelectableText(
+                        'Authorization: Bearer <YOUR_AVOTEK_API_KEY>',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 11,
+                          color: AppColors.primaryBlue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Available API Endpoints List
+                Text(
+                  'Supported Endpoints',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildEndpointRow('POST', '/airtime', 'Buy Airtime (MTN, AIRTEL, GLO, 9MOBILE)', isDark),
+                _buildEndpointRow('POST', '/data', 'Buy SME & Direct Data Bundles', isDark),
+                _buildEndpointRow('POST', '/cable', 'Recharge DSTV, GOTV & Startimes', isDark),
+                _buildEndpointRow('POST', '/electricity', 'Pay Electricity Bills & Get Instant Token', isDark),
+                _buildEndpointRow('POST', '/exam-pins', 'Buy WAEC, NECO & NABTEB Result Checkers', isDark),
+                _buildEndpointRow('GET', '/wallet/balance', 'Query Live Avotek Wallet Balance', isDark),
+                const SizedBox(height: 20),
+
+                // Developer Support Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF132035) : const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: AppColors.primaryCyan.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.api_rounded, color: AppColors.electricCyan, size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.warning_amber_rounded,
-                              size: 16,
-                              color: AppColors.warning,
+                            Text(
+                              'Need Production API Whitelisting?',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Changes made here are not applied to the provider.',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.5,
-                                  color: isDark
-                                      ? const Color(0xFFFBBF24)
-                                      : const Color(0xFF92400E),
-                                ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Contact Avotek Developer Desk on WhatsApp (+2348167002799) to get dedicated API keys and discounted corporate pricing.',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 14),
-
-                      // Provider allowlist is configured outside Avotek.
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Only the provider can apply allowlist changes.',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                color: isDark
-                                    ? AppColors.metallicLight
-                                    : AppColors.slateGrey,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          ElevatedButton.icon(
-                            onPressed: () => _openProviderResource(
-                              Uri.parse(
-                                'https://bigisub.ng/dashboard/settings/',
-                              ),
-                            ),
-                            icon: const Icon(
-                              Icons.open_in_new_rounded,
-                              size: 16,
-                            ),
-                            label: const Text('Open dashboard'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryBlue,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
-                              ),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: _openWhatsAppSupport,
+                        icon: const Icon(Icons.chat_rounded, color: AppColors.success),
+                        tooltip: 'Message on WhatsApp',
                       ),
                     ],
                   ),
@@ -1271,266 +1219,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // --- MODAL: API TOKEN DETAILS ---
-  void _openApiTokenModal() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Container(
-          width: 520,
-          padding: const EdgeInsets.all(26),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkCard : Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 36,
-                offset: const Offset(0, 14),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header: API Token + Subtitle + (X)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Service provider connection',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Provider credentials are stored securely on the server.',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12.5,
-                          color: isDark
-                              ? AppColors.metallicLight
-                              : AppColors.slateGrey,
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 18),
-                    color: isDark ? Colors.white70 : Colors.black54,
-                    onPressed: () => Navigator.pop(ctx),
-                    style: IconButton.styleFrom(
-                      backgroundColor: isDark
-                          ? AppColors.darkCardVariant
-                          : AppColors.lightCardVariant,
-                      padding: const EdgeInsets.all(6),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 22),
-
-              // Token label & box
-              Text(
-                'Credential handling:',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white70 : const Color(0xFF334155),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkCardVariant
-                      : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkBorder
-                        : const Color(0xFFCBD5E1),
-                  ),
-                ),
-                child: Text(
-                  'Provider credentials are stored securely on the server and are not exposed in this app.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF334155),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Created date row
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkCardVariant
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Secret location:',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5,
-                        color: isDark
-                            ? AppColors.metallicLight
-                            : AppColors.slateGrey,
-                      ),
-                    ),
-                    Text(
-                      'Managed in Supabase Edge Function secrets',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF334155),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // How to Use Box
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkCardVariant
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkBorder
-                        : AppColors.lightBorder,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'How to Use',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'The app securely sends VTU requests through the server integration.',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5,
-                        color: isDark
-                            ? AppColors.metallicLight
-                            : AppColors.slateGrey,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkCard : Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.darkBorder
-                              : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Text(
-                        'Provider credentials remain server-side.',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          color: AppColors.primaryCyan,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.warning_amber_rounded,
-                          size: 14,
-                          color: AppColors.warning,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Never place provider credentials in the client app.',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            color: isDark
-                                ? const Color(0xFFFBBF24)
-                                : const Color(0xFF92400E),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 22),
-
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Close'),
-                ),
-              ),
-            ],
-          ),
+  Widget _buildEndpointRow(String method, String path, String description, bool isDark) {
+    final isPost = method == 'POST';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
         ),
       ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: isPost
+                  ? AppColors.primaryBlue.withValues(alpha: 0.15)
+                  : AppColors.success.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              method,
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: isPost ? AppColors.primaryBlue : AppColors.success,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            path,
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              description,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
-  }
-
-  Future<void> _openProviderResource(Uri uri) async {
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not open the provider dashboard.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    }
   }
 
   void _openChangePasswordDialog() {
@@ -3143,28 +2885,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         isDark: isDark,
                       ),
                       _buildDivider(isDark),
-                      _buildToggleTile(
-                        icon: Icons.chat_bubble_outline_rounded,
-                        title: 'WhatsApp receipt preference',
-                        badge: 'PREFERENCE ONLY',
-                        warningNote:
-                            'Automated WhatsApp receipts need a verified business API and approved message template.',
-                        value: _notificationPreferences.whatsappReceipts,
-                        enabled: !_savingNotificationPreferences,
-                        onChanged: (value) => _saveNotificationPreferences(
-                          _notificationPreferences.copyWith(
-                            whatsappReceipts: value,
-                          ),
-                        ),
-                        isDark: isDark,
-                      ),
-                      _buildDivider(isDark),
                       _buildSettingTile(
                         icon: Icons.support_agent_rounded,
                         iconColor: AppColors.success,
                         iconBg: AppColors.success.withValues(alpha: 0.15),
                         title: 'WhatsApp Support',
-                        subtitle: '+234 816 700 2789 · opens WhatsApp',
+                        subtitle: '+234 816 700 2799 · opens WhatsApp',
                         trailing: const Icon(
                           Icons.open_in_new_rounded,
                           color: AppColors.success,

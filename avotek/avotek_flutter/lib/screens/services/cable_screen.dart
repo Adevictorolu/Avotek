@@ -9,6 +9,7 @@ import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/pin_modal.dart';
 import '../../widgets/top_notification.dart';
+import '../../widgets/transaction_success_dialog.dart';
 
 class CableScreen extends StatefulWidget {
   const CableScreen({super.key});
@@ -216,30 +217,20 @@ class _CableScreenState extends State<CableScreen> {
           );
           return;
         }
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle_rounded, color: AppColors.success),
-                SizedBox(width: 8),
-                Text('Subscribed!'),
-              ],
-            ),
-            content: Text(
-              '${result.message}\nRef: ${result.order.providerReference ?? result.order.id}',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.pop(context);
-                },
-                child: const Text('Done'),
-              ),
-            ],
-          ),
+        await TransactionSuccessDialog.show(
+          context,
+          title: 'Cable Subscription Active!',
+          serviceType: '$_selectedProvider (${_selectedPackage ?? "Package"})',
+          recipient: 'Smartcard: $card',
+          amount: _packageAmount,
+          reference: result.order.id,
+          providerReference: result.order.providerReference,
+          message: 'Your $_selectedProvider subscription has been renewed successfully.',
         );
+        _smartcardController.clear();
+        setState(() {
+          _verifiedCustomerName = null;
+        });
       } catch (e) {
         if (!mounted) return;
         TopNotification.showError(context, 'Subscription failed: $e');

@@ -60,6 +60,20 @@ class QuickServiceGrid extends StatelessWidget {
       color: Color(0xFF8B5CF6),
     ),
     ServiceItem(
+      id: 'exam_pins',
+      title: 'Result Checker',
+      subtitle: 'WAEC, NECO PINs',
+      icon: Icons.school_rounded,
+      color: Color(0xFF10B981),
+    ),
+    ServiceItem(
+      id: 'bulk_sms',
+      title: 'Bulk SMS',
+      subtitle: 'Instant Delivery',
+      icon: Icons.chat_bubble_outline_rounded,
+      color: Color(0xFF0EA5E9),
+    ),
+    ServiceItem(
       id: 'airtime_cash',
       title: 'Airtime to Cash',
       subtitle: 'Instant Cash Out',

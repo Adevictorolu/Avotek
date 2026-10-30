@@ -13,6 +13,7 @@ import '../../providers/wallet_provider.dart';
 import '../../widgets/avotek_loading_indicator.dart';
 import '../../widgets/service_brand_logo.dart';
 import '../../widgets/top_notification.dart';
+import '../../widgets/transaction_success_dialog.dart';
 
 class DataScreen extends StatefulWidget {
   const DataScreen({super.key});
@@ -312,12 +313,18 @@ class _DataScreenState extends State<DataScreen> {
           title: 'Transaction Processing',
         );
       } else {
-        TopNotification.showSuccess(
+        await TransactionSuccessDialog.show(
           context,
-          '${_selectedPlan!["plan"]} delivered successfully to $phone.',
-          title: 'Transaction completed successfully.',
+          title: 'Data Bundle Delivered!',
+          serviceType: '$_selectedNetwork Data (${_selectedPlan!["plan"]})',
+          recipient: phone,
+          amount: amount,
+          reference: result.order.id,
+          providerReference: result.order.providerReference,
+          message: '${_selectedPlan!["plan"]} delivered successfully to $phone.',
         );
-        _showSuccessDialog(phone, amount, result.message);
+        _phoneController.clear();
+        _pinController.clear();
       }
     } catch (e) {
       if (!mounted) return;
@@ -372,78 +379,6 @@ class _DataScreenState extends State<DataScreen> {
               context.go('/wallet/fund');
             },
             child: const Text('Add Money Now'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSuccessDialog(String phone, double amount, [String? customMsg]) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF14171E) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                color: Color(0xFF10B981),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_rounded,
-                color: Colors.white,
-                size: 28,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Data Delivered!',
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w900,
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              customMsg ??
-                  '${_selectedPlan!["plan"]} delivered instantly to $phone.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Debited: ₦${amount.toStringAsFixed(2)}',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF00D2FF),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              _pinController.clear();
-            },
-            child: const Text('Done'),
           ),
         ],
       ),

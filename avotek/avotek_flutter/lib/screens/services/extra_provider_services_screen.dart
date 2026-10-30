@@ -11,6 +11,7 @@ import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/pin_modal.dart';
 import '../../widgets/top_notification.dart';
+import '../../widgets/transaction_success_dialog.dart';
 
 enum ExtraProviderService { examPins, bulkSms }
 
@@ -243,31 +244,27 @@ class _ExtraProviderServicesScreenState
           result.message,
           title: 'Awaiting provider confirmation',
         );
-      } else if (_isExam && result.issuedPins.isNotEmpty) {
-        await showDialog<void>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Your examination PINs'),
-            content: SelectableText(result.issuedPins.join('\n')),
-            actions: [
-              TextButton(
-                onPressed: () async {
-                  await Clipboard.setData(
-                    ClipboardData(text: result.issuedPins.join('\n')),
-                  );
-                  if (context.mounted) Navigator.pop(context);
-                },
-                child: const Text('Copy PINs'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
-        );
       } else {
-        TopNotification.showSuccess(context, result.message, title: 'Sent');
+        await TransactionSuccessDialog.show(
+          context,
+          title: _isExam ? 'Exam PIN(s) Ready!' : 'Bulk SMS Sent!',
+          serviceType: _isExam
+              ? '${_selectedExam?['name'] ?? 'Result Checker'} × ${_quantityController.text}'
+              : 'Bulk SMS (${_recipients().length} recipients)',
+          recipient: _isExam ? 'Self / Candidate' : _recipients().join(', '),
+          amount: amount,
+          reference: result.order.id,
+          providerReference: result.order.providerReference,
+          token: result.token,
+          issuedPins: result.issuedPins,
+          message: _isExam
+              ? 'Your examination PIN(s) have been generated successfully.'
+              : 'Bulk SMS submitted successfully.',
+        );
+        if (!_isExam) {
+          _messageController.clear();
+          _recipientController.clear();
+        }
       }
     } catch (error) {
       if (mounted) {

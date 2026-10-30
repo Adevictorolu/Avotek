@@ -10,6 +10,7 @@ import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/pin_modal.dart';
 import '../../widgets/top_notification.dart';
+import '../../widgets/transaction_success_dialog.dart';
 
 class ElectricityScreen extends StatefulWidget {
   const ElectricityScreen({super.key});
@@ -192,81 +193,24 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
           );
           return;
         }
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle_rounded, color: AppColors.success),
-                SizedBox(width: 8),
-                Text('Token Generated!'),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Your prepaid electricity token is ready:',
-                  style: TextStyle(fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryCyan.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.primaryCyan),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SelectableText(
-                        token,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.copy_rounded, size: 18),
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: token));
-                          TopNotification.showSuccess(
-                            context,
-                            'Token copied to clipboard!',
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Units: ${result.units ?? "Available Units"}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  'Meter: $meter (${_discos[_selectedDisco]})',
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.pop(context);
-                },
-                child: const Text('Close'),
-              ),
-            ],
-          ),
+        await TransactionSuccessDialog.show(
+          context,
+          title: 'Electricity Token Generated!',
+          serviceType: '${_discos[_selectedDisco]} ($_selectedMeterType)',
+          recipient: 'Meter: $meter',
+          amount: amount,
+          reference: result.order.id,
+          providerReference: result.order.providerReference,
+          token: token,
+          units: result.units,
+          message: 'Your electricity token has been generated successfully.',
         );
+        _meterController.clear();
+        _amountController.clear();
+        setState(() {
+          _verifiedCustomerName = null;
+          _verificationDetails = null;
+        });
       } catch (e) {
         if (!mounted) return;
         TopNotification.showError(context, 'Payment failed: $e');

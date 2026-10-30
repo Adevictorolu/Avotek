@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
@@ -23,7 +24,37 @@ class AffiliateScreen extends StatefulWidget {
 class _AffiliateScreenState extends State<AffiliateScreen> {
   int _activeTab = 0; // 0: Referral Hub, 1: AVO Token, 2: Leaderboard
   bool _copied = false;
-  final int _userAvoPoints = 0;
+  int _referralCount = 0;
+  int _userAvoPoints = 0;
+  double _totalEarned = 0.0;
+  List<Map<String, dynamic>> _leaderboard = [];
+  bool _isLoadingReferralData = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReferralData();
+  }
+
+  Future<void> _loadReferralData() async {
+    if (_isLoadingReferralData) return;
+    setState(() => _isLoadingReferralData = true);
+    try {
+      final summary = await SupabaseService.instance.getReferralSummary();
+      final leaderboard = await SupabaseService.instance.getReferralLeaderboard();
+      if (mounted) {
+        setState(() {
+          _referralCount = (summary['referral_count'] as num?)?.toInt() ?? 0;
+          _userAvoPoints = (summary['avo_points'] as num?)?.toInt() ?? 0;
+          _totalEarned = (summary['total_earned'] as num?)?.toDouble() ?? 0.0;
+          _leaderboard = leaderboard;
+          _isLoadingReferralData = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingReferralData = false);
+    }
+  }
 
   void _copyToClipboard(String link) {
     Clipboard.setData(ClipboardData(text: link));
@@ -112,127 +143,164 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
 
   void _openRedeemPointsModal() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    bool isRedeeming = false;
     showDialog(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              const Icon(Icons.toll_rounded, color: AppColors.electricCyan),
-              const SizedBox(width: 10),
-              Text(
-                'Redeem AVO Token Points',
-                style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'AVO Token points cannot be redeemed yet. Referral tracking and reward payouts are not connected to a backend.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkCardVariant
-                      : AppColors.lightCardVariant,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkBorder
-                        : AppColors.lightBorder,
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) => AlertDialog(
+            backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: [
+                const Icon(Icons.toll_rounded, color: AppColors.electricCyan),
+                const SizedBox(width: 10),
+                Text(
+                  'Redeem AVO Token Points',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'AVAILABLE POINTS:',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
-                        color: isDark
-                            ? AppColors.metallicLight
-                            : AppColors.slateGrey,
-                      ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Redeem your verified referral reward points directly into your Avotek main wallet (1 AVO Point = ₦1).',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkCardVariant
+                        : AppColors.lightCardVariant,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder,
                     ),
-                    Text(
-                      '$_userAvoPoints pts',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.electricCyan,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'AVAILABLE POINTS:',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                          color: isDark
+                              ? AppColors.metallicLight
+                              : AppColors.slateGrey,
+                        ),
                       ),
-                    ),
-                  ],
+                      Text(
+                        '$_userAvoPoints pts (= ₦$_userAvoPoints)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.electricCyan,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Minimum redemption threshold is 200 pts (Berekete level). Points are credited instantly to your wallet upon confirmation.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  'Close',
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
                 ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                'Minimum redemption threshold is 200 pts (Berekete level). At Jolly level, continue sharing your link to start unlocking cash conversions.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11.5,
-                  color: isDark ? Colors.white60 : Colors.black54,
-                  height: 1.4,
+              ElevatedButton(
+                onPressed: (_userAvoPoints >= 200 && !isRedeeming)
+                    ? () async {
+                        setDialogState(() => isRedeeming = true);
+                        try {
+                          final res = await SupabaseService.instance.redeemAvoPoints(_userAvoPoints);
+                          if (!ctx.mounted) return;
+                          Navigator.pop(ctx);
+                          if (res['success'] == true) {
+                            if (context.mounted) {
+                              await context.read<AuthProvider>().refreshWallet();
+                              await _loadReferralData();
+                              TopNotification.showSuccess(
+                                context,
+                                'Redeemed ${res['points_redeemed']} AVO points! ₦${(res['credited_naira'] as num).toStringAsFixed(0)} credited to your wallet.',
+                                title: 'Points Redeemed',
+                              );
+                            }
+                          } else {
+                            if (context.mounted) {
+                              TopNotification.showError(
+                                context,
+                                res['error']?.toString() ?? 'Redemption failed.',
+                                title: 'Redemption Error',
+                              );
+                            }
+                          }
+                        } catch (e) {
+                          if (ctx.mounted) Navigator.pop(ctx);
+                          if (context.mounted) {
+                            TopNotification.showError(
+                              context,
+                              'Redemption error: $e',
+                              title: 'Redemption Failed',
+                            );
+                          }
+                        }
+                      }
+                    : () {
+                        Navigator.pop(ctx);
+                        TopNotification.showWarning(
+                          context,
+                          'Accumulate at least 200 pts to redeem for cash (currently $_userAvoPoints pts).',
+                        );
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryBlue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
+                child: isRedeeming
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(
+                        'Redeem All',
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+                      ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'Close',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: _userAvoPoints >= 200
-                  ? () {
-                      Navigator.pop(ctx);
-                      TopNotification.showWarning(
-                        context,
-                        'Point redemption is unavailable until it can be verified and credited by the backend. Your points were not changed.',
-                        title: 'Redemption Unavailable',
-                      );
-                    }
-                  : () {
-                      Navigator.pop(ctx);
-                      TopNotification.showWarning(
-                        context,
-                        'Accumulate at least 200 pts to redeem for cash.',
-                      );
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(
-                'Redeem Now',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ],
         );
       },
     );
@@ -1014,7 +1082,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
         final cards = [
           _buildStatCard(
             title: 'TOTAL EARNINGS',
-            value: '₦0',
+            value: '₦${_totalEarned.toStringAsFixed(0)}',
             icon: Icons.trending_up_rounded,
             iconBg: const Color(0xFF059669).withValues(alpha: 0.15),
             iconColor: const Color(0xFF10B981),
@@ -1022,7 +1090,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           ),
           _buildStatCard(
             title: 'AVAILABLE BALANCE',
-            value: '₦0',
+            value: '₦${wallet.balance.toStringAsFixed(0)}',
             icon: Icons.account_balance_wallet_rounded,
             iconBg: const Color(0xFF6366F1).withValues(alpha: 0.15),
             iconColor: const Color(0xFF818CF8),
@@ -1030,7 +1098,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           ),
           _buildStatCard(
             title: 'TOTAL REFERRALS',
-            value: '0',
+            value: '$_referralCount',
             icon: Icons.people_alt_rounded,
             iconBg: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
             iconColor: const Color(0xFF38BDF8),
@@ -1732,9 +1800,35 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
     final auth = context.watch<AuthProvider>();
     final currentUser = auth.user;
 
-    // Only real users that actually exist on the system (mock names completely scrapped)
+    // Real platform leaderboard from Supabase
     final realEarners = <Map<String, dynamic>>[];
-    if (currentUser != null && _userAvoPoints > 0) {
+    if (_leaderboard.isNotEmpty) {
+      for (int i = 0; i < _leaderboard.length; i++) {
+        final item = _leaderboard[i];
+        final name = (item['name'] as String?)?.isNotEmpty == true
+            ? (item['name'] as String)
+            : 'Avotek Member';
+        final points = (item['points'] as num?)?.toInt() ?? 0;
+        final refCount = (item['referral_count'] as num?)?.toInt() ?? 0;
+        realEarners.add({
+          'rank': i + 1,
+          'name': name,
+          'initial': name[0].toUpperCase(),
+          'referrals': '$refCount referrals',
+          'badge': points >= 1000
+              ? 'Chairman'
+              : (points >= 200 ? 'Berekete' : 'Jolly'),
+          'badgeColor': points >= 1000
+              ? const Color(0xFF78350F)
+              : Colors.white,
+          'badgeBg': points >= 1000
+              ? const Color(0xFFFDE68A)
+              : const Color(0xFF10B981),
+          'points': '$points PTS',
+          'isTopThree': i < 3,
+        });
+      }
+    } else if (currentUser != null && _userAvoPoints > 0) {
       realEarners.add({
         'rank': 1,
         'name': currentUser.name.isNotEmpty
@@ -1742,7 +1836,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             : (currentUser.username ?? 'Avotek Member'),
         'initial': (currentUser.name.isNotEmpty ? currentUser.name[0] : 'A')
             .toUpperCase(),
-        'referrals': '${currentUser.referralCode} (${currentUser.avoId})',
+        'referrals': '$_referralCount referrals (${currentUser.avoId})',
         'badge': _userAvoPoints >= 1000
             ? 'Chairman'
             : (_userAvoPoints >= 200 ? 'Berekete' : 'Jolly'),

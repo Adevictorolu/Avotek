@@ -951,9 +951,11 @@ async function handleDedicatedAccount(
     "/dedicated_account/available_providers",
     "GET",
   );
+  console.log("Paystack /dedicated_account/available_providers:", JSON.stringify(providers));
 
   if (providers.ok && customerCode) {
     const providerList = Array.isArray(providers.body?.data) ? providers.body.data : [];
+    console.log("Paystack providerList:", JSON.stringify(providerList));
     const wema = providerList.find((item) => isRecord(item) && item.provider_slug === "wema-bank");
     const firstProvider = providerList.find((item) =>
       isRecord(item) && typeof item.provider_slug === "string"
@@ -975,6 +977,8 @@ async function handleDedicatedAccount(
     let assignedAccount = await findDedicatedAccount(config.paystackSecretKey, customerCode).catch(
       () => null,
     );
+    console.log("Existing assignedAccount from Paystack:", JSON.stringify(assignedAccount));
+    let assignmentResult: unknown = null;
     if (!assignedAccount) {
       const assignment = await paystackApiRequest(
         config.paystackSecretKey,
@@ -988,6 +992,8 @@ async function handleDedicatedAccount(
           phone,
         },
       );
+      assignmentResult = assignment;
+      console.log("Paystack /dedicated_account POST response:", JSON.stringify(assignment));
       if (assignment.ok && assignment.body) {
         assignedAccount = getDedicatedAccount(assignment.body.data);
       }
@@ -1029,6 +1035,7 @@ async function handleDedicatedAccount(
   if (!fallbackTransfer) {
     return jsonResponse({
       message: "Paystack could not prepare your transfer account right now. Please try again.",
+      providers_debug: providers,
     }, 502);
   }
 
@@ -1053,6 +1060,10 @@ async function handleDedicatedAccount(
     transfer_amount_naira: fallbackTransfer.transferAmountNaira,
     net_credit_naira: fallbackTransfer.netCreditNaira,
     expires_at: fallbackTransfer.expiresAt,
+    _debug: {
+      providers,
+      customerCode,
+    },
   });
 }
 
