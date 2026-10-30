@@ -44,11 +44,8 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
   int _getSelectedIndex() {
     final route = widget.currentRoute;
     if (route.startsWith('/services')) return 1;
-    if (route.startsWith('/transactions') || route.startsWith('/history')) {
-      return 2;
-    }
-    if (route.startsWith('/wallet')) return 3;
-    if (route.startsWith('/profile')) return 4;
+    if (route.startsWith('/wallet')) return 2;
+    if (route.startsWith('/profile') || route.startsWith('/settings')) return 3;
     return 0; // default Home
   }
 
@@ -61,13 +58,10 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
         context.go('/services');
         break;
       case 2:
-        context.go('/transactions');
+        context.go('/wallet/fund');
         break;
       case 3:
-        context.go('/wallet');
-        break;
-      case 4:
-        _scaffoldKey.currentState?.openDrawer();
+        context.go('/profile');
         break;
     }
   }
@@ -274,6 +268,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
               title: const AvotekLogo(size: 26, showText: true),
               actions: [
                 IconButton(
+                  icon: const Icon(
+                    Icons.receipt_long_rounded,
+                    size: 20,
+                  ),
+                  tooltip: 'Transaction History',
+                  onPressed: () => context.push('/transactions'),
+                ),
+                IconButton(
                   icon: Icon(
                     isDark
                         ? Icons.light_mode_outlined
@@ -287,6 +289,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     Icons.account_balance_wallet_outlined,
                     size: 20,
                   ),
+                  tooltip: 'Wallet Balance',
                   onPressed: () => context.push('/wallet'),
                 ),
               ],
@@ -333,19 +336,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   label: 'Services',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.receipt_long_outlined),
-                  selectedIcon: Icon(Icons.receipt_long),
-                  label: 'History',
+                  icon: Icon(Icons.add_card_outlined),
+                  selectedIcon: Icon(Icons.add_card_rounded),
+                  label: 'Fund Wallet',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.account_balance_wallet_outlined),
-                  selectedIcon: Icon(Icons.account_balance_wallet),
-                  label: 'Wallet',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.menu_rounded),
-                  selectedIcon: Icon(Icons.menu_rounded),
-                  label: 'Menu',
+                  icon: Icon(Icons.person_outline_rounded),
+                  selectedIcon: Icon(Icons.person_rounded),
+                  label: 'Profile',
                 ),
               ],
             )

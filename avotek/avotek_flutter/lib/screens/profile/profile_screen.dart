@@ -795,9 +795,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   // --- CARD 3: VERIFICATION / KYC STATUS CARD ---
                   _buildKycStatusCard(isDark, fullName, email, phone, user, hasPhone),
+                  const SizedBox(height: 20),
+
+                  // --- CARD 4: SUPPORT, HELP & ACTIVITY (EMBEDDED PROFILE SUPPORT) ---
+                  _buildSupportAndHistoryCard(isDark),
                   const SizedBox(height: 24),
 
-                  // --- CARD 4: SIGN OUT ---
+                  // --- CARD 5: SIGN OUT ---
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(22),
@@ -1297,6 +1301,342 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  // --- CARD 4: SUPPORT & ACTIVITY HUB (EMBEDDED UNDER PROFILE) ---
+  Widget _buildSupportAndHistoryCard(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0052FF).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.support_agent_rounded,
+                  color: Color(0xFF0052FF),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Support & Activity Hub',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '24/7 dedicated support, Help FAQs, and complete transaction history',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Prominent WhatsApp Support Button
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF25D366), Color(0xFF128C7E)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF25D366).withValues(alpha: 0.28),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 20),
+              label: Text(
+                'Chat on WhatsApp Support (+234 816 700 2799)',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              onPressed: () async {
+                final uri = Uri.parse(
+                  'https://wa.me/2348167002799?text=${Uri.encodeComponent("Hello Avotek Support, I need help with my account/transaction.")}',
+                );
+                final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                if (!opened && mounted) {
+                  Clipboard.setData(const ClipboardData(text: '+2348167002799'));
+                  TopNotification.showSuccess(
+                    context,
+                    'WhatsApp number +2348167002799 copied to clipboard.',
+                    title: 'Copied',
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Activity Navigation Tiles
+          _buildActivityTile(
+            icon: Icons.receipt_long_rounded,
+            iconColor: const Color(0xFF0052FF),
+            title: 'Transaction & Activity History',
+            subtitle: 'View all bills, airtime, data receipts, token codes & wallet funding logs',
+            isDark: isDark,
+            onTap: () => context.push('/transactions'),
+          ),
+          const SizedBox(height: 10),
+          _buildActivityTile(
+            icon: Icons.help_outline_rounded,
+            iconColor: const Color(0xFF00D2FF),
+            title: 'Avotek Help & Frequently Asked Questions',
+            subtitle: 'Learn how Pay For Me, Airtime Cashback & Gift Vouchers work',
+            isDark: isDark,
+            onTap: () => _showHelpFaqModal(context, isDark),
+          ),
+          const SizedBox(height: 10),
+          _buildActivityTile(
+            icon: Icons.security_rounded,
+            iconColor: const Color(0xFF10B981),
+            title: 'Security & Transaction PIN',
+            subtitle: 'Manage your password, biometrics, and 4-digit transaction authorization PIN',
+            isDark: isDark,
+            onTap: () => context.push('/settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityTile({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF171B26) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: isDark ? Colors.white38 : Colors.black38,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showHelpFaqModal(BuildContext context, bool isDark) {
+    final faqs = <(String, String)>[
+      (
+        'How does "Pay For Me" (Shareable Link) work?',
+        'Tick "Pay For Me" on any service (Airtime, Data, Cable TV, Electricity, or Result Checker) '
+            'and tap the button to generate a secure shareable link. You can send this link via WhatsApp '
+            'or copy it for a friend, family member, or sponsor to settle the bill for you.',
+      ),
+      (
+        'How do I earn with the Referral & Affiliate Programme?',
+        'Share your unique referral link or Avotek ID with friends. When they register, you receive '
+            '₦50 credited to your wallet balance plus 100 AVO token points, and your friend gets a ₦25 '
+            'welcome bonus instantly! You also earn lifetime commissions on all their recharges.',
+      ),
+      (
+        'How does Airtime Cashback work?',
+        'When you recharge airtime on Avotek, you receive an instant cashback discount credited '
+            'back to your balance or deducted from your total bill immediately upon checkout.',
+      ),
+      (
+        'How do I create and redeem Gift Vouchers?',
+        'Switch to the "Gift Voucher" tab on any service screen to generate a redeemable code. '
+            'Anyone can redeem the voucher code on the Coupons page to instantly receive the value '
+            'in their wallet balance.',
+      ),
+      (
+        'How fast are Data, Electricity, and Cable TV delivered?',
+        'All Avotek transactions are 100% automated with instant direct telecom & DisCo routing. '
+            'Electricity meter tokens and exam PINs are immediately displayed on your screen and saved in '
+            'your receipt history.',
+      ),
+      (
+        'How do I fund my wallet with Paystack Direct?',
+        'Navigate to Fund Wallet and select Paystack Direct. You can pay via debit cards (Mastercard/Visa/Verve), '
+            'bank transfer, USSD, or Apple Pay with instant zero-delay wallet crediting.',
+      ),
+      (
+        'My transaction is pending or processing',
+        'Check Transactions. If your transaction shows pending, our automated system continuously '
+            'requeries the provider. If it does not update within 2 minutes, reach out to our WhatsApp support team.',
+      ),
+      (
+        'How do I reset my password or transaction PIN?',
+        'For passwords, use "Forgot password" on the Sign In page. For transaction PINs, navigate to '
+            'Settings > Security > Change Transaction PIN to verify via email OTP and set a new 4-digit code.',
+      ),
+    ];
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black26,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Avotek Help & FAQs',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Frequently asked questions & instant live assistance',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 340),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: faqs.length,
+                  itemBuilder: (ctx, i) {
+                    final faq = faqs[i];
+                    return ExpansionTile(
+                      tilePadding: EdgeInsets.zero,
+                      childrenPadding: const EdgeInsets.only(bottom: 12),
+                      title: Text(
+                        faq.$1,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            faq.$2,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5,
+                              height: 1.45,
+                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
