@@ -50,7 +50,7 @@ class QuickServiceGrid extends StatelessWidget {
       title: 'Electricity',
       subtitle: 'Prepaid Token',
       icon: Icons.bolt_rounded,
-      color: Color(0xFFF59E0B),
+      color: Color(0xFF00D2FF),
     ),
     ServiceItem(
       id: 'tv',
@@ -92,7 +92,7 @@ class QuickServiceGrid extends StatelessWidget {
       title: 'Recharge PIN',
       subtitle: 'Print VTU Cards',
       icon: Icons.print_rounded,
-      color: Color(0xFFEA580C),
+      color: Color(0xFF0052FF),
     ),
   ];
 

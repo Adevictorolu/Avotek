@@ -30,7 +30,7 @@ class _LandingScreenState extends State<LandingScreen> {
   static const Color sAirtime = Color(0xFF7C3AED); // Solid Violet
   static const Color sData = Color(0xFF2563EB); // Royal Blue
   static const Color sCable = Color(0xFFDB2777); // Pink
-  static const Color sPower = Color(0xFFEA580C); // Warm Orange
+  static const Color sPower = Color(0xFF00D2FF); // Electric Cyan
 
   @override
   void dispose() {

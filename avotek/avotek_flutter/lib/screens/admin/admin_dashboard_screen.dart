@@ -1294,12 +1294,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6600).withValues(alpha: 0.15),
+                  color: const Color(0xFF0052FF).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.price_change_rounded,
-                  color: Color(0xFFFF6600),
+                  color: Color(0xFF00D2FF),
                   size: 24,
                 ),
               ),
@@ -1392,7 +1392,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6600),
+              backgroundColor: const Color(0xFF0052FF),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
