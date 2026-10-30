@@ -14,13 +14,9 @@ class BalanceCard extends StatelessWidget {
     final wallet = context.watch<WalletProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final hasDedicated = wallet.hasDedicatedAccount;
-    final accountNumber = hasDedicated
-        ? wallet.walletSummary?.virtualAccountNumber
-        : null;
-    final bankName = hasDedicated
-        ? wallet.walletSummary?.virtualAccountBank
-        : null;
+    // Dedicated virtual accounts are retired; funding is Paystack-only.
+    const String? accountNumber = null;
+    const String? bankName = null;
 
     return Container(
       width: double.infinity,
@@ -164,7 +160,7 @@ class BalanceCard extends StatelessWidget {
                         ],
                       )
                     : Text(
-                        'Personal transfer account & instant Paystack funding',
+                        'Instant funding via Paystack (card, transfer, USSD)',
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark

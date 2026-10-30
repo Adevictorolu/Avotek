@@ -709,9 +709,11 @@ class _CableScreenState extends State<CableScreen> {
                             ),
                           )
                         else
-                          GridView.builder(
+                          ConstrainedBox(
+                           constraints: const BoxConstraints(maxHeight: 250),
+                           child: GridView.builder(
                             shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
+                            primary: false,
                             itemCount: _livePackages.length,
                             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: isDesktop ? 3 : 2,
@@ -785,11 +787,12 @@ class _CableScreenState extends State<CableScreen> {
                                 ),
                               );
                             },
+                           ),
                           ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                       ],
+                     ),
+                   ),
+                   const SizedBox(height: 20),
 
                   // Smartcard & Phone Inputs (Buy Now Mode)
                   if (_activeMode == 0) ...[

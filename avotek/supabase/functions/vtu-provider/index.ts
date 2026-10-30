@@ -1160,7 +1160,7 @@ Deno.serve(async (request) => {
         }
       }
 
-      const finalMessage = settlementMessage ?? extractProviderMessage(
+      let finalMessage = settlementMessage ?? extractProviderMessage(
         providerBody,
         status === "pending"
           ? "Provider response pending confirmation."
@@ -1168,6 +1168,15 @@ Deno.serve(async (request) => {
           ? "The provider rejected the purchase."
           : "Purchase completed successfully.",
       );
+      if (
+        status === "failed" &&
+        /insufficient|low balance|not enough (fund|balance)|fund your wallet/i.test(finalMessage)
+      ) {
+        // The provider-side float is short; never blame the customer's wallet for it.
+        console.error(`Provider rejected ${action} for float reasons: ${finalMessage}`);
+        finalMessage =
+          "This service is temporarily unavailable. You have not been charged. Please try again shortly.";
+      }
 
       if (status === "failed") {
         await finalizePurchase(

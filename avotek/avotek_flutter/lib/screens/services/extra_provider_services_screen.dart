@@ -125,6 +125,38 @@ class _ExtraProviderServicesScreenState
   bool _consentConfirmed = false;
 
   bool get _isExam => widget.service == ExtraProviderService.examPins;
+
+  /// Official exam-board logo by code. Live price payloads carry no logo,
+  /// so this must never depend on server data.
+  String _examLogoFor(String code) {
+    switch (code.toUpperCase()) {
+      case 'NECO':
+        return 'assets/images/brands/neco.png';
+      case 'NABTEB':
+        return 'assets/images/brands/nabteb.png';
+      case 'WAEC':
+      default:
+        return 'assets/images/brands/waec.png';
+    }
+  }
+
+  static const List<String> _brandLogoAssets = [
+    'assets/images/brands/waec.png',
+    'assets/images/brands/neco.png',
+    'assets/images/brands/nabteb.png',
+    'assets/images/brands/mtn.png',
+    'assets/images/brands/airtel.png',
+    'assets/images/brands/glo.png',
+    'assets/images/brands/9mobile.png',
+  ];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    for (final asset in _brandLogoAssets) {
+      precacheImage(ResizeImage(AssetImage(asset), height: 90), context);
+    }
+  }
   bool get _isAirtimePins => widget.service == ExtraProviderService.airtimePins;
   String get _title => _isExam
       ? 'Buy Result Checker'
@@ -1014,7 +1046,7 @@ class _ExtraProviderServicesScreenState
                                       .toUpperCase() ==
                                   code;
                               final amount = (exam['amount'] as num?)?.toDouble() ?? 0.0;
-                              final logoPath = exam['logo'] as String? ?? 'assets/images/brands/waec.png';
+                              final logoPath = _examLogoFor(code);
 
                               return Expanded(
                                 child: Padding(
@@ -1053,7 +1085,9 @@ class _ExtraProviderServicesScreenState
                                                 Image.asset(
                                                   logoPath,
                                                   height: 30,
+                                                  cacheHeight: 90,
                                                   fit: BoxFit.contain,
+                                                  gaplessPlayback: true,
                                                   errorBuilder: (ctx, err, stack) => Icon(
                                                     Icons.school,
                                                     size: 26,

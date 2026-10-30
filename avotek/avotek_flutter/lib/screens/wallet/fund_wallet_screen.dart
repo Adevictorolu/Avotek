@@ -65,17 +65,6 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     }
 
     await wallet.fetchWallet(user.id);
-    if (!mounted) return;
-    if (!wallet.hasDedicatedAccount) {
-      await wallet.ensureDedicatedAccount(
-        user.id,
-        fullName: user.name.isNotEmpty ? user.name : null,
-        phone: user.phone.isNotEmpty ? user.phone : null,
-      );
-      if (mounted) {
-        await auth.refreshWallet();
-      }
-    }
   }
 
   Future<void> _activateDedicatedAccount() async {
@@ -897,7 +886,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  'Transfer to your dedicated Paystack virtual account without leaving this screen, or fund via Paystack checkout.',
+                  'Fund your wallet instantly and securely with Paystack: card, bank transfer, or USSD.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.5,
                     height: 1.5,
@@ -1260,8 +1249,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                // 2. Dedicated Account Section (Secondary / Alternative)
-                _buildDedicatedAccountSection(context, wallet, isDark),
+
                 const SizedBox(height: 18),
                 Container(
                   padding: const EdgeInsets.all(18),

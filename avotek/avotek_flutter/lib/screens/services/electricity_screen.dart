@@ -515,9 +515,11 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        GridView.builder(
+                        ConstrainedBox(
+                         constraints: const BoxConstraints(maxHeight: 230),
+                         child: GridView.builder(
                           shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
+                          primary: false,
                           itemCount: _discoList.length,
                           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: isDesktop ? 3 : 2,
@@ -578,11 +580,12 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               ),
                             );
                           },
+                         ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                       ],
+                     ),
+                   ),
+                   const SizedBox(height: 20),
 
                   // Meter Type: Prepaid vs Postpaid
                   Container(

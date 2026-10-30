@@ -787,9 +787,11 @@ class _DataScreenState extends State<DataScreen> {
                             ),
                           )
                         else
-                          GridView.builder(
+                          ConstrainedBox(
+                           constraints: const BoxConstraints(maxHeight: 250),
+                           child: GridView.builder(
                             shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
+                            primary: false,
                             itemCount: filteredPlans.length,
                             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: isDesktop ? 3 : 2,
@@ -886,13 +888,14 @@ class _DataScreenState extends State<DataScreen> {
                                 ),
                               );
                             },
+                           ),
                           ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                       ],
+                     ),
+                   ),
+                   const SizedBox(height: 20),
 
-                  // Mode-specific inputs
+                   // Mode-specific inputs
                   if (_activeMode == 0) ...[
                     // Buy Now Mode: PHONE NUMBER
                     Container(

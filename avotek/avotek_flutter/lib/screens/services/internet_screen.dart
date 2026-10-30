@@ -542,9 +542,11 @@ class _InternetScreenState extends State<InternetScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        GridView.builder(
+                        ConstrainedBox(
+                         constraints: const BoxConstraints(maxHeight: 250),
+                         child: GridView.builder(
                           shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
+                          primary: false,
                           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: isDesktop ? 3 : 2,
                             childAspectRatio: isDesktop ? 2.3 : 1.9,
@@ -615,11 +617,12 @@ class _InternetScreenState extends State<InternetScreen> {
                               ),
                             );
                           },
+                         ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                       ],
+                     ),
+                   ),
+                   const SizedBox(height: 20),
 
                   // Account / Device Input Card
                   Container(
