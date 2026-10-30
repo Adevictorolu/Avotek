@@ -27,12 +27,14 @@ not prove that a provider credential is valid or that a real transaction works.
 ## Not yet verified or implemented
 
 - The Paystack Test payment and wallet-credit path has been verified.
-  Paystack's dashboard currently has Live mode selected, but no authenticated
-  Live payment has been completed. The current Supabase project still contains
-  simulated Test wallet credits and must not be used for Live wallet funding
-  until those credits are isolated or reversed through an authorized, audited
-  ledger adjustment. A Paystack dashboard mode toggle does not change the
-  `PAYSTACK_SECRET_KEY` configured in Supabase.
+  Paystack's dashboard currently has Live mode selected. The deployed wallet
+  funding function also successfully initialized an authenticated ₦100 Live
+  checkout using the recently updated secret. The unpaid probe was immediately
+  verified as failed, did not credit the wallet, and left no pending funding
+  attempt. This confirms Live checkout initialization, not settlement: no
+  authenticated Live payment has been completed. The Test-funded wallet
+  balance was reversed to zero with an auditable debit entry while preserving
+  all original funding rows.
 - The current deployment still targets the existing `gcixbqrridzgobkqnlfz`
   Supabase project. A separate project named Avotek Production exists, but it
   has not been verified or configured for the app. The current deployment is
@@ -78,14 +80,27 @@ The latest check of the linked Supabase project found:
   `20261019235500`, and `20261020010000` are applied, and the core profile,
   wallet, transaction, and VTU tables/RPCs exist.
 - Migration `20261019235500_backfill_missing_wallets.sql` creates a zero-balance
-  NGN wallet only for profiles that do not have one. The account's missing
-  wallet has been repaired.
-- Seven completed Paystack Test wallet-funding ledger records totaling ₦4,500
-  and one wallet balance totaling ₦4,500 were observed on 2026-10-29. They are
-  simulated Test funds, not Live funds, and must not be spent against a real
-  VTU provider. Isolate this data in a separate production project or obtain
-  explicit authorization for an audited ledger reversal before using the
-  current project for Live payments.
+  NGN wallet only for profiles that do not have one. Four pre-existing Auth
+  users were missing profile rows, so their funding RPCs could not find a
+  wallet. Migration `20261029235000_backfill_missing_auth_profiles_and_wallets.sql`
+  safely created their profiles and zero-balance NGN wallets. The `auth.users`
+  signup trigger also creates a zero-balance wallet for each new user.
+- Paystack funding is account-scoped, not restricted to the account used for
+  the checkout probe: the Edge Function validates each bearer token with
+  Supabase Auth, then uses that user's ID and email for initialization and
+  passes the same user ID to the server-only wallet RPCs. The current project
+  now has five Auth users, five profiles, and five wallets, with no accounts
+  missing either row. The multi-account database provisioning is verified, but
+  a successful Live payment from a separate account has not been tested.
+- On 2026-10-29, a fresh check found eight completed Paystack Test
+  wallet-funding records totaling ₦5,500 in the only wallet. The wallet had a
+  ₦5,500 balance, no spending, and a matching ₦5,500 `total_funded` value. An
+  atomic, assertion-guarded adjustment set the balance and `total_funded` to
+  zero and inserted the completed debit reversal
+  `AVOTESTREVERSAL_20261029_89fa63372d444df18894844`; all eight original
+  credits remain in the ledger. A follow-up query confirmed the zero balance
+  and exactly one reversal. This removes the unspent Test credits without
+  deleting audit history.
 - Migration `20261020010000_prevent_duplicate_wallet_funding.sql` is applied.
   It serializes funding initialization per wallet and returns the existing
   pending reference instead of creating another pending attempt.
@@ -93,21 +108,36 @@ The latest check of the linked Supabase project found:
   A valid unauthenticated initialization request to `paystack-payments` reaches
   the authentication check (HTTP 401), indicating its required server
   configuration names are present. `paystack-payments` is deployed at version
-  11 with requested-amount validation and duplicate-pending protection.
+  14 with requested-amount validation, duplicate-pending protection, and the
+  Live-key guard.
 - The app calls the `vtu-provider` Edge Function by its deployed name. Its
   endpoint responds to CORS preflight and rejects unauthenticated requests;
   the Bigisub secret names are configured, but credentials and provider
   operations have not been validated with an authenticated account.
 - Paystack callback `PAYSTACK_CALLBACK_URL` and the Live webhook URL point to
   the current Supabase project. The dashboard showed Live mode selected on
-  2026-10-29, but the Paystack Live secret was not rotated or installed in
-  Supabase and a Live payment was not validated. The dashboard's current-month
-  successful-transactions view showed no transactions at the time checked.
+  2026-10-29. A ₦100 Live checkout initialization was accepted by Paystack
+  using the recently updated Supabase secret; the unpaid reference was verified
+  as failed and no wallet credit occurred. A Live settlement and webhook credit
+  have not been tested. The dashboard's current-month successful-transactions
+  view showed no transactions at the time checked.
 - Paystack's `PAYSTACK_SECRET_KEY` secret exists in Supabase, but its value is
-  hidden and must not be inferred from its name or digest. Do not claim Live
-  wallet funding works until the correct rotated Live key is set directly in
-  the production project's Supabase secrets and a controlled Live payment is
-  verified end to end.
+  hidden and must not be inferred from its digest. It was last updated
+  2026-10-29 23:10 UTC. The authenticated initialization request accepted by
+  Paystack and the following verification response confirm the deployed key is
+  a valid Live credential. The Paystack dashboard masks its key value. A
+  subsequent successful Live settlement is still required to certify complete
+  funding and webhook behavior.
+- The `paystack-payments` Edge Function is active at version 14 with a
+  fail-closed guard that rejects funding initialization, verification, and
+  webhooks unless `PAYSTACK_SECRET_KEY` has the `sk_live_` prefix. This does not
+  accept Test keys. An authenticated ₦100 initialization and verification
+  exercised the Live/unpaid path; the request returned a Paystack checkout URL,
+  verification returned failed, and the wallet remained at zero.
+- Do not delete Test funding transactions to remove simulated credits. The
+  observed unspent Test balance was reversed with an auditable debit while
+  preserving the source entries. Recheck all wallet balances and funding
+  ledgers before any further adjustment.
 - The Paystack amount verification now compares the exact requested amount and
   currency while excluding fees passed through to the payer. All seven
   successful Test transactions were credited through the idempotent RPC. No

@@ -2,6 +2,7 @@ import 'package:avotek_flutter/core/router/app_router.dart';
 import 'package:avotek_flutter/core/services/vtu_api_service.dart';
 import 'package:avotek_flutter/core/supabase/supabase_service.dart';
 import 'package:avotek_flutter/models/user_model.dart';
+import 'package:avotek_flutter/models/wallet_model.dart';
 import 'package:avotek_flutter/providers/auth_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -85,6 +86,39 @@ void main() {
       'https://adevictorolu.github.io/Avotek/#/login-callback',
     );
   });
+
+  test(
+    'treats virtual account numbers as active only when Paystack status is assigned',
+    () {
+      final assignedWallet = WalletModel.fromJson({
+        'id': 'w1',
+        'user_id': 'u1',
+        'balance': 2500,
+        'currency': 'NGN',
+        'virtual_account_number': '9012345678',
+        'virtual_account_bank': 'Wema Bank',
+        'virtual_account_name': 'AVOTEK / ADEWALE OKAFOR',
+        'paystack_dva_status': 'assigned',
+      });
+      final unassignedWallet = WalletModel.fromJson({
+        'id': 'w2',
+        'user_id': 'u2',
+        'balance': 0,
+        'currency': 'NGN',
+        'virtual_account_number': '9012345678',
+        'virtual_account_bank': 'Wema Bank',
+        'paystack_dva_status': 'unassigned',
+      });
+
+      expect(assignedWallet.hasDedicatedAccount, isTrue);
+      expect(WalletSummary.fromWallet(assignedWallet).hasDedicatedAccount, isTrue);
+      expect(unassignedWallet.hasDedicatedAccount, isFalse);
+      expect(
+        WalletSummary.fromWallet(unassignedWallet).hasDedicatedAccount,
+        isFalse,
+      );
+    },
+  );
 
   test(
     'VTU requests fail clearly when Supabase is not initialized',

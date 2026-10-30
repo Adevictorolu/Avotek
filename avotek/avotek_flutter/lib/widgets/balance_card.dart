@@ -14,8 +14,13 @@ class BalanceCard extends StatelessWidget {
     final wallet = context.watch<WalletProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final accountNumber = wallet.walletSummary?.virtualAccountNumber;
-    final bankName = wallet.walletSummary?.virtualAccountBank;
+    final hasDedicated = wallet.hasDedicatedAccount;
+    final accountNumber = hasDedicated
+        ? wallet.walletSummary?.virtualAccountNumber
+        : null;
+    final bankName = hasDedicated
+        ? wallet.walletSummary?.virtualAccountBank
+        : null;
 
     return Container(
       width: double.infinity,
@@ -102,91 +107,100 @@ class BalanceCard extends StatelessWidget {
           const SizedBox(height: 18),
           const Divider(height: 1, thickness: 1),
           const SizedBox(height: 16),
-          if (accountNumber != null && accountNumber.isNotEmpty) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Dedicated Virtual Account',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark
-                              ? AppColors.slateGrey
-                              : const Color(0xFF94A3B8),
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Row(
+          Row(
+            children: [
+              Expanded(
+                child: accountNumber != null && accountNumber.isNotEmpty
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${bankName ?? 'Verified bank'} • $accountNumber',
+                            'Dedicated Virtual Account',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
                               color: isDark
-                                  ? Colors.white70
-                                  : const Color(0xFF334155),
+                                  ? AppColors.slateGrey
+                                  : const Color(0xFF94A3B8),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () {
-                              Clipboard.setData(
-                                ClipboardData(text: accountNumber),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Virtual account number copied!',
-                                  ),
-                                  duration: Duration(seconds: 2),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Text(
+                                '${bankName ?? 'Verified bank'} • $accountNumber',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : const Color(0xFF334155),
                                 ),
-                              );
-                            },
-                            child: Icon(
-                              Icons.copy_rounded,
-                              size: 14,
-                              color: isDark
-                                  ? AppColors.primaryCyan
-                                  : AppColors.primaryBlue,
-                            ),
+                              ),
+                              const SizedBox(width: 6),
+                              GestureDetector(
+                                onTap: () {
+                                  Clipboard.setData(
+                                    ClipboardData(text: accountNumber),
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Virtual account number copied!',
+                                      ),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                                child: Icon(
+                                  Icons.copy_rounded,
+                                  size: 14,
+                                  color: isDark
+                                      ? AppColors.primaryCyan
+                                      : AppColors.primaryBlue,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
+                      )
+                    : Text(
+                        'Personal transfer account & instant Paystack funding',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark
+                              ? AppColors.metallicLight
+                              : AppColors.slateGrey,
+                        ),
                       ),
-                    ],
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: onFundPressed,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Add Money'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark
+                      ? AppColors.primaryCyan
+                      : AppColors.primaryBlue,
+                  foregroundColor: isDark
+                      ? const Color(0xFF002B47)
+                      : Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: onFundPressed,
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Add Money'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark
-                        ? AppColors.primaryCyan
-                        : AppColors.primaryBlue,
-                    foregroundColor: isDark
-                        ? const Color(0xFF002B47)
-                        : Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ],
       ),
     );

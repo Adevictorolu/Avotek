@@ -6,6 +6,7 @@ class WalletModel {
   final String? virtualAccountNumber;
   final String? virtualAccountBank;
   final String? virtualAccountName;
+  final String paystackDvaStatus;
   final double totalFunded;
   final double totalSpent;
   final DateTime updatedAt;
@@ -18,10 +19,18 @@ class WalletModel {
     this.virtualAccountNumber,
     this.virtualAccountBank,
     this.virtualAccountName,
+    this.paystackDvaStatus = 'unassigned',
     this.totalFunded = 0.0,
     this.totalSpent = 0.0,
     required this.updatedAt,
   });
+
+  bool get hasDedicatedAccount =>
+      paystackDvaStatus == 'assigned' &&
+      virtualAccountNumber != null &&
+      virtualAccountNumber!.trim().isNotEmpty &&
+      virtualAccountBank != null &&
+      virtualAccountBank!.trim().isNotEmpty;
 
   WalletModel copyWith({
     String? id,
@@ -31,6 +40,7 @@ class WalletModel {
     String? virtualAccountNumber,
     String? virtualAccountBank,
     String? virtualAccountName,
+    String? paystackDvaStatus,
     double? totalFunded,
     double? totalSpent,
     DateTime? updatedAt,
@@ -43,6 +53,7 @@ class WalletModel {
       virtualAccountNumber: virtualAccountNumber ?? this.virtualAccountNumber,
       virtualAccountBank: virtualAccountBank ?? this.virtualAccountBank,
       virtualAccountName: virtualAccountName ?? this.virtualAccountName,
+      paystackDvaStatus: paystackDvaStatus ?? this.paystackDvaStatus,
       totalFunded: totalFunded ?? this.totalFunded,
       totalSpent: totalSpent ?? this.totalSpent,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -57,6 +68,7 @@ class WalletModel {
         'virtual_account_number': virtualAccountNumber,
         'virtual_account_bank': virtualAccountBank,
         'virtual_account_name': virtualAccountName,
+        'paystack_dva_status': paystackDvaStatus,
         'total_funded': totalFunded,
         'total_spent': totalSpent,
         'updated_at': updatedAt.toIso8601String(),
@@ -70,9 +82,12 @@ class WalletModel {
         virtualAccountNumber: json['virtual_account_number'] as String?,
         virtualAccountBank: json['virtual_account_bank'] as String?,
         virtualAccountName: json['virtual_account_name'] as String?,
+        paystackDvaStatus:
+            (json['paystack_dva_status'] as String?) ?? 'unassigned',
         totalFunded: (json['total_funded'] as num?)?.toDouble() ?? 0.0,
         totalSpent: (json['total_spent'] as num?)?.toDouble() ?? 0.0,
-        updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? '') ?? DateTime.now(),
+        updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? '') ??
+            DateTime.now(),
       );
 }
 
@@ -83,6 +98,7 @@ class WalletSummary {
   final String? virtualAccountNumber;
   final String? virtualAccountBank;
   final String? virtualAccountName;
+  final String paystackDvaStatus;
   final double totalFunded;
   final double totalSpent;
 
@@ -92,9 +108,17 @@ class WalletSummary {
     this.virtualAccountNumber,
     this.virtualAccountBank,
     this.virtualAccountName,
+    this.paystackDvaStatus = 'unassigned',
     this.totalFunded = 0.0,
     this.totalSpent = 0.0,
   });
+
+  bool get hasDedicatedAccount =>
+      paystackDvaStatus == 'assigned' &&
+      virtualAccountNumber != null &&
+      virtualAccountNumber!.trim().isNotEmpty &&
+      virtualAccountBank != null &&
+      virtualAccountBank!.trim().isNotEmpty;
 
   factory WalletSummary.fromWallet(WalletModel wallet) => WalletSummary(
         balance: wallet.balance,
@@ -102,6 +126,7 @@ class WalletSummary {
         virtualAccountNumber: wallet.virtualAccountNumber,
         virtualAccountBank: wallet.virtualAccountBank,
         virtualAccountName: wallet.virtualAccountName,
+        paystackDvaStatus: wallet.paystackDvaStatus,
         totalFunded: wallet.totalFunded,
         totalSpent: wallet.totalSpent,
       );

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/services/vtu_api_service.dart';
 import '../core/supabase/supabase_service.dart';
@@ -244,27 +245,45 @@ class VtuProvider extends ChangeNotifier {
     var issuedPins = const <String>[];
     try {
       final response = await dispatch();
-      final data = response['data'] is Map<String, dynamic>
-          ? response['data'] as Map<String, dynamic>
+      final data = response['data'] is Map
+          ? Map<String, dynamic>.from(response['data'] as Map)
           : <String, dynamic>{};
       final providerStatus = (response['status'] ?? data['status'] ?? '')
           .toString()
           .toLowerCase();
       status = switch (providerStatus) {
-        'success' || 'successful' || 'completed' => 'successful',
-        'pending' || 'processing' || 'submitted' || 'in_progress' ||
-        'queued' || 'initiated' => 'pending',
-        'failed' || 'failure' || 'error' || 'rejected' || 'cancelled' ||
-        'refunded' || 'partial' => 'failed',
+        'success' ||
+        'successful' ||
+        'completed' ||
+        'complete' ||
+        'delivered' ||
+        'approved' ||
+        'ok' ||
+        'paid' ||
+        'sent' => 'successful',
+        'pending' ||
+        'processing' ||
+        'submitted' ||
+        'in_progress' ||
+        'queued' ||
+        'initiated' => 'pending',
+        'failed' ||
+        'fail' ||
+        'failure' ||
+        'error' ||
+        'rejected' ||
+        'cancelled' ||
+        'canceled' ||
+        'refunded' ||
+        'partial' ||
+        'declined' => 'failed',
         _ => response['success'] == true ? 'successful' : 'failed',
       };
       if (response['success'] == false) status = 'failed';
       final providerAmount = response['charged_amount'] ??
           data['total_amount'] ??
           data['total_cost'];
-      if (providerAmount is num &&
-          providerAmount > 0 &&
-          providerAmount.toDouble() == amount) {
+      if (providerAmount is num && providerAmount > 0) {
         chargedAmount = providerAmount.toDouble();
       }
       providerReference =
@@ -274,31 +293,83 @@ class VtuProvider extends ChangeNotifier {
                   data['job_id'] ??
                   response['provider_reference'])
               ?.toString();
-      localReference = response['local_reference']?.toString();
-      token = data['token']?.toString();
+      localReference =
+          response['local_reference']?.toString() ??
+          response['reference']?.toString();
+      token =
+          data['token']?.toString() ??
+          data['meter_token']?.toString() ??
+          response['token']?.toString();
       units = data['units']?.toString();
-      final pins = data['pins'];
-      if (pins is List) {
-        issuedPins = pins.map((pin) => pin.toString()).toList();
+      issuedPins = _extractPinList(
+        data['pins'] ?? data['cards'] ?? response['pins'] ?? response['cards'],
+      );
+      if (issuedPins.isNotEmpty) {
         token = issuedPins.join('\n');
       }
       message = response['message']?.toString() ?? message;
+
+      // If still pending and we have a reference, try an immediate requery
+      final lookupRef = (providerReference != null && providerReference.isNotEmpty)
+          ? providerReference
+          : localReference;
+      if (status == 'pending' &&
+          serviceType != 'bulk_sms' &&
+          lookupRef != null &&
+          lookupRef.isNotEmpty) {
+        try {
+          final reqRes = await VtuApiService.instance.requeryTransaction(
+            lookupRef,
+          );
+          final reqStatus = (reqRes['status'] ?? '').toString().toLowerCase();
+          if (reqStatus == 'completed' ||
+              reqStatus == 'successful' ||
+              reqStatus == 'success') {
+            status = 'successful';
+            message = reqRes['message']?.toString() ?? message;
+            final reqData = reqRes['data'] is Map
+                ? Map<String, dynamic>.from(reqRes['data'] as Map)
+                : const <String, dynamic>{};
+            token ??=
+                reqData['token']?.toString() ??
+                reqData['meter_token']?.toString();
+            units ??= reqData['units']?.toString();
+            if (issuedPins.isEmpty) {
+              issuedPins = _extractPinList(reqData['pins'] ?? reqData['cards']);
+              if (issuedPins.isNotEmpty) {
+                token = issuedPins.join('\n');
+              }
+            }
+          } else if (reqStatus == 'failed') {
+            status = 'failed';
+            message = reqRes['message']?.toString() ?? message;
+          }
+        } catch (_) {}
+      }
     } on VtuProviderRequestException catch (error) {
       localReference = error.reference;
-      final isAmbiguous = error.statusCode == 0 || error.statusCode >= 500;
-      final isUnconfigured =
-          error.message?.toLowerCase().contains('not configured') == true;
-      status = isAmbiguous && !isUnconfigured ? 'pending' : 'failed';
-      message = status == 'pending'
-          ? 'The purchase status could not be confirmed. Check your order history before retrying.'
-          : error.toString();
+      // HTTP 4xx, 502, 503 mean the request was rejected or not configured;
+      // only statusCode == 0 (connection dropped mid-flight) is ambiguous.
+      status = error.statusCode == 0 ? 'pending' : 'failed';
+      message = error.message != null && error.message!.trim().isNotEmpty
+          ? error.message!.trim()
+          : (status == 'pending'
+                ? 'The purchase status could not be confirmed. Check your order history before retrying.'
+                : error.toString());
       _lastError = message;
-    } catch (error) {
+    } on TimeoutException {
       status = 'pending';
       message =
-          'The purchase status could not be confirmed. Check your order history before retrying.';
+          'The VTU provider did not respond in time. Check your order history before retrying.';
       _lastError = message;
-      debugPrint('VTU provider purchase outcome is uncertain: $error');
+    } catch (error) {
+      status = 'failed';
+      message = error.toString().replaceFirst('Exception: ', '').trim();
+      if (message.isEmpty) {
+        message = 'The purchase could not be completed.';
+      }
+      _lastError = message;
+      debugPrint('VTU provider purchase error: $error');
     }
 
     final order = await SupabaseService.instance.recordOrder(
@@ -326,6 +397,36 @@ class VtuProvider extends ChangeNotifier {
     );
   }
 
+  List<String> _extractPinList(Object? rawPins) {
+    if (rawPins is String && rawPins.trim().isNotEmpty) {
+      return [rawPins.trim()];
+    }
+    if (rawPins is! List || rawPins.isEmpty) return const [];
+    final items = <String>[];
+    for (final entry in rawPins) {
+      if (entry is Map) {
+        final pin =
+            entry['pin']?.toString() ??
+            entry['token']?.toString() ??
+            entry['pin_code']?.toString() ??
+            '';
+        final serial =
+            entry['serial']?.toString() ??
+            entry['serial_number']?.toString() ??
+            entry['serial_no']?.toString() ??
+            '';
+        if (pin.isNotEmpty && serial.isNotEmpty) {
+          items.add('PIN: $pin (Serial: $serial)');
+        } else if (pin.isNotEmpty) {
+          items.add(pin);
+        }
+      } else if (entry != null && entry.toString().trim().isNotEmpty) {
+        items.add(entry.toString().trim());
+      }
+    }
+    return items;
+  }
+
   // ============================================================================
   // LIVE PURCHASES & SUPABASE SYNCHRONIZATION
   // ============================================================================
@@ -337,6 +438,7 @@ class VtuProvider extends ChangeNotifier {
     required String phone,
     required double amount,
     String? userPin,
+    String airtimeType = 'vtu',
   }) {
     return _purchase(
       userId: userId,
@@ -350,6 +452,7 @@ class VtuProvider extends ChangeNotifier {
         phone: phone,
         amount: amount,
         pin: userPin,
+        airtimeType: airtimeType,
       ),
     );
   }
@@ -479,14 +582,21 @@ class VtuProvider extends ChangeNotifier {
         smartcardNumber: smartcardNumber,
       );
 
-      final data = res['data'] as Map<String, dynamic>?;
-      final name = data?['customer_name']?.toString() ?? '';
-      final bouquet = data?['current_bouquet']?.toString() ?? provider;
+      final data = res['data'] is Map
+          ? Map<String, dynamic>.from(res['data'] as Map)
+          : res;
+      final name =
+          data['customer_name']?.toString() ??
+          data['name']?.toString() ??
+          '';
+      final bouquet = data['current_bouquet']?.toString() ?? provider;
 
       return VerificationResponse(
         isValid:
-            res['success'] == true || (res['success'] == null && data != null),
-        customerName: name,
+            res['success'] == true ||
+            data['valid'] == true ||
+            name.trim().isNotEmpty,
+        customerName: name.isNotEmpty ? name : 'Verified Subscriber',
         identifier: smartcardNumber,
         details: '$bouquet • $provider',
       );
@@ -547,15 +657,25 @@ class VtuProvider extends ChangeNotifier {
         meterType: meterType,
       );
 
-      final data = res['data'] as Map<String, dynamic>?;
-      final name = data?['customer_name']?.toString() ?? '';
-      final address = data?['customer_address']?.toString() ?? '';
-      final discoName = data?['disco']?.toString() ?? disco;
+      final data = res['data'] is Map
+          ? Map<String, dynamic>.from(res['data'] as Map)
+          : res;
+      final name =
+          data['customer_name']?.toString() ??
+          data['name']?.toString() ??
+          '';
+      final address =
+          data['customer_address']?.toString() ??
+          data['address']?.toString() ??
+          '';
+      final discoName = data['disco']?.toString() ?? disco;
 
       return VerificationResponse(
         isValid:
-            res['success'] == true || (res['success'] == null && data != null),
-        customerName: name,
+            res['success'] == true ||
+            data['valid'] == true ||
+            name.trim().isNotEmpty,
+        customerName: name.isNotEmpty ? name : 'Verified Customer',
         identifier: meterNumber,
         details: '$discoName ($meterType) • $address',
       );

@@ -24,6 +24,31 @@ class PaystackPaymentVerification {
   });
 }
 
+class PaystackDedicatedAccountResult {
+  final String status;
+  final String? accountNumber;
+  final String? bankName;
+  final String? accountName;
+  final String? message;
+
+  const PaystackDedicatedAccountResult({
+    required this.status,
+    this.accountNumber,
+    this.bankName,
+    this.accountName,
+    this.message,
+  });
+
+  bool get isAssigned =>
+      status == 'assigned' &&
+      accountNumber != null &&
+      accountNumber!.isNotEmpty &&
+      bankName != null &&
+      bankName!.isNotEmpty &&
+      accountName != null &&
+      accountName!.isNotEmpty;
+}
+
 class PaystackPaymentService {
   static final PaystackPaymentService instance = PaystackPaymentService._();
   PaystackPaymentService._();
@@ -46,6 +71,48 @@ class PaystackPaymentService {
     return PaystackPaymentSession(
       authorizationUrl: authorizationUrl,
       reference: reference,
+    );
+  }
+
+  Future<PaystackDedicatedAccountResult> requestDedicatedAccount({
+    String? fullName,
+    String? phone,
+  }) async {
+    final response = await _invoke({
+      'action': 'dedicated_account',
+      if (fullName != null && fullName.trim().isNotEmpty)
+        'full_name': fullName.trim(),
+      if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+    });
+    final status = response['status'];
+    if (status is! String || (status != 'assigned' && status != 'pending')) {
+      throw const FormatException(
+        'Payment service returned an invalid dedicated account response.',
+      );
+    }
+    final accountNumber = response['account_number'];
+    final bankName = response['bank_name'];
+    final accountName = response['account_name'];
+    final message = response['message'];
+
+    if (status == 'assigned' &&
+        (accountNumber is! String ||
+            accountNumber.trim().isEmpty ||
+            bankName is! String ||
+            bankName.trim().isEmpty ||
+            accountName is! String ||
+            accountName.trim().isEmpty)) {
+      throw const FormatException(
+        'Payment service returned incomplete dedicated account details.',
+      );
+    }
+
+    return PaystackDedicatedAccountResult(
+      status: status,
+      accountNumber: accountNumber is String ? accountNumber.trim() : null,
+      bankName: bankName is String ? bankName.trim() : null,
+      accountName: accountName is String ? accountName.trim() : null,
+      message: message is String ? message.trim() : null,
     );
   }
 
@@ -102,6 +169,8 @@ class PaystackPaymentService {
       throw PaystackPaymentException(
         message ?? 'Payment service request failed (${error.status}).',
         reference: details is Map ? details['reference']?.toString() : null,
+        needsProfileDetails:
+            details is Map && details['needs_profile_details'] == true,
       );
     }
 
@@ -111,6 +180,8 @@ class PaystackPaymentService {
       throw PaystackPaymentException(
         message ?? 'Payment service request failed (${response.status}).',
         reference: data is Map ? data['reference']?.toString() : null,
+        needsProfileDetails:
+            data is Map && data['needs_profile_details'] == true,
       );
     }
     if (response.data is! Map<String, dynamic>) {
@@ -125,7 +196,12 @@ class PaystackPaymentService {
 class PaystackPaymentException implements Exception {
   final String message;
   final String? reference;
-  const PaystackPaymentException(this.message, {this.reference});
+  final bool needsProfileDetails;
+  const PaystackPaymentException(
+    this.message, {
+    this.reference,
+    this.needsProfileDetails = false,
+  });
 
   @override
   String toString() => message;

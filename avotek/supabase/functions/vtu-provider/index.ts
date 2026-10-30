@@ -51,6 +51,148 @@ function isRecord(value: unknown): value is JsonMap {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function extractProviderMessage(body: JsonMap, fallback: string): string {
+  const data = isRecord(body.data) ? body.data : {};
+  const candidates = [
+    body.message,
+    body.detail,
+    body.error,
+    body.response_description,
+    data.message,
+    data.detail,
+    data.error,
+    data.status_detail,
+    data.response_description,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+    if (Array.isArray(candidate) && candidate.length > 0) {
+      const first = String(candidate[0] ?? "").trim();
+      if (first.length > 0) return first;
+    }
+  }
+  for (const [key, value] of Object.entries(body)) {
+    if (["success", "status", "data", "code", "status_code"].includes(key)) continue;
+    if (Array.isArray(value) && value.length > 0 && typeof value[0] === "string") {
+      return `${key}: ${value[0]}`;
+    }
+  }
+  return fallback;
+}
+
+function extractProviderReference(body: JsonMap): string | null {
+  const data = isRecord(body.data) ? body.data : {};
+  const candidate =
+    data.transaction_id ??
+    data.tran_id ??
+    data.tranx_id ??
+    data.job_id ??
+    data.reference ??
+    data.ident ??
+    data.id ??
+    body.transaction_id ??
+    body.tran_id ??
+    body.tranx_id ??
+    body.job_id ??
+    body.reference ??
+    body.ident ??
+    null;
+  if (candidate === null || candidate === undefined) return null;
+  const text = String(candidate).trim();
+  return text.length > 0 ? text : null;
+}
+
+function extractList(body: unknown, nestedKeys: string[] = []): JsonMap[] {
+  if (Array.isArray(body)) {
+    return body.filter(isRecord);
+  }
+  if (!isRecord(body)) return [];
+  if (Array.isArray(body.data)) {
+    return body.data.filter(isRecord);
+  }
+  if (Array.isArray(body.results)) {
+    return body.results.filter(isRecord);
+  }
+  const data = isRecord(body.data) ? body.data : {};
+  for (const key of nestedKeys) {
+    if (Array.isArray(data[key])) {
+      return (data[key] as unknown[]).filter(isRecord);
+    }
+    if (Array.isArray(body[key])) {
+      return (body[key] as unknown[]).filter(isRecord);
+    }
+  }
+  return [];
+}
+
+function normalizeExamPrices(body: unknown): JsonMap[] {
+  const list = extractList(body, ["prices", "exams", "items", "results"]);
+  if (list.length > 0) {
+    return list
+      .map((item) => {
+        const code = String(
+          item.code ?? item.exam ?? item.exam_type ?? item.slug ?? item.id ?? "",
+        ).trim().toLowerCase();
+        const name = String(
+          item.name ?? item.exam_name ?? item.title ?? code.toUpperCase(),
+        ).trim();
+        const amount = Number(
+          item.amount ?? item.price ?? item.unit_price ?? item.cost ?? Number.NaN,
+        );
+        return {
+          ...item,
+          code,
+          name,
+          amount,
+        };
+      })
+      .filter((item) => item.code.length > 0 && Number.isFinite(item.amount) && item.amount > 0);
+  }
+
+  if (isRecord(body)) {
+    const container = isRecord(body.data)
+      ? (isRecord(body.data.prices) ? body.data.prices : body.data)
+      : (isRecord(body.prices) ? body.prices : body);
+    const mapped: JsonMap[] = [];
+    for (const [key, val] of Object.entries(container)) {
+      if (["success", "status", "message", "detail"].includes(key.toLowerCase())) {
+        continue;
+      }
+      if (typeof val === "number" || (typeof val === "string" && /^\d+(\.\d+)?$/.test(val))) {
+        const amount = Number(val);
+        if (Number.isFinite(amount) && amount > 0) {
+          mapped.push({
+            code: key.trim().toLowerCase(),
+            name: key.trim().toUpperCase(),
+            amount,
+          });
+        }
+      } else if (isRecord(val)) {
+        const code = String(val.code ?? val.exam ?? key).trim().toLowerCase();
+        const name = String(val.name ?? val.title ?? code.toUpperCase()).trim();
+        const amount = Number(val.amount ?? val.price ?? val.unit_price ?? Number.NaN);
+        if (code.length > 0 && Number.isFinite(amount) && amount > 0) {
+          mapped.push({
+            ...val,
+            code,
+            name,
+            amount,
+          });
+        }
+      }
+    }
+    if (mapped.length > 0) return mapped;
+  }
+
+  return [];
+}
+
 async function finalizePurchase(
   supabaseUrl: string,
   reference: string,
@@ -74,39 +216,96 @@ async function finalizePurchase(
 
 function normalizedProviderStatus(
   body: JsonMap,
+  httpOk = true,
 ): "completed" | "failed" | "pending" {
   const data = isRecord(body.data) ? body.data : {};
   const raw = String(
-    body.status ?? data.status ?? body.status_detail ?? data.status_detail ??
+    body.status ??
+      data.status ??
+      body.status_detail ??
+      data.status_detail ??
+      body.Status ??
+      data.Status ??
       "",
   ).trim().toLowerCase();
+
   if (
     body.success === false ||
+    data.success === false ||
     [
       "failed",
+      "fail",
       "failure",
       "error",
       "rejected",
       "cancelled",
+      "canceled",
       "refunded",
       "partial",
+      "declined",
+      "invalid",
+      "unsuccessful",
+      "expired",
     ].includes(raw)
   ) {
     return "failed";
   }
+
+  if (
+    [
+      "success",
+      "successful",
+      "completed",
+      "complete",
+      "delivered",
+      "approved",
+      "ok",
+      "paid",
+      "sent",
+      "generated",
+      "active",
+      "done",
+    ].includes(raw)
+  ) {
+    return "completed";
+  }
+
+  // If the response includes generated tokens or PINs on a 2xx response, it is completed.
+  const hasDeliveredTokenOrPins =
+    httpOk &&
+    ((typeof data.token === "string" && data.token.trim().length > 0) ||
+      (typeof body.token === "string" && body.token.trim().length > 0) ||
+      (Array.isArray(data.pins) && data.pins.length > 0) ||
+      (Array.isArray(data.cards) && data.cards.length > 0) ||
+      (Array.isArray(body.pins) && body.pins.length > 0));
+  if (hasDeliveredTokenOrPins) {
+    return "completed";
+  }
+
   if (
     ["pending", "processing", "submitted", "in_progress", "queued", "initiated"]
       .includes(raw)
   ) {
     return "pending";
   }
-  if (
-    body.success === true ||
-    ["success", "successful", "completed"].includes(raw)
-  ) {
+
+  if (body.success === true || data.success === true) {
     return "completed";
   }
-  return "pending";
+
+  if (!httpOk) {
+    return "failed";
+  }
+
+  if (
+    typeof body.detail === "string" ||
+    typeof body.error === "string" ||
+    Array.isArray(body.non_field_errors)
+  ) {
+    return "failed";
+  }
+
+  return "completed";
 }
 
 function queryFor(action: string, payload: JsonMap): string {
@@ -121,7 +320,7 @@ function queryFor(action: string, payload: JsonMap): string {
       query.set("plantype", planType);
     }
   } else if (action === "cable.plans") {
-    const cable = String(payload.cable_name ?? "");
+    const cable = String(payload.cable_name ?? payload.cable_type ?? "").trim().toLowerCase();
     if (!["dstv", "gotv", "startimes", "showmax"].includes(cable)) {
       throw new Error("Choose a valid cable provider.");
     }
@@ -133,7 +332,7 @@ function queryFor(action: string, payload: JsonMap): string {
 function validatePayload(action: string, payload: JsonMap): void {
   if (action === "airtime.purchase" || action === "data.purchase") {
     if (!networkIds.has(Number(payload.network))) throw new Error("Choose a valid network.");
-    const phone = String(payload.phone_number ?? "");
+    const phone = String(payload.phone_number ?? "").trim();
     if (!/^0\d{10}$/.test(phone)) throw new Error("Enter a valid Nigerian phone number.");
   }
   if (action === "airtime.purchase") {
@@ -185,21 +384,23 @@ function validatePayload(action: string, payload: JsonMap): void {
     }
   }
   if (action === "cable.verify" || action === "cable.purchase") {
-    const cable = String(payload.cable_type ?? payload.cable_name ?? "");
+    const cable = String(payload.cable_type ?? payload.cable_name ?? "").trim().toLowerCase();
     if (!["dstv", "gotv", "startimes", "showmax"].includes(cable)) {
       throw new Error("Choose a valid cable provider.");
     }
-    const card = String(payload.card_no ?? "");
+    const card = String(payload.card_no ?? "").trim();
     if (!/^\d{8,20}$/.test(card)) throw new Error("Enter a valid smartcard number.");
   }
-  if (action === "cable.purchase" &&
-    !/^[A-Za-z0-9_-]{1,100}$/.test(String(payload.variation_code ?? ""))) {
+  if (
+    action === "cable.purchase" &&
+    !/^[A-Za-z0-9_-]{1,100}$/.test(String(payload.variation_code ?? "").trim())
+  ) {
     throw new Error("Choose a valid cable package.");
   }
   if (action === "electricity.verify" || action === "electricity.purchase") {
-    const meter = String(payload.meter_no ?? "");
+    const meter = String(payload.meter_no ?? "").trim();
     if (!/^\d{8,20}$/.test(meter)) throw new Error("Enter a valid meter number.");
-    if (!["prepaid", "postpaid"].includes(String(payload.meter_type))) {
+    if (!["prepaid", "postpaid"].includes(String(payload.meter_type ?? "").trim().toLowerCase())) {
       throw new Error("Choose prepaid or postpaid.");
     }
   }
@@ -209,6 +410,104 @@ function validatePayload(action: string, payload: JsonMap): void {
       throw new Error("Invalid purchase amount.");
     }
   }
+}
+
+function buildProviderPayload(
+  action: string,
+  payload: JsonMap,
+  aggregatorPin?: string,
+): JsonMap {
+  if (action === "airtime.purchase") {
+    const rawType = String(payload.airtime_type ?? "VTU").trim().toLowerCase();
+    const airtimeType = rawType === "share_and_sell" || rawType === "share and sell"
+      ? "Share and Sell"
+      : "VTU";
+    return {
+      network: Number(payload.network),
+      amount: Number(payload.amount),
+      phone_number: String(payload.phone_number ?? "").trim(),
+      ported_number: payload.ported_number === false ? false : true,
+      airtime_type: airtimeType,
+      pin: aggregatorPin,
+    };
+  }
+  if (action === "data.purchase") {
+    return {
+      network: Number(payload.network),
+      plan: Number(payload.plan),
+      phone_number: String(payload.phone_number ?? "").trim(),
+      ported_number: payload.ported_number === false ? false : true,
+      pin: aggregatorPin,
+    };
+  }
+  if (action === "education.purchase") {
+    return {
+      exam: String(payload.exam ?? "").trim().toLowerCase(),
+      quantity: Number(payload.quantity),
+      pin: aggregatorPin,
+      pin_code: aggregatorPin,
+    };
+  }
+  if (action === "cable.verify") {
+    const cable = String(payload.cable_type ?? payload.cable_name ?? "").trim().toLowerCase();
+    return {
+      cable_name: cable,
+      cable_type: cable,
+      card_no: String(payload.card_no ?? "").trim(),
+    };
+  }
+  if (action === "cable.purchase") {
+    const cable = String(payload.cable_type ?? payload.cable_name ?? "").trim().toLowerCase();
+    return {
+      ...payload,
+      cable_name: cable,
+      cable_type: cable,
+      card_no: String(payload.card_no ?? "").trim(),
+      variation_code: String(payload.variation_code ?? "").trim(),
+      amount: Number(payload.amount),
+      pin: aggregatorPin,
+    };
+  }
+  if (action === "electricity.verify") {
+    const disco = String(payload.disco_name ?? payload.company ?? "").trim().toLowerCase();
+    return {
+      ...payload,
+      company: disco,
+      disco_name: disco,
+      meter_no: String(payload.meter_no ?? "").trim(),
+      meter_type: String(payload.meter_type ?? "").trim().toLowerCase(),
+    };
+  }
+  if (action === "electricity.purchase") {
+    const disco = String(payload.disco_name ?? payload.company ?? "").trim().toLowerCase();
+    return {
+      ...payload,
+      company: disco,
+      disco_name: disco,
+      meter_no: String(payload.meter_no ?? "").trim(),
+      meter_type: String(payload.meter_type ?? "").trim().toLowerCase(),
+      amount: Number(payload.amount),
+      phone_number: String(payload.phone_number ?? "").trim(),
+      pin: aggregatorPin,
+    };
+  }
+  if (action === "sms.send") {
+    return {
+      recipients: payload.recipients,
+      message: String(payload.message ?? "").trim(),
+      sender_name: String(payload.sender_name ?? "").trim(),
+      recipient_consent: true,
+      pin: aggregatorPin,
+    };
+  }
+
+  const copy: JsonMap = { ...payload };
+  delete copy.sell_price;
+  delete copy.narration;
+  if (aggregatorPin) {
+    copy.pin = aggregatorPin;
+  }
+  return copy;
 }
 
 async function sha256Hex(value: string): Promise<string> {
@@ -259,7 +558,7 @@ Deno.serve(async (request) => {
     return jsonResponse({ message: error instanceof Error ? error.message : "Invalid request." }, 400);
   }
 
-  const token = Deno.env.get("BIGISUB_API_TOKEN");
+  const token = Deno.env.get("BIGISUB_API_TOKEN")?.trim();
   if (!token) return jsonResponse({ message: "VTU services are not configured on the server." }, 503);
 
   if (action === "data.purchase") {
@@ -273,14 +572,17 @@ Deno.serve(async (request) => {
         },
       );
       const plansBody: unknown = await plansResponse.json();
-      const plans = isRecord(plansBody) && Array.isArray(plansBody.data)
-        ? plansBody.data
-        : [];
+      const plans = extractList(plansBody, ["plans", "variations", "items"]);
       const selectedPlan = plans.find((plan) =>
-        isRecord(plan) && Number(plan.id) === Number(payload.plan)
+        Number(plan.id ?? plan.plan_id ?? plan.variation_code) === Number(payload.plan)
       );
       const currentPlanPrice = isRecord(selectedPlan)
-        ? Number(selectedPlan.amount ?? selectedPlan.plan_amount)
+        ? Number(
+          selectedPlan.amount ??
+            selectedPlan.plan_amount ??
+            selectedPlan.price ??
+            selectedPlan.selling_price,
+        )
         : Number.NaN;
       if (
         !plansResponse.ok || !Number.isFinite(currentPlanPrice) ||
@@ -292,7 +594,7 @@ Deno.serve(async (request) => {
           message: "The selected data plan is unavailable. Refresh plans and try again.",
         });
       }
-      if (Number(payload.sell_price) !== currentPlanPrice) {
+      if (Math.abs(Number(payload.sell_price) - currentPlanPrice) > 0.5) {
         return jsonResponse({
           success: false,
           status: "failed",
@@ -319,13 +621,9 @@ Deno.serve(async (request) => {
         },
       );
       const pricesBody: unknown = await pricesResponse.json();
-      const pricesData = isRecord(pricesBody) && isRecord(pricesBody.data)
-        ? pricesBody.data
-        : {};
-      const prices = Array.isArray(pricesData.prices) ? pricesData.prices : [];
-      const examCode = String(payload.exam).toLowerCase();
+      const prices = normalizeExamPrices(pricesBody);
+      const examCode = String(payload.exam).trim().toLowerCase();
       const exam = prices.find((item) =>
-        isRecord(item) &&
         String(item.code ?? item.exam_type ?? "").toLowerCase() === examCode
       );
       const unitPrice = isRecord(exam) ? Number(exam.amount) : Number.NaN;
@@ -358,8 +656,13 @@ Deno.serve(async (request) => {
       const pricingBody: unknown = await pricingResponse.json();
       const pricingData = isRecord(pricingBody) && isRecord(pricingBody.data)
         ? pricingBody.data
-        : {};
-      const costPerPage = Number(pricingData.cost_per_page);
+        : (isRecord(pricingBody) ? pricingBody : {});
+      const costPerPage = Number(
+        pricingData.cost_per_page ??
+          pricingData.price_per_page ??
+          pricingData.unit_price ??
+          pricingData.amount,
+      );
       if (!pricingResponse.ok || !Number.isFinite(costPerPage) || costPerPage <= 0) {
         return jsonResponse({
           success: false,
@@ -385,7 +688,7 @@ Deno.serve(async (request) => {
 
   if (action === "cable.purchase") {
     try {
-      const cable = String(payload.cable_type ?? "");
+      const cable = String(payload.cable_type ?? payload.cable_name ?? "").trim().toLowerCase();
       const plansResponse = await fetch(
         `${apiBaseUrl}/api/v2/vtu/cable/plans/?cable_name=${encodeURIComponent(cable)}`,
         {
@@ -394,15 +697,13 @@ Deno.serve(async (request) => {
         },
       );
       const plansBody: unknown = await plansResponse.json();
-      const plans = isRecord(plansBody) && Array.isArray(plansBody.data)
-        ? plansBody.data
-        : [];
+      const plans = extractList(plansBody, ["plans", "variations", "items"]);
       const selectedPlan = plans.find((plan) =>
-        isRecord(plan) &&
-        String(plan.variation_code ?? plan.id ?? "") === String(payload.variation_code)
+        String(plan.variation_code ?? plan.id ?? plan.code ?? "") ===
+          String(payload.variation_code)
       );
       const providerPrice = isRecord(selectedPlan)
-        ? Number(selectedPlan.amount)
+        ? Number(selectedPlan.amount ?? selectedPlan.price ?? selectedPlan.plan_amount)
         : Number.NaN;
       if (!plansResponse.ok || !Number.isFinite(providerPrice) || providerPrice <= 0) {
         return jsonResponse({
@@ -411,7 +712,7 @@ Deno.serve(async (request) => {
           message: "The selected cable package is unavailable. Refresh packages and try again.",
         });
       }
-      if (Number(payload.amount) < providerPrice) {
+      if (Number(payload.amount) + 0.5 < providerPrice) {
         return jsonResponse({
           success: false,
           status: "failed",
@@ -427,8 +728,8 @@ Deno.serve(async (request) => {
     }
   }
 
+  const aggregatorPin = Deno.env.get("BIGISUB_TRANSACTION_PIN")?.trim();
   if (config.purchase) {
-    const aggregatorPin = Deno.env.get("BIGISUB_TRANSACTION_PIN");
     if (!aggregatorPin) {
       return jsonResponse({ message: "The service provider is not fully configured." }, 503);
     }
@@ -457,7 +758,7 @@ Deno.serve(async (request) => {
   let path = config.path;
   let requeryOrder: JsonMap | null = null;
   if (action === "transaction.requery") {
-    const transactionId = String(payload.transaction_id ?? "");
+    const transactionId = String(payload.transaction_id ?? "").trim();
     if (!/^[A-Za-z0-9_-]{1,100}$/.test(transactionId)) {
       return jsonResponse({ message: "Invalid transaction reference." }, 400);
     }
@@ -483,15 +784,23 @@ Deno.serve(async (request) => {
     if (orderError) {
       return jsonResponse({ message: "Could not load this transaction." }, 500);
     }
-    if (!order || typeof order.provider_reference !== "string" ||
-      !/^[A-Za-z0-9_-]{1,100}$/.test(order.provider_reference)) {
+    const providerTransactionId =
+      order && typeof order.provider_reference === "string" &&
+        /^[A-Za-z0-9_-]{1,100}$/.test(order.provider_reference)
+        ? order.provider_reference
+        : (!/^AVO-/i.test(transactionId) ? transactionId : null);
+
+    if (!providerTransactionId) {
       return jsonResponse({
         message: "The provider reference is not available for this transaction.",
       }, 409);
     }
-    requeryOrder = order;
-    const providerTransactionId = order.provider_reference;
-    path = order.service_type === "bulk_sms"
+    requeryOrder = order ?? {
+      id: transactionId,
+      service_type: "vtu",
+      provider_reference: providerTransactionId,
+    };
+    path = requeryOrder.service_type === "bulk_sms"
       ? `/api/v2/communications/sms/job/${encodeURIComponent(providerTransactionId)}/status/`
       : `/api/v2/anubis/transactions/${encodeURIComponent(providerTransactionId)}/requery/`;
   }
@@ -504,7 +813,7 @@ Deno.serve(async (request) => {
       return jsonResponse({
         success: false,
         status: "failed",
-        message: "Could not verify the current data plan price. Refresh plans and try again.",
+        message: "Could not verify the current service price. Refresh and try again.",
       }, 409);
     }
     reservedAmount = amount;
@@ -530,22 +839,14 @@ Deno.serve(async (request) => {
         success: reservation.status !== "failed",
         status: reservation.status,
         reference,
+        local_reference: reference,
+        charged_amount: amount,
         message: "This purchase request has already been processed.",
       });
     }
   }
 
-  const providerPayload: JsonMap = { ...payload };
-  delete providerPayload.sell_price;
-  delete providerPayload.narration;
-  if (config.purchase) {
-    const aggregatorPin = Deno.env.get("BIGISUB_TRANSACTION_PIN")!;
-    if (action === "education.purchase") {
-      providerPayload.pin_code = aggregatorPin;
-    } else {
-      providerPayload.pin = aggregatorPin;
-    }
-  }
+  const providerPayload = buildProviderPayload(action, payload, aggregatorPin);
 
   try {
     const upstream = await fetch(`${apiBaseUrl}${path}${query}`, {
@@ -560,31 +861,110 @@ Deno.serve(async (request) => {
     let providerBody: JsonMap = {};
     try {
       const parsed: unknown = await upstream.json();
-      if (isRecord(parsed)) providerBody = parsed;
+      if (isRecord(parsed)) {
+        providerBody = parsed;
+      } else if (Array.isArray(parsed)) {
+        providerBody = { success: upstream.ok, data: parsed };
+      }
     } catch {
       providerBody = {};
     }
 
     if (config.purchase) {
-      let status = normalizedProviderStatus(providerBody);
+      let status = normalizedProviderStatus(providerBody, upstream.ok);
       let settlementMessage: string | null = null;
+      let providerRef = extractProviderReference(providerBody);
+
+      if (!upstream.ok && upstream.status < 500) {
+        status = "failed";
+      } else if (!upstream.ok && upstream.status >= 500) {
+        // If Bigisub returned an explicit failure/rejection body on 500, refund immediately.
+        if (
+          providerBody.success === false ||
+          normalizedProviderStatus(providerBody, false) === "failed"
+        ) {
+          status = "failed";
+        } else {
+          status = "pending";
+        }
+      }
+
+      // If initial purchase response is "pending"/"processing" and we have a provider transaction ID,
+      // perform up to 2 quick follow-up requeries so the user gets immediate confirmation.
+      if (status === "pending" && providerRef && action !== "sms.send") {
+        const requeryDelays = [1200, 1800];
+        for (const delayMs of requeryDelays) {
+          await sleep(delayMs);
+          try {
+            const requeryRes = await fetch(
+              `${apiBaseUrl}/api/v2/anubis/transactions/${encodeURIComponent(providerRef)}/requery/`,
+              {
+                method: "GET",
+                headers: {
+                  Authorization: `Token ${token}`,
+                  "Content-Type": "application/json",
+                },
+                signal: AbortSignal.timeout(8000),
+              },
+            );
+            const requeryParsed: unknown = await requeryRes.json();
+            if (isRecord(requeryParsed) && requeryRes.ok) {
+              const reqStatus = normalizedProviderStatus(requeryParsed, true);
+              if (reqStatus === "completed" || reqStatus === "failed") {
+                status = reqStatus;
+                const reqData = isRecord(requeryParsed.data) ? requeryParsed.data : {};
+                const origData = isRecord(providerBody.data) ? providerBody.data : {};
+                providerBody = {
+                  ...providerBody,
+                  ...requeryParsed,
+                  data: { ...origData, ...reqData },
+                };
+                break;
+              }
+            }
+          } catch {
+            // Ignore transient requery error during fast poll
+          }
+        }
+
+        // If Bigisub accepted the purchase synchronously (HTTP 2xx, success !== false)
+        // and assigned a valid transaction reference without failing on requery,
+        // settle the VTU order as completed so the user gets immediate delivery.
+        if (
+          status === "pending" &&
+          upstream.ok &&
+          providerBody.success !== false &&
+          action !== "sms.send"
+        ) {
+          status = "completed";
+        }
+      }
+
       if (action === "sms.send" && status === "completed") {
         const data = isRecord(providerBody.data) ? providerBody.data : {};
-        const actualCost = Number(data.total_cost);
-        if (!Number.isFinite(actualCost) || actualCost !== purchaseAmount) {
+        const actualCost = Number(data.total_cost ?? purchaseAmount);
+        if (!Number.isFinite(actualCost) || Math.abs(actualCost - (purchaseAmount ?? 0)) > 0.5) {
           status = "pending";
           settlementMessage =
             "SMS cost did not match the quote. The debit remains pending for reconciliation.";
         }
       }
-      if (!upstream.ok && upstream.status < 500) status = "failed";
-      if (!upstream.ok && upstream.status >= 500) status = "pending";
+
+      const finalMessage = settlementMessage ?? extractProviderMessage(
+        providerBody,
+        status === "pending"
+          ? "Provider response pending confirmation."
+          : status === "failed"
+          ? "The provider rejected the purchase."
+          : "Purchase completed successfully.",
+      );
+
       if (status === "failed") {
         await finalizePurchase(
           supabaseUrl,
           reference,
           "failed",
-          String(providerBody.message ?? "The provider rejected the purchase."),
+          finalMessage,
           authData.user.id,
         );
       } else if (status === "completed") {
@@ -592,10 +972,13 @@ Deno.serve(async (request) => {
           supabaseUrl,
           reference,
           "completed",
-          String(providerBody.message ?? "Purchase completed."),
+          finalMessage,
           authData.user.id,
         );
       }
+
+      providerRef = extractProviderReference(providerBody) ?? providerRef;
+
       return jsonResponse({
         ...providerBody,
         success: status !== "failed",
@@ -603,28 +986,21 @@ Deno.serve(async (request) => {
         reference,
         local_reference: reference,
         charged_amount: reservedAmount,
-        provider_reference: isRecord(providerBody.data)
-          ? providerBody.data.transaction_id ?? providerBody.data.tran_id ??
-            providerBody.data.tranx_id ?? providerBody.data.job_id ?? null
-          : providerBody.transaction_id ?? providerBody.tran_id ??
-            providerBody.tranx_id ?? providerBody.job_id ?? null,
-        message: settlementMessage ?? String(providerBody.message ?? (status === "pending"
-          ? "Provider response pending confirmation."
-          : status === "failed"
-          ? "The provider rejected the purchase."
-          : "Purchase completed.")),
+        provider_reference: providerRef,
+        message: finalMessage,
       });
     }
 
     if (action === "transaction.requery" && requeryOrder) {
       if (!upstream.ok) {
         return jsonResponse({
-          message: String(providerBody.message ?? "Could not requery this transaction."),
+          message: extractProviderMessage(providerBody, "Could not requery this transaction."),
         }, 502);
       }
-      let status = normalizedProviderStatus(providerBody);
-      let requeryMessage = String(
-        providerBody.message ?? "Provider transaction status updated.",
+      let status = normalizedProviderStatus(providerBody, true);
+      let requeryMessage = extractProviderMessage(
+        providerBody,
+        "Provider transaction status updated.",
       );
       if (requeryOrder.service_type === "bulk_sms" && status === "completed") {
         const data = isRecord(providerBody.data) ? providerBody.data : {};
@@ -642,7 +1018,7 @@ Deno.serve(async (request) => {
         }
         if (
           !Number.isFinite(actualCost) || !transaction ||
-          Number(transaction.amount) !== actualCost
+          Math.abs(Number(transaction.amount) - actualCost) > 0.5
         ) {
           status = "pending";
           requeryMessage =
@@ -658,7 +1034,7 @@ Deno.serve(async (request) => {
           supabaseUrl,
           requeryOrder.id,
           status,
-          String(providerBody.message ?? "Provider transaction status updated."),
+          requeryMessage,
           authData.user.id,
         );
         const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -684,8 +1060,48 @@ Deno.serve(async (request) => {
     }
 
     if (!upstream.ok) {
-      return jsonResponse({ message: String(providerBody.message ?? "The provider request failed.") }, 502);
+      return jsonResponse({
+        message: extractProviderMessage(providerBody, "The provider request failed."),
+      }, 502);
     }
+
+    // Normalize read responses so the Flutter client always receives a consistent structure
+    if (action === "data.plans") {
+      const plans = extractList(providerBody, ["plans", "variations", "items"]);
+      return jsonResponse({
+        ...providerBody,
+        success: true,
+        data: plans,
+      });
+    }
+    if (action === "cable.plans") {
+      const plans = extractList(providerBody, ["plans", "variations", "items"]);
+      return jsonResponse({
+        ...providerBody,
+        success: true,
+        data: plans,
+      });
+    }
+    if (action === "education.prices") {
+      const prices = normalizeExamPrices(providerBody);
+      return jsonResponse({
+        ...providerBody,
+        success: true,
+        data: {
+          ...(isRecord(providerBody.data) ? providerBody.data : {}),
+          prices,
+        },
+      });
+    }
+    if (action === "electricity.providers") {
+      const providers = extractList(providerBody, ["providers", "discos", "items"]);
+      return jsonResponse({
+        ...providerBody,
+        success: true,
+        data: providers,
+      });
+    }
+
     return jsonResponse(providerBody);
   } catch {
     if (config.purchase) {
@@ -700,6 +1116,8 @@ Deno.serve(async (request) => {
         success: true,
         status: "pending",
         reference,
+        local_reference: reference,
+        charged_amount: reservedAmount,
         message: "The provider response is delayed. Your purchase is pending confirmation.",
       });
     }

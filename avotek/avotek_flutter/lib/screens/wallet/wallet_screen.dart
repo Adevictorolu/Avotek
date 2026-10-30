@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -44,6 +45,12 @@ class _WalletScreenState extends State<WalletScreen> {
       await auth.refreshWallet();
       await wallet.fetchWallet(auth.user!.id);
       await wallet.fetchTransactions(auth.user!.id);
+      if (mounted && !wallet.hasDedicatedAccount) {
+        await wallet.ensureDedicatedAccount(auth.user!.id);
+        if (mounted && wallet.hasDedicatedAccount) {
+          await auth.refreshWallet();
+        }
+      }
     }
   }
 
@@ -52,6 +59,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final wallet = context.watch<WalletProvider>();
+    final summary = wallet.walletSummary;
 
     final allTxs = wallet.transactions;
     final fundingTxs = allTxs.where((t) => t.isCredit).toList();
@@ -69,7 +77,9 @@ class _WalletScreenState extends State<WalletScreen> {
       currentRoute: '/wallet',
       onToggleTheme: widget.onToggleTheme,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0A0D14) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark
+            ? const Color(0xFF0A0D14)
+            : const Color(0xFFF8FAFC),
         body: SingleChildScrollView(
           padding: EdgeInsets.symmetric(
             horizontal: isDesktop ? 36 : 16,
@@ -93,17 +103,29 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                   ElevatedButton.icon(
                     onPressed: _refresh,
-                    icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      size: 16,
+                      color: Colors.white,
+                    ),
                     label: Text(
                       'Refresh Wallet',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w800),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ],
@@ -115,7 +137,9 @@ class _WalletScreenState extends State<WalletScreen> {
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF3A2410) : const Color(0xFFFFFBEB),
+                    color: isDark
+                        ? const Color(0xFF3A2410)
+                        : const Color(0xFFFFFBEB),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFF59E0B)),
                   ),
@@ -129,15 +153,95 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                 ),
 
+              if (wallet.hasDedicatedAccount && summary != null) ...[
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF131722) : Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFF23304B)
+                          : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryBlue.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_rounded,
+                          color: AppColors.primaryBlue,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${summary.virtualAccountBank ?? 'Dedicated Bank'} • ${summary.virtualAccountNumber}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${summary.virtualAccountName ?? 'Avotek Customer'} — Transfer to fund wallet directly',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                color: isDark
+                                    ? AppColors.metallicLight
+                                    : AppColors.slateGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(
+                            ClipboardData(text: summary.virtualAccountNumber!),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Dedicated account number copied!'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.copy_rounded, size: 15),
+                        label: const Text('Copy'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               // Tabs Row: Transaction Summary | Funding History
               Row(
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF131722) : const Color(0xFFE2E8F0),
+                      color: isDark
+                          ? const Color(0xFF131722)
+                          : const Color(0xFFE2E8F0),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF23304B) : const Color(0xFFCBD5E1),
+                        color: isDark
+                            ? const Color(0xFF23304B)
+                            : const Color(0xFFCBD5E1),
                       ),
                     ),
                     padding: const EdgeInsets.all(4),
@@ -168,14 +272,22 @@ class _WalletScreenState extends State<WalletScreen> {
                     icon: const Icon(Icons.add_rounded, size: 16),
                     label: Text(
                       'Fund Wallet',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 12.5, fontWeight: FontWeight.w800),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.electricCyan,
                       foregroundColor: const Color(0xFF0A0D14),
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ],
@@ -188,31 +300,44 @@ class _WalletScreenState extends State<WalletScreen> {
                   color: isDark ? const Color(0xFF131722) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+                    color: isDark
+                        ? const Color(0xFF23304B)
+                        : const Color(0xFFE2E8F0),
                   ),
                 ),
                 child: Row(
                   children: [
                     const Padding(
                       padding: EdgeInsets.only(left: 14),
-                      child: Icon(Icons.search_rounded, color: AppColors.electricCyan, size: 20),
+                      child: Icon(
+                        Icons.search_rounded,
+                        color: AppColors.electricCyan,
+                        size: 20,
+                      ),
                     ),
                     Expanded(
                       child: TextField(
                         controller: _searchController,
-                        onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                        onChanged: (val) =>
+                            setState(() => _searchQuery = val.trim()),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13.5,
                           color: isDark ? Colors.white : Colors.black87,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Search by description, reference, or amount',
+                          hintText:
+                              'Search by description, reference, or amount',
                           hintStyle: GoogleFonts.plusJakartaSans(
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            color: isDark
+                                ? AppColors.metallicLight
+                                : AppColors.slateGrey,
                             fontSize: 13,
                           ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
                         ),
                       ),
                     ),
@@ -237,7 +362,9 @@ class _WalletScreenState extends State<WalletScreen> {
                   color: isDark ? const Color(0xFF10141F) : Colors.white,
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF202A3E) : const Color(0xFFE2E8F0),
+                    color: isDark
+                        ? const Color(0xFF202A3E)
+                        : const Color(0xFFE2E8F0),
                   ),
                 ),
                 padding: const EdgeInsets.all(24),
@@ -252,14 +379,22 @@ class _WalletScreenState extends State<WalletScreen> {
                               height: 68,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: isDark ? const Color(0xFF1C2436) : const Color(0xFFF1F5F9),
+                                color: isDark
+                                    ? const Color(0xFF1C2436)
+                                    : const Color(0xFFF1F5F9),
                                 border: Border.all(
-                                  color: isDark ? const Color(0xFF2C3954) : const Color(0xFFCBD5E1),
+                                  color: isDark
+                                      ? const Color(0xFF2C3954)
+                                      : const Color(0xFFCBD5E1),
                                   width: 1.5,
                                 ),
                               ),
                               child: const Center(
-                                child: Icon(Icons.add_rounded, size: 36, color: Colors.white70),
+                                child: Icon(
+                                  Icons.add_rounded,
+                                  size: 36,
+                                  color: Colors.white70,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -268,7 +403,9 @@ class _WalletScreenState extends State<WalletScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -276,22 +413,34 @@ class _WalletScreenState extends State<WalletScreen> {
                               'Fund your wallet to see transactions here',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13,
-                                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                color: isDark
+                                    ? AppColors.metallicLight
+                                    : AppColors.slateGrey,
                               ),
                             ),
                             const SizedBox(height: 22),
                             ElevatedButton.icon(
                               onPressed: () => context.push('/wallet/fund'),
-                              icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
+                              icon: const Icon(
+                                Icons.add_circle_outline_rounded,
+                                size: 16,
+                              ),
                               label: Text(
                                 'Fund Wallet Now',
-                                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryBlue,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
                           ],
@@ -302,43 +451,66 @@ class _WalletScreenState extends State<WalletScreen> {
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: currentList.length,
                         separatorBuilder: (_, _) => Divider(
-                          color: isDark ? const Color(0xFF1C2436) : const Color(0xFFF1F5F9),
+                          color: isDark
+                              ? const Color(0xFF1C2436)
+                              : const Color(0xFFF1F5F9),
                           height: 20,
                         ),
                         itemBuilder: (context, idx) {
                           final tx = currentList[idx];
                           final isCredit = tx.isCredit;
                           return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 6,
+                              horizontal: 4,
+                            ),
                             child: Row(
                               children: [
                                 Container(
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: (isCredit ? AppColors.success : AppColors.primaryBlue).withValues(alpha: 0.15),
+                                    color:
+                                        (isCredit
+                                                ? AppColors.success
+                                                : AppColors.primaryBlue)
+                                            .withValues(alpha: 0.15),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: (isCredit ? AppColors.success : AppColors.electricCyan).withValues(alpha: 0.3),
+                                      color:
+                                          (isCredit
+                                                  ? AppColors.success
+                                                  : AppColors.electricCyan)
+                                              .withValues(alpha: 0.3),
                                     ),
                                   ),
                                   child: Icon(
-                                    isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-                                    color: isCredit ? AppColors.success : AppColors.electricCyan,
+                                    isCredit
+                                        ? Icons.arrow_downward_rounded
+                                        : Icons.arrow_upward_rounded,
+                                    color: isCredit
+                                        ? AppColors.success
+                                        : AppColors.electricCyan,
                                     size: 20,
                                   ),
                                 ),
                                 const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        tx.narration ?? (isCredit ? 'Wallet Funding' : tx.category.toUpperCase()),
+                                        tx.narration ??
+                                            (isCredit
+                                                ? 'Wallet Funding'
+                                                : tx.category.toUpperCase()),
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w700,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          color: isDark
+                                              ? Colors.white
+                                              : const Color(0xFF0F172A),
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -348,7 +520,9 @@ class _WalletScreenState extends State<WalletScreen> {
                                         '${DateFormat('dd MMM yyyy • hh:mm a').format(tx.createdAt)} • Ref: ${tx.reference}',
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 11.5,
-                                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                          color: isDark
+                                              ? AppColors.metallicLight
+                                              : AppColors.slateGrey,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -364,7 +538,11 @@ class _WalletScreenState extends State<WalletScreen> {
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w900,
-                                        color: isCredit ? AppColors.success : (isDark ? Colors.white : Colors.black87),
+                                        color: isCredit
+                                            ? AppColors.success
+                                            : (isDark
+                                                  ? Colors.white
+                                                  : Colors.black87),
                                       ),
                                     ),
                                     const SizedBox(height: 3),
@@ -372,7 +550,9 @@ class _WalletScreenState extends State<WalletScreen> {
                                       'Bal: ₦${tx.balanceAfter.toStringAsFixed(2)}',
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 10.5,
-                                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                        color: isDark
+                                            ? AppColors.metallicLight
+                                            : AppColors.slateGrey,
                                       ),
                                     ),
                                   ],

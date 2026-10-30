@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/services/paystack_payment_service.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/top_notification.dart';
@@ -21,8 +22,11 @@ class FundWalletScreen extends StatefulWidget {
 
 class _FundWalletScreenState extends State<FundWalletScreen> {
   final _amountController = TextEditingController();
+  final _fullNameController = TextEditingController();
+  final _phoneController = TextEditingController();
   bool _isStartingPayment = false;
   bool _isCheckingPayment = false;
+  bool _isRefreshingTransfer = false;
   String? _lastVerifiedReference;
   String? _callbackReference;
   String? _verificationMessage;
@@ -32,6 +36,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeFundingScreen();
       _checkCallbackReference();
     });
   }
@@ -39,7 +44,129 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
   @override
   void dispose() {
     _amountController.dispose();
+    _fullNameController.dispose();
+    _phoneController.dispose();
     super.dispose();
+  }
+
+  Future<void> _initializeFundingScreen() async {
+    final auth = context.read<AuthProvider>();
+    final wallet = context.read<WalletProvider>();
+    final user = auth.user;
+    if (user == null) return;
+
+    if (_fullNameController.text.isEmpty &&
+        user.name.isNotEmpty &&
+        user.name.toLowerCase() != 'avotek user') {
+      _fullNameController.text = user.name;
+    }
+    if (_phoneController.text.isEmpty && user.phone.isNotEmpty) {
+      _phoneController.text = user.phone;
+    }
+
+    await wallet.fetchWallet(user.id);
+    if (!mounted) return;
+    if (!wallet.hasDedicatedAccount) {
+      await wallet.ensureDedicatedAccount(user.id);
+      if (mounted) {
+        await auth.refreshWallet();
+      }
+    }
+  }
+
+  Future<void> _activateDedicatedAccount() async {
+    final auth = context.read<AuthProvider>();
+    final wallet = context.read<WalletProvider>();
+    final user = auth.user;
+    if (user == null) return;
+
+    final fullName = _fullNameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (wallet.dedicatedAccountNeedsProfile) {
+      final parts = fullName.split(RegExp(r'\s+')).where((s) => s.isNotEmpty);
+      if (parts.length < 2) {
+        TopNotification.showWarning(
+          context,
+          'Enter both your first name and last name.',
+        );
+        return;
+      }
+      if (phone.replaceAll(RegExp(r'\D'), '').length < 10) {
+        TopNotification.showWarning(
+          context,
+          'Enter a valid Nigerian phone number (e.g. 08012345678).',
+        );
+        return;
+      }
+    }
+
+    final result = await wallet.ensureDedicatedAccount(
+      user.id,
+      fullName: fullName.isNotEmpty ? fullName : null,
+      phone: phone.isNotEmpty ? phone : null,
+      force: true,
+    );
+    if (!mounted) return;
+
+    if (fullName.isNotEmpty || phone.isNotEmpty) {
+      await auth.updateProfile(
+        name: fullName.isNotEmpty ? fullName : null,
+        phone: phone.isNotEmpty ? phone : null,
+      );
+    }
+    await auth.refreshWallet();
+    if (!mounted) return;
+
+    if (result != null && result.isAssigned) {
+      TopNotification.showSuccess(
+        context,
+        'Your personal ${result.bankName} account (${result.accountNumber}) is active!',
+        title: 'Dedicated account ready',
+      );
+    } else if (wallet.dedicatedAccountMessage != null) {
+      TopNotification.showInfo(
+        context,
+        wallet.dedicatedAccountMessage!,
+        title: 'Account status',
+      );
+    }
+  }
+
+  Future<void> _refreshTransferBalance() async {
+    final auth = context.read<AuthProvider>();
+    final wallet = context.read<WalletProvider>();
+    final userId = auth.user?.id;
+    if (userId == null || _isRefreshingTransfer) return;
+
+    final previousBalance = wallet.balance;
+    setState(() => _isRefreshingTransfer = true);
+    try {
+      await Future.wait([
+        auth.refreshWallet(),
+        wallet.fetchWallet(userId),
+      ]);
+      if (!mounted) return;
+      final newBalance = wallet.balance;
+      if (newBalance > previousBalance) {
+        final credited = newBalance - previousBalance;
+        TopNotification.showSuccess(
+          context,
+          '₦${credited.toStringAsFixed(2)} transfer received! New balance: ₦${newBalance.toStringAsFixed(2)}.',
+          title: 'Wallet credited',
+        );
+      } else {
+        TopNotification.showInfo(
+          context,
+          'Wallet refreshed. Once Paystack confirms your bank transfer, your balance updates automatically.',
+          title: 'Balance up to date',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshingTransfer = false);
+      }
+    }
   }
 
   Future<void> _checkCallbackReference() async {
@@ -258,6 +385,325 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     }
   }
 
+  Widget _buildDedicatedAccountSection(
+    BuildContext context,
+    WalletProvider wallet,
+    bool isDark,
+  ) {
+    final summary = wallet.walletSummary;
+    final hasDedicated = wallet.hasDedicatedAccount && summary != null;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF0F172A), const Color(0xFF131F38)]
+              : [const Color(0xFFEFF6FF), const Color(0xFFF8FAFC)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? AppColors.electricCyan.withValues(alpha: 0.35)
+              : const Color(0xFFBFDBFE),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0052FF).withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.account_balance_rounded,
+                  color: Color(0xFF0052FF),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Personal Bank Transfer Account',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Fund directly from your bank app without leaving Avotek',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  hasDedicated ? 'ACTIVE' : 'IN-APP',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.success,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          if (hasDedicated) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0A0E17) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF26334D)
+                      : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    (summary.virtualAccountBank ?? 'DEDICATED BANK')
+                        .toUpperCase(),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: const Color(0xFF0052FF),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: SelectableText(
+                          summary.virtualAccountNumber!,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.8,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(
+                            ClipboardData(text: summary.virtualAccountNumber!),
+                          );
+                          TopNotification.showSuccess(
+                            context,
+                            'Account number ${summary.virtualAccountNumber} copied to clipboard!',
+                            title: 'Copied',
+                          );
+                        },
+                        icon: const Icon(Icons.copy_rounded, size: 16),
+                        label: const Text('Copy Number'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0052FF),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Account Name: ${summary.virtualAccountName ?? 'Avotek Customer'}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? const Color(0xFFCBD5E1)
+                          : const Color(0xFF334155),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Transfer any amount to this personal account number from your banking app. It settles directly into Paystack and credits your Avotek wallet automatically.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12.5,
+                height: 1.5,
+                color: isDark
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xFF475569),
+              ),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _isRefreshingTransfer
+                    ? null
+                    : _refreshTransferBalance,
+                icon: _isRefreshingTransfer
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh_rounded, size: 18),
+                label: Text(
+                  _isRefreshingTransfer
+                      ? 'Checking wallet balance...'
+                      : "I've sent the money • Refresh Balance",
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: isDark
+                      ? AppColors.electricCyan
+                      : const Color(0xFF0052FF),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ] else if (wallet.isProvisioningDedicatedAccount) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2.2),
+                  ),
+                  SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      'Assigning your personalized Paystack transfer account number...',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            if (wallet.dedicatedAccountMessage != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : const Color(0xFFCBD5E1),
+                  ),
+                ),
+                child: Text(
+                  wallet.dedicatedAccountMessage!,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.5,
+                    height: 1.5,
+                    color: isDark
+                        ? const Color(0xFFE2E8F0)
+                        : const Color(0xFF334155),
+                  ),
+                ),
+              ),
+            ],
+            if (wallet.dedicatedAccountNeedsProfile) ...[
+              TextField(
+                controller: _fullNameController,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  labelText: 'Full Name (First & Last Name)',
+                  hintText: 'For example, Adewale Okafor',
+                  prefixIcon: const Icon(Icons.person_outline_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: 'Nigerian Phone Number',
+                  hintText: '08012345678',
+                  prefixIcon: const Icon(Icons.phone_android_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _activateDedicatedAccount,
+                icon: const Icon(Icons.bolt_rounded, size: 18),
+                label: Text(
+                  wallet.dedicatedAccountNeedsProfile
+                      ? 'Save Details & Get Personal Account Number'
+                      : 'Get Personal Transfer Account Number',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0052FF),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -288,7 +734,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  'Pay securely with Paystack. Wallet funds are added only after server-side payment verification.',
+                  'Transfer to your dedicated Paystack virtual account without leaving this screen, or fund via Paystack checkout.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.5,
                     height: 1.5,
@@ -298,6 +744,8 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
+                _buildDedicatedAccountSection(context, wallet, isDark),
+                const SizedBox(height: 20),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(22),
@@ -344,6 +792,17 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         ),
                       ),
                       const SizedBox(height: 22),
+                      Text(
+                        'Or pay via Paystack Checkout (Card / USSD)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? const Color(0xFFCBD5E1)
+                              : const Color(0xFF334155),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       TextField(
                         controller: _amountController,
                         keyboardType: TextInputType.number,
@@ -479,7 +938,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Never send your card details or payment credentials to Avotek support. Returning from checkout does not itself confirm payment; the wallet changes only after Paystack is verified by the server. If confirmation is delayed, check Transactions before attempting another payment.',
+                          'Never send your card details or payment credentials to Avotek support. Bank transfers to your dedicated account and checkout payments are credited only after Paystack verification by the server.',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12.5,
                             height: 1.55,

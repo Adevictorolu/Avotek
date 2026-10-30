@@ -10,6 +10,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/nigerian_network_detector.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
+import '../../providers/wallet_provider.dart';
 import '../../widgets/avotek_loading_indicator.dart';
 import '../../widgets/service_brand_logo.dart';
 import '../../widgets/top_notification.dart';
@@ -196,11 +197,15 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
         phone: phone,
         amount: _amount,
         userPin: pin,
+        airtimeType: _selectedTopupType.toLowerCase(),
       );
 
       if (!mounted) return;
       setState(() => _isProcessing = false);
       await auth.refreshWallet();
+      if (mounted) {
+        await context.read<WalletProvider>().fetchWallet(currentUser.id);
+      }
       if (!mounted) return;
 
       if (!result.success || result.order.status == 'failed') {
@@ -212,8 +217,8 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
       } else if (result.order.status == 'pending') {
         TopNotification.showWarning(
           context,
-          'Your airtime request is awaiting telecom gateway confirmation.',
-          title: 'Transaction Pending',
+          result.message,
+          title: 'Transaction Processing',
         );
       } else {
         TopNotification.showSuccess(

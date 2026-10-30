@@ -43,10 +43,9 @@ class VtuApiService {
     }
     late final FunctionResponse response;
     try {
-      response = await Supabase.instance.client.functions.invoke(
-        'vtu-provider',
-        body: body,
-      );
+      response = await Supabase.instance.client.functions
+          .invoke('vtu-provider', body: body)
+          .timeout(const Duration(seconds: 35));
     } on AssertionError {
       throw StateError(
         'Supabase must be initialized before calling the VTU service.',
@@ -80,6 +79,7 @@ class VtuApiService {
     required double amount,
     String? pin,
     String airtimeType = 'vtu',
+    bool portedNumber = true,
   }) => _invoke(
     'airtime.purchase',
     userPin: pin,
@@ -88,7 +88,8 @@ class VtuApiService {
           ? network
           : mapNetworkNameToId(network.toString()),
       'phone_number': _cleanPhoneNumber(phone),
-      'amount': amount.toStringAsFixed(0),
+      'amount': amount.round(),
+      'ported_number': portedNumber,
       'airtime_type': airtimeType,
     },
   );
@@ -107,9 +108,19 @@ class VtuApiService {
       },
     );
     final data = response['data'];
-    return data is List
-        ? data.whereType<Map<String, dynamic>>().toList()
-        : const [];
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    if (data is Map && data['plans'] is List) {
+      return (data['plans'] as List)
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    return const [];
   }
 
   Future<Map<String, dynamic>> purchaseData({
@@ -143,9 +154,19 @@ class VtuApiService {
       },
     );
     final data = response['data'];
-    return data is List
-        ? data.whereType<Map<String, dynamic>>().toList()
-        : const [];
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    if (data is Map && data['plans'] is List) {
+      return (data['plans'] as List)
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    return const [];
   }
 
   Future<Map<String, dynamic>> verifySmartcard({
@@ -183,9 +204,16 @@ class VtuApiService {
   Future<List<Map<String, dynamic>>> getElectricityProviders() async {
     final response = await _invoke('electricity.providers');
     final data = response['data'];
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
     if (data is Map<String, dynamic> && data['providers'] is List) {
       return (data['providers'] as List)
-          .whereType<Map<String, dynamic>>()
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
           .toList();
     }
     return const [];
@@ -199,6 +227,7 @@ class VtuApiService {
     'electricity.verify',
     payload: {
       'company': mapDiscoNameToCode(company),
+      'disco_name': mapDiscoNameToCode(company),
       'meter_no': meterNumber.trim(),
       'meter_type': meterType.toLowerCase(),
     },
@@ -218,6 +247,7 @@ class VtuApiService {
     userPin: pin,
     payload: {
       'company': mapDiscoNameToCode(company),
+      'disco_name': mapDiscoNameToCode(company),
       'meter_no': meterNumber.trim(),
       'meter_type': meterType.toLowerCase(),
       'phone_number': _cleanPhoneNumber(phone),
@@ -231,10 +261,22 @@ class VtuApiService {
   Future<List<Map<String, dynamic>>> getExamPinPrices() async {
     final response = await _invoke('education.prices');
     final data = response['data'];
-    final prices = data is Map<String, dynamic> ? data['prices'] : null;
-    return prices is List
-        ? prices.whereType<Map<String, dynamic>>().toList()
-        : const [];
+    if (data is Map) {
+      final prices = data['prices'];
+      if (prices is List) {
+        return prices
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
+      }
+    }
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    return const [];
   }
 
   Future<Map<String, dynamic>> purchaseExamPins({
@@ -247,8 +289,7 @@ class VtuApiService {
     payload: {'exam': examCode, 'quantity': quantity},
   );
 
-  Future<Map<String, dynamic>> getSmsPricing() =>
-      _invoke('sms.pricing');
+  Future<Map<String, dynamic>> getSmsPricing() => _invoke('sms.pricing');
 
   Future<Map<String, dynamic>> sendBulkSms({
     required List<String> recipients,

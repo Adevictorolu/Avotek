@@ -57,6 +57,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (wallet.errorMessage != null && mounted) {
           setState(() => _loadError = wallet.errorMessage);
         }
+        if (mounted && !wallet.hasDedicatedAccount) {
+          wallet.ensureDedicatedAccount(auth.user!.id).then((result) {
+            if (mounted && result != null && result.isAssigned) {
+              auth.refreshWallet();
+            }
+          });
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -319,10 +326,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 vertical: 7,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryBlue.withOpacity(isDark ? 0.18 : 0.12),
+                                color: AppColors.primaryBlue.withValues(
+                                  alpha: isDark ? 0.18 : 0.12,
+                                ),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: AppColors.primaryBlue.withOpacity(0.4),
+                                  color: AppColors.primaryBlue.withValues(
+                                    alpha: 0.4,
+                                  ),
                                   width: 1,
                                 ),
                               ),
@@ -594,24 +605,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
     bool isDark,
     bool isDesktop,
   ) {
-    final rawAcct =
-        wallet.walletSummary?.virtualAccountNumber ??
-        auth.wallet?.virtualAccountNumber ??
-        '';
+    final hasAssignedAccount =
+        wallet.hasDedicatedAccount ||
+        (auth.wallet?.hasDedicatedAccount ?? false);
+    final rawAcct = hasAssignedAccount
+        ? (wallet.walletSummary?.virtualAccountNumber ??
+              auth.wallet?.virtualAccountNumber ??
+              '')
+        : '';
     // Format account into 816  700  2789
     final spacedAcct = rawAcct.length >= 10
         ? '${rawAcct.substring(0, 3)}  ${rawAcct.substring(3, 6)}  ${rawAcct.substring(6)}'
         : rawAcct;
 
-    final bank =
-        wallet.walletSummary?.virtualAccountBank ??
-        auth.wallet?.virtualAccountBank ??
-        '';
+    final bank = hasAssignedAccount
+        ? (wallet.walletSummary?.virtualAccountBank ??
+              auth.wallet?.virtualAccountBank ??
+              '')
+        : '';
     final formattedBalance = NumberFormat('#,##0.00', 'en_US').format(balance);
-    final holderName = (auth.user?.name != null && auth.user!.name.isNotEmpty)
-        ? auth.user!.name
-        : (auth.user?.email.split('@').first ?? 'MEMBER');
-    final cardHolder = 'AVOTEK ${holderName.toUpperCase()}';
+    final assignedHolderName =
+        wallet.walletSummary?.virtualAccountName ??
+        auth.wallet?.virtualAccountName;
+    final holderName =
+        (assignedHolderName != null && assignedHolderName.trim().isNotEmpty)
+        ? assignedHolderName.trim()
+        : ((auth.user?.name != null && auth.user!.name.isNotEmpty)
+              ? auth.user!.name
+              : (auth.user?.email.split('@').first ?? 'MEMBER'));
+    final cardHolder = holderName.toUpperCase();
 
     return Container(
       width: double.infinity,
@@ -904,6 +926,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.white70,
                   ),
                 ),
+              ] else ...[
+                const Divider(color: Colors.white12, height: 1),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        wallet.isProvisioningDedicatedAccount
+                            ? 'Assigning your personal transfer account...'
+                            : 'Personal bank transfer account available',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    InkWell(
+                      onTap: () => context.push('/wallet/fund'),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          'Get Account No.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ],
           ),
@@ -1054,6 +1119,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'title': 'Electricity',
         'icon': Icons.flash_on_rounded,
         'route': '/services/electricity',
+      },
+      {
+        'title': 'Exam PINs',
+        'icon': Icons.school_rounded,
+        'route': '/services/exam-pins',
       },
     ];
 

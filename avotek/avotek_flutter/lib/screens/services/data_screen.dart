@@ -9,6 +9,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/nigerian_network_detector.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
+import '../../providers/wallet_provider.dart';
 import '../../widgets/avotek_loading_indicator.dart';
 import '../../widgets/service_brand_logo.dart';
 import '../../widgets/top_notification.dart';
@@ -99,21 +100,28 @@ class _DataScreenState extends State<DataScreen> {
       if (rawPlans.isNotEmpty && mounted) {
         final formatted = rawPlans
             .map((p) {
-              final size = p['size'] ?? '';
-              final vol = p['plan_volume'] ?? '';
-              final type = p['plantype'] ?? '';
-              final val = p['validity'] ?? '';
-              final amt =
-                  (p['amount'] as num?)?.toDouble() ??
-                  (p['plan_amount'] as num?)?.toDouble() ??
-                  0.0;
-              final id = (p['id'] as num?)?.toInt() ?? 0;
+              final size = (p['size'] ?? '').toString().trim();
+              final vol = (p['plan_volume'] ?? p['volume'] ?? '').toString().trim();
+              final type = (p['plantype'] ?? p['plan_type'] ?? p['type'] ?? 'SME').toString().trim();
+              final val = (p['validity'] ?? p['month_validate'] ?? '30 Days').toString().trim();
+              final fallbackName = (p['plan_name'] ?? p['name'] ?? p['plan'] ?? '').toString().trim();
+              final rawAmt = p['amount'] ?? p['plan_amount'] ?? p['price'];
+              final amt = rawAmt is num
+                  ? rawAmt.toDouble()
+                  : double.tryParse(rawAmt?.toString() ?? '') ?? 0.0;
+              final rawId = p['id'] ?? p['plan_id'] ?? p['dataplan_id'];
+              final id = rawId is num
+                  ? rawId.toInt()
+                  : int.tryParse(rawId?.toString() ?? '') ?? 0;
+              final label = ('$size$vol').trim().isNotEmpty
+                  ? '$size$vol $type ($val)'
+                  : (fallbackName.isNotEmpty ? fallbackName : '$type Data Plan');
               return {
                 'id': id,
-                'plan': '$size$vol $type ($val)',
+                'plan': label,
                 'price': amt,
                 'code': 'BIGISUB-$id',
-                'plantype': type.toString().toUpperCase(),
+                'plantype': type.toUpperCase(),
               };
             })
             .where((plan) {
@@ -286,6 +294,9 @@ class _DataScreenState extends State<DataScreen> {
       if (!mounted) return;
       setState(() => _isProcessing = false);
       await auth.refreshWallet();
+      if (mounted) {
+        await context.read<WalletProvider>().fetchWallet(currentUser.id);
+      }
       if (!mounted) return;
 
       if (!result.success || result.order.status == 'failed') {
@@ -297,8 +308,8 @@ class _DataScreenState extends State<DataScreen> {
       } else if (result.order.status == 'pending') {
         TopNotification.showWarning(
           context,
-          'Your data bundle request is awaiting telecom gateway confirmation.',
-          title: 'Transaction Pending',
+          result.message,
+          title: 'Transaction Processing',
         );
       } else {
         TopNotification.showSuccess(
