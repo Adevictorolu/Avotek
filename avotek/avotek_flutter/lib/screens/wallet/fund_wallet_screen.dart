@@ -67,6 +67,43 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     await wallet.fetchWallet(user.id);
   }
 
+  Future<void> _activateDedicatedAccount() async {
+    final auth = context.read<AuthProvider>();
+    final wallet = context.read<WalletProvider>();
+    final user = auth.user;
+    if (user == null) return;
+
+    final fullName = _fullNameController.text.trim().isNotEmpty
+        ? _fullNameController.text.trim()
+        : user.name;
+    final phone = _phoneController.text.trim().isNotEmpty
+        ? _phoneController.text.trim()
+        : user.phone;
+
+    final result = await wallet.ensureDedicatedAccount(
+      user.id,
+      fullName: fullName.isNotEmpty ? fullName : null,
+      phone: phone.isNotEmpty ? phone : null,
+      force: true,
+    );
+    if (!mounted) return;
+
+    if (result != null && result.isAssigned) {
+      TopNotification.showSuccess(
+        context,
+        'Your dedicated ${result.bankName} account (${result.accountNumber}) is ready!',
+        title: 'Dedicated Account Activated',
+      );
+    } else {
+      TopNotification.showInfo(
+        context,
+        wallet.dedicatedAccountMessage ??
+            'Dedicated virtual accounts require Paystack merchant KYC. Use Instant Bank Transfer above to fund your wallet immediately.',
+        title: 'Dedicated Account Status',
+      );
+    }
+  }
+
   Future<void> _refreshTransferBalance() async {
     final auth = context.read<AuthProvider>();
     final wallet = context.read<WalletProvider>();
@@ -249,7 +286,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     }
   }
 
-  Future<void> _startPayment() async {
+  Future<void> _startPayment({List<String>? channels}) async {
     final amount = int.tryParse(_amountController.text.trim());
     if (amount == null || amount < 100 || amount > 1000000) {
       TopNotification.showWarning(
@@ -263,13 +300,18 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     try {
       final session = await PaystackPaymentService.instance.initialize(
         amountNaira: amount,
+        channels: channels,
       );
       if (!mounted) return;
+      final isBankTransfer = channels != null &&
+          channels.length == 1 &&
+          channels.first == 'bank_transfer';
       setState(() {
         _callbackReference = session.reference;
         _authorizationUri = Uri.parse(session.authorizationUrl);
-        _verificationMessage =
-            'Checkout is ready. After paying, return here and check your payment status.';
+        _verificationMessage = isBankTransfer
+            ? 'Paystack Bank Transfer window is open. Transfer into the account displayed by Paystack, then return here and verify.'
+            : 'Checkout is ready. After paying, return here and check your payment status.';
       });
       await _openCheckout();
     } catch (error) {
@@ -558,12 +600,13 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
+                      // Primary Button: Transfer via Bank Account (Paystack)
                       Container(
                         width: double.infinity,
                         height: 52,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                            colors: [Color(0xFF0052FF), Color(0xFF0038B8)],
                           ),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
@@ -579,7 +622,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                   _isCheckingPayment ||
                                   _authorizationUri != null
                               ? null
-                              : _startPayment,
+                              : () => _startPayment(channels: ['bank_transfer']),
                           icon: _isStartingPayment
                               ? const SizedBox(
                                   width: 18,
@@ -589,13 +632,13 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Icon(Icons.bolt_rounded),
+                              : const Icon(Icons.account_balance_rounded),
                           label: Text(
                             _isStartingPayment
-                                ? 'Connecting Paystack Direct...'
+                                ? 'Connecting Paystack Bank Transfer...'
                                 : _authorizationUri != null
                                 ? 'Paystack Checkout Ready'
-                                : 'Proceed with Instant Paystack Funding',
+                                : 'Transfer via Bank Account',
                             style: GoogleFonts.plusJakartaSans(
                               fontWeight: FontWeight.w800,
                               fontSize: 14,
@@ -606,6 +649,34 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                             foregroundColor: Colors.white,
                             disabledForegroundColor: Colors.white70,
                             shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      // Secondary Button: Pay with Card / USSD
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: _isStartingPayment ||
+                                  _isCheckingPayment ||
+                                  _authorizationUri != null
+                              ? null
+                              : () => _startPayment(channels: ['card', 'ussd', 'bank']),
+                          icon: const Icon(Icons.credit_card_rounded, size: 18),
+                          label: Text(
+                            'Pay with Debit Card or USSD',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF0052FF),
+                            side: const BorderSide(color: Color(0xFF0052FF), width: 1.4),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -637,7 +708,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'A checkout page has been created. Click the button below to pay via Card, USSD or Bank Transfer. Once done, return here and tap "Check Payment Status".',
+                                'A checkout page has been created. Click the button below to complete payment via Bank Transfer, Card or USSD. Once done, return here and tap "Verify Payment".',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   height: 1.45,
@@ -715,6 +786,8 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
+                // 2. Dedicated Virtual Account Card
+                _buildDedicatedAccountSection(context, wallet, isDark),
 
                 const SizedBox(height: 18),
                 Container(
@@ -758,6 +831,253 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDedicatedAccountSection(
+    BuildContext context,
+    WalletProvider wallet,
+    bool isDark,
+  ) {
+    final summary = wallet.walletSummary;
+    final hasDedicated = wallet.hasDedicatedAccount &&
+        summary != null &&
+        summary.virtualAccountNumber != null &&
+        summary.virtualAccountNumber!.isNotEmpty &&
+        summary.virtualAccountBank != null &&
+        summary.virtualAccountBank!.isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF141720) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0052FF).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.badge_outlined,
+                  color: Color(0xFF0052FF),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Dedicated Virtual Account',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      hasDedicated
+                          ? 'Automated 24/7 instant funding account'
+                          : 'Permanent dedicated Nigerian bank account',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (hasDedicated)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '● ACTIVE',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF10B981),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (hasDedicated) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0D1117) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: const Color(0xFF0052FF).withValues(alpha: 0.25),
+                ),
+              ),
+              child: Column(
+                children: [
+                  _buildAccountDetailRow(
+                    'Bank Name',
+                    summary.virtualAccountBank ?? 'Paystack Partner Bank',
+                    isDark,
+                  ),
+                  const Divider(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Account Number',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              color: isDark
+                                  ? const Color(0xFF94A3B8)
+                                  : const Color(0xFF64748B),
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            summary.virtualAccountNumber!,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.2,
+                              color: const Color(0xFF0052FF),
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton.filledTonal(
+                        onPressed: () {
+                          Clipboard.setData(
+                            ClipboardData(text: summary.virtualAccountNumber!),
+                          );
+                          TopNotification.showSuccess(
+                            context,
+                            'Account number copied to clipboard!',
+                          );
+                        },
+                        icon: const Icon(Icons.copy_rounded, size: 18),
+                        tooltip: 'Copy account number',
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 20),
+                  _buildAccountDetailRow(
+                    'Account Name',
+                    summary.virtualAccountName ?? 'Avotek User',
+                    isDark,
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            Text(
+              'A dedicated virtual account provides a personal Nigerian bank account number permanently assigned to your Avotek wallet. Any money sent to this account from any banking app credits your wallet automatically.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12.5,
+                height: 1.5,
+                color: isDark
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xFF475569),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: wallet.isProvisioningDedicatedAccount
+                      ? null
+                      : _activateDedicatedAccount,
+                  icon: wallet.isProvisioningDedicatedAccount
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.verified_outlined, size: 18),
+                  label: Text(
+                    wallet.isProvisioningDedicatedAccount
+                        ? 'Checking Paystack...'
+                        : 'Check / Request Dedicated Account',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0052FF),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (wallet.dedicatedAccountMessage != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                wallet.dedicatedAccountMessage!,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11.5,
+                  color: isDark
+                      ? const Color(0xFFCBD5E1)
+                      : const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAccountDetailRow(String label, String value, bool isDark) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          ),
+        ),
+      ],
     );
   }
 }

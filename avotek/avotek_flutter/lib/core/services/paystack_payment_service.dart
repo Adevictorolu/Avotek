@@ -61,10 +61,14 @@ class PaystackPaymentService {
   static final PaystackPaymentService instance = PaystackPaymentService._();
   PaystackPaymentService._();
 
-  Future<PaystackPaymentSession> initialize({required int amountNaira}) async {
+  Future<PaystackPaymentSession> initialize({
+    required int amountNaira,
+    List<String>? channels,
+  }) async {
     final response = await _invoke({
       'action': 'initialize',
       'amount': amountNaira,
+      if (channels != null && channels.isNotEmpty) 'channels': channels,
     });
     final authorizationUrl = response['authorization_url'];
     final reference = response['reference'];

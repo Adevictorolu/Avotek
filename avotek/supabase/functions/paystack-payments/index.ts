@@ -783,148 +783,10 @@ async function handleInitialize(
     }, 409);
   }
 
-  let response: Response;
-  try {
-    response = await fetch("https://api.paystack.co/transaction/initialize", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${config.paystackSecretKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: user.email,
-        amount: amount * 100,
-        currency: "NGN",
-        reference,
-        callback_url: callback.toString(),
-        channels: ["bank_transfer", "card", "ussd", "bank"],
-        metadata: { user_id: user.id, purpose: "wallet_funding" },
-      }),
-      signal: AbortSignal.timeout(15000),
-    });
-  } catch (error) {
-    console.error("Paystack initialization request failed:", error);
-    return jsonResponse({
-      message: "Payment initialization could not be confirmed. Check your transactions before retrying.",
-      reference,
-    }, 503);
-  }
-
-  let result: unknown;
-  try {
-    result = await response.json();
-  } catch (error) {
-    console.error("Paystack initialization returned an unreadable response:", error);
-    return jsonResponse({
-      message: "Payment initialization could not be confirmed. Check your transactions before retrying.",
-      reference,
-    }, 502);
-  }
-  if (!response.ok || !isRecord(result) || result.status !== true || !isRecord(result.data)) {
-    const { error } = await admin.rpc("fail_paystack_wallet_funding", {
-      p_user_id: user.id,
-      p_reference: reference,
-    });
-    if (error) console.error("Could not close failed Paystack initialization:", error.message);
-    console.error("Paystack rejected payment initialization.");
-    return jsonResponse({ message: "Paystack could not start this payment. Please try again." }, 502);
-  }
-
-  const authorizationUrl = result.data.authorization_url;
-  let checkoutUrl: URL | null = null;
-  try {
-    if (typeof authorizationUrl === "string") checkoutUrl = new URL(authorizationUrl);
-  } catch {
-    checkoutUrl = null;
-  }
-  if (
-    result.data.reference !== reference ||
-    !checkoutUrl ||
-    checkoutUrl.protocol !== "https:" ||
-    checkoutUrl.hostname !== "checkout.paystack.com"
-  ) {
-    console.error("Paystack initialization returned an invalid checkout URL.");
-    return jsonResponse({
-      message: "Paystack returned an invalid checkout link. Check your transactions before retrying.",
-      reference,
-    }, 502);
-  }
-  return jsonResponse({ authorization_url: checkoutUrl.toString(), reference });
-}
-
-async function handleDedicatedAccount(
-  _admin: Awaited<ReturnType<typeof createPaystackClient>>,
-  _config: NonNullable<ReturnType<typeof getServerConfig>>,
-  _user: { id: string; email: string },
-  _body: JsonMap,
-): Promise<Response> {
-  return jsonResponse({
-    status: "unavailable",
-    message: "Dedicated account numbers are retired to prevent invalid bank routing errors. Please use Paystack Instant Funding to top up your wallet directly with card, direct bank transfer, or USSD.",
-  });
-}
-
-async function handleTransferAccount(
-  _admin: Awaited<ReturnType<typeof createPaystackClient>>,
-  _config: NonNullable<ReturnType<typeof getServerConfig>>,
-  _user: { id: string; email: string },
-  _body: JsonMap,
-): Promise<Response> {
-  return jsonResponse({
-    status: "unavailable",
-    message: "Transfer account numbers are retired. Please use Paystack Instant Funding to top up your wallet directly with card, bank transfer, or USSD.",
-  });
-}
-
-async function handleInitialize(
-  admin: Awaited<ReturnType<typeof createPaystackClient>>,
-  config: NonNullable<ReturnType<typeof getServerConfig>>,
-  user: { id: string; email: string },
-  body: JsonMap,
-): Promise<Response> {
-  if (!hasValidPaystackKey(config.paystackSecretKey)) {
-    console.error("Paystack initialization blocked because the configured key is not valid.");
-    return jsonResponse({ message: "Paystack wallet funding is not configured." }, 503);
-  }
-
-  const amount = Number(body.amount);
-  if (!Number.isInteger(amount) || amount < 100 || amount > 1000000) {
-    return jsonResponse({ message: "Enter an amount between ₦100 and ₦1,000,000." }, 400);
-  }
-
-  const rawCallbackUrl = Deno.env.get("PAYSTACK_CALLBACK_URL")?.trim() ||
-    "https://adevictorolu.github.io/Avotek/";
-  let callback: URL;
-  try {
-    callback = new URL(rawCallbackUrl);
-    if (
-      callback.protocol !== "https:" ||
-      callback.hostname !== "adevictorolu.github.io"
-    ) {
-      callback = new URL("https://adevictorolu.github.io/Avotek/");
-    }
-  } catch {
-    callback = new URL("https://adevictorolu.github.io/Avotek/");
-  }
-
-  await clearUnpaidPendingFunding(admin, config.paystackSecretKey, user.id);
-
-  const reference = `AVOFUND_${crypto.randomUUID().replaceAll("-", "")}`;
-  const { data: prepared, error: prepareError } = await admin.rpc("prepare_paystack_wallet_funding", {
-    p_user_id: user.id,
-    p_reference: reference,
-    p_amount: amount,
-  });
-  if (prepareError) {
-    console.error("Could not create pending wallet funding record:", prepareError.message);
-    return jsonResponse({ message: "Could not start wallet funding. Please try again." }, 503);
-  }
-  if (isRecord(prepared) && prepared.already_pending === true) {
-    return jsonResponse({
-      message: "A wallet funding payment is already pending. Check its status before starting another.",
-      reference: prepared.reference,
-    }, 409);
-  }
+  const rawChannels = Array.isArray(body.channels) ? body.channels : null;
+  const channels = rawChannels && rawChannels.every((c) => typeof c === "string" && c.trim().length > 0)
+    ? rawChannels
+    : ["bank_transfer", "card", "ussd", "bank"];
 
   let response: Response;
   try {
@@ -940,7 +802,7 @@ async function handleInitialize(
         currency: "NGN",
         reference,
         callback_url: callback.toString(),
-        channels: ["bank_transfer", "card", "ussd", "bank"],
+        channels,
         metadata: { user_id: user.id, purpose: "wallet_funding" },
       }),
       signal: AbortSignal.timeout(15000),
@@ -1197,55 +1059,12 @@ async function handleDedicatedAccount(
     });
   }
 
-  // 5. Automatic Default Paystack-Titan Bank Transfer Account Strategy:
-  // Generate a live Paystack-Titan transfer account automatically and attach it to the user's wallet
-  // with "<USER NAME> / PAYSTACK CHECKOUT" so the user always has an active default account number on screen.
-  const requestedAmount = Number(body.amount);
-  const baseAmountNaira =
-    Number.isInteger(requestedAmount) && requestedAmount >= 100 && requestedAmount <= 1000000
-      ? requestedAmount
-      : 100;
-
-  const fallbackTransfer = await createBankTransferChargeAccount(
-    admin,
-    config.paystackSecretKey,
-    user.id,
-    email,
-    baseAmountNaira,
-    effectiveFullName,
-  );
-  if (!fallbackTransfer) {
-    return jsonResponse({
-      message: "Paystack could not prepare your transfer account right now. Please try again.",
-      providers_debug: providers,
-    }, 502);
-  }
-
-  const { error: saveError } = await admin.rpc("save_paystack_dedicated_wallet_account", {
-    p_user_id: user.id,
-    p_customer_code: customerCode ?? "",
-    p_account_number: fallbackTransfer.accountNumber,
-    p_bank_name: fallbackTransfer.bankName,
-    p_account_name: fallbackTransfer.accountName,
-  });
-  if (saveError) {
-    console.error("Could not save automatic Paystack-Titan account:", saveError.message);
-  }
-
+  // If Paystack Dedicated Accounts are not enabled on this merchant integration,
+  // do NOT fabricate an ephemeral 100-naira charge account as a permanent account.
+  // Instead, report unavailable so the UI guides the user to instant Paystack Bank Transfer.
   return jsonResponse({
-    status: "assigned",
-    account_number: fallbackTransfer.accountNumber,
-    bank_name: fallbackTransfer.bankName,
-    account_name: fallbackTransfer.accountName,
-    reference: fallbackTransfer.reference,
-    amount_naira: fallbackTransfer.amountNaira,
-    transfer_amount_naira: fallbackTransfer.transferAmountNaira,
-    net_credit_naira: fallbackTransfer.netCreditNaira,
-    expires_at: fallbackTransfer.expiresAt,
-    _debug: {
-      providers,
-      customerCode,
-    },
+    status: "unavailable",
+    message: "Dedicated virtual accounts are awaiting Paystack merchant activation. Please use instant Paystack Bank Transfer to fund your wallet immediately.",
   });
 }
 
