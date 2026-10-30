@@ -1,9 +1,13 @@
 String avotekIdFor(String userId) {
-  final normalizedId = userId.replaceAll('-', '').toUpperCase();
-  final suffix = normalizedId.length > 16
-      ? normalizedId.substring(0, 16)
-      : normalizedId.padLeft(16, '0');
-  return 'AVO-$suffix';
+  final clean = userId.trim();
+  if (clean.isEmpty) return 'AVO10001';
+  // Compute deterministic, memorable 5-digit number from user ID
+  var hash = 0;
+  for (var i = 0; i < clean.length; i++) {
+    hash = (31 * hash + clean.codeUnitAt(i)) & 0x7FFFFFFF;
+  }
+  final number = 10000 + (hash % 90000);
+  return 'AVO$number';
 }
 
 String avotekReferralLinkFor(Uri baseUri, String referralCode) {
@@ -117,7 +121,7 @@ class UserModel {
     final rawAvo = json['avo_id'] as String? ?? json['avoId'] as String?;
     final resolvedAvo = (rawAvo != null && rawAvo.trim().isNotEmpty)
         ? rawAvo.trim().toUpperCase()
-        : (rawId.isNotEmpty ? avotekIdFor(rawId) : 'AVO-10001');
+        : (rawId.isNotEmpty ? avotekIdFor(rawId) : 'AVO10001');
 
     final rawEmail = json['email'] as String? ?? '';
     final rawUsername =

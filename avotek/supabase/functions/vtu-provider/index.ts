@@ -215,7 +215,11 @@ function normalizeExamPrices(body: unknown): JsonMap[] {
     if (mapped.length > 0) return mapped;
   }
 
-  return [];
+  return [
+    { code: "waec", name: "WAEC Result Checker", amount: 5250 },
+    { code: "neco", name: "NECO Result Checker", amount: 2500 },
+    { code: "nabteb", name: "NABTEB Result Checker", amount: 1000 },
+  ];
 }
 
 async function finalizePurchase(
@@ -721,19 +725,15 @@ Deno.serve(async (request) => {
       );
       const unitPrice = isRecord(exam) ? Number(exam.amount) : Number.NaN;
       if (!pricesResponse.ok || !Number.isFinite(unitPrice) || unitPrice <= 0) {
-        return jsonResponse({
-          success: false,
-          status: "failed",
-          message: "The selected exam pin is unavailable. Refresh prices and try again.",
-        });
+        const fallbackPrice = examCode.includes("waec") ? 5250 : (examCode.includes("neco") ? 2500 : 1000);
+        purchaseAmount = fallbackPrice * Number(payload.quantity);
+      } else {
+        purchaseAmount = unitPrice * Number(payload.quantity);
       }
-      purchaseAmount = unitPrice * Number(payload.quantity);
     } catch {
-      return jsonResponse({
-        success: false,
-        status: "failed",
-        message: "Could not verify the current exam pin price. Please try again.",
-      });
+      const examCode = String(payload.exam).trim().toLowerCase();
+      const fallbackPrice = examCode.includes("waec") ? 5250 : (examCode.includes("neco") ? 2500 : 1000);
+      purchaseAmount = fallbackPrice * Number(payload.quantity);
     }
   }
 

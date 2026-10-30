@@ -8,13 +8,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Authentication account IDs', () {
-    test('generates a stable Avotek ID from the Supabase user ID', () {
+    test('generates a stable, memorable Avotek ID from the Supabase user ID', () {
       const userId = '550e8400-e29b-41d4-a716-446655440000';
+      final avoId = UserModel.avoIdFor(userId);
 
-      expect(UserModel.avoIdFor(userId), 'AVO-550E8400E29B41D4');
+      expect(avoId, matches(RegExp(r'^AVO\d{5}$')));
       expect(
         UserModel.fromJson({'id': userId, 'email': 'person@example.com'}).avoId,
-        'AVO-550E8400E29B41D4',
+        avoId,
       );
     });
 
@@ -39,7 +40,7 @@ void main() {
       );
       expect(
         friendlyAuthError(Exception('Email not confirmed')),
-        'Verify your email address using the link we sent before signing in.',
+        'Please check your inbox and verify your email address to activate your account.',
       );
     });
 

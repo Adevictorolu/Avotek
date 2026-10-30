@@ -22,7 +22,7 @@ String friendlyAuthError(Object error) {
   }
   if (normalized.contains('email not confirmed') ||
       normalized.contains('email_not_confirmed')) {
-    return 'Verify your email address using the link we sent before signing in.';
+    return 'Please check your inbox and verify your email address to activate your account.';
   }
   if (normalized.contains('weak_password') ||
       normalized.contains('password should be at least')) {
@@ -30,12 +30,18 @@ String friendlyAuthError(Object error) {
   }
   if (normalized.contains('too many requests') ||
       normalized.contains('rate limit')) {
-    return 'Too many attempts. Wait a few minutes and try again.';
+    return 'Too many attempts. Wait a few moments and try again.';
+  }
+  if (normalized.contains('duplicate key') ||
+      normalized.contains('already exists') ||
+      normalized.contains('unique constraint')) {
+    return 'This phone number or username is already taken. Please choose another.';
   }
   if (normalized.contains('socketexception') ||
       normalized.contains('failed host lookup') ||
-      normalized.contains('network is unreachable')) {
-    return 'Could not reach Avotek. Check your internet connection and retry.';
+      normalized.contains('network is unreachable') ||
+      normalized.contains('clientexception')) {
+    return 'Could not reach Avotek servers. Check your internet connection and retry.';
   }
   return message.isEmpty
       ? 'Authentication could not be completed. Please try again.'
@@ -47,6 +53,8 @@ class AuthProvider extends ChangeNotifier {
   WalletModel? _wallet;
   bool _isLoading = false;
   String? _errorMessage;
+  bool _emailVerificationPending = false;
+  String? _pendingVerificationEmail;
 
   AuthProvider() {
     _initSession();
@@ -58,6 +66,8 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String? get authError => _errorMessage;
+  bool get emailVerificationPending => _emailVerificationPending;
+  String? get pendingVerificationEmail => _pendingVerificationEmail;
 
   /// True if the user is authenticated but hasn't created a 4-digit security PIN yet
   bool get needsPinSetup =>
@@ -266,12 +276,16 @@ class AuthProvider extends ChangeNotifier {
         referralCode: referralCode,
       );
       if (SupabaseService.instance.currentSession == null) {
+        _emailVerificationPending = true;
+        _pendingVerificationEmail = email;
         _errorMessage =
-            'Your account was created. Check your email to verify it, then sign in.';
+            'Verification email sent. Check your inbox to activate your account.';
         _isLoading = false;
         notifyListeners();
         return false;
       }
+      _emailVerificationPending = false;
+      _pendingVerificationEmail = null;
       _user = user;
       AppDatabaseService.instance.cacheUser(user);
       await refreshWallet();

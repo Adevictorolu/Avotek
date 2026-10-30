@@ -67,9 +67,13 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     await wallet.fetchWallet(user.id);
     if (!mounted) return;
     if (!wallet.hasDedicatedAccount) {
-      await wallet.ensureDedicatedAccount(user.id);
-      if (mounted) {
-        await auth.refreshWallet();
+      final cleanPhone = user.phone.replaceAll(RegExp(r'\D'), '');
+      final isRealName = user.name.trim().isNotEmpty && user.name.toLowerCase() != 'avotek user';
+      if (cleanPhone.length >= 10 && isRealName) {
+        await wallet.ensureDedicatedAccount(user.id);
+        if (mounted) {
+          await auth.refreshWallet();
+        }
       }
     }
   }
@@ -420,6 +424,12 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
   ) {
     final summary = wallet.walletSummary;
     final hasDedicated = wallet.hasDedicatedAccount && summary != null;
+    final currentUser = context.watch<AuthProvider>().user;
+    final needsSecurityKyc = wallet.dedicatedAccountNeedsProfile ||
+        (currentUser != null &&
+            (currentUser.phone.replaceAll(RegExp(r'\D'), '').length < 10 ||
+                currentUser.name.trim().isEmpty ||
+                currentUser.name.toLowerCase() == 'avotek user'));
 
     return Container(
       width: double.infinity,
@@ -700,7 +710,38 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                 ),
               ),
             ],
-            if (wallet.dedicatedAccountNeedsProfile) ...[
+            if (needsSecurityKyc) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFBFDBFE),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.shield_outlined,
+                      color: Color(0xFF0052FF),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Provide your legal name and Nigerian phone number to generate your permanent Paystack transfer account.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          height: 1.4,
+                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF1E40AF),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               TextField(
                 controller: _fullNameController,
                 textCapitalization: TextCapitalization.words,
@@ -735,8 +776,8 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                 onPressed: _activateDedicatedAccount,
                 icon: const Icon(Icons.bolt_rounded, size: 18),
                 label: Text(
-                  wallet.dedicatedAccountNeedsProfile
-                      ? 'Save Details & Get Personal Account Number'
+                  needsSecurityKyc
+                      ? 'Save Details & Generate Personal Account'
                       : 'Get Personal Transfer Account Number',
                 ),
                 style: ElevatedButton.styleFrom(

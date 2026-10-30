@@ -57,8 +57,12 @@ Deno.serve(async (request) => {
   });
 
   let lookup = admin.from("profiles").select("email");
-  if (/^AVO-[A-F0-9]{16}$/i.test(identifier)) {
-    lookup = lookup.eq("avo_id", identifier.toUpperCase());
+  if (/^AVO-?[A-Z0-9]{4,16}$/i.test(identifier)) {
+    const rawClean = identifier.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const rawDigits = rawClean.replace(/^AVO/, "");
+    const candidate1 = `AVO${rawDigits}`;
+    const candidate2 = `AVO-${rawDigits}`;
+    lookup = lookup.or(`avo_id.eq.${identifier.toUpperCase()},avo_id.eq.${candidate1},avo_id.eq.${candidate2}`);
   } else if (/^[0-9+() -]{7,20}$/.test(identifier)) {
     lookup = lookup.eq("phone", identifier);
   } else if (/^[a-zA-Z0-9._-]{3,32}$/.test(identifier)) {
