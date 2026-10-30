@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -52,7 +53,17 @@ class VtuApiService {
       );
     } on FunctionException catch (error) {
       final details = error.details;
-      final message = details is Map ? details['message']?.toString() : null;
+      String? message;
+      if (details is Map) {
+        message = details['message']?.toString();
+      } else if (details is String && details.trim().startsWith('{')) {
+        try {
+          final decoded = jsonDecode(details);
+          if (decoded is Map) {
+            message = decoded['message']?.toString();
+          }
+        } catch (_) {}
+      }
       throw VtuProviderRequestException(error.status, message, reference);
     }
 

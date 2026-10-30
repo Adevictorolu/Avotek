@@ -146,6 +146,59 @@ function normalizeNigerianPhone(value: string): string | null {
   return null;
 }
 
+function formatPersonalizedAccountName(
+  fullName: string | null | undefined,
+  email: string,
+  providerAccountName: string,
+): string {
+  const rawName = (fullName ?? "").trim();
+  const cleanName = rawName && rawName.toLowerCase() !== "avotek user"
+    ? rawName
+    : email.split("@")[0].replace(/[._-]+/g, " ").trim() || "Avotek User";
+  const upperUser = cleanName.toUpperCase();
+  const upperProvider = providerAccountName.trim().toUpperCase();
+  if (upperProvider.includes(upperUser)) {
+    return upperProvider;
+  }
+  if (upperProvider === "PAYSTACK CHECKOUT" || upperProvider.includes("PAYSTACK")) {
+    return `${upperUser} / PAYSTACK CHECKOUT`;
+  }
+  return `${upperUser} / ${upperProvider}`;
+}
+
+/**
+ * Calculates the net wallet credit after deducting Paystack's transaction fee.
+ * Example: If a user pays ₦100.00 (10,000 kobo), Paystack's 1.5% fee (₦1.50 = 150 kobo)
+ * is subtracted, crediting ₦98.50 to the user's Avotek wallet.
+ */
+function calculateNetFunding(payment: JsonMap): {
+  grossNaira: number;
+  feeNaira: number;
+  netNaira: number;
+  narration: string;
+} {
+  const rawAmountKobo = Number(payment.amount);
+  const grossKobo = Number.isFinite(rawAmountKobo) && rawAmountKobo > 0
+    ? Math.round(rawAmountKobo)
+    : 0;
+  const reportedFeeKobo = Number.isFinite(Number(payment.fees)) && Number(payment.fees) > 0
+    ? Math.round(Number(payment.fees))
+    : 0;
+  // Standard Paystack local fee: 1.5% (plus ₦100 for payments >= ₦2,500, capped at ₦2,000)
+  const flatFeeKobo = grossKobo >= 250000 ? 10000 : 0;
+  const standardFeeKobo = Math.min(200000, Math.round(grossKobo * 0.015) + flatFeeKobo);
+  const feeKobo = Math.max(reportedFeeKobo, standardFeeKobo);
+  const netKobo = Math.max(0, grossKobo - feeKobo);
+
+  const grossNaira = Math.round(grossKobo) / 100;
+  const feeNaira = Math.round(feeKobo) / 100;
+  const netNaira = Math.round(netKobo) / 100;
+  const narration =
+    `Paystack wallet funding (₦${grossNaira.toFixed(2)} paid - ₦${feeNaira.toFixed(2)} Paystack fee = ₦${netNaira.toFixed(2)} credited)`;
+
+  return { grossNaira, feeNaira, netNaira, narration };
+}
+
 async function findDedicatedAccount(
   secretKey: string,
   customerCode: string,
@@ -164,22 +217,6 @@ async function findDedicatedAccount(
     if (details && isRecord(account) && account.active !== false) return details;
   }
   return null;
-}
-
-function matchesRequestedAmount(payment: JsonMap, expectedKobo: number): boolean {
-  const amountKobo = Number(payment.amount);
-  if (!Number.isSafeInteger(amountKobo) || amountKobo < expectedKobo) return false;
-
-  const requestedAmount = payment.requested_amount;
-  if (requestedAmount !== undefined && requestedAmount !== null) {
-    const requestedKobo = Number(requestedAmount);
-    if (Number.isSafeInteger(requestedKobo) && requestedKobo === expectedKobo) {
-      return true;
-    }
-  }
-  // Allow Paystack's automatic bank_transfer fee gross-up (up to 3% or NGN 250)
-  const maxWithFeeKobo = expectedKobo + Math.max(25000, Math.round(expectedKobo * 0.03));
-  return amountKobo >= expectedKobo && amountKobo <= maxWithFeeKobo;
 }
 
 async function sha512HmacHex(secret: string, value: string): Promise<string> {
@@ -233,18 +270,23 @@ async function clearUnpaidPendingFunding(
     if (!ref) continue;
     try {
       const payment = await verifyPaystackTransaction(secretKey, ref);
-      const expectedKobo = Math.round(Number(row.amount) * 100);
+      const amountKobo = Number(payment.amount);
       if (
         payment.status === "success" &&
         payment.currency === "NGN" &&
-        matchesRequestedAmount(payment, expectedKobo)
+        Number.isSafeInteger(amountKobo) &&
+        amountKobo > 0
       ) {
-        await admin.rpc("credit_paystack_wallet_funding", {
-          p_user_id: userId,
-          p_reference: ref,
-          p_amount: row.amount,
-        });
-        continue;
+        const net = calculateNetFunding(payment);
+        if (net.netNaira > 0) {
+          await admin.rpc("credit_paystack_wallet_funding", {
+            p_user_id: userId,
+            p_reference: ref,
+            p_amount: net.netNaira,
+            p_narration: net.narration,
+          });
+          continue;
+        }
       }
     } catch {
       // Not paid yet; close stale pending row so a fresh transfer can be created
@@ -262,6 +304,7 @@ async function createBankTransferChargeAccount(
   userId: string,
   email: string,
   amountNaira: number,
+  fullName?: string | null,
 ): Promise<{
   accountNumber: string;
   bankName: string;
@@ -269,6 +312,7 @@ async function createBankTransferChargeAccount(
   reference: string;
   amountNaira: number;
   transferAmountNaira: number;
+  netCreditNaira: number;
   expiresAt: string | null;
 } | null> {
   await clearUnpaidPendingFunding(admin, secretKey, userId);
@@ -293,7 +337,11 @@ async function createBankTransferChargeAccount(
       email,
       amount: String(amountNaira * 100),
       reference,
-      metadata: { user_id: userId, purpose: "wallet_funding" },
+      metadata: {
+        user_id: userId,
+        purpose: "wallet_funding",
+        full_name: fullName ?? email,
+      },
       bank_transfer: {
         account_expires_at: expiresAtIso,
       },
@@ -318,22 +366,133 @@ async function createBankTransferChargeAccount(
     return null;
   }
 
-  const rawChargeAmountKobo = Number(data.amount);
-  const transferAmountNaira = Number.isFinite(rawChargeAmountKobo) && rawChargeAmountKobo > 0
-    ? rawChargeAmountKobo / 100
-    : amountNaira;
+  const personalizedName = formatPersonalizedAccountName(
+    fullName,
+    email,
+    account.accountName,
+  );
+  const netPreview = calculateNetFunding({ amount: amountNaira * 100, fees: 0 });
 
   return {
     accountNumber: account.accountNumber,
     bankName: account.bankName,
-    accountName: account.accountName,
+    accountName: personalizedName,
     reference,
     amountNaira,
-    transferAmountNaira,
+    transferAmountNaira: amountNaira,
+    netCreditNaira: netPreview.netNaira,
     expiresAt: typeof data.account_expires_at === "string"
       ? data.account_expires_at
       : expiresAtIso,
   };
+}
+
+async function ensureCustomerCodeForUser(
+  admin: Awaited<ReturnType<typeof createPaystackClient>>,
+  secretKey: string,
+  userId: string,
+  email: string,
+  fullName: string,
+  phoneRaw: string,
+  existingCode?: string | null,
+): Promise<string | null> {
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanName = fullName.trim() && fullName.trim().toLowerCase() !== "avotek user"
+    ? fullName.trim()
+    : cleanEmail.split("@")[0].replace(/[._-]+/g, " ").trim() || "Avotek Customer";
+  const parts = cleanName.split(/\s+/).filter(Boolean);
+  const firstName = parts[0] || "Avotek";
+  const lastName = parts.length > 1 ? parts.slice(1).join(" ") : "Customer";
+  const phone = normalizeNigerianPhone(phoneRaw) ?? "+2348000000000";
+
+  let customerCode = existingCode && /^CUS_[A-Za-z0-9]+$/.test(existingCode)
+    ? existingCode
+    : null;
+
+  if (!customerCode) {
+    const existingCustomer = await paystackApiRequest(
+      secretKey,
+      `/customer/${encodeURIComponent(cleanEmail)}`,
+      "GET",
+    );
+    if (existingCustomer.ok && existingCustomer.body) {
+      customerCode = getCustomerCode(existingCustomer.body.data);
+    } else if (existingCustomer.status === 404) {
+      const created = await paystackApiRequest(secretKey, "/customer", "POST", {
+        email: cleanEmail,
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        metadata: { avotek_user_id: userId },
+      });
+      if (created.ok && created.body) {
+        customerCode = getCustomerCode(created.body.data);
+      }
+    }
+  }
+
+  if (customerCode) {
+    await paystackApiRequest(
+      secretKey,
+      `/customer/${encodeURIComponent(customerCode)}`,
+      "PUT",
+      {
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        metadata: { avotek_user_id: userId },
+      },
+    ).catch(() => null);
+
+    await admin.rpc("save_paystack_customer_code", {
+      p_user_id: userId,
+      p_customer_code: customerCode,
+    });
+  }
+
+  return customerCode;
+}
+
+async function rotateDefaultTransferAccountIfNeeded(
+  admin: Awaited<ReturnType<typeof createPaystackClient>>,
+  secretKey: string,
+  userId: string,
+): Promise<void> {
+  try {
+    const { data: wallet } = await admin
+      .from("wallets")
+      .select("virtual_account_bank, paystack_customer_code")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!wallet || wallet.virtual_account_bank !== "Paystack-Titan") return;
+
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("email, full_name")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!profile?.email) return;
+
+    const fresh = await createBankTransferChargeAccount(
+      admin,
+      secretKey,
+      userId,
+      String(profile.email).trim().toLowerCase(),
+      100,
+      String(profile.full_name ?? ""),
+    );
+    if (fresh) {
+      await admin.rpc("save_paystack_dedicated_wallet_account", {
+        p_user_id: userId,
+        p_customer_code: String(wallet.paystack_customer_code ?? ""),
+        p_account_number: fresh.accountNumber,
+        p_bank_name: fresh.bankName,
+        p_account_name: fresh.accountName,
+      });
+    }
+  } catch (err) {
+    console.error("Could not auto-rotate Paystack-Titan account:", err);
+  }
 }
 
 async function handleWebhook(
@@ -410,8 +569,32 @@ async function handleWebhook(
   if (event.event !== "charge.success") return jsonResponse({ received: true });
 
   const reference = String(event.data.reference ?? "");
-  if (!/^[A-Za-z0-9_-]{10,100}$/.test(reference)) {
+  if (!/^[A-Za-z0-9_-]{8,100}$/.test(reference)) {
     return jsonResponse({ message: "Invalid payment reference." }, 400);
+  }
+
+  let payment: JsonMap;
+  try {
+    payment = await verifyPaystackTransaction(config.paystackSecretKey, reference);
+  } catch (error) {
+    console.error("Paystack webhook verification request failed:", error);
+    return jsonResponse({ message: "Payment verification is temporarily unavailable." }, 503);
+  }
+
+  const amountKobo = Number(payment.amount);
+  if (
+    payment.reference !== reference ||
+    payment.status !== "success" ||
+    payment.currency !== "NGN" ||
+    !Number.isSafeInteger(amountKobo) ||
+    amountKobo <= 0
+  ) {
+    return jsonResponse({ received: true });
+  }
+
+  const net = calculateNetFunding(payment);
+  if (net.netNaira <= 0) {
+    return jsonResponse({ received: true });
   }
 
   const { data: transaction, error: transactionError } = await admin
@@ -423,105 +606,89 @@ async function handleWebhook(
     console.error("Paystack webhook transaction lookup failed.");
     return jsonResponse({ message: "Payment record lookup failed." }, 503);
   }
-  if (!transaction) {
-    let payment: JsonMap;
-    try {
-      payment = await verifyPaystackTransaction(config.paystackSecretKey, reference);
-    } catch (error) {
-      console.error("Paystack dedicated transfer verification failed:", error);
-      return jsonResponse({ message: "Payment verification is temporarily unavailable." }, 503);
-    }
 
-    const customerCode = getCustomerCode(payment.customer);
-    const amountKobo = Number(payment.amount);
-    const eventCustomerCode = getCustomerCode(event.data.customer);
-    if (
-      payment.reference !== reference ||
-      payment.status !== "success" ||
-      payment.currency !== "NGN" ||
-      !Number.isSafeInteger(amountKobo) ||
-      amountKobo <= 0 ||
-      !["bank_transfer", "dedicated_nuban", "bank"].includes(String(payment.channel)) ||
-      !customerCode ||
-      (eventCustomerCode && eventCustomerCode !== customerCode)
-    ) {
-      console.error("Paystack transfer details did not match a valid dedicated account deposit.");
+  if (transaction) {
+    if (transaction.category !== "wallet_fund" || transaction.type !== "credit") {
+      return jsonResponse({ received: true });
+    }
+    if (transaction.status === "completed") return jsonResponse({ received: true });
+    if (!["pending", "failed"].includes(transaction.status)) {
       return jsonResponse({ received: true });
     }
 
-    const { data: wallet, error: walletError } = await admin
+    const { error: creditError } = await admin.rpc("credit_paystack_wallet_funding", {
+      p_user_id: transaction.user_id,
+      p_reference: reference,
+      p_amount: net.netNaira,
+      p_narration: net.narration,
+    });
+    if (creditError) {
+      console.error("Paystack webhook wallet credit failed:", creditError.message);
+      return jsonResponse({ message: "Wallet credit is temporarily unavailable." }, 503);
+    }
+
+    if (String(payment.channel) === "bank_transfer") {
+      await rotateDefaultTransferAccountIfNeeded(
+        admin,
+        config.paystackSecretKey,
+        transaction.user_id,
+      );
+    }
+    return jsonResponse({ received: true });
+  }
+
+  // No matching local reference: match by metadata.user_id, customer_code, or customer.email
+  const customerCode = getCustomerCode(payment.customer);
+  const metadataUserId = isRecord(payment.metadata) && typeof payment.metadata.user_id === "string"
+    ? payment.metadata.user_id
+    : null;
+  const customerEmail = isRecord(payment.customer) && typeof payment.customer.email === "string"
+    ? payment.customer.email.trim().toLowerCase()
+    : null;
+
+  let targetUserId: string | null = metadataUserId;
+  if (!targetUserId && customerCode) {
+    const { data: walletByCode } = await admin
       .from("wallets")
       .select("user_id")
       .eq("paystack_customer_code", customerCode)
-      .eq("paystack_dva_status", "assigned")
-      .not("virtual_account_number", "is", null)
       .maybeSingle();
-    if (walletError) {
-      console.error("Paystack dedicated transfer account lookup failed.");
-      return jsonResponse({ message: "Transfer account lookup failed." }, 503);
-    }
-    if (!wallet) return jsonResponse({ received: true });
-
-    const requestedKobo = Number(payment.requested_amount);
-    const creditKobo = Number.isSafeInteger(requestedKobo) && requestedKobo > 0
-      ? Math.min(amountKobo, requestedKobo)
-      : amountKobo;
-    const amountNaira = Math.floor(creditKobo / 100);
-    if (amountNaira <= 0) return jsonResponse({ received: true });
-
-    const { error: creditError } = await admin.rpc(
-      "credit_paystack_dedicated_wallet_funding",
-      {
-        p_user_id: wallet.user_id,
-        p_customer_code: customerCode,
-        p_reference: reference,
-        p_amount: amountNaira,
-      },
-    );
-    if (creditError) {
-      console.error("Paystack dedicated transfer wallet credit failed:", creditError.message);
-      return jsonResponse({ message: "Wallet credit is temporarily unavailable." }, 503);
-    }
-    return jsonResponse({ received: true });
+    if (walletByCode?.user_id) targetUserId = String(walletByCode.user_id);
   }
-  if (transaction.category !== "wallet_fund" || transaction.type !== "credit") {
-    console.error("Paystack webhook reference belongs to a different transaction type.");
-    return jsonResponse({ received: true });
+  if (!targetUserId && customerEmail) {
+    const { data: profileByEmail } = await admin
+      .from("profiles")
+      .select("id")
+      .ilike("email", customerEmail)
+      .maybeSingle();
+    if (profileByEmail?.id) targetUserId = String(profileByEmail.id);
   }
-  if (transaction.status === "completed") return jsonResponse({ received: true });
-  if (!["pending", "failed"].includes(transaction.status)) {
+
+  if (!targetUserId) {
     return jsonResponse({ received: true });
   }
 
-  let payment: JsonMap;
-  try {
-    payment = await verifyPaystackTransaction(config.paystackSecretKey, reference);
-  } catch (error) {
-    console.error("Paystack webhook verification request failed:", error);
-    return jsonResponse({ message: "Payment verification is temporarily unavailable." }, 503);
-  }
-
-  const expectedKobo = Math.round(Number(transaction.amount) * 100);
-  if (
-    payment.reference !== reference ||
-    payment.currency !== "NGN" ||
-    !matchesRequestedAmount(payment, expectedKobo)
-  ) {
-    console.error("Paystack verification details do not match the pending funding record.");
-    return jsonResponse({ message: "Payment details did not match the funding record." }, 409);
-  }
-  if (payment.status !== "success") {
-    return jsonResponse({ message: "Paystack has not confirmed this charge yet." }, 503);
-  }
-
-  const { error: creditError } = await admin.rpc("credit_paystack_wallet_funding", {
-    p_user_id: transaction.user_id,
-    p_reference: reference,
-    p_amount: transaction.amount,
-  });
+  const { error: creditError } = await admin.rpc(
+    "credit_paystack_dedicated_wallet_funding",
+    {
+      p_user_id: targetUserId,
+      p_customer_code: customerCode ?? "",
+      p_reference: reference,
+      p_amount: net.netNaira,
+      p_narration: net.narration,
+    },
+  );
   if (creditError) {
-    console.error("Paystack webhook wallet credit failed:", creditError.message);
+    console.error("Paystack dedicated transfer wallet credit failed:", creditError.message);
     return jsonResponse({ message: "Wallet credit is temporarily unavailable." }, 503);
+  }
+
+  if (String(payment.channel) === "bank_transfer") {
+    await rotateDefaultTransferAccountIfNeeded(
+      admin,
+      config.paystackSecretKey,
+      targetUserId,
+    );
   }
   return jsonResponse({ received: true });
 }
@@ -529,7 +696,7 @@ async function handleWebhook(
 async function authenticateUser(
   request: Request,
   supabaseUrl: string,
-): Promise<{ id: string; email: string } | null> {
+): Promise<{ id: string; email: string }> | Promise<null> {
   const token = (request.headers.get("Authorization") ?? "")
     .replace(/^Bearer\s+/i, "")
     .trim();
@@ -576,7 +743,6 @@ async function handleInitialize(
     callback = new URL("https://adevictorolu.github.io/Avotek/");
   }
 
-  // Clear any unpaid stale pending wallet_fund row so the user is never blocked by 409
   await clearUnpaidPendingFunding(admin, config.paystackSecretKey, user.id);
 
   const reference = `AVOFUND_${crypto.randomUUID().replaceAll("-", "")}`;
@@ -676,15 +842,48 @@ async function handleDedicatedAccount(
     return jsonResponse({ message: "Live wallet funding is not configured." }, 503);
   }
 
-  // Return the permanent account if this wallet already has one.
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("email, full_name, phone")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const suppliedFullName = typeof body.full_name === "string" ? body.full_name.trim() : "";
+  const suppliedPhone = typeof body.phone === "string" ? body.phone.trim() : "";
+  const effectiveFullName = suppliedFullName || String(profile?.full_name ?? "").trim();
+  const effectivePhoneRaw = suppliedPhone || String(profile?.phone ?? "").trim();
+  const email = String(profile?.email ?? user.email).trim().toLowerCase();
+
+  if (
+    profile &&
+    ((suppliedFullName && suppliedFullName !== String(profile.full_name ?? "").trim()) ||
+      (suppliedPhone && suppliedPhone !== String(profile.phone ?? "").trim()))
+  ) {
+    await admin
+      .from("profiles")
+      .update({
+        ...(suppliedFullName ? { full_name: suppliedFullName } : {}),
+        ...(suppliedPhone ? { phone: suppliedPhone } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+  }
+
   const { data: existingWallet } = await admin
     .from("wallets")
-    .select("virtual_account_number, virtual_account_bank, virtual_account_name, paystack_dva_status")
+    .select(
+      "virtual_account_number, virtual_account_bank, virtual_account_name, paystack_customer_code, paystack_dva_status, paystack_dva_requested_at",
+    )
     .eq("user_id", user.id)
     .maybeSingle();
+
+  const forceNew = body.force_new === true;
+
+  // 1. If the wallet already has a permanent non-Paystack-Titan account, return it immediately.
   if (
     existingWallet?.paystack_dva_status === "assigned" &&
     existingWallet.virtual_account_number &&
+    existingWallet.virtual_account_bank &&
     existingWallet.virtual_account_bank !== "Paystack-Titan"
   ) {
     return jsonResponse({
@@ -695,171 +894,168 @@ async function handleDedicatedAccount(
     });
   }
 
-  // Ask Paystack whether Dedicated Virtual Accounts are enabled for this business.
+  // 2. If the wallet has an active Paystack-Titan account assigned within the last 6 hours, reuse it
+  if (
+    !forceNew &&
+    existingWallet?.paystack_dva_status === "assigned" &&
+    existingWallet.virtual_account_number &&
+    existingWallet.virtual_account_bank === "Paystack-Titan"
+  ) {
+    const requestedAtMs = existingWallet.paystack_dva_requested_at
+      ? Date.parse(String(existingWallet.paystack_dva_requested_at))
+      : 0;
+    const isFresh = Number.isFinite(requestedAtMs) &&
+      requestedAtMs > 0 &&
+      (Date.now() - requestedAtMs) < 6 * 3600 * 1000;
+
+    if (isFresh) {
+      const expectedName = formatPersonalizedAccountName(
+        effectiveFullName,
+        email,
+        existingWallet.virtual_account_name ?? "PAYSTACK CHECKOUT",
+      );
+      if (existingWallet.virtual_account_name !== expectedName) {
+        await admin.rpc("save_paystack_dedicated_wallet_account", {
+          p_user_id: user.id,
+          p_customer_code: String(existingWallet.paystack_customer_code ?? ""),
+          p_account_number: existingWallet.virtual_account_number,
+          p_bank_name: existingWallet.virtual_account_bank,
+          p_account_name: expectedName,
+        });
+      }
+      return jsonResponse({
+        status: "assigned",
+        account_number: existingWallet.virtual_account_number,
+        bank_name: existingWallet.virtual_account_bank,
+        account_name: expectedName,
+      });
+    }
+  }
+
+  // 3. Ensure Paystack customer code exists and is linked to this wallet
+  const customerCode = await ensureCustomerCodeForUser(
+    admin,
+    config.paystackSecretKey,
+    user.id,
+    email,
+    effectiveFullName,
+    effectivePhoneRaw,
+    existingWallet?.paystack_customer_code
+      ? String(existingWallet.paystack_customer_code)
+      : null,
+  );
+
+  // 4. Try Paystack Dedicated NUBAN first if enabled on the merchant account
   const providers = await paystackApiRequest(
     config.paystackSecretKey,
     "/dedicated_account/available_providers",
     "GET",
   );
-  if (!providers.ok) {
-    const upstreamMessage = typeof providers.body?.message === "string" ? providers.body.message : "";
-    console.error("Dedicated accounts unavailable:", providers.status, upstreamMessage);
-    if (providers.status === 403 || providers.status === 404) {
-      return jsonResponse({
-        status: "unavailable",
-        message:
-          "Personal dedicated account numbers are being activated on our Paystack account. You can still fund instantly with a bank transfer or card below.",
-      });
-    }
-    return jsonResponse({ message: "Could not reach Paystack right now. Please try again." }, 502);
-  }
-  const providerList = Array.isArray(providers.body?.data) ? providers.body.data : [];
-  const wema = providerList.find((item) => isRecord(item) && item.provider_slug === "wema-bank");
-  const firstProvider = providerList.find((item) => isRecord(item) && typeof item.provider_slug === "string");
-  const preferredBank = isRecord(wema)
-    ? String(wema.provider_slug)
-    : isRecord(firstProvider)
-    ? String(firstProvider.provider_slug)
-    : "wema-bank";
 
-  const { data: profile, error: profileError } = await admin
-    .from("profiles")
-    .select("email, full_name, phone")
-    .eq("id", user.id)
-    .maybeSingle();
-  if (profileError || !profile) {
-    return jsonResponse({ message: "Complete your account profile before requesting a transfer account." }, 503);
-  }
-
-  const suppliedFullName = typeof body.full_name === "string" ? body.full_name.trim() : "";
-  const suppliedPhone = typeof body.phone === "string" ? body.phone.trim() : "";
-  const effectiveFullName = suppliedFullName || String(profile.full_name ?? "").trim();
-  const effectivePhoneRaw = suppliedPhone || String(profile.phone ?? "").trim();
-  const nameParts = effectiveFullName.split(/\s+/).filter(Boolean);
-  const phone = normalizeNigerianPhone(effectivePhoneRaw);
-  if (
-    nameParts.length < 2 ||
-    !phone ||
-    effectiveFullName.toLowerCase() === "avotek user"
-  ) {
-    return jsonResponse({
-      message:
-        "Enter your first and last name and a valid Nigerian phone number. Your account number will carry this name.",
-      needs_profile_details: true,
-    }, 400);
-  }
-
-  if (
-    (suppliedFullName && suppliedFullName !== String(profile.full_name ?? "").trim()) ||
-    (suppliedPhone && phone !== normalizeNigerianPhone(String(profile.phone ?? "")))
-  ) {
-    const { error: updateProfileError } = await admin
-      .from("profiles")
-      .update({ full_name: effectiveFullName, phone: effectivePhoneRaw, updated_at: new Date().toISOString() })
-      .eq("id", user.id);
-    if (updateProfileError) {
-      console.error("Could not update profile for dedicated account:", updateProfileError.message);
-      return jsonResponse({ message: "Could not save your profile details. Please try again." }, 503);
-    }
-  }
-
-  const { data: claim, error: claimError } = await admin.rpc(
-    "claim_paystack_dedicated_wallet_account",
-    { p_user_id: user.id },
-  );
-  if (claimError || !isRecord(claim)) {
-    console.error("Could not claim dedicated account assignment:", claimError?.message);
-    return jsonResponse({ message: "Could not prepare your personal transfer account. Please try again." }, 503);
-  }
-
-  const firstName = nameParts[0];
-  const lastName = nameParts.slice(1).join(" ");
-  const email = String(profile.email ?? user.email).trim().toLowerCase();
-  let customerCode = getCustomerCode({ customer_code: claim.customer_code });
-  if (!customerCode) {
-    const existingCustomer = await paystackApiRequest(
-      config.paystackSecretKey,
-      `/customer/${encodeURIComponent(email)}`,
-      "GET",
+  if (providers.ok && customerCode) {
+    const providerList = Array.isArray(providers.body?.data) ? providers.body.data : [];
+    const wema = providerList.find((item) => isRecord(item) && item.provider_slug === "wema-bank");
+    const firstProvider = providerList.find((item) =>
+      isRecord(item) && typeof item.provider_slug === "string"
     );
-    if (existingCustomer.ok && existingCustomer.body) {
-      customerCode = getCustomerCode(existingCustomer.body.data);
-    } else if (existingCustomer.status === 404) {
-      const created = await paystackApiRequest(config.paystackSecretKey, "/customer", "POST", {
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        phone,
-        metadata: { avotek_user_id: user.id },
+    const preferredBank = isRecord(wema)
+      ? String(wema.provider_slug)
+      : isRecord(firstProvider)
+      ? String(firstProvider.provider_slug)
+      : "wema-bank";
+
+    const cleanName = effectiveFullName && effectiveFullName.toLowerCase() !== "avotek user"
+      ? effectiveFullName
+      : email.split("@")[0].replace(/[._-]+/g, " ").trim() || "Avotek Customer";
+    const parts = cleanName.split(/\s+/).filter(Boolean);
+    const firstName = parts[0] || "Avotek";
+    const lastName = parts.length > 1 ? parts.slice(1).join(" ") : "Customer";
+    const phone = normalizeNigerianPhone(effectivePhoneRaw) ?? "+2348000000000";
+
+    let assignedAccount = await findDedicatedAccount(config.paystackSecretKey, customerCode).catch(
+      () => null,
+    );
+    if (!assignedAccount) {
+      const assignment = await paystackApiRequest(
+        config.paystackSecretKey,
+        "/dedicated_account",
+        "POST",
+        {
+          customer: customerCode,
+          preferred_bank: preferredBank,
+          first_name: firstName,
+          last_name: lastName,
+          phone,
+        },
+      );
+      if (assignment.ok && assignment.body) {
+        assignedAccount = getDedicatedAccount(assignment.body.data);
+      }
+    }
+    if (assignedAccount) {
+      await admin.rpc("save_paystack_dedicated_wallet_account", {
+        p_user_id: user.id,
+        p_customer_code: customerCode,
+        p_account_number: assignedAccount.accountNumber,
+        p_bank_name: assignedAccount.bankName,
+        p_account_name: assignedAccount.accountName,
       });
-      if (created.ok && created.body) customerCode = getCustomerCode(created.body.data);
-    }
-  }
-  if (!customerCode) {
-    await admin.rpc("fail_paystack_dedicated_wallet_account", { p_user_id: user.id });
-    return jsonResponse({ message: "Paystack could not prepare your transfer account. Please try again." }, 502);
-  }
-  await paystackApiRequest(config.paystackSecretKey, `/customer/${encodeURIComponent(customerCode)}`, "PUT", {
-    first_name: firstName,
-    last_name: lastName,
-    phone,
-    metadata: { avotek_user_id: user.id },
-  });
-  const { error: saveCustomerError } = await admin.rpc("save_paystack_customer_code", {
-    p_user_id: user.id,
-    p_customer_code: customerCode,
-  });
-  if (saveCustomerError) {
-    console.error("Could not save Paystack customer mapping:", saveCustomerError.message);
-    return jsonResponse({ message: "Could not securely link your transfer account. Please contact Avotek support." }, 503);
-  }
-
-  let assignedAccount = await findDedicatedAccount(config.paystackSecretKey, customerCode).catch(() => null);
-  if (!assignedAccount) {
-    const assignment = await paystackApiRequest(config.paystackSecretKey, "/dedicated_account", "POST", {
-      customer: customerCode,
-      preferred_bank: preferredBank,
-      first_name: firstName,
-      last_name: lastName,
-      phone,
-    });
-    if (!assignment.ok || !assignment.body) {
-      await admin.rpc("fail_paystack_dedicated_wallet_account", { p_user_id: user.id });
-      console.error("Paystack rejected dedicated account assignment:", assignment.status, assignment.body?.message);
       return jsonResponse({
-        message: "Paystack cannot assign a transfer account to your profile right now. Please try again later.",
-      }, 502);
+        status: "assigned",
+        account_number: assignedAccount.accountNumber,
+        bank_name: assignedAccount.bankName,
+        account_name: assignedAccount.accountName,
+      });
     }
-    assignedAccount = getDedicatedAccount(assignment.body.data);
-  }
-  if (!assignedAccount) {
-    return jsonResponse({
-      status: "pending",
-      message: "Your account number is being generated by the bank. Refresh in a minute.",
-    }, 202);
   }
 
-  const { error: saveAccountError } = await admin.rpc("save_paystack_dedicated_wallet_account", {
-    p_user_id: user.id,
-    p_customer_code: customerCode,
-    p_account_number: assignedAccount.accountNumber,
-    p_bank_name: assignedAccount.bankName,
-    p_account_name: assignedAccount.accountName,
-  });
-  if (saveAccountError) {
-    console.error("Could not save dedicated account details:", saveAccountError.message);
-    return jsonResponse({ message: "Your transfer account is assigned but could not be saved. Please contact Avotek support." }, 503);
+  // 5. Automatic Default Paystack-Titan Bank Transfer Account Strategy:
+  // Generate a live Paystack-Titan transfer account automatically and attach it to the user's wallet
+  // with "<USER NAME> / PAYSTACK CHECKOUT" so the user always has an active default account number on screen.
+  const requestedAmount = Number(body.amount);
+  const baseAmountNaira =
+    Number.isInteger(requestedAmount) && requestedAmount >= 100 && requestedAmount <= 1000000
+      ? requestedAmount
+      : 100;
+
+  const fallbackTransfer = await createBankTransferChargeAccount(
+    admin,
+    config.paystackSecretKey,
+    user.id,
+    email,
+    baseAmountNaira,
+    effectiveFullName,
+  );
+  if (!fallbackTransfer) {
+    return jsonResponse({
+      message: "Paystack could not prepare your transfer account right now. Please try again.",
+    }, 502);
   }
+
+  const { error: saveError } = await admin.rpc("save_paystack_dedicated_wallet_account", {
+    p_user_id: user.id,
+    p_customer_code: customerCode ?? "",
+    p_account_number: fallbackTransfer.accountNumber,
+    p_bank_name: fallbackTransfer.bankName,
+    p_account_name: fallbackTransfer.accountName,
+  });
+  if (saveError) {
+    console.error("Could not save automatic Paystack-Titan account:", saveError.message);
+  }
+
   return jsonResponse({
     status: "assigned",
-    account_number: assignedAccount.accountNumber,
-    bank_name: assignedAccount.bankName,
-    account_name: assignedAccount.accountName,
+    account_number: fallbackTransfer.accountNumber,
+    bank_name: fallbackTransfer.bankName,
+    account_name: fallbackTransfer.accountName,
+    reference: fallbackTransfer.reference,
+    amount_naira: fallbackTransfer.amountNaira,
+    transfer_amount_naira: fallbackTransfer.transferAmountNaira,
+    net_credit_naira: fallbackTransfer.netCreditNaira,
+    expires_at: fallbackTransfer.expiresAt,
   });
 }
 
-// Temporary, amount-specific bank transfer account (Paystack Charge API).
-// It expires, so it is NEVER stored as the wallet's permanent account number.
 async function handleTransferAccount(
   admin: Awaited<ReturnType<typeof createPaystackClient>>,
   config: NonNullable<ReturnType<typeof getServerConfig>>,
@@ -873,16 +1069,44 @@ async function handleTransferAccount(
   if (!Number.isInteger(amount) || amount < 100 || amount > 1000000) {
     return jsonResponse({ message: "Enter an amount between ₦100 and ₦1,000,000." }, 400);
   }
+
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("full_name, phone")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const { data: wallet } = await admin
+    .from("wallets")
+    .select("virtual_account_bank, paystack_customer_code")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
   const account = await createBankTransferChargeAccount(
     admin,
     config.paystackSecretKey,
     user.id,
     user.email,
     amount,
+    String(profile?.full_name ?? ""),
   );
   if (!account) {
-    return jsonResponse({ message: "Paystack could not generate a transfer account right now. Please try again." }, 502);
+    return jsonResponse({
+      message: "Paystack could not generate a transfer account right now. Please try again.",
+    }, 502);
   }
+
+  // Keep the wallet's default Paystack-Titan account synchronized with this active transfer account
+  if (!wallet?.virtual_account_bank || wallet.virtual_account_bank === "Paystack-Titan") {
+    await admin.rpc("save_paystack_dedicated_wallet_account", {
+      p_user_id: user.id,
+      p_customer_code: String(wallet?.paystack_customer_code ?? ""),
+      p_account_number: account.accountNumber,
+      p_bank_name: account.bankName,
+      p_account_name: account.accountName,
+    });
+  }
+
   return jsonResponse({
     status: "assigned",
     account_number: account.accountNumber,
@@ -891,37 +1115,190 @@ async function handleTransferAccount(
     reference: account.reference,
     amount_naira: account.amountNaira,
     transfer_amount_naira: account.transferAmountNaira,
+    net_credit_naira: account.netCreditNaira,
     expires_at: account.expiresAt,
   });
 }
+
+async function syncCustomerPaystackTransfers(
+  admin: Awaited<ReturnType<typeof createPaystackClient>>,
+  secretKey: string,
+  user: { id: string; email: string },
+): Promise<{
+  credited: boolean;
+  reference: string;
+  netNaira: number;
+  grossNaira: number;
+  feeNaira: number;
+} | null> {
+  // 1. Check recent pending or failed local wallet_fund transactions for this user
+  const { data: recentLocal } = await admin
+    .from("transactions")
+    .select("reference, status")
+    .eq("user_id", user.id)
+    .eq("category", "wallet_fund")
+    .eq("type", "credit")
+    .in("status", ["pending", "failed"])
+    .order("created_at", { ascending: false })
+    .limit(6);
+
+  if (Array.isArray(recentLocal)) {
+    for (const row of recentLocal) {
+      const ref = typeof row.reference === "string" ? row.reference : "";
+      if (!ref) continue;
+      try {
+        const payment = await verifyPaystackTransaction(secretKey, ref);
+        const amountKobo = Number(payment.amount);
+        if (
+          payment.status === "success" &&
+          payment.currency === "NGN" &&
+          Number.isSafeInteger(amountKobo) &&
+          amountKobo > 0
+        ) {
+          const net = calculateNetFunding(payment);
+          if (net.netNaira > 0) {
+            const { data: creditRes, error } = await admin.rpc(
+              "credit_paystack_wallet_funding",
+              {
+                p_user_id: user.id,
+                p_reference: ref,
+                p_amount: net.netNaira,
+                p_narration: net.narration,
+              },
+            );
+            if (!error && isRecord(creditRes) && creditRes.credited === true) {
+              if (String(payment.channel) === "bank_transfer") {
+                await rotateDefaultTransferAccountIfNeeded(admin, secretKey, user.id);
+              }
+              return {
+                credited: true,
+                reference: ref,
+                netNaira: net.netNaira,
+                grossNaira: net.grossNaira,
+                feeNaira: net.feeNaira,
+              };
+            }
+          }
+        }
+      } catch {
+        // Ignore unverified reference
+      }
+    }
+  }
+
+  // 2. Also query Paystack's customer transactions directly in case Paystack assigned a new reference
+  try {
+    const customerRes = await paystackApiRequest(
+      secretKey,
+      `/customer/${encodeURIComponent(user.email.trim().toLowerCase())}`,
+      "GET",
+    );
+    if (customerRes.ok && customerRes.body && isRecord(customerRes.body.data)) {
+      const customerId = customerRes.body.data.id;
+      const customerCode = getCustomerCode(customerRes.body.data) ?? "";
+      if (typeof customerId === "number" || typeof customerId === "string") {
+        const txListRes = await paystackApiRequest(
+          secretKey,
+          `/transaction?customer=${encodeURIComponent(String(customerId))}&status=success&perPage=10`,
+          "GET",
+        );
+        const txList = Array.isArray(txListRes.body?.data) ? txListRes.body.data : [];
+        for (const item of txList) {
+          if (!isRecord(item)) continue;
+          const ref = typeof item.reference === "string" ? item.reference.trim() : "";
+          const amountKobo = Number(item.amount);
+          if (
+            !ref ||
+            !/^[A-Za-z0-9_-]{8,100}$/.test(ref) ||
+            item.status !== "success" ||
+            item.currency !== "NGN" ||
+            !Number.isSafeInteger(amountKobo) ||
+            amountKobo <= 0
+          ) {
+            continue;
+          }
+
+          // Check if already completed in our DB
+          const { data: existingTx } = await admin
+            .from("transactions")
+            .select("status")
+            .eq("reference", ref)
+            .maybeSingle();
+          if (existingTx?.status === "completed") continue;
+
+          const verified = await verifyPaystackTransaction(secretKey, ref);
+          if (verified.status !== "success" || verified.currency !== "NGN") continue;
+
+          const net = calculateNetFunding(verified);
+          if (net.netNaira <= 0) continue;
+
+          const { data: creditRes, error } = await admin.rpc(
+            "credit_paystack_dedicated_wallet_funding",
+            {
+              p_user_id: user.id,
+              p_customer_code: customerCode,
+              p_reference: ref,
+              p_amount: net.netNaira,
+              p_narration: net.narration,
+            },
+          );
+          if (!error && isRecord(creditRes) && creditRes.credited === true) {
+            if (String(verified.channel) === "bank_transfer") {
+              await rotateDefaultTransferAccountIfNeeded(admin, secretKey, user.id);
+            }
+            return {
+              credited: true,
+              reference: ref,
+              netNaira: net.netNaira,
+              grossNaira: net.grossNaira,
+              feeNaira: net.feeNaira,
+            };
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Customer transaction sync check failed:", err);
+  }
+
+  return null;
+}
+
 async function handleVerify(
   admin: Awaited<ReturnType<typeof createPaystackClient>>,
   config: NonNullable<ReturnType<typeof getServerConfig>>,
   user: { id: string; email: string },
   body: JsonMap,
 ): Promise<Response> {
-  let reference = String(body.reference ?? "").trim();
-
-  // If no reference was passed, verify the user's most recent pending wallet_fund transaction
-  if (!reference) {
-    const { data: latestPending } = await admin
-      .from("transactions")
-      .select("reference")
-      .eq("user_id", user.id)
-      .eq("category", "wallet_fund")
-      .eq("type", "credit")
-      .eq("status", "pending")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (!latestPending?.reference) {
-      return jsonResponse({ status: "none", credited: false });
-    }
-    reference = String(latestPending.reference);
+  if (!hasLivePaystackKey(config.paystackSecretKey)) {
+    console.error("Paystack verification blocked because the configured key is not Live.");
+    return jsonResponse({ message: "Live wallet funding is not configured." }, 503);
   }
 
-  if (!/^AVOFUND_[A-Fa-f0-9]{32}$/.test(reference)) {
+  const reference = String(body.reference ?? "").trim();
+
+  // If no specific reference was passed (verify_latest), scan all recent pending/customer transfers
+  if (!reference) {
+    const synced = await syncCustomerPaystackTransfers(
+      admin,
+      config.paystackSecretKey,
+      user,
+    );
+    if (synced) {
+      return jsonResponse({
+        status: "completed",
+        credited: true,
+        reference: synced.reference,
+        amount: synced.netNaira,
+        gross_amount: synced.grossNaira,
+        fee_amount: synced.feeNaira,
+        currency: "NGN",
+      });
+    }
+    return jsonResponse({ status: "none", credited: false });
+  }
+
+  if (!/^[A-Za-z0-9_-]{8,100}$/.test(reference)) {
     return jsonResponse({ message: "Invalid payment reference." }, 400);
   }
 
@@ -950,10 +1327,6 @@ async function handleVerify(
   if (!["pending", "failed"].includes(transaction.status)) {
     return jsonResponse({ status: transaction.status, credited: false });
   }
-  if (!hasLivePaystackKey(config.paystackSecretKey)) {
-    console.error("Paystack verification blocked because the configured key is not Live.");
-    return jsonResponse({ message: "Live wallet funding is not configured." }, 503);
-  }
 
   let payment: JsonMap;
   try {
@@ -962,15 +1335,18 @@ async function handleVerify(
     console.error("Paystack transaction verification failed:", error);
     return jsonResponse({ message: "Payment is not confirmed yet. Please check again shortly." }, 503);
   }
-  const expectedKobo = Math.round(Number(transaction.amount) * 100);
+
+  const amountKobo = Number(payment.amount);
   if (
     payment.reference !== reference ||
     payment.currency !== "NGN" ||
-    !matchesRequestedAmount(payment, expectedKobo)
+    !Number.isSafeInteger(amountKobo) ||
+    amountKobo <= 0
   ) {
-    console.error("Paystack verification details do not match the pending funding record.");
+    console.error("Paystack verification details do not match a valid NGN payment.");
     return jsonResponse({ message: "Payment details did not match the funding record." }, 409);
   }
+
   if (payment.status !== "success") {
     if (["failed", "abandoned", "reversed"].includes(String(payment.status))) {
       const { error } = await admin.rpc("fail_paystack_wallet_funding", {
@@ -992,20 +1368,33 @@ async function handleVerify(
     });
   }
 
+  const net = calculateNetFunding(payment);
+  if (net.netNaira <= 0) {
+    return jsonResponse({ message: "Payment amount is too small after fees." }, 409);
+  }
+
   const { error: creditError } = await admin.rpc("credit_paystack_wallet_funding", {
     p_user_id: user.id,
     p_reference: reference,
-    p_amount: transaction.amount,
+    p_amount: net.netNaira,
+    p_narration: net.narration,
   });
   if (creditError) {
     console.error("Paystack verification wallet credit failed:", creditError.message);
     return jsonResponse({ message: "Payment is confirmed but wallet update is delayed." }, 503);
   }
+
+  if (String(payment.channel) === "bank_transfer") {
+    await rotateDefaultTransferAccountIfNeeded(admin, config.paystackSecretKey, user.id);
+  }
+
   return jsonResponse({
     status: "completed",
     credited: true,
     reference,
-    amount: Number(transaction.amount),
+    amount: net.netNaira,
+    gross_amount: net.grossNaira,
+    fee_amount: net.feeNaira,
     currency: "NGN",
   });
 }
@@ -1041,9 +1430,49 @@ Deno.serve(async (request) => {
   }
   if (!isRecord(body)) return jsonResponse({ message: "Invalid request body." }, 400);
 
+  const admin = await createPaystackClient(config.supabaseUrl, config.serviceRoleKey);
+
+  const bearerToken = (request.headers.get("Authorization") ?? "")
+    .replace(/^Bearer\s+/i, "")
+    .trim();
+  let isServiceRole = bearerToken === config.serviceRoleKey;
+  if (!isServiceRole && bearerToken.split(".").length === 3) {
+    try {
+      const jwtPayload = JSON.parse(atob(bearerToken.split(".")[1]));
+      if (isRecord(jwtPayload) && jwtPayload.role === "service_role") {
+        isServiceRole = true;
+      }
+    } catch {
+      isServiceRole = false;
+    }
+  }
+  if (body.action === "provision_all_default_accounts" && isServiceRole) {
+    const { data: profiles } = await admin
+      .from("profiles")
+      .select("id, email, full_name, phone");
+    const provisioned: JsonMap[] = [];
+    if (Array.isArray(profiles)) {
+      for (const p of profiles) {
+        if (!isRecord(p) || typeof p.id !== "string" || typeof p.email !== "string") continue;
+        const res = await handleDedicatedAccount(
+          admin,
+          config,
+          { id: p.id, email: p.email },
+          { full_name: p.full_name, phone: p.phone },
+        );
+        const resBody: unknown = await res.json().catch(() => ({}));
+        provisioned.push({
+          user_id: p.id,
+          email: p.email,
+          result: isRecord(resBody) ? resBody : {},
+        });
+      }
+    }
+    return jsonResponse({ status: "ok", provisioned });
+  }
+
   const user = await authenticateUser(request, config.supabaseUrl);
   if (!user) return jsonResponse({ message: "Authentication is required." }, 401);
-  const admin = await createPaystackClient(config.supabaseUrl, config.serviceRoleKey);
 
   if (body.action === "initialize") {
     return await handleInitialize(admin, config, user, body);

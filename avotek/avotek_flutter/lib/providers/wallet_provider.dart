@@ -99,7 +99,11 @@ class WalletProvider extends ChangeNotifier {
 
     try {
       final result = await PaystackPaymentService.instance
-          .requestDedicatedAccount(fullName: fullName, phone: phone);
+          .requestDedicatedAccount(
+            fullName: fullName,
+            phone: phone,
+            forceNew: force,
+          );
       if (result.isAssigned) {
         _dedicatedAccountNeedsProfile = false;
         _dedicatedAccountMessage = null;
@@ -147,6 +151,18 @@ class WalletProvider extends ChangeNotifier {
     try {
       _activeTransfer = await PaystackPaymentService.instance
           .requestTransferAccount(amountNaira: amountNaira);
+      if (_activeTransfer != null && _activeTransfer!.isAssigned) {
+        _walletSummary = WalletSummary(
+          balance: _walletSummary?.balance ?? 0.0,
+          currency: _walletSummary?.currency ?? 'NGN',
+          virtualAccountNumber: _activeTransfer!.accountNumber,
+          virtualAccountBank: _activeTransfer!.bankName,
+          virtualAccountName: _activeTransfer!.accountName,
+          paystackDvaStatus: 'assigned',
+          totalFunded: _walletSummary?.totalFunded ?? 0.0,
+          totalSpent: _walletSummary?.totalSpent ?? 0.0,
+        );
+      }
       return _activeTransfer;
     } on PaystackPaymentException catch (error) {
       _dedicatedAccountMessage = error.message;

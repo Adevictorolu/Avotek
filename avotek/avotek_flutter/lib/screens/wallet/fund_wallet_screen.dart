@@ -591,7 +591,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Transfer any amount to this personal account number from your banking app. It settles directly into Paystack and credits your Avotek wallet automatically.',
+              'Transfer to this personal Paystack account number from your banking app. Paystack deducts its 1.5% transfer fee and credits the net amount directly to your Avotek wallet (for example, ₦100 paid credits ₦98.50).',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12.5,
                 height: 1.5,
@@ -601,34 +601,56 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _isRefreshingTransfer
-                    ? null
-                    : _refreshTransferBalance,
-                icon: _isRefreshingTransfer
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh_rounded, size: 18),
-                label: Text(
-                  _isRefreshingTransfer
-                      ? 'Checking wallet balance...'
-                      : "I've sent the money • Refresh Balance",
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: isDark
-                      ? AppColors.electricCyan
-                      : const Color(0xFF0052FF),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isRefreshingTransfer
+                        ? null
+                        : _refreshTransferBalance,
+                    icon: _isRefreshingTransfer
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh_rounded, size: 18),
+                    label: Text(
+                      _isRefreshingTransfer
+                          ? 'Checking balance...'
+                          : "I've sent the money • Refresh",
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: isDark
+                          ? AppColors.electricCyan
+                          : const Color(0xFF0052FF),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 10),
+                OutlinedButton(
+                  onPressed: wallet.isProvisioningDedicatedAccount
+                      ? null
+                      : _activateDedicatedAccount,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Tooltip(
+                    message: 'Rotate / refresh transfer account number',
+                    child: Icon(Icons.autorenew_rounded, size: 18),
+                  ),
+                ),
+              ],
             ),
           ] else if (wallet.isProvisioningDedicatedAccount) ...[
             const Padding(
@@ -920,7 +942,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Account name: ${wallet.activeTransfer!.accountName}. This is a temporary account for this payment only and expires in 8 hours. Your wallet is credited automatically; then tap "I\'ve sent the money".',
+                                'Account name: ${wallet.activeTransfer!.accountName}. Paystack deducts its 1.5% transfer fee and credits the net amount directly to your wallet; then tap "I\'ve sent the money".',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   height: 1.5,

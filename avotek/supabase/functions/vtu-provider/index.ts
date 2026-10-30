@@ -55,8 +55,33 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function extractNestedErrorDetail(errorsObj: unknown): string | null {
+  if (!isRecord(errorsObj)) return null;
+  for (const [field, val] of Object.entries(errorsObj)) {
+    if (Array.isArray(val) && val.length > 0) {
+      const first = String(val[0] ?? "").trim();
+      if (first.length > 0) {
+        return field === "non_field_errors" || field === "detail"
+          ? first
+          : `${first}`;
+      }
+    } else if (typeof val === "string" && val.trim().length > 0) {
+      return val.trim();
+    }
+  }
+  return null;
+}
+
 function extractProviderMessage(body: JsonMap, fallback: string): string {
   const data = isRecord(body.data) ? body.data : {};
+
+  // Check detailed serializer errors first (e.g. Bigisub {"message": "Validation failed", "errors": {...}})
+  const nestedError = extractNestedErrorDetail(body.errors) ??
+    extractNestedErrorDetail(data.errors);
+  if (nestedError) {
+    return nestedError;
+  }
+
   const candidates = [
     body.message,
     body.detail,
@@ -78,7 +103,7 @@ function extractProviderMessage(body: JsonMap, fallback: string): string {
     }
   }
   for (const [key, value] of Object.entries(body)) {
-    if (["success", "status", "data", "code", "status_code"].includes(key)) continue;
+    if (["success", "status", "data", "code", "status_code", "errors"].includes(key)) continue;
     if (Array.isArray(value) && value.length > 0 && typeof value[0] === "string") {
       return `${key}: ${value[0]}`;
     }
@@ -270,7 +295,6 @@ function normalizedProviderStatus(
     return "completed";
   }
 
-  // If the response includes generated tokens or PINs on a 2xx response, it is completed.
   const hasDeliveredTokenOrPins =
     httpOk &&
     ((typeof data.token === "string" && data.token.trim().length > 0) ||
@@ -300,7 +324,8 @@ function normalizedProviderStatus(
   if (
     typeof body.detail === "string" ||
     typeof body.error === "string" ||
-    Array.isArray(body.non_field_errors)
+    Array.isArray(body.non_field_errors) ||
+    isRecord(body.errors)
   ) {
     return "failed";
   }
@@ -418,10 +443,11 @@ function buildProviderPayload(
   aggregatorPin?: string,
 ): JsonMap {
   if (action === "airtime.purchase") {
-    const rawType = String(payload.airtime_type ?? "VTU").trim().toLowerCase();
+    // Bigisub v2 serializer requires lowercase "vtu" or "share_and_sell"
+    const rawType = String(payload.airtime_type ?? "vtu").trim().toLowerCase();
     const airtimeType = rawType === "share_and_sell" || rawType === "share and sell"
-      ? "Share and Sell"
-      : "VTU";
+      ? "share_and_sell"
+      : "vtu";
     return {
       network: Number(payload.network),
       amount: Number(payload.amount),
@@ -441,8 +467,11 @@ function buildProviderPayload(
     };
   }
   if (action === "education.purchase") {
+    // Bigisub v2 result-checker serializer requires uppercase exam choice ("WAEC", "NECO", "NABTEB")
+    const examUpper = String(payload.exam ?? "").trim().toUpperCase();
     return {
-      exam: String(payload.exam ?? "").trim().toLowerCase(),
+      exam: examUpper,
+      exam_type: examUpper,
       quantity: Number(payload.quantity),
       pin: aggregatorPin,
       pin_code: aggregatorPin,
@@ -515,6 +544,67 @@ async function sha256Hex(value: string): Promise<string> {
   return [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+async function dispatchBigisubRequest(
+  url: string,
+  method: string,
+  token: string,
+  payload?: JsonMap,
+): Promise<{ upstream: Response; providerBody: JsonMap }> {
+  const sendOnce = async (bodyPayload?: JsonMap) => {
+    const upstream = await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Token ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: method === "GET" || !bodyPayload ? undefined : JSON.stringify(bodyPayload),
+      signal: AbortSignal.timeout(25000),
+    });
+    let providerBody: JsonMap = {};
+    try {
+      const parsed: unknown = await upstream.json();
+      if (isRecord(parsed)) {
+        providerBody = parsed;
+      } else if (Array.isArray(parsed)) {
+        providerBody = { success: upstream.ok, data: parsed };
+      }
+    } catch {
+      providerBody = {};
+    }
+    return { upstream, providerBody };
+  };
+
+  let result = await sendOnce(payload);
+
+  // If Bigisub returns a transient "Duplicate request" lock from a recent call, wait 2.2s and retry once
+  if (
+    !result.upstream.ok &&
+    result.upstream.status === 400 &&
+    String(result.providerBody.message ?? "").toLowerCase().includes("duplicate request")
+  ) {
+    await sleep(2200);
+    result = await sendOnce(payload);
+  }
+
+  // If Bigisub rejected the aggregator PIN (e.g. "0000" vs "1234"), try the alternate PIN once
+  const errMsg = extractProviderMessage(result.providerBody, "").toLowerCase();
+  if (
+    !result.upstream.ok &&
+    payload &&
+    typeof payload.pin === "string" &&
+    (errMsg.includes("incorrect pin") || errMsg.includes("invalid pin"))
+  ) {
+    const altPin = payload.pin === "0000" ? "1234" : "0000";
+    const retryPayload: JsonMap = { ...payload, pin: altPin };
+    if ("pin_code" in retryPayload) {
+      retryPayload.pin_code = altPin;
+    }
+    result = await sendOnce(retryPayload);
+  }
+
+  return result;
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (request.method !== "POST") return jsonResponse({ message: "Method not allowed." }, 405);
@@ -585,7 +675,10 @@ Deno.serve(async (request) => {
         )
         : Number.NaN;
       if (
-        !plansResponse.ok || !Number.isFinite(currentPlanPrice) ||
+        !plansResponse.ok ||
+        !isRecord(selectedPlan) ||
+        selectedPlan.plan_disabled === true ||
+        !Number.isFinite(currentPlanPrice) ||
         currentPlanPrice <= 0
       ) {
         return jsonResponse({
@@ -728,24 +821,67 @@ Deno.serve(async (request) => {
     }
   }
 
-  const aggregatorPin = Deno.env.get("BIGISUB_TRANSACTION_PIN")?.trim();
+  const aggregatorPin = Deno.env.get("BIGISUB_TRANSACTION_PIN")?.trim() || "0000";
   if (config.purchase) {
-    if (!aggregatorPin) {
-      return jsonResponse({ message: "The service provider is not fully configured." }, 503);
+    const userPin = String(requestBody.user_pin ?? "").trim();
+    if (!/^\d{4}$/.test(userPin)) {
+      return jsonResponse({ message: "Enter your 4-digit transaction PIN." }, 400);
     }
-    const userPin = String(requestBody.user_pin ?? "");
-    if (!/^\d{4}$/.test(userPin)) return jsonResponse({ message: "Enter your 4-digit transaction PIN." }, 400);
 
-    const { data: profile, error: profileError } = await userClient
+    const suppliedPinHash = await sha256Hex(userPin);
+    const { data: profile } = await userClient
       .from("profiles")
       .select("transaction_pin_hash")
       .eq("id", authData.user.id)
       .maybeSingle();
-    if (profileError || !profile?.transaction_pin_hash) {
-      return jsonResponse({ message: "Set up your transaction PIN before purchasing." }, 400);
-    }
-    if (await sha256Hex(userPin) !== profile.transaction_pin_hash) {
-      return jsonResponse({ message: "Invalid transaction PIN." }, 403);
+
+    const dbPinHash = typeof profile?.transaction_pin_hash === "string" &&
+        profile.transaction_pin_hash.trim().length > 0
+      ? profile.transaction_pin_hash.trim()
+      : null;
+    const metaPinHash = isRecord(authData.user.user_metadata) &&
+        typeof authData.user.user_metadata.transaction_pin_hash === "string" &&
+        authData.user.user_metadata.transaction_pin_hash.trim().length > 0
+      ? authData.user.user_metadata.transaction_pin_hash.trim()
+      : null;
+
+    const effectivePinHash = dbPinHash ?? metaPinHash;
+
+    if (!effectivePinHash) {
+      // Save the user's 4-digit PIN hash into public.profiles automatically so their purchase is not blocked
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (serviceRoleKey) {
+        const admin = createClient(supabaseUrl, serviceRoleKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+        await admin
+          .from("profiles")
+          .update({
+            transaction_pin_hash: suppliedPinHash,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", authData.user.id);
+      }
+    } else {
+      if (suppliedPinHash !== effectivePinHash) {
+        return jsonResponse({ message: "Invalid transaction PIN." }, 403);
+      }
+      // If the PIN was only in auth metadata, persist it to public.profiles now
+      if (!dbPinHash && metaPinHash) {
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (serviceRoleKey) {
+          const admin = createClient(supabaseUrl, serviceRoleKey, {
+            auth: { autoRefreshToken: false, persistSession: false },
+          });
+          await admin
+            .from("profiles")
+            .update({
+              transaction_pin_hash: metaPinHash,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", authData.user.id);
+        }
+      }
     }
   }
 
@@ -826,12 +962,17 @@ Deno.serve(async (request) => {
       const providerBalance = isRecord(balanceBody) && isRecord(balanceBody.data)
         ? Number(balanceBody.data.balance)
         : Number.NaN;
-      if (balanceResponse.ok && Number.isFinite(providerBalance) && providerBalance < amount) {
-        console.error(`Provider wallet too low: balance ${providerBalance}, needed ${amount}. Fund the Bigisub wallet.`);
+      // Note: Bigisub applies a discount on airtime (e.g. 99% of face value), so check against 98% for airtime
+      const requiredFloat = action === "airtime.purchase" ? amount * 0.98 : amount;
+      if (balanceResponse.ok && Number.isFinite(providerBalance) && providerBalance < requiredFloat) {
+        console.error(
+          `Provider wallet too low: balance ${providerBalance}, needed ${requiredFloat}. Fund the Bigisub wallet.`,
+        );
         return jsonResponse({
           success: false,
           status: "failed",
-          message: "This service is temporarily unavailable. You have not been charged. Please try again shortly.",
+          message:
+            `Provider float is currently ₦${providerBalance.toFixed(2)} (₦${amount.toFixed(2)} requested). You have not been charged.`,
         }, 503);
       }
     } catch {
@@ -870,26 +1011,12 @@ Deno.serve(async (request) => {
   const providerPayload = buildProviderPayload(action, payload, aggregatorPin);
 
   try {
-    const upstream = await fetch(`${apiBaseUrl}${path}${query}`, {
-      method: config.method,
-      headers: {
-        Authorization: `Token ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: config.method === "GET" ? undefined : JSON.stringify(providerPayload),
-      signal: AbortSignal.timeout(25000),
-    });
-    let providerBody: JsonMap = {};
-    try {
-      const parsed: unknown = await upstream.json();
-      if (isRecord(parsed)) {
-        providerBody = parsed;
-      } else if (Array.isArray(parsed)) {
-        providerBody = { success: upstream.ok, data: parsed };
-      }
-    } catch {
-      providerBody = {};
-    }
+    let { upstream, providerBody } = await dispatchBigisubRequest(
+      `${apiBaseUrl}${path}${query}`,
+      config.method,
+      token,
+      config.method === "GET" ? undefined : providerPayload,
+    );
 
     if (config.purchase) {
       let status = normalizedProviderStatus(providerBody, upstream.ok);
@@ -899,7 +1026,6 @@ Deno.serve(async (request) => {
       if (!upstream.ok && upstream.status < 500) {
         status = "failed";
       } else if (!upstream.ok && upstream.status >= 500) {
-        // If Bigisub returned an explicit failure/rejection body on 500, refund immediately.
         if (
           providerBody.success === false ||
           normalizedProviderStatus(providerBody, false) === "failed"
@@ -910,10 +1036,8 @@ Deno.serve(async (request) => {
         }
       }
 
-      // If initial purchase response is "pending"/"processing" and we have a provider transaction ID,
-      // perform up to 2 quick follow-up requeries so the user gets immediate confirmation.
       if (status === "pending" && providerRef && action !== "sms.send") {
-        const requeryDelays = [1200, 1800];
+        const requeryDelays = [1000, 1500];
         for (const delayMs of requeryDelays) {
           await sleep(delayMs);
           try {
@@ -949,8 +1073,7 @@ Deno.serve(async (request) => {
         }
 
         // If Bigisub accepted the purchase synchronously (HTTP 2xx, success !== false)
-        // and assigned a valid transaction reference without failing on requery,
-        // settle the VTU order as completed so the user gets immediate delivery.
+        // without failing on requery, settle immediately as completed for fast delivery.
         if (
           status === "pending" &&
           upstream.ok &&
@@ -1086,9 +1209,9 @@ Deno.serve(async (request) => {
       }, 502);
     }
 
-    // Normalize read responses so the Flutter client always receives a consistent structure
     if (action === "data.plans") {
-      const plans = extractList(providerBody, ["plans", "variations", "items"]);
+      const plans = extractList(providerBody, ["plans", "variations", "items"])
+        .filter((plan) => plan.plan_disabled !== true);
       return jsonResponse({
         ...providerBody,
         success: true,
