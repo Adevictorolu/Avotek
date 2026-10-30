@@ -310,13 +310,12 @@ async function clearUnpaidPendingFunding(
           continue;
         }
       }
+      // If payment is not successful, remove the stale pending row so phantom transactions don't pollute the ledger
+      await admin.from("transactions").delete().eq("user_id", userId).eq("reference", ref).eq("status", "pending");
     } catch {
-      // Not paid yet; close stale pending row so a fresh transfer can be created
+      // Not paid; delete stale pending row so phantom transactions don't pollute the user ledger
+      await admin.from("transactions").delete().eq("user_id", userId).eq("reference", ref).eq("status", "pending");
     }
-    await admin.rpc("fail_paystack_wallet_funding", {
-      p_user_id: userId,
-      p_reference: ref,
-    });
   }
 }
 

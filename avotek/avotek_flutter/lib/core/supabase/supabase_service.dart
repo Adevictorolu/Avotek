@@ -511,17 +511,21 @@ class SupabaseService {
           .map(
             (item) => TransactionModel.fromJson(item as Map<String, dynamic>),
           )
+          .where((t) {
+            // New users shouldn't have active phantom transactions from uncompleted checkout initializations
+            if (t.status.toLowerCase() == 'pending' && t.category == 'wallet_fund') {
+              final age = DateTime.now().difference(t.createdAt).inMinutes;
+              return age <= 10; // Only keep actively in-progress checkouts under 10 minutes
+            }
+            return true;
+          })
           .toList();
-      if (list.isNotEmpty) return list;
+      return list;
     } catch (e) {
       debugPrint('Notice: Fetching transactions from Supabase: $e');
     }
 
-    final localList = _fallbackTransactions[userId] ?? [];
-    if (filterType != null && filterType != 'all') {
-      return localList.where((t) => t.type == filterType).take(limit).toList();
-    }
-    return localList.take(limit).toList();
+    return const [];
   }
 
   // ==========================================

@@ -647,6 +647,40 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                     : const Color(0xFF475569),
               ),
             ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0052FF).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color(0xFF0052FF).withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: Color(0xFF00D2FF),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Bank Routing Note: If your banking app (e.g. OPay, PalmPay, GTBank) reports an error resolving this account number, please use Paystack Direct above for 100% instant, guaranteed funding.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        height: 1.45,
+                        color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 14),
             Row(
               children: [
@@ -873,8 +907,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                _buildDedicatedAccountSection(context, wallet, isDark),
-                const SizedBox(height: 20),
+                // 1. Paystack Direct Hero Section (Primary)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(22),
@@ -891,47 +924,159 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Icon(
-                            Icons.account_balance_wallet_rounded,
-                            color: Color(0xFF0052FF),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0052FF).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.account_balance_wallet_rounded,
+                                  color: Color(0xFF0052FF),
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Current Balance',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? const Color(0xFFCBD5E1)
+                                      : const Color(0xFF475569),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 10),
                           Text(
-                            'Current balance',
+                            '₦${wallet.balance.toStringAsFixed(2)}',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? const Color(0xFFCBD5E1)
-                                  : const Color(0xFF475569),
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '₦${wallet.balance.toStringAsFixed(2)}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF0F172A),
-                        ),
+                      const SizedBox(height: 20),
+                      Divider(
+                        color: isDark
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFFF1F5F9),
+                        height: 1,
                       ),
-                      const SizedBox(height: 22),
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00D2FF).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.bolt_rounded,
+                              color: Color(0xFF00D2FF),
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Instant Online Funding (Paystack Direct)',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  ),
+                                ),
+                                Text(
+                                  'Cards (Visa/Mastercard/Verve), Bank App, USSD & Apple Pay',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11.5,
+                                    color: isDark
+                                        ? const Color(0xFF94A3B8)
+                                        : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '⚡ RECOMMENDED',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF10B981),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       Text(
-                        'Or pay via Paystack Checkout (Card / USSD)',
+                        'Select or enter amount to fund:',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? const Color(0xFFCBD5E1)
-                              : const Color(0xFF334155),
+                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [500, 1000, 2000, 5000, 10000, 20000].map((preset) {
+                          final isSelected = _amountController.text == preset.toString();
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                _amountController.text = preset.toString();
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFF0052FF)
+                                    : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF00D2FF)
+                                      : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                ),
+                              ),
+                              child: Text(
+                                '₦${preset.toString()}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 14),
                       TextField(
                         controller: _amountController,
                         keyboardType: TextInputType.number,
@@ -949,121 +1094,33 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         ],
                         decoration: InputDecoration(
                           labelText: 'Amount (NGN)',
-                          hintText: 'For example, 1000',
+                          hintText: 'Enter custom amount e.g. 1000',
                           prefixText: '₦ ',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          helperText: 'Minimum ₦100; maximum ₦1,000,000',
+                          helperText: 'Minimum ₦100; maximum ₦1,000,000 • 100% Instant Credit',
                         ),
                       ),
-                      const SizedBox(height: 18),
-                      SizedBox(
+                      const SizedBox(height: 16),
+                      Container(
                         width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: wallet.isCreatingTransfer
-                              ? null
-                              : _generateAmountTransferAccount,
-                          icon: wallet.isCreatingTransfer
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.account_balance_rounded),
-                          label: Text(
-                            wallet.isCreatingTransfer
-                                ? 'Generating transfer account...'
-                                : 'Pay by Bank Transfer (shows account here)',
+                        height: 52,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0052FF).withValues(alpha: 0.35),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
                             ),
-                          ),
+                          ],
                         ),
-                      ),
-                      if (wallet.activeTransfer != null) ...[
-                        const SizedBox(height: 14),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFF10B981)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Transfer exactly ₦${(wallet.activeTransfer!.transferAmountNaira ?? wallet.activeTransfer!.amountNaira ?? 0).toStringAsFixed(2)}',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              SelectableText(
-                                '${wallet.activeTransfer!.bankName}  •  ${wallet.activeTransfer!.accountNumber}',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 20,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Account name: ${wallet.activeTransfer!.accountName}. Paystack deducts its 1.5% transfer fee and credits the net amount directly to your wallet; then tap "I\'ve sent the money".',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12,
-                                  height: 1.5,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  OutlinedButton.icon(
-                                    onPressed: () {
-                                      Clipboard.setData(
-                                        ClipboardData(
-                                          text: wallet.activeTransfer!.accountNumber!,
-                                        ),
-                                      );
-                                      TopNotification.showSuccess(
-                                        context,
-                                        'Account number copied.',
-                                        title: 'Copied',
-                                      );
-                                    },
-                                    icon: const Icon(Icons.copy_rounded, size: 16),
-                                    label: const Text('Copy number'),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  TextButton.icon(
-                                    onPressed: _isRefreshingTransfer
-                                        ? null
-                                        : _refreshTransferBalance,
-                                    icon: const Icon(Icons.refresh_rounded, size: 16),
-                                    label: const Text("I've sent the money"),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 10),                      SizedBox(
-                        width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed:
-                              _isStartingPayment ||
+                          onPressed: _isStartingPayment ||
                                   _isCheckingPayment ||
                                   _authorizationUri != null
                               ? null
@@ -1074,20 +1131,26 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                   height: 18,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
+                                    color: Colors.white,
                                   ),
                                 )
-                              : const Icon(Icons.lock_rounded),
+                              : const Icon(Icons.bolt_rounded),
                           label: Text(
                             _isStartingPayment
-                                ? 'Preparing secure checkout...'
+                                ? 'Connecting Paystack Direct...'
                                 : _authorizationUri != null
-                                ? 'Checkout ready'
-                                : 'Continue to Paystack',
+                                ? 'Paystack Checkout Ready'
+                                : 'Proceed with Instant Paystack Funding',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0052FF),
+                            backgroundColor: Colors.transparent,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            disabledForegroundColor: Colors.white70,
+                            shadowColor: Colors.transparent,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -1095,20 +1158,72 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         ),
                       ),
                       if (_authorizationUri != null) ...[
-                        const SizedBox(height: 10),
-                        SizedBox(
+                        const SizedBox(height: 12),
+                        Container(
                           width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: _openCheckout,
-                            icon: const Icon(Icons.open_in_new_rounded),
-                            label: const Text('Open secure checkout'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF0052FF),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0052FF).withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF0052FF).withValues(alpha: 0.3),
                             ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Paystack Checkout Session Active',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'A checkout page has been created. Click the button below to pay via Card, USSD or Bank Transfer. Once done, return here and tap "Check Payment Status".',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  height: 1.45,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: _openCheckout,
+                                      icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                                      label: const Text('Open Checkout Window'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF0052FF),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  OutlinedButton.icon(
+                                    onPressed: _isCheckingPayment
+                                        ? null
+                                        : () => _verifyPayment(_callbackReference!),
+                                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                                    label: const Text('Verify Payment'),
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -1116,7 +1231,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         const SizedBox(height: 16),
                         const LinearProgressIndicator(),
                         const SizedBox(height: 8),
-                        const Text('Verifying your payment securely...'),
+                        const Text('Verifying your payment securely with Paystack...'),
                       ],
                       if (_callbackReference != null) ...[
                         const SizedBox(height: 14),
@@ -1144,6 +1259,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 24),
+                // 2. Dedicated Account Section (Secondary / Alternative)
+                _buildDedicatedAccountSection(context, wallet, isDark),
                 const SizedBox(height: 18),
                 Container(
                   padding: const EdgeInsets.all(18),
