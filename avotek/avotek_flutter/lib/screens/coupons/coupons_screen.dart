@@ -2,15 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/wallet_provider.dart';
 import '../../widgets/top_notification.dart';
 
 class CouponsScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
+  final String? initialCode;
 
-  const CouponsScreen({super.key, required this.onToggleTheme});
+  const CouponsScreen({
+    super.key,
+    required this.onToggleTheme,
+    this.initialCode,
+  });
 
   @override
   State<CouponsScreen> createState() => _CouponsScreenState();
@@ -24,6 +33,14 @@ class _CouponsScreenState extends State<CouponsScreen> {
   final List<Map<String, dynamic>> _redemptionHistory = [];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.initialCode != null && widget.initialCode!.trim().isNotEmpty) {
+      _codeController.text = widget.initialCode!.trim().toUpperCase();
+    }
+  }
+
+  @override
   void dispose() {
     _codeController.dispose();
     super.dispose();
@@ -32,16 +49,229 @@ class _CouponsScreenState extends State<CouponsScreen> {
   Future<void> _handleRedeem() async {
     final code = _codeController.text.trim().toUpperCase();
     if (code.isEmpty) {
-      TopNotification.showError(context, 'Please enter a coupon code.', title: 'Code Required');
+      TopNotification.showError(
+        context,
+        'Please enter a coupon code.',
+        title: 'Code Required',
+      );
       return;
     }
 
     setState(() => _isRedeeming = true);
-    setState(() => _isRedeeming = false);
-    TopNotification.showWarning(
-      context,
-      'Coupon redemption is unavailable until codes can be verified by the backend. No funds were credited.',
-      title: 'Redemption Unavailable',
+    final auth = context.read<AuthProvider>();
+    final wallet = context.read<WalletProvider>();
+
+    try {
+      final res = await SupabaseService.instance.redeemGiftVoucher(code);
+      if (!mounted) return;
+      await auth.refreshWallet();
+      if (auth.user != null) {
+        await wallet.fetchWallet(auth.user!.id);
+      }
+      final creditedAmount = (res['amount'] as num?)?.toDouble() ?? 0.0;
+      final newBalance =
+          (res['new_balance'] as num?)?.toDouble() ?? wallet.balance;
+      final note = (res['note'] ?? '').toString();
+      _codeController.clear();
+      setState(() {
+        _redemptionHistory.insert(0, {
+          'code': code,
+          'amount': creditedAmount,
+          'date': DateTime.now(),
+          'status': 'Claimed',
+        });
+      });
+      _showRedeemSuccessDialog(
+        code: code,
+        amount: creditedAmount,
+        newBalance: newBalance,
+        note: note,
+      );
+    } catch (e) {
+      if (mounted) {
+        final err = e.toString().replaceFirst('Exception: ', '').trim();
+        TopNotification.showError(
+          context,
+          err.contains('not found') || err.contains('already been redeemed')
+              ? err
+              : 'This coupon code is invalid, already claimed, or expired.',
+          title: 'Redemption Failed',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRedeeming = false);
+    }
+  }
+
+  void _showRedeemSuccessDialog({
+    required String code,
+    required double amount,
+    required double newBalance,
+    required String note,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(
+            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+            width: 1.5,
+          ),
+        ),
+        content: SizedBox(
+          width: 520,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.celebration_rounded,
+                    color: Color(0xFF10B981),
+                    size: 38,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Coupon Redeemed! 🎉',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your wallet has been credited instantly.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        '+ ₦${amount.toStringAsFixed(2)}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF10B981),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Code: $code',
+                        style: GoogleFonts.firaCode(
+                          fontSize: 12,
+                          color: isDark
+                              ? const Color(0xFFCBD5E1)
+                              : const Color(0xFF334155),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (note.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Message: "$note"',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontStyle: FontStyle.italic,
+                        color: isDark
+                            ? const Color(0xFFCBD5E1)
+                            : const Color(0xFF475569),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'New Wallet Balance:',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF64748B),
+                      ),
+                    ),
+                    Text(
+                      '₦${newBalance.toStringAsFixed(2)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryBlue,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(dialogCtx),
+                    child: Text(
+                      'Continue',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -54,7 +284,8 @@ class _CouponsScreenState extends State<CouponsScreen> {
       currentRoute: '/coupons',
       onToggleTheme: widget.onToggleTheme,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0A0D14) : const Color(0xFFF8FAFC),
+        backgroundColor:
+            isDark ? const Color(0xFF0A0D14) : const Color(0xFFF8FAFC),
         body: SingleChildScrollView(
           padding: EdgeInsets.symmetric(
             horizontal: isDesktop ? 36 : 16,
@@ -63,7 +294,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. TOP BANNER (Matches Screenshot 1)
+              // 1. TOP BANNER
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(26),
@@ -91,7 +322,10 @@ class _CouponsScreenState extends State<CouponsScreen> {
                       onTap: () => context.pop(),
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
@@ -99,144 +333,176 @@ class _CouponsScreenState extends State<CouponsScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.arrow_back_rounded, size: 14, color: Colors.white),
+                            const Icon(
+                              Icons.arrow_back_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            ),
                             const SizedBox(width: 6),
                             Text(
-                              'Back',
+                              'Back to Dashboard',
                               style: GoogleFonts.plusJakartaSans(
+                                color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.white,
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Coupons',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: -0.5,
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(
+                            Icons.confirmation_number_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Claim & Redeem Coupons',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Instant wallet top-up via promotional or gift voucher codes',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                color: Colors.white.withValues(alpha: 0.85),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // 2. SEGMENTED TABS
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF131826)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setState(() => _selectedTab = 0),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _selectedTab == 0
+                                ? (isDark
+                                    ? const Color(0xFF1E2638)
+                                    : Colors.white)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: _selectedTab == 0
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      blurRadius: 4,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Redeem Coupon',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: _selectedTab == 0
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                                color: _selectedTab == 0
+                                    ? AppColors.primaryBlue
+                                    : (isDark
+                                        ? AppColors.metallicLight
+                                        : AppColors.slateGrey),
+                                fontSize: 13.5,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Redeem promotional codes and view your redemption history',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.9),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setState(() => _selectedTab = 1),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _selectedTab == 1
+                                ? (isDark
+                                    ? const Color(0xFF1E2638)
+                                    : Colors.white)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: _selectedTab == 1
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      blurRadius: 4,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Redemption History',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: _selectedTab == 1
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                                color: _selectedTab == 1
+                                    ? AppColors.primaryBlue
+                                    : (isDark
+                                        ? AppColors.metallicLight
+                                        : AppColors.slateGrey),
+                                fontSize: 13.5,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-
-              // 2. TABS ROW: Redeem Coupon | History (Matches Screenshot 1)
-              Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => setState(() => _selectedTab = 0),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: _selectedTab == 0
-                              ? AppColors.primaryBlue
-                              : (isDark ? const Color(0xFF131722) : Colors.white),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: _selectedTab == 0
-                                ? AppColors.primaryBlue
-                                : (isDark ? const Color(0xFF23304B) : const Color(0xFFCBD5E1)),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.confirmation_number_outlined,
-                              size: 16,
-                              color: _selectedTab == 0 ? Colors.white : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Redeem Coupon',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: _selectedTab == 0 ? Colors.white : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => setState(() => _selectedTab = 1),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: _selectedTab == 1
-                              ? AppColors.primaryBlue
-                              : (isDark ? const Color(0xFF131722) : Colors.white),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: _selectedTab == 1
-                                ? AppColors.primaryBlue
-                                : (isDark ? const Color(0xFF23304B) : const Color(0xFFCBD5E1)),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.history_rounded,
-                              size: 16,
-                              color: _selectedTab == 1 ? Colors.white : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'History',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: _selectedTab == 1 ? Colors.white : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 24),
 
-              // 3. MAIN CARD (Matches Screenshot 1)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF10141F) : Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF202A3E) : const Color(0xFFE2E8F0),
-                  ),
-                ),
-                child: _selectedTab == 0 ? _buildRedeemForm(isDark) : _buildHistoryList(isDark),
-              ),
-              const SizedBox(height: 60),
+              // 3. TAB CONTENT
+              if (_selectedTab == 0)
+                _buildRedeemTab(isDark)
+              else
+                _buildHistoryList(isDark),
             ],
           ),
         ),
@@ -244,59 +510,33 @@ class _CouponsScreenState extends State<CouponsScreen> {
     );
   }
 
-  Widget _buildRedeemForm(bool isDark) {
+  Widget _buildRedeemTab(bool isDark) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Ticket Icon
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: (isDark ? const Color(0xFF1B2233) : const Color(0xFFEFF6FF)),
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.electricCyan.withValues(alpha: 0.3)),
-          ),
-          child: const Icon(
-            Icons.confirmation_number_rounded,
-            size: 36,
-            color: AppColors.electricCyan,
-          ),
-        ),
-        const SizedBox(height: 18),
-
-        // Heading & Subtitle
         Text(
-          'Redeem Coupon',
+          'Enter Coupon Code',
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
             color: isDark ? Colors.white : const Color(0xFF0F172A),
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
-          'Enter your coupon code to get instant wallet credit',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 13,
-            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-          ),
-        ),
-        const SizedBox(height: 28),
-
-        // Monospace Code Input Box
+        const SizedBox(height: 10),
         Container(
           constraints: const BoxConstraints(maxWidth: 520),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0C0F17) : const Color(0xFFF1F5F9),
+            color: isDark ? const Color(0xFF131826) : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? const Color(0xFF283654) : const Color(0xFFCBD5E1),
-              width: 1.2,
+              color: isDark
+                  ? const Color(0xFF1E2638)
+                  : const Color(0xFFE2E8F0),
             ),
           ),
           child: TextField(
             controller: _codeController,
             textCapitalization: TextCapitalization.characters,
-            textAlign: TextAlign.center,
             style: GoogleFonts.jetBrainsMono(
               fontSize: 16,
               fontWeight: FontWeight.w800,
@@ -304,14 +544,19 @@ class _CouponsScreenState extends State<CouponsScreen> {
               color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
             decoration: InputDecoration(
-              hintText: 'ENTER COUPON CODE (E.G., WELCOME20)',
+              hintText: 'ENTER CODE (E.G., AVOGIFT-8K392)',
               hintStyle: GoogleFonts.jetBrainsMono(
                 fontSize: 12.5,
-                color: isDark ? AppColors.metallicLight.withValues(alpha: 0.6) : Colors.grey,
+                color: isDark
+                    ? AppColors.metallicLight.withValues(alpha: 0.6)
+                    : Colors.grey,
                 letterSpacing: 1.2,
               ),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 18,
+              ),
             ),
           ),
         ),
@@ -339,9 +584,16 @@ class _CouponsScreenState extends State<CouponsScreen> {
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
-                : const Icon(Icons.auto_awesome_rounded, size: 18, color: Colors.white),
+                : const Icon(
+                    Icons.auto_awesome_rounded,
+                    size: 18,
+                    color: Colors.white,
+                  ),
             label: Text(
               _isRedeeming ? 'Validating...' : 'Redeem Coupon',
               style: GoogleFonts.plusJakartaSans(
@@ -353,7 +605,9 @@ class _CouponsScreenState extends State<CouponsScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
           ),
         ),
@@ -368,16 +622,26 @@ class _CouponsScreenState extends State<CouponsScreen> {
         child: Center(
           child: Column(
             children: [
-              Icon(Icons.history_rounded, size: 48, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
+              Icon(
+                Icons.history_rounded,
+                size: 48,
+                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+              ),
               const SizedBox(height: 14),
               Text(
                 'No coupons redeemed yet',
-                style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 'Redeemed vouchers will appear here with instant credit receipts.',
-                style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: AppColors.slateGrey),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.5,
+                  color: AppColors.slateGrey,
+                ),
               ),
             ],
           ),
@@ -389,7 +653,9 @@ class _CouponsScreenState extends State<CouponsScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _redemptionHistory.length,
-      separatorBuilder: (_, _) => Divider(color: isDark ? const Color(0xFF1C2436) : const Color(0xFFF1F5F9)),
+      separatorBuilder: (_, _) => Divider(
+        color: isDark ? const Color(0xFF1C2436) : const Color(0xFFF1F5F9),
+      ),
       itemBuilder: (context, idx) {
         final item = _redemptionHistory[idx];
         return ListTile(
@@ -400,14 +666,23 @@ class _CouponsScreenState extends State<CouponsScreen> {
               color: AppColors.success.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20),
+            child: const Icon(
+              Icons.check_circle_rounded,
+              color: AppColors.success,
+              size: 20,
+            ),
           ),
           title: Text(
             item['code'] as String,
-            style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.w800, fontSize: 14),
+            style: GoogleFonts.jetBrainsMono(
+              fontWeight: FontWeight.w800,
+              fontSize: 14,
+            ),
           ),
           subtitle: Text(
-            DateFormat('dd MMM yyyy, hh:mm a').format(item['date'] as DateTime),
+            DateFormat(
+              'dd MMM yyyy, hh:mm a',
+            ).format(item['date'] as DateTime),
             style: GoogleFonts.plusJakartaSans(fontSize: 11),
           ),
           trailing: Text(

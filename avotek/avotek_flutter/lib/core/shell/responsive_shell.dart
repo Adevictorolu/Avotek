@@ -562,19 +562,12 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   isDark: isDark,
                 ),
                 _buildNavItem(
-                  icon: Icons.sync_rounded,
-                  activeIcon: Icons.sync_rounded,
+                  icon: Icons.tv_rounded,
+                  activeIcon: Icons.tv_rounded,
                   label: 'Subscriptions',
                   route: '/services/tv',
-                  isActive: false,
-                  isDark: isDark,
-                ),
-                _buildNavItem(
-                  icon: Icons.credit_card_outlined,
-                  activeIcon: Icons.credit_card_rounded,
-                  label: 'Requests',
-                  route: '/transactions',
-                  isActive: false,
+                  isActive: currentRoute == '/services/tv' ||
+                      currentRoute.startsWith('/services/cable'),
                   isDark: isDark,
                 ),
                 _buildNavItem(

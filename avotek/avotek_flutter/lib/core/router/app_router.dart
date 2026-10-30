@@ -248,7 +248,10 @@ class AppRouter {
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,
             state,
-            CouponsScreen(onToggleTheme: themeToggle),
+            CouponsScreen(
+              onToggleTheme: themeToggle,
+              initialCode: state.uri.queryParameters['code'],
+            ),
           ),
         ),
         GoRoute(

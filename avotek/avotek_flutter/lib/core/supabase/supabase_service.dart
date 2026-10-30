@@ -634,4 +634,43 @@ class SupabaseService {
     });
     return (res as num).toDouble();
   }
+
+  /// Create a gift voucher debited directly from caller's wallet
+  Future<Map<String, dynamic>> createGiftVoucher({
+    required double amount,
+    String recipient = '',
+    String note = '',
+  }) async {
+    final res = await client.rpc('create_gift_voucher', params: {
+      'p_amount': amount,
+      'p_recipient': recipient,
+      'p_note': note,
+    });
+    return Map<String, dynamic>.from(res as Map);
+  }
+
+  /// Redeem a gift voucher or coupon code with instant wallet crediting
+  Future<Map<String, dynamic>> redeemGiftVoucher(String code) async {
+    final res = await client.rpc('redeem_gift_voucher', params: {
+      'p_code': code.trim(),
+    });
+    return Map<String, dynamic>.from(res as Map);
+  }
+
+  /// List gift vouchers created by user
+  Future<List<Map<String, dynamic>>> listUserGiftVouchers(String userId) async {
+    try {
+      final data = await client
+          .from('gift_vouchers')
+          .select()
+          .eq('creator_id', userId)
+          .order('created_at', ascending: false);
+      if (data is List) {
+        return data.map((d) => Map<String, dynamic>.from(d as Map)).toList();
+      }
+    } catch (e) {
+      debugPrint('Error listing gift vouchers: $e');
+    }
+    return [];
+  }
 }

@@ -226,6 +226,8 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
         ),
         hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13),
+        labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF475569), fontSize: 13),
+        floatingLabelStyle: GoogleFonts.plusJakartaSans(color: AppColors.primaryBlue, fontSize: 14, fontWeight: FontWeight.w600),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -243,8 +245,17 @@ class AppTheme {
         backgroundColor: AppColors.lightCard,
         elevation: 4,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: AppColors.lightBorder, width: 1),
+        ),
+        titleTextStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          color: const Color(0xFF0F172A),
+        ),
+        contentTextStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 13.5,
+          color: const Color(0xFF334155),
         ),
       ),
     );
@@ -344,6 +355,8 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.primaryCyan, width: 1.5),
         ),
         hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF64748B), fontSize: 13),
+        labelStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13),
+        floatingLabelStyle: GoogleFonts.plusJakartaSans(color: AppColors.primaryCyan, fontSize: 14, fontWeight: FontWeight.w600),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -361,8 +374,17 @@ class AppTheme {
         backgroundColor: AppColors.darkCard,
         elevation: 4,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: AppColors.darkBorder, width: 1),
+        ),
+        titleTextStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+        ),
+        contentTextStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 13.5,
+          color: const Color(0xFFCBD5E1),
         ),
       ),
     );

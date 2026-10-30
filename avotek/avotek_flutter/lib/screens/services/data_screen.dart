@@ -11,6 +11,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/avotek_loading_indicator.dart';
+import '../../widgets/pin_modal.dart';
 import '../../widgets/service_brand_logo.dart';
 import '../../widgets/top_notification.dart';
 import '../../widgets/transaction_success_dialog.dart';
@@ -223,15 +224,6 @@ class _DataScreenState extends State<DataScreen> {
       );
       return;
     }
-    if (pin.length != 4) {
-      TopNotification.showError(
-        context,
-        'Please enter your 4-digit transaction PIN.',
-        title: 'PIN Required',
-      );
-      return;
-    }
-
     final auth = context.read<AuthProvider>();
     final currentUser = auth.user;
     if (currentUser == null) {
@@ -245,33 +237,30 @@ class _DataScreenState extends State<DataScreen> {
     final vtu = context.read<VtuProvider>();
     final amount = (_selectedPlan!['price'] as num).toDouble();
 
-    setState(() {
-      _isProcessing = true;
-      _processingMessage = 'Verifying your credentials…';
-    });
-
-    // 1. Verify PIN
-    final pinValid = await auth.verifyPin(pin);
-    if (!mounted) return;
-    if (!pinValid) {
-      setState(() => _isProcessing = false);
-      TopNotification.showError(
-        context,
-        'Invalid transaction PIN. Please re-enter your 4-digit PIN.',
-        title: 'PIN Incorrect',
-      );
-      return;
-    }
-
-    // 2. Check Balance
+    // Check Balance
     final currentBalance = auth.wallet?.balance ?? 0.0;
     if (currentBalance < amount) {
-      setState(() => _isProcessing = false);
       _showInsufficientBalanceDialog(amount, currentBalance);
       return;
     }
 
+    String? transactionPin;
+    final confirmed = await PinModal.show(
+      context,
+      title: 'Confirm Data Bundle',
+      amount: amount,
+      description: '$_selectedNetwork ${_selectedPlan?['name'] ?? 'Data'} • $phone',
+      onPinSubmit: (p) async {
+        transactionPin = p;
+        return auth.verifyPin(p);
+      },
+    );
+    if (!mounted || confirmed != true || transactionPin == null) {
+      return;
+    }
+
     setState(() {
+      _isProcessing = true;
       _processingMessage = 'Processing your request securely…';
     });
 
@@ -280,7 +269,7 @@ class _DataScreenState extends State<DataScreen> {
         _processingMessage = 'Confirming your transaction status…';
       });
 
-      // 4. Dispatch the order through the server-side VTU provider.
+      // Dispatch the order through the server-side VTU provider.
       final result = await vtu.buyData(
         userId: currentUser.id,
         network: _selectedNetwork,
@@ -289,7 +278,7 @@ class _DataScreenState extends State<DataScreen> {
         amount: amount,
         sellPrice: amount,
         planId: _selectedPlan!['id'] as int?,
-        userPin: pin,
+        userPin: transactionPin,
       );
 
       if (!mounted) return;
@@ -716,32 +705,55 @@ class _DataScreenState extends State<DataScreen> {
             ),
           ),
         const SizedBox(height: 14),
-        TextField(
-          controller: _pinController,
-          keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) {
-            if (!_isProcessing) _handlePurchase();
-          },
-          obscureText: true,
-          maxLength: 4,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18,
-            letterSpacing: 6,
-            fontWeight: FontWeight.w800,
-          ),
-          decoration: InputDecoration(
-            counterText: '',
-            labelText: 'Transaction PIN',
-            hintText: '••••',
-            filled: true,
-            fillColor: isDark ? const Color(0xFF141720) : Colors.white,
-            prefixIcon: const Icon(
-              Icons.lock_outline_rounded,
-              color: Color(0xFF00D2FF),
-              size: 20,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF141720) : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1),
             ),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBlue.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.dialpad_rounded,
+                  color: AppColors.primaryBlue,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Secure Keypad PIN Entry',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Enter your 4-digit PIN on the encrypted on-screen keypad without browser autofill.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 24),
