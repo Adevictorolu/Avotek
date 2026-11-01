@@ -12,7 +12,7 @@ import 'core/supabase/supabase_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  GoogleFonts.config.allowRuntimeFetching = true;
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   await SupabaseService.instance.initialize();
   await AppDatabaseService.instance.init();

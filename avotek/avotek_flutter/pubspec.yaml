@@ -73,9 +73,9 @@ flutter:
     - assets/fonts/
 
   fonts:
-    - family: Plus Jakarta Sans
+    - family: Figtree
       fonts:
-        - asset: assets/fonts/PlusJakartaSans-Variable.ttf
+        - asset: assets/fonts/Figtree-Variable.ttf
 dependency_overrides:
   flutter_secure_storage: ^10.0.0
 

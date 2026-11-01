@@ -89,14 +89,12 @@ class PaystackPaymentService {
   Future<PaystackDedicatedAccountResult> requestDedicatedAccount({
     String? fullName,
     String? phone,
-    bool forceNew = false,
   }) async {
     final response = await _invoke({
       'action': 'dedicated_account',
       if (fullName != null && fullName.trim().isNotEmpty)
         'full_name': fullName.trim(),
       if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
-      if (forceNew) 'force_new': true,
     });
     final status = response['status'];
     if (status is! String ||

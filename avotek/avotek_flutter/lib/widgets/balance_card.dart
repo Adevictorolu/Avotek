@@ -35,7 +35,7 @@ class BalanceCard extends StatelessWidget {
                 children: [
                   Text(
                     'Available Balance',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isDark
@@ -73,7 +73,7 @@ class BalanceCard extends StatelessWidget {
                 ),
                 child: Text(
                   wallet.currency,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: isDark
@@ -89,7 +89,7 @@ class BalanceCard extends StatelessWidget {
             wallet.isBalanceVisible
                 ? '₦${wallet.balance.toStringAsFixed(2)}'
                 : '₦ • • • • • •',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 32,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.5,
@@ -119,8 +119,8 @@ class BalanceCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Instant funding via Paystack (Cards • Transfer • USSD)',
-                        style: GoogleFonts.plusJakartaSans(
+                        'Fund your wallet securely.',
+                        style: GoogleFonts.figtree(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: isDark
@@ -137,8 +137,8 @@ class BalanceCard extends StatelessWidget {
                 onPressed: onFundPressed,
                 icon: const Icon(Icons.add_rounded, size: 18),
                 label: Text(
-                  'Add Money',
-                  style: GoogleFonts.plusJakartaSans(
+                  'Fund Wallet',
+                  style: GoogleFonts.figtree(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),

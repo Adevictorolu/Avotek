@@ -96,7 +96,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 children: [
                   Text(
                     'Wallet Summary',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
                       letterSpacing: -0.5,
@@ -112,7 +112,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                     label: Text(
                       'Refresh Wallet',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w800,
                       ),
@@ -147,7 +147,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                   child: Text(
                     wallet.errorMessage!,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : const Color(0xFF78350F),
@@ -197,7 +197,7 @@ class _WalletScreenState extends State<WalletScreen> {
                             children: [
                               Text(
                                 'Instant Wallet Funding',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
                                   color: isDark
@@ -214,7 +214,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                 ),
                                 child: Text(
                                   'PAYSTACK DIRECT',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w800,
                                     color: const Color(0xFF10B981),
@@ -226,7 +226,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           const SizedBox(height: 2),
                           Text(
                             'Debit Card, Direct Bank Transfer & USSD — 100% Instant Credit',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               color: isDark
                                   ? AppColors.metallicLight
@@ -296,7 +296,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     icon: const Icon(Icons.add_rounded, size: 16),
                     label: Text(
                       'Fund Wallet',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w800,
                       ),
@@ -344,14 +344,14 @@ class _WalletScreenState extends State<WalletScreen> {
                         controller: _searchController,
                         onChanged: (val) =>
                             setState(() => _searchQuery = val.trim()),
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 13.5,
                           color: isDark ? Colors.white : Colors.black87,
                         ),
                         decoration: InputDecoration(
                           hintText:
                               'Search by description, reference, or amount',
-                          hintStyle: GoogleFonts.plusJakartaSans(
+                          hintStyle: GoogleFonts.figtree(
                             color: isDark
                                 ? AppColors.metallicLight
                                 : AppColors.slateGrey,
@@ -424,7 +424,7 @@ class _WalletScreenState extends State<WalletScreen> {
                             const SizedBox(height: 20),
                             Text(
                               'No wallet transactions yet',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 color: isDark
@@ -435,7 +435,7 @@ class _WalletScreenState extends State<WalletScreen> {
                             const SizedBox(height: 6),
                             Text(
                               'Fund your wallet to see transactions here',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark
                                     ? AppColors.metallicLight
@@ -451,7 +451,7 @@ class _WalletScreenState extends State<WalletScreen> {
                               ),
                               label: Text(
                                 'Fund Wallet Now',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -526,7 +526,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                     children: [
                                       Text(
                                         tx.displayTitle,
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w700,
                                           color: isDark
@@ -539,7 +539,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                       const SizedBox(height: 2),
                                       Text(
                                         DateFormat('dd MMM yyyy • hh:mm a').format(tx.createdAt),
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 11.5,
                                           color: isDark
                                               ? AppColors.metallicLight
@@ -556,7 +556,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                   children: [
                                     Text(
                                       '${isCredit ? '+' : '-'}₦${tx.amount.toStringAsFixed(2)}',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w900,
                                         color: isCredit
@@ -569,7 +569,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                     const SizedBox(height: 3),
                                     Text(
                                       'Bal: ₦${tx.balanceAfter.toStringAsFixed(2)}',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 10.5,
                                         color: isDark
                                             ? AppColors.metallicLight
@@ -630,7 +630,7 @@ class _WalletScreenState extends State<WalletScreen> {
             const SizedBox(width: 6),
             Text(
               title,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 color: isSelected

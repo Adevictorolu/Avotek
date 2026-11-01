@@ -146,7 +146,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                 Text(
                   'Coupon Redeemed! 🎉',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -156,7 +156,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                 Text(
                   'Your wallet has been credited instantly.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13,
                     color: isDark
                         ? const Color(0xFF94A3B8)
@@ -178,7 +178,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                     children: [
                       Text(
                         '+ ₦${amount.toStringAsFixed(2)}',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
                           color: const Color(0xFF10B981),
@@ -187,7 +187,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Code: $code',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 12,
                           color: isDark
                               ? const Color(0xFFCBD5E1)
@@ -212,7 +212,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                     child: Text(
                       'Message: "$note"',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12.5,
                         fontStyle: FontStyle.italic,
                         color: isDark
@@ -228,7 +228,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                   children: [
                     Text(
                       'New Wallet Balance:',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 13,
                         color: isDark
                             ? const Color(0xFF94A3B8)
@@ -237,7 +237,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                     ),
                     Text(
                       '₦${newBalance.toStringAsFixed(2)}',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: AppColors.primaryBlue,
@@ -260,7 +260,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                     onPressed: () => Navigator.pop(dialogCtx),
                     child: Text(
                       'Continue',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
@@ -341,7 +341,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                             const SizedBox(width: 6),
                             Text(
                               'Back to Dashboard',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -372,7 +372,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                           children: [
                             Text(
                               'Claim & Redeem Coupons',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
@@ -382,7 +382,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                             const SizedBox(height: 2),
                             Text(
                               'Instant wallet top-up via promotional or gift voucher codes',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: Colors.white.withValues(alpha: 0.85),
                               ),
@@ -434,7 +434,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                           child: Center(
                             child: Text(
                               'Redeem Coupon',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontWeight: _selectedTab == 0
                                     ? FontWeight.w800
                                     : FontWeight.w600,
@@ -477,7 +477,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                           child: Center(
                             child: Text(
                               'Redemption History',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontWeight: _selectedTab == 1
                                     ? FontWeight.w800
                                     : FontWeight.w600,
@@ -516,7 +516,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
       children: [
         Text(
           'Enter Coupon Code',
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 14,
             fontWeight: FontWeight.w700,
             color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -537,7 +537,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
           child: TextField(
             controller: _codeController,
             textCapitalization: TextCapitalization.characters,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               letterSpacing: 2,
@@ -545,7 +545,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
             ),
             decoration: InputDecoration(
               hintText: 'ENTER CODE (E.G., AVOGIFT-8K392)',
-              hintStyle: GoogleFonts.plusJakartaSans(
+              hintStyle: GoogleFonts.figtree(
                 fontSize: 12.5,
                 color: isDark
                     ? AppColors.metallicLight.withValues(alpha: 0.6)
@@ -596,7 +596,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                   ),
             label: Text(
               _isRedeeming ? 'Validating...' : 'Redeem Coupon',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
@@ -630,7 +630,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
               const SizedBox(height: 14),
               Text(
                 'No coupons redeemed yet',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
@@ -638,7 +638,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
               const SizedBox(height: 6),
               Text(
                 'Redeemed vouchers will appear here with instant credit receipts.',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 12.5,
                   color: AppColors.slateGrey,
                 ),
@@ -674,7 +674,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
           ),
           title: Text(
             item['code'] as String,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontWeight: FontWeight.w800,
               fontSize: 14,
             ),
@@ -683,11 +683,11 @@ class _CouponsScreenState extends State<CouponsScreen> {
             DateFormat(
               'dd MMM yyyy, hh:mm a',
             ).format(item['date'] as DateTime),
-            style: GoogleFonts.plusJakartaSans(fontSize: 11),
+            style: GoogleFonts.figtree(fontSize: 11),
           ),
           trailing: Text(
             '+₦${(item['amount'] as double).toStringAsFixed(2)}',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 15,
               fontWeight: FontWeight.w900,
               color: AppColors.success,

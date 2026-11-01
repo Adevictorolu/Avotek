@@ -329,7 +329,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           const SizedBox(width: 4),
                           Text(
                             'Back',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: isDark ? Colors.white70 : Colors.black87,
@@ -344,7 +344,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                   // Header matching user screenshot
                   Text(
                     'Pay Electricity Bill',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -353,7 +353,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                   const SizedBox(height: 4),
                   Text(
                     'Instant meter token delivery and activation',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 14,
                       color: isDark ? Colors.white60 : const Color(0xFF64748B),
                     ),
@@ -410,7 +410,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                   const SizedBox(width: 8),
                                   Text(
                                     'Buy Now',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 0
@@ -461,7 +461,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                   const SizedBox(width: 8),
                                   Text(
                                     'Gift Voucher',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 1
@@ -482,7 +482,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                     const SizedBox(height: 10),
                     Text(
                       'This creates a shareable electricity voucher link. The recipient redeems it for their meter.',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12,
                         color: const Color(0xFF00D2FF),
                         fontWeight: FontWeight.w500,
@@ -507,7 +507,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                       children: [
                         Text(
                           'METER TYPE',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
@@ -548,7 +548,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                       const SizedBox(width: 6),
                                       Text(
                                         'Prepaid (Token)',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w700,
                                           color: _selectedMeterType == 'prepaid'
@@ -593,7 +593,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                       const SizedBox(width: 6),
                                       Text(
                                         'Postpaid (Bill)',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w700,
                                           color: _selectedMeterType == 'postpaid'
@@ -630,7 +630,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                         children: [
                           Text(
                             'METER NUMBER',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -650,13 +650,13 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                       setState(() => _verifiedCustomerName = null);
                                     }
                                   },
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 14,
                                     color: isDark ? Colors.white : Colors.black87,
                                   ),
                                   decoration: InputDecoration(
                                     hintText: 'Enter your 11-digit meter number',
-                                    hintStyle: GoogleFonts.plusJakartaSans(
+                                    hintStyle: GoogleFonts.figtree(
                                       fontSize: 13,
                                       color: isDark ? Colors.white38 : Colors.black38,
                                     ),
@@ -707,7 +707,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                   Expanded(
                                     child: Text(
                                       'Meter Account: $_verifiedCustomerName',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFF10B981),
@@ -721,7 +721,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           const SizedBox(height: 12),
                           Text(
                             'AMOUNT',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -734,14 +734,14 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                             keyboardType: TextInputType.number,
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                             onChanged: (_) => setState(() {}),
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: InputDecoration(
                               hintText: 'Enter amount e.g. 2000',
-                              hintStyle: GoogleFonts.plusJakartaSans(
+                              hintStyle: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
@@ -749,7 +749,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 padding: const EdgeInsets.only(left: 14, right: 6),
                                 child: Text(
                                   '₦',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
                                     color: const Color(0xFF0038B8),
@@ -790,7 +790,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                   ),
                                   child: Text(
                                     '₦${amt.toInt()}',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11.5,
                                       fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
                                       color: isSel ? const Color(0xFF0038B8) : (isDark ? Colors.white70 : const Color(0xFF334155)),
@@ -803,7 +803,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           const SizedBox(height: 12),
                           Text(
                             'PHONE NUMBER',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -815,13 +815,13 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: InputDecoration(
                               hintText: 'e.g. 08012345678',
-                              hintStyle: GoogleFonts.plusJakartaSans(
+                              hintStyle: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
@@ -853,7 +853,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                   child: RichText(
                                     text: TextSpan(
                                       text: 'Pay For Me ',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                         color: isDark ? Colors.white70 : const Color(0xFF334155),
@@ -861,7 +861,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                       children: [
                                         TextSpan(
                                           text: '- get a shareable payment link',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 12,
                                             fontWeight: FontWeight.normal,
                                             color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
@@ -893,7 +893,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                         children: [
                           Text(
                             'VOUCHER AMOUNT',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -906,14 +906,14 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                             keyboardType: TextInputType.number,
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                             onChanged: (_) => setState(() {}),
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: InputDecoration(
                               hintText: 'Enter amount e.g. 5000',
-                              hintStyle: GoogleFonts.plusJakartaSans(
+                              hintStyle: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
@@ -921,7 +921,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 padding: const EdgeInsets.only(left: 14, right: 6),
                                 child: Text(
                                   '₦',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
                                     color: const Color(0xFF0038B8),
@@ -941,7 +941,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           const SizedBox(height: 12),
                           Text(
                             'GIFT MESSAGE (OPTIONAL)',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -953,13 +953,13 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                             controller: _giftMessageController,
                             maxLength: 200,
                             maxLines: 2,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: InputDecoration(
                               hintText: 'Enjoy your electricity voucher!',
-                              hintStyle: GoogleFonts.plusJakartaSans(
+                              hintStyle: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
@@ -997,7 +997,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           children: [
                             Text(
                               'SELECT ELECTRICITY COMPANY',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.8,
@@ -1006,7 +1006,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                             ),
                             Text(
                               '${_discoList.length} companies',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
@@ -1072,7 +1072,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                         textAlign: TextAlign.center,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 12.5,
                                           fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
                                           color: isSelected
@@ -1126,7 +1126,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 children: [
                                   Text(
                                     'SELECTED DISCO & PLAN',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.8,
@@ -1138,7 +1138,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                     '${_selectedDisco.replaceAll("-", " ").toUpperCase()} ($_selectedMeterType)',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
                                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1160,7 +1160,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 _amountController.text.trim().isNotEmpty
                                     ? '₦${_amountController.text.trim()}'
                                     : '₦0',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
                                   color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
@@ -1231,7 +1231,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                                 : (_amountController.text.trim().isNotEmpty
                                                     ? 'Pay Electricity Bill • ₦${_amountController.text.trim()}'
                                                     : 'Pay Electricity Bill')),
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 14.5,
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: 0.3,
@@ -1252,7 +1252,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               Expanded(
                                 child: Text(
                                   validationErrors.first,
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: const Color(0xFFF59E0B),

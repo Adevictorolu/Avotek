@@ -505,7 +505,7 @@ class _ExtraProviderServicesScreenState
                           const SizedBox(width: 4),
                           Text(
                             'Back',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: isDark ? Colors.white70 : Colors.black87,
@@ -520,7 +520,7 @@ class _ExtraProviderServicesScreenState
                   // Header Title & Subtitle
                   Text(
                     _title,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -529,7 +529,7 @@ class _ExtraProviderServicesScreenState
                   const SizedBox(height: 4),
                   Text(
                     _subtitle,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 14,
                       color: isDark ? Colors.white60 : const Color(0xFF64748B),
                     ),
@@ -588,7 +588,7 @@ class _ExtraProviderServicesScreenState
                                   const SizedBox(width: 8),
                                   Text(
                                     _isExam || _isAirtimePins ? 'Buy Now' : 'Send Now',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 0
@@ -639,7 +639,7 @@ class _ExtraProviderServicesScreenState
                                   const SizedBox(width: 8),
                                   Text(
                                     'Gift Voucher',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 1
@@ -660,7 +660,7 @@ class _ExtraProviderServicesScreenState
                     const SizedBox(height: 10),
                     Text(
                       'This creates a shareable gift link. The recipient redeems it themselves.',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12,
                         color: const Color(0xFF00D2FF),
                         fontWeight: FontWeight.w500,
@@ -687,7 +687,7 @@ class _ExtraProviderServicesScreenState
                         children: [
                           Text(
                             'SELECT TELECOM NETWORK',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -745,7 +745,7 @@ class _ExtraProviderServicesScreenState
                                                 const SizedBox(height: 6),
                                                 Text(
                                                   net['code'] as String,
-                                                  style: GoogleFonts.plusJakartaSans(
+                                                  style: GoogleFonts.figtree(
                                                     fontSize: 12,
                                                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                                                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -800,7 +800,7 @@ class _ExtraProviderServicesScreenState
                         children: [
                           Text(
                             'SELECT CARD DENOMINATION',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -842,7 +842,7 @@ class _ExtraProviderServicesScreenState
                                       child: Center(
                                         child: Text(
                                           '₦$denom',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w800,
                                             color: isSelected
@@ -881,7 +881,7 @@ class _ExtraProviderServicesScreenState
                             children: [
                               Text(
                                 'QUANTITY (1 TO 50 CARDS)',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
@@ -911,7 +911,7 @@ class _ExtraProviderServicesScreenState
                                     ),
                                     child: Text(
                                       _quantityController.text,
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w900,
                                         color: foreground,
@@ -956,7 +956,7 @@ class _ExtraProviderServicesScreenState
                                   ),
                                   child: Text(
                                     '$qty card${qty > 1 ? "s" : ""}',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 12,
                                       fontWeight: isCur ? FontWeight.w800 : FontWeight.w600,
                                       color: isCur ? const Color(0xFF00D2FF) : (isDark ? Colors.white70 : const Color(0xFF475569)),
@@ -987,7 +987,7 @@ class _ExtraProviderServicesScreenState
                         children: [
                           Text(
                             'NAME ON RECHARGE CARD (OPTIONAL)',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -997,10 +997,10 @@ class _ExtraProviderServicesScreenState
                           const SizedBox(height: 10),
                           TextField(
                             controller: _businessNameController,
-                            style: GoogleFonts.plusJakartaSans(color: foreground),
+                            style: GoogleFonts.figtree(color: foreground),
                             decoration: InputDecoration(
                               hintText: 'e.g. Avotek Telecom or My Business Name',
-                              hintStyle: GoogleFonts.plusJakartaSans(color: isDark ? Colors.white38 : Colors.black38),
+                              hintStyle: GoogleFonts.figtree(color: isDark ? Colors.white38 : Colors.black38),
                               prefixIcon: const Icon(Icons.business_rounded, color: Color(0xFF00D2FF)),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
@@ -1038,7 +1038,7 @@ class _ExtraProviderServicesScreenState
                         children: [
                           Text(
                             'EXAM TYPE',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -1105,7 +1105,7 @@ class _ExtraProviderServicesScreenState
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   code,
-                                                  style: GoogleFonts.plusJakartaSans(
+                                                  style: GoogleFonts.figtree(
                                                     fontSize: 11.5,
                                                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                                                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1113,7 +1113,7 @@ class _ExtraProviderServicesScreenState
                                                 ),
                                                 Text(
                                                   '₦${amount.toStringAsFixed(0)}',
-                                                  style: GoogleFonts.plusJakartaSans(
+                                                  style: GoogleFonts.figtree(
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.w700,
                                                     color: const Color(0xFF00D2FF),
@@ -1164,7 +1164,7 @@ class _ExtraProviderServicesScreenState
                         children: [
                           Text(
                             'QUANTITY',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -1198,7 +1198,7 @@ class _ExtraProviderServicesScreenState
                                       child: Center(
                                         child: Text(
                                           '$q pin${q > 1 ? 's' : ''}',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 14,
                                             fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
                                             color: isSel ? const Color(0xFF00D2FF) : (isDark ? Colors.white : Colors.black87),
@@ -1232,7 +1232,7 @@ class _ExtraProviderServicesScreenState
                         children: [
                           Text(
                             'CANDIDATE PHONE NUMBER (OPTIONAL)',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -1244,10 +1244,10 @@ class _ExtraProviderServicesScreenState
                             controller: _candidatePhoneController,
                             keyboardType: TextInputType.phone,
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            style: GoogleFonts.plusJakartaSans(color: foreground),
+                            style: GoogleFonts.figtree(color: foreground),
                             decoration: InputDecoration(
                               hintText: '08012345678 (where candidate can receive PIN)',
-                              hintStyle: GoogleFonts.plusJakartaSans(color: isDark ? Colors.white38 : Colors.black38),
+                              hintStyle: GoogleFonts.figtree(color: isDark ? Colors.white38 : Colors.black38),
                               prefixIcon: const Icon(Icons.phone_iphone_rounded, color: Color(0xFF00D2FF)),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
@@ -1283,7 +1283,7 @@ class _ExtraProviderServicesScreenState
                             children: [
                               Text(
                                 'SUPPORTED NETWORKS (100% ROUTING)',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
@@ -1303,7 +1303,7 @@ class _ExtraProviderServicesScreenState
                                   const SizedBox(width: 5),
                                   Text(
                                     'Active Delivery',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: const Color(0xFF10B981),
@@ -1337,7 +1337,7 @@ class _ExtraProviderServicesScreenState
                                       const SizedBox(height: 4),
                                       Text(
                                         net['code'] as String,
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
                                           color: isDark ? Colors.white70 : const Color(0xFF334155),
@@ -1373,7 +1373,7 @@ class _ExtraProviderServicesScreenState
                             children: [
                               Text(
                                 'SENDER ID',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
@@ -1382,7 +1382,7 @@ class _ExtraProviderServicesScreenState
                               ),
                               Text(
                                 '${_senderController.text.length}/11 chars',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 11,
                                   color: isDark ? Colors.white38 : Colors.black38,
                                 ),
@@ -1393,12 +1393,12 @@ class _ExtraProviderServicesScreenState
                           TextField(
                             controller: _senderController,
                             maxLength: 11,
-                            style: GoogleFonts.plusJakartaSans(color: foreground),
+                            style: GoogleFonts.figtree(color: foreground),
                             onChanged: (_) => setState(() {}),
                             decoration: InputDecoration(
                               counterText: '',
                               hintText: 'e.g. MyStore, Notice, Avotek',
-                              hintStyle: GoogleFonts.plusJakartaSans(color: isDark ? Colors.white38 : Colors.black38),
+                              hintStyle: GoogleFonts.figtree(color: isDark ? Colors.white38 : Colors.black38),
                               prefixIcon: const Icon(Icons.badge_rounded, color: Color(0xFF00D2FF)),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
@@ -1434,7 +1434,7 @@ class _ExtraProviderServicesScreenState
                             children: [
                               Text(
                                 'RECIPIENTS',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
@@ -1449,7 +1449,7 @@ class _ExtraProviderServicesScreenState
                                 ),
                                 child: Text(
                                   '${_recipients().length} valid recipient(s)',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF00D2FF),
@@ -1463,11 +1463,11 @@ class _ExtraProviderServicesScreenState
                             controller: _recipientController,
                             minLines: 3,
                             maxLines: 6,
-                            style: GoogleFonts.plusJakartaSans(color: foreground),
+                            style: GoogleFonts.figtree(color: foreground),
                             onChanged: (_) => setState(() {}),
                             decoration: InputDecoration(
                               hintText: 'Enter Nigerian phone numbers separated by comma or new line\ne.g. 08012345678, 09087654321',
-                              hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: isDark ? Colors.white38 : Colors.black38),
+                              hintStyle: GoogleFonts.figtree(fontSize: 13, color: isDark ? Colors.white38 : Colors.black38),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
                               border: OutlineInputBorder(
@@ -1502,7 +1502,7 @@ class _ExtraProviderServicesScreenState
                             children: [
                               Text(
                                 'SMS CONTENT',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
@@ -1511,7 +1511,7 @@ class _ExtraProviderServicesScreenState
                               ),
                               Text(
                                 '${_messageController.text.length} chars • ${VtuApiService.estimateSmsPages(_messageController.text)} page(s)',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
                                   color: const Color(0xFF00D2FF),
@@ -1524,11 +1524,11 @@ class _ExtraProviderServicesScreenState
                             controller: _messageController,
                             minLines: 3,
                             maxLines: 6,
-                            style: GoogleFonts.plusJakartaSans(color: foreground),
+                            style: GoogleFonts.figtree(color: foreground),
                             onChanged: (_) => setState(() {}),
                             decoration: InputDecoration(
                               hintText: 'Type your broadcast SMS message here...',
-                              hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: isDark ? Colors.white38 : Colors.black38),
+                              hintStyle: GoogleFonts.figtree(fontSize: 13, color: isDark ? Colors.white38 : Colors.black38),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
                               border: OutlineInputBorder(
@@ -1550,7 +1550,7 @@ class _ExtraProviderServicesScreenState
                               Expanded(
                                 child: Text(
                                   'I confirm that recipients consented to receive this broadcast message.',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12.5,
                                     color: isDark ? Colors.white70 : const Color(0xFF475569),
                                   ),
@@ -1586,7 +1586,7 @@ class _ExtraProviderServicesScreenState
                           child: RichText(
                             text: TextSpan(
                               text: 'Pay For Me ',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: isDark ? Colors.white70 : const Color(0xFF334155),
@@ -1594,7 +1594,7 @@ class _ExtraProviderServicesScreenState
                               children: [
                                 TextSpan(
                                   text: '- get a shareable payment link',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12,
                                     fontWeight: FontWeight.normal,
                                     color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
@@ -1627,14 +1627,14 @@ class _ExtraProviderServicesScreenState
                           children: [
                             Text(
                               'Wallet Balance',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark ? Colors.white60 : const Color(0xFF64748B),
                               ),
                             ),
                             Text(
                               '₦${wallet.balance.toStringAsFixed(2)}',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: foreground,
@@ -1648,7 +1648,7 @@ class _ExtraProviderServicesScreenState
                           children: [
                             Text(
                               'Total Amount',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
                                 color: foreground,
@@ -1656,7 +1656,7 @@ class _ExtraProviderServicesScreenState
                             ),
                             Text(
                               price != null ? '₦${price.toStringAsFixed(2)}' : '--',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFF00D2FF),
@@ -1714,7 +1714,7 @@ class _ExtraProviderServicesScreenState
                                       : (_isAirtimePins
                                           ? 'Generate Airtime PIN (${_quantityController.text})'
                                           : 'Send Bulk SMS')),
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,

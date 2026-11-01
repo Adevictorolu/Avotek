@@ -213,7 +213,7 @@ class _PricingScreenState extends State<PricingScreen> {
           const SizedBox(height: 12),
           Text(
             'Every price, in the open',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 28,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.5,
@@ -576,7 +576,7 @@ class _PricingScreenState extends State<PricingScreen> {
               const SizedBox(height: 12),
               Text(
                 'Pay less as you sell more',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
@@ -722,7 +722,7 @@ class _PricingScreenState extends State<PricingScreen> {
             children: [
               Text(
                 price,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
                   color: isFeatured ? AppColors.primaryCyan : (isDark ? Colors.white : const Color(0xFF0F172A)),

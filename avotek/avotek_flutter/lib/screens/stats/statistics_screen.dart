@@ -68,7 +68,7 @@ class StatisticsScreen extends StatelessWidget {
             children: [
               Text(
                 'Statistics',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5,
@@ -78,7 +78,7 @@ class StatisticsScreen extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 'A summary of your recently loaded wallet transactions.',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 13,
                   color: isDark
                       ? const Color(0xFF94A3B8)
@@ -89,7 +89,7 @@ class StatisticsScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   wallet.errorMessage!,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     color: AppColors.error,
                     fontWeight: FontWeight.w600,
                   ),
@@ -150,7 +150,7 @@ class StatisticsScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   'Statistics use the latest transactions loaded for your wallet.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12,
                     color: isDark
                         ? const Color(0xFF94A3B8)
@@ -222,7 +222,7 @@ class _MetricCard extends StatelessWidget {
                   metric.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     color: isDark
@@ -235,7 +235,7 @@ class _MetricCard extends StatelessWidget {
                   metric.value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 19,
                     fontWeight: FontWeight.w900,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -268,7 +268,7 @@ class _EmptyStatistics extends StatelessWidget {
       ),
       child: Text(
         'Your transaction statistics will appear here after activity is recorded.',
-        style: GoogleFonts.plusJakartaSans(
+        style: GoogleFonts.figtree(
           color: isDark ? Colors.white70 : const Color(0xFF475569),
         ),
       ),

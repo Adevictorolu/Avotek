@@ -59,7 +59,7 @@ class ServiceBrandLogo extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           clean,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 11,
             fontWeight: FontWeight.w700,
           ),
@@ -93,7 +93,7 @@ class ServiceBrandLogo extends StatelessWidget {
           ),
           child: Text(
             'MTN',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               color: Colors.black,
               fontWeight: FontWeight.w900,
               fontSize: size * 0.32,
@@ -132,7 +132,7 @@ class ServiceBrandLogo extends StatelessWidget {
             ),
             Text(
               'airtel',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: size * 0.22,
@@ -173,7 +173,7 @@ class ServiceBrandLogo extends StatelessWidget {
           child: Center(
             child: Text(
               'glo',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: size * 0.36,
@@ -216,7 +216,7 @@ class ServiceBrandLogo extends StatelessWidget {
               child: Center(
                 child: Text(
                   '9',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     color: Colors.black,
                     fontWeight: FontWeight.w900,
                     fontSize: size * 0.28,
@@ -227,7 +227,7 @@ class ServiceBrandLogo extends StatelessWidget {
             SizedBox(width: size * 0.04),
             Text(
               '9mobile',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
                 fontSize: size * 0.17,
@@ -264,7 +264,7 @@ class ServiceBrandLogo extends StatelessWidget {
         errorBuilder: (ctx, err, stack) => Center(
           child: Text(
             'WAEC',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               color: const Color(0xFF0F9D58),
               fontWeight: FontWeight.w900,
               fontSize: size * 0.22,
@@ -299,7 +299,7 @@ class ServiceBrandLogo extends StatelessWidget {
         errorBuilder: (ctx, err, stack) => Center(
           child: Text(
             'NECO',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               color: const Color(0xFF0052FF),
               fontWeight: FontWeight.w900,
               fontSize: size * 0.22,
@@ -333,7 +333,7 @@ class ServiceBrandLogo extends StatelessWidget {
           Icon(Icons.menu_book_rounded, color: const Color(0xFF55C57A), size: size * 0.38),
           Text(
             'JAMB',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               color: Colors.white,
               fontWeight: FontWeight.w900,
               fontSize: size * 0.22,
@@ -369,7 +369,7 @@ class ServiceBrandLogo extends StatelessWidget {
         errorBuilder: (ctx, err, stack) => Center(
           child: Text(
             'NABTEB',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               color: const Color(0xFF8B0000),
               fontWeight: FontWeight.w900,
               fontSize: size * 0.18,
@@ -393,7 +393,7 @@ class ServiceBrandLogo extends StatelessWidget {
       child: Center(
         child: Text(
           'DStv',
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             color: const Color(0xFF00A3E0),
             fontWeight: FontWeight.w900,
             fontSize: size * 0.32,
@@ -417,7 +417,7 @@ class ServiceBrandLogo extends StatelessWidget {
       child: Center(
         child: Text(
           'GOtv',
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             color: const Color(0xFF70FF00),
             fontWeight: FontWeight.w900,
             fontSize: size * 0.32,
@@ -445,7 +445,7 @@ class ServiceBrandLogo extends StatelessWidget {
             Icon(Icons.star_rounded, color: const Color(0xFFFFAB00), size: size * 0.3),
             Text(
               'Star',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: size * 0.28,
@@ -473,7 +473,7 @@ class ServiceBrandLogo extends StatelessWidget {
           Icon(Icons.electric_bolt_rounded, color: const Color(0xFFF59E0B), size: size * 0.42),
           Text(
             name.contains('IKEDC') ? 'IKEDC' : (name.contains('EKEDC') ? 'EKEDC' : 'POWER'),
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               color: Colors.white,
               fontWeight: FontWeight.w900,
               fontSize: size * 0.18,
@@ -495,7 +495,7 @@ class ServiceBrandLogo extends StatelessWidget {
       child: Center(
         child: Text(
           label.isNotEmpty ? label.substring(0, 1) : 'A',
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             color: Colors.white,
             fontWeight: FontWeight.w900,
             fontSize: size * 0.4,

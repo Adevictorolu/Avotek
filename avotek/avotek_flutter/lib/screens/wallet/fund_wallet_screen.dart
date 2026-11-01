@@ -84,7 +84,6 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
       user.id,
       fullName: fullName.isNotEmpty ? fullName : null,
       phone: phone.isNotEmpty ? phone : null,
-      force: true,
     );
     if (!mounted) return;
 
@@ -98,7 +97,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
       TopNotification.showInfo(
         context,
         wallet.dedicatedAccountMessage ??
-            'Dedicated virtual accounts require Paystack merchant KYC. Use Instant Bank Transfer above to fund your wallet immediately.',
+            'Your personal bank account is not available yet. Check Fund Wallet for available options.',
         title: 'Dedicated Account Status',
       );
     }
@@ -177,7 +176,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
         title: Text(
           'Payment successful',
           textAlign: TextAlign.center,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 20,
             fontWeight: FontWeight.w800,
           ),
@@ -187,7 +186,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
           children: [
             Text(
               '₦${amountNaira.toStringAsFixed(2)}',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 28,
                 fontWeight: FontWeight.w900,
                 color: const Color(0xFF0052FF),
@@ -199,7 +198,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
             SelectableText(
               'Transaction reference\n$reference',
               textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 12,
                 height: 1.5,
                 color: const Color(0xFF64748B),
@@ -385,7 +384,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
               children: [
                 Text(
                   'Fund your wallet',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 26,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.5,
@@ -395,7 +394,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                 const SizedBox(height: 5),
                 Text(
                   'Instant credit via Bank Transfer or Card.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13.5,
                     color: isDark
                         ? const Color(0xFF94A3B8)
@@ -439,7 +438,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                               const SizedBox(width: 10),
                               Text(
                                 'Current Balance',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: isDark
@@ -451,7 +450,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           ),
                           Text(
                             '₦${wallet.balance.toStringAsFixed(2)}',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
                               color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -488,7 +487,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                               children: [
                                 Text(
                                   'Instant Wallet Funding',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
                                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -496,7 +495,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                 ),
                                 Text(
                                   'Bank Transfer, Card, or USSD',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 11.5,
                                     color: isDark
                                         ? const Color(0xFF94A3B8)
@@ -514,7 +513,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                             ),
                             child: Text(
                               '⚡ 100% INSTANT',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
                                 color: const Color(0xFF10B981),
@@ -526,7 +525,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'Select or enter amount to fund:',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
@@ -560,7 +559,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                               ),
                               child: Text(
                                 '₦${preset.toString()}',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   color: isSelected
@@ -588,22 +587,22 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           FilteringTextInputFormatter.digitsOnly,
                           LengthLimitingTextInputFormatter(7),
                         ],
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
                         decoration: InputDecoration(
                           labelText: 'Amount (NGN)',
-                          labelStyle: GoogleFonts.plusJakartaSans(
+                          labelStyle: GoogleFonts.figtree(
                             color: isDark ? Colors.white70 : const Color(0xFF475569),
                           ),
                           hintText: 'Enter custom amount e.g. 1000',
-                          hintStyle: GoogleFonts.plusJakartaSans(
+                          hintStyle: GoogleFonts.figtree(
                             color: isDark ? Colors.white38 : Colors.black38,
                           ),
                           prefixText: '₦ ',
-                          prefixStyle: GoogleFonts.plusJakartaSans(
+                          prefixStyle: GoogleFonts.figtree(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: isDark ? AppColors.electricCyan : const Color(0xFF0038B8),
@@ -612,7 +611,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           helperText: 'Minimum ₦100; maximum ₦1,000,000 • 100% Instant Credit',
-                          helperStyle: GoogleFonts.plusJakartaSans(
+                          helperStyle: GoogleFonts.figtree(
                             fontSize: 11,
                             color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                           ),
@@ -658,7 +657,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                 : _authorizationUri != null
                                 ? 'Paystack Checkout Ready'
                                 : 'Transfer via Bank Account',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontWeight: FontWeight.w800,
                               fontSize: 14,
                             ),
@@ -688,7 +687,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           icon: const Icon(Icons.credit_card_rounded, size: 18),
                           label: Text(
                             'Pay with Debit Card or USSD',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontWeight: FontWeight.w700,
                               fontSize: 13.5,
                             ),
@@ -719,7 +718,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                             children: [
                               Text(
                                 'Paystack Checkout Session Active',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 13,
                                   color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -728,7 +727,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 'A checkout page has been created. Click the button below to complete payment via Bank Transfer, Card or USSD. Once done, return here and tap "Verify Payment".',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 12,
                                   height: 1.45,
                                   color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
@@ -783,7 +782,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         Text(
                           _verificationMessage ??
                               'Payment confirmation pending.',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12.5,
                             height: 1.5,
                             color: isDark
@@ -862,7 +861,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                   children: [
                     Text(
                       'Dedicated Virtual Account',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -872,7 +871,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                       hasDedicated
                           ? 'Automated 24/7 instant funding account'
                           : 'Permanent dedicated Nigerian bank account',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 11.5,
                         color: isDark
                             ? const Color(0xFF94A3B8)
@@ -891,7 +890,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                   ),
                   child: Text(
                     '● ACTIVE',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFF10B981),
@@ -927,7 +926,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         children: [
                           Text(
                             'Account Number',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 11.5,
                               color: isDark
                                   ? const Color(0xFF94A3B8)
@@ -937,7 +936,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           const SizedBox(height: 3),
                           Text(
                             summary.virtualAccountNumber!,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.2,
@@ -973,7 +972,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
           ] else ...[
             Text(
               'A dedicated virtual account provides a personal Nigerian bank account number permanently assigned to your Avotek wallet. Any money sent to this account from any banking app credits your wallet automatically.',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 12.5,
                 height: 1.5,
                 color: isDark
@@ -1002,7 +1001,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                     wallet.isProvisioningDedicatedAccount
                         ? 'Checking Paystack...'
                         : 'Check / Request Dedicated Account',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
@@ -1025,7 +1024,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
               const SizedBox(height: 10),
               Text(
                 wallet.dedicatedAccountMessage!,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 11.5,
                   color: isDark
                       ? const Color(0xFFCBD5E1)
@@ -1045,14 +1044,14 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 12,
             color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
           ),
         ),
         Text(
           value,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: isDark ? Colors.white : const Color(0xFF0F172A),

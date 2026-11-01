@@ -33,115 +33,136 @@ class AppColors {
 }
 
 class AppTheme {
-  static TextTheme _buildPlusJakartaSansTextTheme(Brightness brightness) {
+  static TextTheme _buildFigtreeTextTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
     final primaryTextColor = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
     final secondaryTextColor = isDark ? AppColors.metallicLight : AppColors.slateGrey;
     final base = isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme;
-    final baseFontTheme = GoogleFonts.plusJakartaSansTextTheme(base);
+    final baseFontTheme = GoogleFonts.figtreeTextTheme(base);
 
-    return baseFontTheme.apply(fontFamily: 'Plus Jakarta Sans').copyWith(
-      displayLarge: GoogleFonts.plusJakartaSans(
+    final textTheme = baseFontTheme.copyWith(
+      displayLarge: GoogleFonts.figtree(
         fontSize: 34,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.8,
         color: primaryTextColor,
       ),
-      displayMedium: GoogleFonts.plusJakartaSans(
+      displayMedium: GoogleFonts.figtree(
         fontSize: 26,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.6,
         color: primaryTextColor,
       ),
-      displaySmall: GoogleFonts.plusJakartaSans(
+      displaySmall: GoogleFonts.figtree(
         fontSize: 22,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.5,
         color: primaryTextColor,
       ),
-      headlineLarge: GoogleFonts.plusJakartaSans(
+      headlineLarge: GoogleFonts.figtree(
         fontSize: 24,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.4,
         color: primaryTextColor,
       ),
-      headlineMedium: GoogleFonts.plusJakartaSans(
+      headlineMedium: GoogleFonts.figtree(
         fontSize: 20,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.3,
         color: primaryTextColor,
       ),
-      headlineSmall: GoogleFonts.plusJakartaSans(
+      headlineSmall: GoogleFonts.figtree(
         fontSize: 18,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.2,
         color: primaryTextColor,
       ),
-      titleLarge: GoogleFonts.plusJakartaSans(
+      titleLarge: GoogleFonts.figtree(
         fontSize: 18,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.1,
         color: primaryTextColor,
       ),
-      titleMedium: GoogleFonts.plusJakartaSans(
+      titleMedium: GoogleFonts.figtree(
         fontSize: 16,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.1,
         color: primaryTextColor,
       ),
-      titleSmall: GoogleFonts.plusJakartaSans(
+      titleSmall: GoogleFonts.figtree(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.0,
         color: secondaryTextColor,
       ),
-      bodyLarge: GoogleFonts.plusJakartaSans(
+      bodyLarge: GoogleFonts.figtree(
         fontSize: 15,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
         color: primaryTextColor,
       ),
-      bodyMedium: GoogleFonts.plusJakartaSans(
+      bodyMedium: GoogleFonts.figtree(
         fontSize: 14,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.1,
         color: secondaryTextColor,
       ),
-      bodySmall: GoogleFonts.plusJakartaSans(
+      bodySmall: GoogleFonts.figtree(
         fontSize: 12,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.1,
         color: secondaryTextColor,
       ),
-      labelLarge: GoogleFonts.plusJakartaSans(
+      labelLarge: GoogleFonts.figtree(
         fontSize: 14,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.2,
         color: primaryTextColor,
       ),
-      labelMedium: GoogleFonts.plusJakartaSans(
+      labelMedium: GoogleFonts.figtree(
         fontSize: 12,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
         color: secondaryTextColor,
       ),
-      labelSmall: GoogleFonts.plusJakartaSans(
+      labelSmall: GoogleFonts.figtree(
         fontSize: 11,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.2,
         color: secondaryTextColor,
       ),
     );
+    final spacedTextTheme = textTheme.apply(
+      fontFamily: 'Figtree',
+      letterSpacingDelta: 0.1,
+    );
+    return spacedTextTheme.copyWith(
+      displayLarge: spacedTextTheme.displayLarge?.copyWith(wordSpacing: 0.2),
+      displayMedium: spacedTextTheme.displayMedium?.copyWith(wordSpacing: 0.2),
+      displaySmall: spacedTextTheme.displaySmall?.copyWith(wordSpacing: 0.2),
+      headlineLarge: spacedTextTheme.headlineLarge?.copyWith(wordSpacing: 0.2),
+      headlineMedium: spacedTextTheme.headlineMedium?.copyWith(wordSpacing: 0.2),
+      headlineSmall: spacedTextTheme.headlineSmall?.copyWith(wordSpacing: 0.2),
+      titleLarge: spacedTextTheme.titleLarge?.copyWith(wordSpacing: 0.2),
+      titleMedium: spacedTextTheme.titleMedium?.copyWith(wordSpacing: 0.2),
+      titleSmall: spacedTextTheme.titleSmall?.copyWith(wordSpacing: 0.2),
+      bodyLarge: spacedTextTheme.bodyLarge?.copyWith(wordSpacing: 0.2),
+      bodyMedium: spacedTextTheme.bodyMedium?.copyWith(wordSpacing: 0.2),
+      bodySmall: spacedTextTheme.bodySmall?.copyWith(wordSpacing: 0.2),
+      labelLarge: spacedTextTheme.labelLarge?.copyWith(wordSpacing: 0.2),
+      labelMedium: spacedTextTheme.labelMedium?.copyWith(wordSpacing: 0.2),
+      labelSmall: spacedTextTheme.labelSmall?.copyWith(wordSpacing: 0.2),
+    );
   }
 
   static ThemeData light() {
-    final textTheme = _buildPlusJakartaSansTextTheme(Brightness.light);
+    final textTheme = _buildFigtreeTextTheme(Brightness.light);
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      fontFamily: 'Plus Jakarta Sans',
-      fontFamilyFallback: [GoogleFonts.plusJakartaSans().fontFamily ?? 'Plus Jakarta Sans', 'Public Sans', 'sans-serif'],
+      fontFamily: 'Figtree',
+      fontFamilyFallback: [GoogleFonts.figtree().fontFamily ?? 'Figtree', 'Public Sans', 'sans-serif'],
       textTheme: textTheme,
       primaryTextTheme: textTheme,
       pageTransitionsTheme: const PageTransitionsTheme(
@@ -175,7 +196,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.plusJakartaSans(
+        titleTextStyle: GoogleFonts.figtree(
           color: const Color(0xFF0F172A),
           fontSize: 16,
           fontWeight: FontWeight.w700,
@@ -197,7 +218,7 @@ class AppTheme {
         indicatorColor: AppColors.primaryBlue.withValues(alpha: 0.12),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
-          return GoogleFonts.plusJakartaSans(
+          return GoogleFonts.figtree(
             fontSize: 11,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             color: isSelected ? AppColors.primaryBlue : AppColors.slateGrey,
@@ -227,17 +248,17 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
         ),
-        hintStyle: GoogleFonts.plusJakartaSans(
+        hintStyle: GoogleFonts.figtree(
           color: const Color(0xFF94A3B8),
           fontSize: 13,
           fontWeight: FontWeight.w500,
         ),
-        labelStyle: GoogleFonts.plusJakartaSans(
+        labelStyle: GoogleFonts.figtree(
           color: const Color(0xFF475569),
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
-        floatingLabelStyle: GoogleFonts.plusJakartaSans(
+        floatingLabelStyle: GoogleFonts.figtree(
           color: AppColors.primaryBlue,
           fontSize: 14,
           fontWeight: FontWeight.w600,
@@ -252,7 +273,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
+          textStyle: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w700),
         ),
       ),
       dialogTheme: DialogThemeData(
@@ -262,12 +283,12 @@ class AppTheme {
           borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: AppColors.lightBorder, width: 1),
         ),
-        titleTextStyle: GoogleFonts.plusJakartaSans(
+        titleTextStyle: GoogleFonts.figtree(
           fontSize: 18,
           fontWeight: FontWeight.w800,
           color: const Color(0xFF0F172A),
         ),
-        contentTextStyle: GoogleFonts.plusJakartaSans(
+        contentTextStyle: GoogleFonts.figtree(
           fontSize: 13.5,
           color: const Color(0xFF334155),
         ),
@@ -276,13 +297,13 @@ class AppTheme {
   }
 
   static ThemeData dark() {
-    final textTheme = _buildPlusJakartaSansTextTheme(Brightness.dark);
+    final textTheme = _buildFigtreeTextTheme(Brightness.dark);
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      fontFamily: 'Plus Jakarta Sans',
-      fontFamilyFallback: [GoogleFonts.plusJakartaSans().fontFamily ?? 'Plus Jakarta Sans', 'Public Sans', 'sans-serif'],
+      fontFamily: 'Figtree',
+      fontFamilyFallback: [GoogleFonts.figtree().fontFamily ?? 'Figtree', 'Public Sans', 'sans-serif'],
       textTheme: textTheme,
       primaryTextTheme: textTheme,
       pageTransitionsTheme: const PageTransitionsTheme(
@@ -316,7 +337,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.plusJakartaSans(
+        titleTextStyle: GoogleFonts.figtree(
           color: const Color(0xFFF8FAFC),
           fontSize: 16,
           fontWeight: FontWeight.w700,
@@ -338,7 +359,7 @@ class AppTheme {
         indicatorColor: AppColors.primaryCyan.withValues(alpha: 0.15),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
-          return GoogleFonts.plusJakartaSans(
+          return GoogleFonts.figtree(
             fontSize: 11,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             color: isSelected ? AppColors.primaryCyan : AppColors.metallicLight,
@@ -368,17 +389,17 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.primaryCyan, width: 1.5),
         ),
-        hintStyle: GoogleFonts.plusJakartaSans(
+        hintStyle: GoogleFonts.figtree(
           color: const Color(0xFF64748B),
           fontSize: 13,
           fontWeight: FontWeight.w500,
         ),
-        labelStyle: GoogleFonts.plusJakartaSans(
+        labelStyle: GoogleFonts.figtree(
           color: const Color(0xFF94A3B8),
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
-        floatingLabelStyle: GoogleFonts.plusJakartaSans(
+        floatingLabelStyle: GoogleFonts.figtree(
           color: AppColors.primaryCyan,
           fontSize: 14,
           fontWeight: FontWeight.w600,
@@ -393,7 +414,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700),
+          textStyle: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w700),
         ),
       ),
       dialogTheme: DialogThemeData(
@@ -403,12 +424,12 @@ class AppTheme {
           borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: AppColors.darkBorder, width: 1),
         ),
-        titleTextStyle: GoogleFonts.plusJakartaSans(
+        titleTextStyle: GoogleFonts.figtree(
           fontSize: 18,
           fontWeight: FontWeight.w800,
           color: Colors.white,
         ),
-        contentTextStyle: GoogleFonts.plusJakartaSans(
+        contentTextStyle: GoogleFonts.figtree(
           fontSize: 13.5,
           color: const Color(0xFFCBD5E1),
         ),

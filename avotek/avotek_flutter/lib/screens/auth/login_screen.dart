@@ -120,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: isDark ? const Color(0xFF111827) : Colors.white,
           title: Text(
             'Reset your password',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               color: isDark ? Colors.white : const Color(0xFF0F172A),
               fontWeight: FontWeight.w800,
             ),
@@ -130,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => sendResetLink(),
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
             decoration: InputDecoration(
@@ -282,7 +282,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 18),
                 Text(
                   'Welcome to Avotek!',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
@@ -292,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Your permanent system identification number is:',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12.5,
                     color: const Color(0xFF94A3B8),
                   ),
@@ -313,7 +313,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Text(
                     avotekId,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 2,
@@ -325,7 +325,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'You can use this Avotek ID ($avotekId), your username, or your email to sign in anytime.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12,
                     color: Colors.white70,
                     height: 1.4,
@@ -348,7 +348,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     child: Text(
                       'Enter Dashboard',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
@@ -424,7 +424,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 'Verification Email Sent',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -434,7 +434,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 'We sent a secure activation link to:',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 13,
                   color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                 ),
@@ -448,7 +448,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: Text(
                   userEmail,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primaryBlue,
@@ -477,7 +477,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Expanded(
                       child: Text(
                         'Open your email, click the activation link, and sign in. Check your spam/junk folder if not received in a moment.',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 12,
                           height: 1.45,
                           color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF1E40AF),
@@ -508,7 +508,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                   child: Text(
                     'Proceed to Sign In',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                     ),
@@ -649,7 +649,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Hero Headline
         RichText(
           text: TextSpan(
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 48,
               fontWeight: FontWeight.w900,
               height: 1.15,
@@ -674,7 +674,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Subtitle
         Text(
           'Airtime, high-speed SME & corporate data bundles, electricity prepaid tokens, cable TV, and corporate CAC registration across Nigeria.',
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 15,
             height: 1.5,
             fontWeight: FontWeight.w500,
@@ -722,7 +722,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Text(
                             'Instant SME Data',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -730,7 +730,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           Text(
                             '1GB at ₦245 • 30 Days',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: AppColors.primaryCyan,
@@ -838,7 +838,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 4),
                   Text(
                     '₦248,500',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 9,
                       fontWeight: FontWeight.w900,
                       color: AppColors.primaryCyan,
@@ -889,7 +889,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Text(
           'Leveraging technology in one smart app.',
           textAlign: TextAlign.center,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 20,
             fontWeight: FontWeight.w800,
             color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -925,7 +925,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // Main Header
           Text(
             _isSignUp ? 'Create your account' : 'Sign in to Avotek',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 26,
               fontWeight: FontWeight.w900,
               letterSpacing: -0.5,
@@ -937,7 +937,7 @@ class _LoginScreenState extends State<LoginScreen> {
             _isSignUp
                 ? 'Join thousands saving on data and utility recharge daily.'
                 : 'Welcome back — enter your Avotek ID, username, or email.',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 13,
               fontWeight: FontWeight.w500,
               color: isDark ? const Color(0xFF94A3B8) : AppColors.slateGrey,
@@ -1090,7 +1090,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(width: 8),
                       Text(
                         'Remember me',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: isDark
@@ -1105,7 +1105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onTap: _showForgotPasswordDialog,
                   child: Text(
                     'Forgot password?',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: AppColors.primaryCyan,
@@ -1144,7 +1144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     )
                   : Text(
                       _isSignUp ? 'Create Account' : 'Sign In',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.2,
@@ -1164,7 +1164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Text(
                   'or continue with',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF64748B),
@@ -1186,7 +1186,7 @@ class _LoginScreenState extends State<LoginScreen> {
               icon: _buildGoogleIcon(size: 20),
               label: Text(
                 'Continue with Google',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: Colors.black,
@@ -1212,7 +1212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 _isSignUp
                     ? 'Already have an account? '
                     : "Don't have an account? ",
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF94A3B8),
@@ -1222,7 +1222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 onTap: () => setState(() => _isSignUp = !_isSignUp),
                 child: Text(
                   _isSignUp ? 'Sign in' : 'Create one',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: AppColors.primaryCyan,
@@ -1268,14 +1268,14 @@ class _LoginScreenState extends State<LoginScreen> {
         keyboardType: keyboardType,
         textInputAction: textInputAction,
         onSubmitted: onSubmitted,
-        style: GoogleFonts.plusJakartaSans(
+        style: GoogleFonts.figtree(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: isDark ? Colors.white : const Color(0xFF0F172A),
         ),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.plusJakartaSans(
+          hintStyle: GoogleFonts.figtree(
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: isDark ? const Color(0xFFB6C2D2) : const Color(0xFF64748B),

@@ -77,12 +77,11 @@ class WalletProvider extends ChangeNotifier {
     dynamic userId, {
     String? fullName,
     String? phone,
-    bool force = false,
   }) async {
     final uid = userId?.toString() ?? '';
     if (uid.isEmpty) return null;
 
-    if (!force && _walletSummary?.hasDedicatedAccount == true) {
+    if (_walletSummary?.hasDedicatedAccount == true) {
       return PaystackDedicatedAccountResult(
         status: 'assigned',
         accountNumber: _walletSummary!.virtualAccountNumber,
@@ -102,7 +101,6 @@ class WalletProvider extends ChangeNotifier {
           .requestDedicatedAccount(
             fullName: fullName,
             phone: phone,
-            forceNew: force,
           );
       if (result.isAssigned) {
         _dedicatedAccountNeedsProfile = false;
@@ -118,7 +116,6 @@ class WalletProvider extends ChangeNotifier {
           totalFunded: _walletSummary?.totalFunded ?? 0.0,
           totalSpent: _walletSummary?.totalSpent ?? 0.0,
         );
-        await fetchWallet(uid);
       } else {
         _dedicatedAccountNeedsProfile = false;
         _dedicatedAccountUnavailable = result.status == 'unavailable';

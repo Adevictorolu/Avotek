@@ -123,14 +123,14 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
               child: TextField(
                 controller: _searchCtrl,
                 autofocus: true,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
                 ),
                 decoration: InputDecoration(
                   hintText: 'Search data, airtime, electricity, cable TV, CAC registration...',
-                  hintStyle: GoogleFonts.plusJakartaSans(
+                  hintStyle: GoogleFonts.figtree(
                     fontSize: 13,
                     color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                   ),
@@ -174,7 +174,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
                     child: Text(
                       _query.isEmpty ? 'QUICK SERVICES' : 'MATCHING SERVICES',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
@@ -188,7 +188,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
                       child: Center(
                         child: Text(
                           'No services found matching "$_query"',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 13,
                             color: Colors.grey,
                           ),
@@ -210,7 +210,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
                         ),
                         title: Text(
                           s['title'] as String,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                             color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -218,7 +218,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
                         ),
                         subtitle: Text(
                           s['desc'] as String,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12,
                             color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                           ),

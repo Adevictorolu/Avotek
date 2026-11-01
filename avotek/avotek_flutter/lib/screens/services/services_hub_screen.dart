@@ -30,7 +30,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
       SnackBar(
         content: Text(
           '$serviceName is not enabled yet.',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+          style: GoogleFonts.figtree(fontWeight: FontWeight.w600),
         ),
         backgroundColor: AppColors.primaryBlue,
         behavior: SnackBarBehavior.floating,
@@ -44,7 +44,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
         content: Text(
           '$serviceName is disabled until Bigisub request and response details '
           'are verified.',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+          style: GoogleFonts.figtree(fontWeight: FontWeight.w600),
         ),
         backgroundColor: AppColors.primaryBlue,
         behavior: SnackBarBehavior.floating,
@@ -78,43 +78,54 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                 children: [
                   Text(
                     'Services',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
+                    style: GoogleFonts.figtree(
+                      fontSize: isDesktop ? 28 : 26,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.4,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: () =>
-                        setState(() => _isHubbleView = !_isHubbleView),
-                    icon: Icon(
-                      _isHubbleView
-                          ? Icons.grid_view_rounded
-                          : Icons.view_list_rounded,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                    label: Text(
-                      _isHubbleView ? 'List view' : 'Grid view',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
+                  if (isDesktop)
+                    ElevatedButton.icon(
+                      onPressed: () =>
+                          setState(() => _isHubbleView = !_isHubbleView),
+                      icon: Icon(
+                        _isHubbleView
+                            ? Icons.grid_view_rounded
+                            : Icons.view_list_rounded,
+                        size: 17,
+                      ),
+                      label: Text(_isHubbleView ? 'List view' : 'Grid view'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    )
+                  else
+                    IconButton.filledTonal(
+                      tooltip: _isHubbleView ? 'Switch to list view' : 'Switch to grid view',
+                      onPressed: () =>
+                          setState(() => _isHubbleView = !_isHubbleView),
+                      icon: Icon(
+                        _isHubbleView
+                            ? Icons.view_list_rounded
+                            : Icons.grid_view_rounded,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue.withValues(
+                          alpha: isDark ? 0.22 : 0.1,
+                        ),
+                        foregroundColor: AppColors.primaryBlue,
                       ),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -134,13 +145,13 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                   controller: _searchController,
                   onChanged: (val) =>
                       setState(() => _searchQuery = val.trim().toLowerCase()),
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 14,
                     color: isDark ? Colors.white : Colors.black87,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Search services...',
-                    hintStyle: GoogleFonts.plusJakartaSans(
+                    hintStyle: GoogleFonts.figtree(
                       color: isDark
                           ? AppColors.metallicLight
                           : AppColors.slateGrey,
@@ -191,7 +202,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                   ),
                   _ServiceCardData(
                     title: 'Bulk SMS',
-                    icon: Icons.chat_bubble_outline_rounded,
+                    icon: Icons.chat_bubble_rounded,
                     onTap: () => context.push('/services/bulk-sms'),
                   ),
                   _ServiceCardData(
@@ -295,7 +306,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.0,
@@ -314,7 +325,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
               ),
               child: Text(
                 '${filtered.length}',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: isDark
@@ -337,8 +348,8 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
             mainAxisSpacing: 14,
             crossAxisSpacing: 14,
             childAspectRatio: !_isHubbleView
-                ? (isDesktop ? 5.5 : 3.2)
-                : (isDesktop ? 1.7 : 1.35),
+                ? (isDesktop ? 5.5 : 3.1)
+                : (isDesktop ? 1.7 : 1.0),
           ),
           itemBuilder: (context, idx) {
             final item = filtered[idx];
@@ -363,10 +374,10 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
       onTap: item.onTap,
       borderRadius: BorderRadius.circular(18),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(compact ? 14 : 12),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF131722) : Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(
             color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
             width: 1.2,
@@ -387,7 +398,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                   Expanded(
                     child: Text(
                       item.title,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -409,12 +420,12 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                   Text(
                     item.title,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
@@ -434,7 +445,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                       ),
                       child: Text(
                         'Popular',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 9.5,
                           fontWeight: FontWeight.w800,
                           color: AppColors.electricCyan,
@@ -453,16 +464,14 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
 
   Widget _serviceIcon(_ServiceCardData item, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2638) : const Color(0xFFEFF6FF),
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: AppColors.electricCyan.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        color: isDark
+            ? AppColors.primaryBlue.withValues(alpha: 0.22)
+            : AppColors.primaryBlue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Icon(item.icon, color: AppColors.electricCyan, size: 22),
+      child: Icon(item.icon, color: AppColors.primaryBlue, size: 24),
     );
   }
 
@@ -475,7 +484,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
       ),
       child: Text(
         'COMING SOON',
-        style: GoogleFonts.plusJakartaSans(
+        style: GoogleFonts.figtree(
           fontSize: 9,
           fontWeight: FontWeight.w800,
           color: isDark ? AppColors.metallicLight : AppColors.slateGrey,

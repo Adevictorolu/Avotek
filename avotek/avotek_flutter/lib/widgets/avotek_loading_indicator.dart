@@ -90,7 +90,7 @@ class _AvotekLoadingIndicatorState extends State<AvotekLoadingIndicator>
           const SizedBox(height: 18),
           Text(
             widget.message!,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: Theme.of(context).brightness == Brightness.dark

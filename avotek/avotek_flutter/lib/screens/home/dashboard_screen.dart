@@ -58,11 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           setState(() => _loadError = wallet.errorMessage);
         }
         if (mounted && !wallet.hasDedicatedAccount) {
-          wallet.ensureDedicatedAccount(auth.user!.id).then((result) {
-            if (mounted && result != null && result.isAssigned) {
-              auth.refreshWallet();
-            }
-          });
+          wallet.ensureDedicatedAccount(auth.user!.id);
         }
       }
     } catch (_) {
@@ -94,7 +90,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 8),
             Text(
               'Upgrade to VIP Agent',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontWeight: FontWeight.w800,
                 fontSize: 18,
               ),
@@ -103,14 +99,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         content: Text(
           'Upgrade to VIP Agent tier to get higher commissions, discounted data bundles, and zero funding fees.',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13),
+          style: GoogleFonts.figtree(fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Maybe Later',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+              style: GoogleFonts.figtree(fontWeight: FontWeight.w600),
             ),
           ),
           ElevatedButton(
@@ -129,7 +125,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
             child: Text(
               'Upgrade Now',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+              style: GoogleFonts.figtree(fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -175,7 +171,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'Could not load account details',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                   ),
@@ -184,7 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   _loadError!,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13,
                     color: AppColors.slateGrey,
                   ),
@@ -246,7 +242,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Text(
                           timeGreeting,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: isDark
@@ -257,7 +253,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(height: 2),
                         Text(
                           userName,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: isDesktop ? 26 : 22,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.5,
@@ -301,7 +297,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 const SizedBox(width: 5),
                                 Text(
                                   'Upgrade',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
                                     color: isDark
@@ -347,7 +343,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   const SizedBox(width: 5),
                                   Text(
                                     'Admin',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.primaryBlue,
@@ -385,7 +381,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 const SizedBox(width: 5),
                                 Text(
                                   'Regular',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w600,
                                     color: isDark
@@ -460,7 +456,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           label: Text(
                             'Fund Wallet',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -504,7 +500,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           label: Text(
                             'History',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               color: isDark
@@ -545,7 +541,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(width: 6),
                         Text(
                           'Quick Actions',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: isDark
@@ -561,7 +557,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           Text(
                             'All Services',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w700,
                               color: isDark
@@ -616,13 +612,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ? auth.user!.name
               : (auth.user?.email.split('@').first ?? 'MEMBER'));
     final cardHolder = holderName.toUpperCase();
-    final avoId = auth.user?.avoId.isNotEmpty == true
-        ? auth.user!.avoId
-        : 'AVO-${auth.user?.id.substring(0, 8).toUpperCase() ?? '2026'}';
-    final spacedAvoId = avoId.length >= 8
-        ? '${avoId.substring(0, 3)}  ${avoId.substring(3, 7)}  ${avoId.substring(7)}'
-        : avoId;
-
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isDesktop ? 26 : 20),
@@ -687,7 +676,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Text(
                         'avotek',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
@@ -720,7 +709,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     child: Text(
                       'AVOTEK WALLET',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
@@ -746,7 +735,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(width: 6),
                   Text(
                     'AVAILABLE BALANCE',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
@@ -760,7 +749,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Text(
                     _obscureBalance ? '₦ • • • • • •' : '₦$formattedBalance',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: isDesktop ? 38 : 30,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
@@ -816,85 +805,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.white70,
                   ),
                   const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.bolt_rounded, size: 14, color: AppColors.electricCyan),
-                        const SizedBox(width: 4),
-                        Text(
-                          'PAYSTACK INSTANT',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: 0.6,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 12),
 
-              // Large Spaced Avotek ID & Copy
+              // Show the Paystack-assigned account instead of an internal ID.
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    spacedAvoId,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: isDesktop ? 22 : 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2.2,
-                      color: Colors.white,
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: avoId));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Avotek ID copied to clipboard!'),
-                          backgroundColor: AppColors.success,
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.copy_rounded,
-                            size: 13,
-                            color: Colors.white,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'PERSONAL BANK ACCOUNT',
+                          style: GoogleFonts.figtree(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.7,
+                            color: Colors.white70,
                           ),
-                          const SizedBox(width: 4),
+                        ),
+                        const SizedBox(height: 4),
+                        if (wallet.hasDedicatedAccount) ...[
                           Text(
-                            'Copy ID',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
+                            wallet.walletSummary!.virtualAccountNumber!,
+                            style: GoogleFonts.figtree(
+                              fontSize: isDesktop ? 21 : 18,
                               fontWeight: FontWeight.w800,
+                              letterSpacing: 1.1,
                               color: Colors.white,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${wallet.walletSummary!.virtualAccountBank} · ${wallet.walletSummary!.virtualAccountName ?? cardHolder}',
+                            style: GoogleFonts.figtree(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white70,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ] else
+                          Text(
+                            wallet.isProvisioningDedicatedAccount
+                                ? 'Preparing your account…'
+                                : (wallet.dedicatedAccountMessage ??
+                                      'Use Fund Wallet to set up your account.'),
+                            style: GoogleFonts.figtree(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
                     ),
                   ),
+                  if (wallet.hasDedicatedAccount)
+                    IconButton(
+                      tooltip: 'Copy account number',
+                      onPressed: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text: wallet.walletSummary!.virtualAccountNumber!,
+                          ),
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Account number copied.'),
+                            backgroundColor: AppColors.success,
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.copy_rounded,
+                        size: 17,
+                        color: Colors.white,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.15),
+                        minimumSize: const Size(38, 38),
+                      ),
+                    )
                 ],
               ),
               const SizedBox(height: 12),
@@ -908,7 +906,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Expanded(
                     child: Text(
                       cardHolder,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.0,
@@ -948,7 +946,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(width: 4),
                           Text(
                             'Fund Wallet',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -1065,7 +1063,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 9.5,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.4,
@@ -1079,7 +1077,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1171,7 +1169,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 10),
                     Text(
                       item['title'] as String,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1200,7 +1198,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Text(
               'Recent Activity',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
                 color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1210,7 +1208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onPressed: () => context.push('/transactions'),
               child: Text(
                 'View All',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
                   color: AppColors.electricCyan,
@@ -1245,7 +1243,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(height: 10),
                         Text(
                           'No recent transactions found',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: isDark
@@ -1300,7 +1298,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             children: [
                               Text(
                                 tx.category.toUpperCase(),
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w700,
                                   color: isDark
@@ -1312,7 +1310,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 DateFormat(
                                   'dd MMM yyyy • hh:mm a',
                                 ).format(tx.createdAt),
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 11,
                                   color: isDark
                                       ? AppColors.metallicLight
@@ -1324,7 +1322,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         Text(
                           '${isCredit ? '+' : '-'}₦${tx.amount.toStringAsFixed(2)}',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w800,
                             color: isCredit

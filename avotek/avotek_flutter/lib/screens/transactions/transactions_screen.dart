@@ -196,7 +196,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 children: [
                   Text(
                     'Transactions Summary',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
                       letterSpacing: -0.5,
@@ -285,7 +285,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             const SizedBox(width: 6),
                             Text(
                               'Audit',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
@@ -326,13 +326,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         controller: _searchController,
                         onChanged: (val) =>
                             setState(() => _searchQuery = val.trim()),
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 13.5,
                           color: isDark ? Colors.white : Colors.black87,
                         ),
                         decoration: InputDecoration(
                           hintText: 'Search transactions...',
-                          hintStyle: GoogleFonts.plusJakartaSans(
+                          hintStyle: GoogleFonts.figtree(
                             color: isDark
                                 ? AppColors.metallicLight
                                 : AppColors.slateGrey,
@@ -407,7 +407,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             const SizedBox(height: 20),
                             Text(
                               'No transactions found',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 color: isDark
@@ -418,7 +418,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             const SizedBox(height: 6),
                             Text(
                               "You haven't made any transactions yet",
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark
                                     ? AppColors.metallicLight
@@ -431,7 +431,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                               icon: const Icon(Icons.explore_rounded, size: 16),
                               label: Text(
                                 'Explore Services',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -509,7 +509,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                       children: [
                                         Text(
                                           tx.displayTitle,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w700,
                                             color: isDark
@@ -522,7 +522,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                         const SizedBox(height: 2),
                                         Text(
                                           DateFormat('dd MMM yyyy • hh:mm a').format(tx.createdAt),
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 11.5,
                                             color: isDark
                                                 ? AppColors.metallicLight
@@ -562,7 +562,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                     children: [
                                       Text(
                                         '${isCredit ? '+' : '-'}₦${tx.amount.toStringAsFixed(2)}',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w900,
                                           color: isCredit
@@ -599,7 +599,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                         ),
                                         child: Text(
                                           tx.status.toUpperCase(),
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 9.5,
                                             fontWeight: FontWeight.w800,
                                             color:
@@ -657,7 +657,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ),
         child: Text(
           label,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: isActive
@@ -681,7 +681,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             const SizedBox(width: 8),
             Text(
               'Transaction Receipt',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontWeight: FontWeight.w800,
                 fontSize: 17,
               ),
@@ -721,7 +721,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             icon: const Icon(Icons.copy_rounded, size: 16),
             label: Text(
               'Copy Ref',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
             ),
           ),
           TextButton.icon(
@@ -732,7 +732,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             icon: const Icon(Icons.picture_as_pdf_rounded, size: 16),
             label: Text(
               'Save PDF',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
             ),
           ),
           ElevatedButton(
@@ -743,7 +743,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Done',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+              style: GoogleFonts.figtree(fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -927,14 +927,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         children: [
           Text(
             label,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 12,
               color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
             ),
           ),
           Text(
             value,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
               color: isDark ? Colors.white : Colors.black87,

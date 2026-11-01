@@ -322,7 +322,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                           const SizedBox(width: 4),
                           Text(
                             'Back',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: isDark ? Colors.white70 : Colors.black87,
@@ -337,7 +337,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                   // Header
                   Text(
                     'Buy Airtime',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -346,7 +346,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                   const SizedBox(height: 4),
                   Text(
                     'Quick and secure airtime purchase',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 14,
                       color: isDark ? Colors.white60 : const Color(0xFF64748B),
                     ),
@@ -403,7 +403,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                   const SizedBox(width: 8),
                                   Text(
                                     'Buy Now',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 0
@@ -454,7 +454,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                   const SizedBox(width: 8),
                                   Text(
                                     'Gift Voucher',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 1
@@ -475,7 +475,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                     const SizedBox(height: 10),
                     Text(
                       'This creates a shareable gift link. The recipient redeems it themselves.',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12,
                         color: const Color(0xFF00D2FF),
                         fontWeight: FontWeight.w500,
@@ -500,7 +500,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                       children: [
                         Text(
                           'SELECT NETWORK PROVIDER',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
@@ -563,7 +563,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                               const SizedBox(height: 6),
                                               Text(
                                                 net['label']!,
-                                                style: GoogleFonts.plusJakartaSans(
+                                                style: GoogleFonts.figtree(
                                                   fontSize: 11,
                                                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                                                   color: isSelected
@@ -618,7 +618,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                         children: [
                           Text(
                             'PHONE NUMBER',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -630,13 +630,13 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: InputDecoration(
                               hintText: 'e.g. 08012345678',
-                              hintStyle: GoogleFonts.plusJakartaSans(
+                              hintStyle: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
@@ -668,7 +668,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                   child: RichText(
                                     text: TextSpan(
                                       text: 'Pay For Me ',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                         color: isDark ? Colors.white70 : const Color(0xFF334155),
@@ -676,7 +676,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                       children: [
                                         TextSpan(
                                           text: '- get a shareable payment link',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 12,
                                             fontWeight: FontWeight.normal,
                                             color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
@@ -708,7 +708,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                         children: [
                           Text(
                             'RECIPIENT PHONE (OPTIONAL)',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -720,13 +720,13 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: InputDecoration(
                               hintText: 'e.g. 08012345678',
-                              hintStyle: GoogleFonts.plusJakartaSans(
+                              hintStyle: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
@@ -742,7 +742,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                           const SizedBox(height: 12),
                           Text(
                             'GIFT MESSAGE (OPTIONAL)',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -755,13 +755,13 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                             maxLength: 200,
                             maxLines: 2,
                             onChanged: (_) => setState(() {}),
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: InputDecoration(
                               hintText: 'Happy birthday! Enjoy your airtime...',
-                              hintStyle: GoogleFonts.plusJakartaSans(
+                              hintStyle: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
@@ -796,7 +796,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                       children: [
                         Text(
                           'ENTER OR SELECT AMOUNT',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
@@ -808,14 +808,14 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                           controller: _amountController,
                           keyboardType: TextInputType.number,
                           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: isDark ? Colors.white : Colors.black87,
                           ),
                           decoration: InputDecoration(
                             hintText: 'Enter amount e.g. 500',
-                            hintStyle: GoogleFonts.plusJakartaSans(
+                            hintStyle: GoogleFonts.figtree(
                               fontSize: 13,
                               color: isDark ? Colors.white38 : Colors.black38,
                             ),
@@ -823,7 +823,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                               padding: const EdgeInsets.only(left: 14, right: 6),
                               child: Text(
                                 '₦',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
                                   color: const Color(0xFF0038B8),
@@ -864,7 +864,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                 ),
                                 child: Text(
                                   '₦${q.toInt()}',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12,
                                     fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
                                     color: isSel
@@ -915,7 +915,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                 children: [
                                   Text(
                                     'AIRTIME AMOUNT',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.8,
@@ -927,7 +927,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                     _amount >= 50 && _cashbackPercent > 0
                                         ? 'Save ₦${_cashbackAmount.toStringAsFixed(2)} (${_cashbackPercent.toStringAsFixed(1)}% Cashback)'
                                         : 'Select or enter amount below',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
                                       color: _amount >= 50 && _cashbackPercent > 0
@@ -949,7 +949,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                               ),
                               child: Text(
                                 _amount > 0 ? '₦${_amount.toStringAsFixed(0)}' : '₦0',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
                                   color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
@@ -1020,7 +1020,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                                 : (_amount >= 50
                                                     ? 'Buy Airtime Now • ₦${_netCharge.toStringAsFixed(0)}'
                                                     : 'Buy Airtime Now')),
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 14.5,
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: 0.3,
@@ -1041,7 +1041,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                               Expanded(
                                 child: Text(
                                   validationErrors.first,
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: const Color(0xFFF59E0B),

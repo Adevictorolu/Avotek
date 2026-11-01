@@ -105,7 +105,7 @@ class AvotekLogo extends StatelessWidget {
                 TextSpan(
                   text: 'AVO',
                   style: TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
+                    fontFamily: 'Figtree',
                     fontSize: size * 0.52,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.2,
@@ -115,7 +115,7 @@ class AvotekLogo extends StatelessWidget {
                 TextSpan(
                   text: 'TEK',
                   style: TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
+                    fontFamily: 'Figtree',
                     fontSize: size * 0.52,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.2,

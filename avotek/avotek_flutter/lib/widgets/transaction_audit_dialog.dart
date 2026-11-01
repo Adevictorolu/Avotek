@@ -202,7 +202,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                             const SizedBox(width: 10),
                             Text(
                               'Transaction Audit',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 color: isDark
@@ -300,7 +300,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                       child: Center(
                                         child: Text(
                                           f,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 12,
                                             fontWeight: isSelected
                                                 ? FontWeight.w800
@@ -351,7 +351,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                 const SizedBox(width: 8),
                                 Text(
                                   _dateRangeText,
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
                                     color: isDark
@@ -367,7 +367,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                           // --- 3. OVERVIEW SECTION ---
                           Text(
                             'Overview',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               color: isDark
@@ -422,7 +422,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                           // --- 4. FINANCIAL SUMMARY (Avotek Blue Gradient - NO ORANGE) ---
                           Text(
                             'Financial Summary',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               color: isDark
@@ -461,7 +461,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                     children: [
                                       Text(
                                         'Total Spent',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                           color: Colors.white70,
@@ -470,7 +470,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                       const SizedBox(height: 6),
                                       Text(
                                         '₦${NumberFormat('#,##0.00').format(totalSpent)}',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 22,
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: -0.5,
@@ -510,7 +510,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                     children: [
                                       Text(
                                         'Average Transaction',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                           color: Colors.white70,
@@ -519,7 +519,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                       const SizedBox(height: 6),
                                       Text(
                                         '₦${NumberFormat('#,##0.00').format(averageTx)}',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 22,
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: -0.5,
@@ -537,7 +537,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                           // --- 5. MOST USED SERVICE ---
                           Text(
                             'Most Used Service',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               color: isDark
@@ -568,7 +568,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                   children: [
                                     Text(
                                       topService,
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w800,
                                         color: isDark
@@ -578,7 +578,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                     ),
                                     Text(
                                       '$topServiceCount txns • ₦${NumberFormat('#,##0.00').format(topServiceAmount)}',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w700,
                                         color: isDark
@@ -611,7 +611,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                           // --- 6. RECENT ACTIVITY ---
                           Text(
                             'Recent Activity',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               color: isDark
@@ -649,7 +649,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                       children: [
                                         Text(
                                           item.dayName,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
                                             color: isDark
@@ -660,7 +660,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                         const SizedBox(height: 2),
                                         Text(
                                           item.dateStr,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 11,
                                             color: isDark
                                                 ? const Color(0xFF94A3B8)
@@ -675,7 +675,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                       children: [
                                         Text(
                                           '${item.count} transactions',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
                                             color: isDark
@@ -686,7 +686,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                         const SizedBox(height: 2),
                                         Text(
                                           '₦${NumberFormat('#,##0.00').format(item.spent)}',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 12.5,
                                             fontWeight: FontWeight.w800,
                                             color: item.spent > 0
@@ -739,7 +739,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
@@ -751,7 +751,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
             const SizedBox(height: 6),
             Text(
               value,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
                 color: valueColor,

@@ -94,7 +94,7 @@ class TransactionTile extends StatelessWidget {
                     transaction.displayTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -103,7 +103,7 @@ class TransactionTile extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     formattedDate,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 11,
                       color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                     ),
@@ -116,7 +116,7 @@ class TransactionTile extends StatelessWidget {
               children: [
                 Text(
                   '${isCredit ? '+' : '-'}₦${transaction.amount.toStringAsFixed(2)}',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: isCredit ? AppColors.success : (isDark ? Colors.white : const Color(0xFF0F172A)),

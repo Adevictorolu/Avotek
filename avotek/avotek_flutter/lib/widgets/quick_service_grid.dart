@@ -154,7 +154,7 @@ class QuickServiceGrid extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
+                    fontFamily: 'Figtree',
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -167,7 +167,7 @@ class QuickServiceGrid extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: 'Plus Jakarta Sans',
+                    fontFamily: 'Figtree',
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: isDark ? AppColors.metallicLight : AppColors.slateGrey,

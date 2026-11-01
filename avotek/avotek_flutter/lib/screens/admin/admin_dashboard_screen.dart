@@ -171,7 +171,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             'Adjust User Wallet',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18),
+            style: GoogleFonts.figtree(fontWeight: FontWeight.w800, fontSize: 18),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -179,7 +179,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Text(
                 'Target: $userEmail',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 12,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                 ),
@@ -187,7 +187,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               const SizedBox(height: 4),
               Text(
                 'Current Balance: ₦${currentBalance.toStringAsFixed(2)}',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: AppColors.electricCyan,
@@ -322,7 +322,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'Super Admin Access Restricted',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                   ),
@@ -331,7 +331,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Text(
                   'Only authorized system administrators (ademolavictor869@gmail.com) have permission to view the Avotek management console.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13,
                     color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                   ),
@@ -401,7 +401,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   // Developer & Server Direct Controls
                   Text(
                     'Platform Infrastructure & Logs',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -437,7 +437,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 Text(
                   'Super Admin Oversight',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
                   ),
@@ -452,7 +452,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   child: Text(
                     'SUPER ADMIN',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w900,
                       color: AppColors.electricCyan,
@@ -464,7 +464,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 4),
             Text(
               email,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 13,
                 color: isDark ? Colors.white70 : AppColors.slateGrey,
               ),
@@ -531,7 +531,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 Text(
                   'Super Administrator Mode Active',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -540,7 +540,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'As Super Admin, your account is configured for platform oversight, user management, KYC approvals, and provider float maintenance. To preserve ledger integrity, VTU consumer purchases are restricted on this administrative account.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12.5,
                     height: 1.45,
                     color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -635,7 +635,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.8,
@@ -648,7 +648,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           const SizedBox(height: 8),
           Text(
             value,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 20,
               fontWeight: FontWeight.w900,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -697,7 +697,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   children: [
                     Text(
                       'BigiSub Provider Float Balance',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -713,7 +713,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                         child: Text(
                           'LOW FLOAT',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w800,
                             color: AppColors.warning,
@@ -727,7 +727,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   bal >= 0
                       ? 'Live available API balance: ₦${bal.toStringAsFixed(2)}'
                       : 'Checking provider API float...',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                     color: isLow ? AppColors.warning : AppColors.electricCyan,
@@ -777,7 +777,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 children: [
                   Text(
                     'User Management & KYC Oversight',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -786,7 +786,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 2),
                   Text(
                     'Manage users, verify KYC credentials, and oversee wallet balances.',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 12.5,
                       color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                     ),
@@ -811,10 +811,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     width: 220,
                     child: TextField(
                       onChanged: (val) => setState(() => _userSearchQuery = val),
-                      style: GoogleFonts.plusJakartaSans(fontSize: 12),
+                      style: GoogleFonts.figtree(fontSize: 12),
                       decoration: InputDecoration(
                         hintText: 'Search users...',
-                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey),
+                        hintStyle: GoogleFonts.figtree(fontSize: 12, color: Colors.grey),
                         prefixIcon: const Icon(Icons.search_rounded, size: 16),
                         contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -833,7 +833,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Center(
                 child: Text(
                   _userSearchQuery.isEmpty ? 'No users loaded yet.' : 'No users match your query.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13,
                     color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                   ),
@@ -870,7 +870,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.15),
                       child: Text(
                         name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontWeight: FontWeight.w800,
                           color: AppColors.primaryBlue,
                         ),
@@ -884,7 +884,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         children: [
                           Text(
                             name,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
                               color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -892,7 +892,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ),
                           Text(
                             email,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 11.5,
                               color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                             ),
@@ -904,7 +904,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       flex: 2,
                       child: Text(
                         phone,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 12,
                           color: isDark ? Colors.white70 : const Color(0xFF334155),
                         ),
@@ -914,7 +914,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       flex: 2,
                       child: Text(
                         '₦${walletBal.toStringAsFixed(2)}',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
                           color: AppColors.electricCyan,
@@ -946,7 +946,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             const SizedBox(width: 4),
                             Text(
                               isVerified ? 'KYC Verified' : 'Unverified',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 color: isVerified ? AppColors.success : AppColors.warning,
@@ -989,7 +989,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Provision New User',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18),
+          style: GoogleFonts.figtree(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1075,11 +1075,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Suspend / Remove User',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18),
+          style: GoogleFonts.figtree(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         content: Text(
           'Are you sure you want to suspend or remove user $userEmail?\n\nTheir login credentials and wallet access will be immediately revoked.',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13),
+          style: GoogleFonts.figtree(fontSize: 13),
         ),
         actions: [
           TextButton(
@@ -1169,7 +1169,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   children: [
                     Text(
                       'Co-Administrator Management',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1178,7 +1178,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     const SizedBox(height: 2),
                     Text(
                       'Super admin (ademolavictor869@gmail.com) can authorize other email addresses to access this admin oversight console.',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12.5,
                         color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                       ),
@@ -1194,12 +1194,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(
                 child: TextField(
                   controller: _newCoAdminController,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 13),
+                  style: GoogleFonts.figtree(fontSize: 13),
                   decoration: InputDecoration(
                     labelText: 'Add Co-Admin Email Address',
-                    labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13),
+                    labelStyle: GoogleFonts.figtree(fontSize: 13),
                     hintText: 'admin@avotek.com',
-                    hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey),
+                    hintStyle: GoogleFonts.figtree(fontSize: 13, color: Colors.grey),
                     prefixIcon: const Icon(Icons.email_outlined, size: 18),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -1238,7 +1238,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           if (_coAdmins.isEmpty)
             Text(
               'No additional co-administrators added. Only root Super Admin has console access.',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 12.5,
                 color: isDark ? Colors.white54 : AppColors.slateGrey,
               ),
@@ -1250,7 +1250,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: _coAdmins.map((admin) {
                 return Chip(
                   avatar: const Icon(Icons.security_rounded, size: 16, color: AppColors.primaryBlue),
-                  label: Text(admin, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600)),
+                  label: Text(admin, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600)),
                   deleteIcon: const Icon(Icons.close_rounded, size: 14),
                   onDeleted: () {
                     setState(() => _coAdmins.remove(admin));
@@ -1328,7 +1328,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   children: [
                     Text(
                       'Service Pricing, Cashback & Profit Margins Control',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
                         color: foreground,
@@ -1337,7 +1337,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     const SizedBox(height: 2),
                     Text(
                       'Manage customer-facing prices, airtime cashback discounts, data profit margins, and utility service fees in real-time.',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12.5,
                         color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                       ),
@@ -1352,7 +1352,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           // Section 1: Telecom & Data Pricing
           Text(
             'TELECOM & AIRTIME / DATA MARGINS',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 12,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
@@ -1407,7 +1407,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Text(
                 'Quick Data Presets: ',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: isDark ? Colors.white60 : Colors.black54,
@@ -1417,7 +1417,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 spacing: 6,
                 children: ['3.0', '5.0', '8.0', '10.0'].map((p) {
                   return ActionChip(
-                    label: Text('+$p%', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700)),
+                    label: Text('+$p%', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w700)),
                     onPressed: () => setState(() => _dataMarginController.text = p),
                   );
                 }).toList(),
@@ -1429,7 +1429,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           // Section 2: Bills & Cable Fees
           Text(
             'BILLS & CABLE TV CONVENIENCE FEES',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 12,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
@@ -1471,7 +1471,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           // Section 3: Examination PINs
           Text(
             'EXAMINATION RESULT CHECKER PIN PRICES',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 12,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
@@ -1531,7 +1531,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 : const Icon(Icons.save_rounded, size: 18),
             label: Text(
               _isSavingPricing ? 'Saving Changes...' : 'Save All Pricing & Margins Overrides',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
+              style: GoogleFonts.figtree(fontWeight: FontWeight.w800, fontSize: 14),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0052FF),
@@ -1612,7 +1612,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   children: [
                     Text(
                       'Mobile App (APK) Release Management',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1621,7 +1621,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     const SizedBox(height: 2),
                     Text(
                       'Set the Android APK download link and version string distributed to users from the sidebar and download modal.',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12.5,
                         color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                       ),
@@ -1634,12 +1634,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           const SizedBox(height: 20),
           TextField(
             controller: _apkUrlController,
-            style: GoogleFonts.plusJakartaSans(fontSize: 13),
+            style: GoogleFonts.figtree(fontSize: 13),
             decoration: InputDecoration(
               labelText: 'Direct APK Download URL / Release Link',
-              labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13),
+              labelStyle: GoogleFonts.figtree(fontSize: 13),
               hintText: 'https://...',
-              hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey),
+              hintStyle: GoogleFonts.figtree(fontSize: 13, color: Colors.grey),
               prefixIcon: const Icon(Icons.link_rounded, size: 18),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -1649,12 +1649,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           const SizedBox(height: 14),
           TextField(
             controller: _apkVersionController,
-            style: GoogleFonts.plusJakartaSans(fontSize: 13),
+            style: GoogleFonts.figtree(fontSize: 13),
             decoration: InputDecoration(
               labelText: 'Release Version',
-              labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13),
+              labelStyle: GoogleFonts.figtree(fontSize: 13),
               hintText: 'v1.2.0',
-              hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.grey),
+              hintStyle: GoogleFonts.figtree(fontSize: 13, color: Colors.grey),
               prefixIcon: const Icon(Icons.tag_rounded, size: 18),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -1678,7 +1678,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     : const Icon(Icons.save_rounded, size: 18),
                 label: Text(
                   _isSavingApkSettings ? 'Saving...' : 'Save APK Release Settings',
-                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+                  style: GoogleFonts.figtree(fontWeight: FontWeight.w800),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10B981),
@@ -1703,7 +1703,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 icon: const Icon(Icons.open_in_new_rounded, size: 16),
                 label: Text(
                   'Test Download Link',
-                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                  style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
@@ -1823,7 +1823,7 @@ class _AdminToolCard extends StatelessWidget {
                 tool.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1834,7 +1834,7 @@ class _AdminToolCard extends StatelessWidget {
                   tool.description,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 11.5,
                     height: 1.35,
                     color: isDark ? Colors.white70 : AppColors.slateGrey,

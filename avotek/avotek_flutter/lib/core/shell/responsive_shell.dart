@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../responsive/responsive_layout.dart';
-import '../supabase/supabase_service.dart';
 import '../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
@@ -64,172 +63,6 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
         context.go('/profile');
         break;
     }
-  }
-
-  Future<void> _showDownloadApkModal() async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    String apkUrl = 'https://github.com/adevictorolu/Avotek/releases/latest/download/avotek.apk';
-    String version = 'v1.2.0';
-
-    try {
-      final fetchedUrl = await SupabaseService.instance.getAppSetting('apk_download_url');
-      if (fetchedUrl != null && fetchedUrl.trim().isNotEmpty) {
-        apkUrl = fetchedUrl.trim();
-      }
-      final fetchedVer = await SupabaseService.instance.getAppSetting('apk_version');
-      if (fetchedVer != null && fetchedVer.trim().isNotEmpty) {
-        version = fetchedVer.trim();
-      }
-    } catch (_) {}
-
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF141722) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: BorderSide(
-            color: isDark ? const Color(0xFF1E2638) : const Color(0xFFE2E8F0),
-            width: 1.5,
-          ),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.android_rounded,
-                color: Color(0xFF10B981),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Download Mobile App',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                    ),
-                  ),
-                  Text(
-                    'Android APK Package ($version)',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 11.5,
-                      color: const Color(0xFF10B981),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Get the official Avotek Android app directly on your mobile device for lightning-fast recharge, biometric login, and instant push receipts.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  height: 1.5,
-                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1E293B)
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.verified_rounded,
-                      color: Color(0xFF10B981),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Direct APK build verified for Android 8.0+',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Close',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-            ),
-          ),
-          OutlinedButton.icon(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: apkUrl));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('APK download link copied to clipboard!'),
-                  backgroundColor: Color(0xFF10B981),
-                ),
-              );
-            },
-            icon: const Icon(Icons.copy_rounded, size: 16),
-            label: Text(
-              'Copy Link',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-            ),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final uri = Uri.parse(apkUrl);
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            },
-            icon: const Icon(Icons.download_rounded, size: 18),
-            label: Text(
-              'Download APK',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -318,34 +151,63 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
         child: const Icon(Icons.support_agent_rounded),
       ),
       bottomNavigationBar: !isDesktop
-          ? NavigationBar(
-              selectedIndex: _getSelectedIndex(),
-              onDestinationSelected: _onBottomNavTapped,
-              backgroundColor: isDark
-                  ? AppColors.darkCard
-                  : AppColors.lightCard,
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: 'Home',
+          ? SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                    borderRadius: BorderRadius.circular(26),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.28 : 0.08,
+                        ),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(26),
+                    child: NavigationBar(
+                      height: 66,
+                      selectedIndex: _getSelectedIndex(),
+                      onDestinationSelected: _onBottomNavTapped,
+                      labelBehavior:
+                          NavigationDestinationLabelBehavior.onlyShowSelected,
+                      backgroundColor: Colors.transparent,
+                      indicatorColor: isDark
+                          ? AppColors.primaryBlue.withValues(alpha: 0.24)
+                          : AppColors.primaryBlue.withValues(alpha: 0.12),
+                      destinations: const [
+                        NavigationDestination(
+                          icon: Icon(Icons.home_rounded),
+                          label: 'Home',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.grid_view_rounded),
+                          label: 'Services',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.add_card_rounded),
+                          label: 'Fund Wallet',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.person_rounded),
+                          label: 'Profile',
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.grid_view_outlined),
-                  selectedIcon: Icon(Icons.grid_view_rounded),
-                  label: 'Services',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.add_card_outlined),
-                  selectedIcon: Icon(Icons.add_card_rounded),
-                  label: 'Fund Wallet',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline_rounded),
-                  selectedIcon: Icon(Icons.person_rounded),
-                  label: 'Profile',
-                ),
-              ],
+              ),
             )
           : null,
     );
@@ -432,7 +294,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                 children: [
                   Text(
                     'Avotek Help & FAQs',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
                     ),
@@ -457,7 +319,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                         const SizedBox(width: 6),
                         Text(
                           '24/7 Active',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF25D366),
@@ -471,7 +333,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
               const SizedBox(height: 6),
               Text(
                 'Frequently asked questions & instant live assistance',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 13,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                 ),
@@ -489,7 +351,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                       childrenPadding: const EdgeInsets.only(bottom: 12),
                       title: Text(
                         faq.$1,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w700,
                         ),
@@ -499,7 +361,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             faq.$2,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12.5,
                               height: 1.45,
                               color: isDark
@@ -536,7 +398,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   icon: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 20),
                   label: Text(
                     'Chat on WhatsApp Support (+234 816 700 2789)',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
@@ -605,86 +467,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
             ),
           ),
 
-          // 2. Promotional Card: "Download Mobile App - Install Android APK ↗"
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            child: InkWell(
-              onTap: _showDownloadApkModal,
-              borderRadius: BorderRadius.circular(14),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkCardVariant
-                      : AppColors.lightCardVariant,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkBorder
-                        : AppColors.lightBorder,
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.android_rounded,
-                        color: Color(0xFF10B981),
-                        size: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Download Mobile App',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF0F172A),
-                            ),
-                          ),
-                          Text(
-                            'Install Android APK',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: isDark
-                                  ? AppColors.metallicLight
-                                  : AppColors.slateGrey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.arrow_outward_rounded,
-                      size: 14,
-                      color: isDark
-                          ? AppColors.metallicLight
-                          : AppColors.slateGrey,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // 3. Scrollable Navigation List (MENU, BUSINESS, ACCOUNT)
+          // 2. Scrollable Navigation List (MENU, BUSINESS, ACCOUNT)
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -831,7 +614,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                           backgroundColor: AppColors.primaryBlue,
                           child: Text(
                             userInitials,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -845,7 +628,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                             children: [
                               Text(
                                 userName,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w800,
                                   color: isDark
@@ -857,7 +640,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                               ),
                               Text(
                                 'Regular',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 10.5,
                                   color: isDark
                                       ? AppColors.metallicLight
@@ -901,7 +684,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                               const SizedBox(width: 6),
                               Text(
                                 'Logout',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.grey,
@@ -934,7 +717,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                             const SizedBox(width: 4),
                             Text(
                               isDark ? 'Light' : 'Dark',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
                                 color: isDark
@@ -961,7 +744,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       child: Text(
         label,
-        style: GoogleFonts.plusJakartaSans(
+        style: GoogleFonts.figtree(
           fontSize: 10,
           fontWeight: FontWeight.w800,
           letterSpacing: 1.1,
@@ -1012,7 +795,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
               const SizedBox(width: 12),
               Text(
                 label,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 13,
                   fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
                   color: isActive

@@ -145,13 +145,12 @@ function getDedicatedAccount(value: unknown): {
 
   if (
     !accountNumber ||
-    !/^[0-9]{10,20}$/.test(accountNumber)
+    !/^[0-9]{10,20}$/.test(accountNumber) ||
+    !bankName.trim() ||
+    !accountName
   ) {
     return null;
   }
-
-  if (!bankName) bankName = "Titan Trust Bank (Paystack)";
-  if (!accountName) accountName = "Avotek Customer / Paystack Checkout";
 
   return {
     accountNumber,
@@ -423,7 +422,8 @@ async function ensureCustomerCodeForUser(
   const parts = cleanName.split(/\s+/).filter(Boolean);
   const firstName = parts[0] || "Avotek";
   const lastName = parts.length > 1 ? parts.slice(1).join(" ") : "Customer";
-  const phone = normalizeNigerianPhone(phoneRaw) ?? "+2348000000000";
+  const phone = normalizeNigerianPhone(phoneRaw);
+  if (!phone) return null;
 
   let customerCode = existingCode && /^CUS_[A-Za-z0-9]+$/.test(existingCode)
     ? existingCode
@@ -452,7 +452,7 @@ async function ensureCustomerCodeForUser(
   }
 
   if (customerCode) {
-    await paystackApiRequest(
+    const updatedCustomer = await paystackApiRequest(
       secretKey,
       `/customer/${encodeURIComponent(customerCode)}`,
       "PUT",
@@ -462,15 +462,35 @@ async function ensureCustomerCodeForUser(
         phone,
         metadata: { avotek_user_id: userId },
       },
-    ).catch(() => null);
+    );
+    if (!updatedCustomer.ok) {
+      console.error("Could not update Paystack customer details.");
+      return null;
+    }
 
-    await admin.rpc("save_paystack_customer_code", {
+    const { error: saveCustomerCodeError } = await admin.rpc("save_paystack_customer_code", {
       p_user_id: userId,
       p_customer_code: customerCode,
     });
+    if (saveCustomerCodeError) {
+      console.error("Could not save Paystack customer code:", saveCustomerCodeError.message);
+      return null;
+    }
   }
 
   return customerCode;
+}
+
+async function releaseDedicatedAccountRequest(
+  admin: Awaited<ReturnType<typeof createPaystackClient>>,
+  userId: string,
+): Promise<void> {
+  const { error } = await admin.rpc("fail_paystack_dedicated_wallet_account", {
+    p_user_id: userId,
+  });
+  if (error) {
+    console.error("Could not release the Paystack dedicated account request:", error.message);
+  }
 }
 
 async function rotateDefaultTransferAccountIfNeeded(
@@ -692,7 +712,7 @@ async function handleWebhook(
     "credit_paystack_dedicated_wallet_funding",
     {
       p_user_id: targetUserId,
-      p_customer_code: customerCode ?? "",
+      p_customer_code: customerCode,
       p_reference: reference,
       p_amount: net.netNaira,
       p_narration: net.narration,
@@ -867,42 +887,34 @@ async function handleDedicatedAccount(
     return jsonResponse({ message: "Paystack wallet funding is not configured." }, 503);
   }
 
-  const { data: profile } = await admin
+  const { data: profile, error: profileError } = await admin
     .from("profiles")
     .select("email, full_name, phone")
     .eq("id", user.id)
     .maybeSingle();
+  if (profileError) {
+    console.error("Could not load the user's profile for Paystack account assignment:", profileError.message);
+    return jsonResponse({ message: "Could not load your profile. Please try again." }, 503);
+  }
 
   const suppliedFullName = typeof body.full_name === "string" ? body.full_name.trim() : "";
   const suppliedPhone = typeof body.phone === "string" ? body.phone.trim() : "";
   const effectiveFullName = suppliedFullName || String(profile?.full_name ?? "").trim();
   const effectivePhoneRaw = suppliedPhone || String(profile?.phone ?? "").trim();
+  const normalizedPhone = normalizeNigerianPhone(effectivePhoneRaw);
   const email = String(profile?.email ?? user.email).trim().toLowerCase();
 
-  if (
-    profile &&
-    ((suppliedFullName && suppliedFullName !== String(profile.full_name ?? "").trim()) ||
-      (suppliedPhone && suppliedPhone !== String(profile.phone ?? "").trim()))
-  ) {
-    await admin
-      .from("profiles")
-      .update({
-        ...(suppliedFullName ? { full_name: suppliedFullName } : {}),
-        ...(suppliedPhone ? { phone: suppliedPhone } : {}),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", user.id);
-  }
-
-  const { data: existingWallet } = await admin
+  const { data: existingWallet, error: walletError } = await admin
     .from("wallets")
     .select(
       "virtual_account_number, virtual_account_bank, virtual_account_name, paystack_customer_code, paystack_dva_status, paystack_dva_requested_at",
     )
     .eq("user_id", user.id)
     .maybeSingle();
-
-  const forceNew = body.force_new === true;
+  if (walletError || !existingWallet) {
+    console.error("Could not load the user's wallet for Paystack account assignment:", walletError?.message ?? "Wallet not found.");
+    return jsonResponse({ message: "Could not load your wallet. Please try again." }, 503);
+  }
 
   // 1. If the wallet already has a permanent non-Paystack-Titan account, return it immediately.
   if (
@@ -911,6 +923,10 @@ async function handleDedicatedAccount(
     existingWallet.virtual_account_bank &&
     existingWallet.virtual_account_bank !== "Paystack-Titan"
   ) {
+    if (!existingWallet.virtual_account_name) {
+      console.error("Paystack dedicated account has no provider-supplied account name.");
+      return jsonResponse({ message: "Your bank account details are incomplete. Please contact support." }, 503);
+    }
     return jsonResponse({
       status: "assigned",
       account_number: existingWallet.virtual_account_number,
@@ -919,152 +935,208 @@ async function handleDedicatedAccount(
     });
   }
 
-  // 2. If the wallet has an active Paystack-Titan account assigned within the last 6 hours, reuse it
+  // Paystack-assigned accounts are persistent; reuse the existing account.
   if (
-    !forceNew &&
     existingWallet?.paystack_dva_status === "assigned" &&
     existingWallet.virtual_account_number &&
     existingWallet.virtual_account_bank === "Paystack-Titan"
   ) {
-    const requestedAtMs = existingWallet.paystack_dva_requested_at
-      ? Date.parse(String(existingWallet.paystack_dva_requested_at))
-      : 0;
-    const isFresh = Number.isFinite(requestedAtMs) &&
-      requestedAtMs > 0 &&
-      (Date.now() - requestedAtMs) < 6 * 3600 * 1000;
+    if (!existingWallet.virtual_account_name) {
+      console.error("Paystack dedicated account has no provider-supplied account name.");
+      return jsonResponse({ message: "Your bank account details are incomplete. Please contact support." }, 503);
+    }
+    return jsonResponse({
+      status: "assigned",
+      account_number: existingWallet.virtual_account_number,
+      bank_name: existingWallet.virtual_account_bank,
+      account_name: existingWallet.virtual_account_name,
+    });
+  }
 
-    if (isFresh) {
-      const expectedName = formatPersonalizedAccountName(
-        effectiveFullName,
-        email,
-        existingWallet.virtual_account_name ?? "PAYSTACK CHECKOUT",
-      );
-      if (existingWallet.virtual_account_name !== expectedName) {
-        await admin.rpc("save_paystack_dedicated_wallet_account", {
-          p_user_id: user.id,
-          p_customer_code: String(existingWallet.paystack_customer_code ?? ""),
-          p_account_number: existingWallet.virtual_account_number,
-          p_bank_name: existingWallet.virtual_account_bank,
-          p_account_name: expectedName,
-        });
-      }
-      return jsonResponse({
-        status: "assigned",
-        account_number: existingWallet.virtual_account_number,
-        bank_name: existingWallet.virtual_account_bank,
-        account_name: expectedName,
-      });
+  if (
+    !effectiveFullName ||
+    effectiveFullName.toLowerCase() === "avotek user" ||
+    !normalizedPhone
+  ) {
+    return jsonResponse({
+      message: "Add your full name and a valid Nigerian phone number to your profile before setting up your bank account.",
+      needs_profile_details: true,
+    }, 400);
+  }
+
+  if (
+    profile &&
+    ((suppliedFullName && suppliedFullName !== String(profile.full_name ?? "").trim()) ||
+      (suppliedPhone && suppliedPhone !== String(profile.phone ?? "").trim()))
+  ) {
+    const { error: profileUpdateError } = await admin
+      .from("profiles")
+      .update({
+        ...(suppliedFullName ? { full_name: suppliedFullName } : {}),
+        ...(suppliedPhone ? { phone: suppliedPhone } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+    if (profileUpdateError) {
+      console.error("Could not save profile details for Paystack account assignment:", profileUpdateError.message);
+      return jsonResponse({ message: "Could not save your profile details. Please try again." }, 503);
     }
   }
 
-  // 3. Ensure Paystack customer code exists and is linked to this wallet
-  const customerCode = await ensureCustomerCodeForUser(
-    admin,
-    config.paystackSecretKey,
-    user.id,
-    email,
-    effectiveFullName,
-    effectivePhoneRaw,
-    existingWallet?.paystack_customer_code
-      ? String(existingWallet.paystack_customer_code)
-      : null,
+  const { data: claim, error: claimError } = await admin.rpc(
+    "claim_paystack_dedicated_wallet_account",
+    { p_user_id: user.id },
   );
+  if (claimError || !isRecord(claim) || typeof claim.status !== "string") {
+    console.error("Could not claim the user's Paystack account request:", claimError?.message ?? "Invalid claim response.");
+    return jsonResponse({ message: "Could not prepare your bank account. Please try again." }, 503);
+  }
+  if (claim.status === "assigned") {
+    const account = getDedicatedAccount({
+      account_number: claim.account_number,
+      bank_name: claim.bank_name,
+      account_name: claim.account_name,
+    });
+    if (!account) {
+      console.error("Paystack account claim returned incomplete account details.");
+      return jsonResponse({ message: "Your bank account details are incomplete. Please contact support." }, 503);
+    }
+    return jsonResponse({
+      status: "assigned",
+      account_number: account.accountNumber,
+      bank_name: account.bankName,
+      account_name: account.accountName,
+    });
+  }
+  if (claim.status === "pending") {
+    return jsonResponse({
+      status: "pending",
+      message: "Your bank account is being prepared. Please check again shortly.",
+    });
+  }
+  if (claim.status !== "claimed") {
+    console.error("Paystack account claim returned an unexpected status:", claim.status);
+    return jsonResponse({ message: "Could not prepare your bank account. Please try again." }, 503);
+  }
 
-  // 4. Try Paystack Dedicated NUBAN first if enabled on the merchant account
-  const providers = await paystackApiRequest(
-    config.paystackSecretKey,
-    "/dedicated_account/available_providers",
-    "GET",
-  );
-  console.log("Paystack /dedicated_account/available_providers:", JSON.stringify(providers));
-
-  const cleanName = effectiveFullName && effectiveFullName.toLowerCase() !== "avotek user"
-    ? effectiveFullName
-    : email.split("@")[0].replace(/[._-]+/g, " ").trim() || "Avotek Customer";
-  const parts = cleanName.split(/\s+/).filter(Boolean);
-  const firstName = parts[0] || "Avotek";
-  const lastName = parts.length > 1 ? parts.slice(1).join(" ") : "Customer";
-  const phone = normalizeNigerianPhone(effectivePhoneRaw) ?? "+2348000000000";
-
-  let assignedAccount: ReturnType<typeof getDedicatedAccount> = null;
-
-  if (providers.ok) {
-    const providerList = Array.isArray(providers.body?.data) ? providers.body.data : [];
-    const wema = providerList.find((item) => isRecord(item) && item.provider_slug === "wema-bank");
-    const firstProvider = providerList.find((item) =>
-      isRecord(item) && typeof item.provider_slug === "string"
-    );
-    const preferredBank = isRecord(wema)
-      ? String(wema.provider_slug)
-      : isRecord(firstProvider)
-      ? String(firstProvider.provider_slug)
-      : "wema-bank";
-
-    // A. Single-step Dedicated Account Assignment
-    const directAssign = await paystackApiRequest(
+  try {
+    // 3. Ensure Paystack customer code exists and is linked to this wallet.
+    const customerCode = await ensureCustomerCodeForUser(
+      admin,
       config.paystackSecretKey,
-      "/dedicated_account/assign",
-      "POST",
-      {
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        phone,
-        preferred_bank: preferredBank,
-        country: "NG",
-      },
+      user.id,
+      email,
+      effectiveFullName,
+      effectivePhoneRaw,
+      existingWallet.paystack_customer_code
+        ? String(existingWallet.paystack_customer_code)
+        : null,
     );
-    console.log("Paystack /dedicated_account/assign response:", JSON.stringify(directAssign));
-    if (directAssign.ok && directAssign.body) {
-      assignedAccount = getDedicatedAccount(directAssign.body.data ?? directAssign.body);
+
+    if (!customerCode) {
+      await releaseDedicatedAccountRequest(admin, user.id);
+      console.error("Could not link the Paystack customer to the user's wallet.");
+      return jsonResponse({ message: "Could not prepare your bank account. Please try again." }, 503);
     }
 
-    // B. If not assigned, try via customer code
-    if (!assignedAccount && customerCode) {
-      assignedAccount = await findDedicatedAccount(config.paystackSecretKey, customerCode).catch(
-        () => null,
+    // 4. Use only a Paystack-enabled dedicated account provider.
+    const providers = await paystackApiRequest(
+      config.paystackSecretKey,
+      "/dedicated_account/available_providers",
+      "GET",
+    );
+    console.log("Paystack dedicated account provider lookup:", providers.status, providers.ok);
+
+    const cleanName = effectiveFullName.trim();
+    const parts = cleanName.split(/\s+/).filter(Boolean);
+    const firstName = parts[0];
+    const lastName = parts.length > 1 ? parts.slice(1).join(" ") : firstName;
+    const phone = normalizedPhone;
+    let assignedAccount: ReturnType<typeof getDedicatedAccount> = null;
+
+    if (providers.ok) {
+      const providerList = Array.isArray(providers.body?.data) ? providers.body.data : [];
+      const wema = providerList.find((item) => isRecord(item) && item.provider_slug === "wema-bank");
+      const firstProvider = providerList.find((item) =>
+        isRecord(item) && typeof item.provider_slug === "string"
       );
+      const preferredBank = isRecord(wema)
+        ? String(wema.provider_slug)
+        : isRecord(firstProvider)
+        ? String(firstProvider.provider_slug)
+        : "wema-bank";
+
+      const directAssign = await paystackApiRequest(
+        config.paystackSecretKey,
+        "/dedicated_account/assign",
+        "POST",
+        {
+          email,
+          first_name: firstName,
+          last_name: lastName,
+          phone,
+          preferred_bank: preferredBank,
+          country: "NG",
+        },
+      );
+      console.log("Paystack dedicated account assignment:", directAssign.status, directAssign.ok);
+      if (directAssign.ok && directAssign.body) {
+        assignedAccount = getDedicatedAccount(directAssign.body.data ?? directAssign.body);
+      }
+
       if (!assignedAccount) {
-        const assignment = await paystackApiRequest(
-          config.paystackSecretKey,
-          "/dedicated_account",
-          "POST",
-          {
-            customer: customerCode,
-            preferred_bank: preferredBank,
-          },
-        );
-        console.log("Paystack /dedicated_account POST response:", JSON.stringify(assignment));
-        if (assignment.ok && assignment.body) {
-          assignedAccount = getDedicatedAccount(assignment.body.data);
+        assignedAccount = await findDedicatedAccount(config.paystackSecretKey, customerCode);
+        if (!assignedAccount) {
+          const assignment = await paystackApiRequest(
+            config.paystackSecretKey,
+            "/dedicated_account",
+            "POST",
+            { customer: customerCode, preferred_bank: preferredBank },
+          );
+          console.log("Paystack customer account assignment:", assignment.status, assignment.ok);
+          if (assignment.ok && assignment.body) {
+            assignedAccount = getDedicatedAccount(assignment.body.data);
+          }
         }
       }
     }
-  }
 
-  if (assignedAccount) {
-    await admin.rpc("save_paystack_dedicated_wallet_account", {
-      p_user_id: user.id,
-      p_customer_code: customerCode ?? "",
-      p_account_number: assignedAccount.accountNumber,
-      p_bank_name: assignedAccount.bankName,
-      p_account_name: assignedAccount.accountName,
-    });
+    if (assignedAccount) {
+      const { error: saveAccountError } = await admin.rpc(
+        "save_paystack_dedicated_wallet_account",
+        {
+          p_user_id: user.id,
+          p_customer_code: customerCode,
+          p_account_number: assignedAccount.accountNumber,
+          p_bank_name: assignedAccount.bankName,
+          p_account_name: assignedAccount.accountName,
+        },
+      );
+      if (saveAccountError) {
+        await releaseDedicatedAccountRequest(admin, user.id);
+        console.error("Could not persist Paystack dedicated account:", saveAccountError.message);
+        return jsonResponse({
+          message: "Paystack assigned an account, but it could not be saved to your wallet. Please contact support before transferring.",
+        }, 503);
+      }
+      return jsonResponse({
+        status: "assigned",
+        account_number: assignedAccount.accountNumber,
+        bank_name: assignedAccount.bankName,
+        account_name: assignedAccount.accountName,
+      });
+    }
+
+    await releaseDedicatedAccountRequest(admin, user.id);
     return jsonResponse({
-      status: "assigned",
-      account_number: assignedAccount.accountNumber,
-      bank_name: assignedAccount.bankName,
-      account_name: assignedAccount.accountName,
+      status: "unavailable",
+      message: "Dedicated bank accounts are not active for this merchant yet. Open Fund Wallet to see available payment options.",
     });
+  } catch (error) {
+    await releaseDedicatedAccountRequest(admin, user.id);
+    console.error("Paystack dedicated account provisioning failed:", error);
+    return jsonResponse({ message: "Could not prepare your bank account. Please try again." }, 503);
   }
-
-  // If Paystack Dedicated Accounts are not enabled on this merchant integration,
-  // do NOT fabricate an ephemeral 100-naira charge account as a permanent account.
-  // Instead, report unavailable so the UI guides the user to instant Paystack Bank Transfer.
-  return jsonResponse({
-    status: "unavailable",
-    message: "Dedicated virtual accounts are awaiting Paystack merchant activation. Please use instant Paystack Bank Transfer to fund your wallet immediately.",
-  });
 }
 
 async function handleTransferAccount(

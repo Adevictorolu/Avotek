@@ -276,7 +276,7 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                                   widget.title!.isNotEmpty)
                                 Text(
                                   widget.title!,
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 14.5,
                                     fontWeight: FontWeight.w800,
                                     color: isDark
@@ -286,7 +286,7 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                                 ),
                               Text(
                                 widget.message,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: isDark

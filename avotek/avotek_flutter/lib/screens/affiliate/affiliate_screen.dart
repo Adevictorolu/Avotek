@@ -159,7 +159,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 const SizedBox(width: 10),
                 Text(
                   'Redeem AVO Token Points',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -173,7 +173,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               children: [
                 Text(
                   'Redeem your verified referral reward points directly into your Avotek main wallet (1 AVO Point = ₦1).',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13,
                     color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                   ),
@@ -197,7 +197,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     children: [
                       Text(
                         'AVAILABLE POINTS:',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.8,
@@ -208,7 +208,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                       ),
                       Text(
                         '$_userAvoPoints pts (= ₦$_userAvoPoints)',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
                           color: AppColors.electricCyan,
@@ -220,7 +220,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 const SizedBox(height: 12),
                 Text(
                   'Minimum redemption threshold is 200 pts (Berekete level). Points are credited instantly to your wallet upon confirmation.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 11.5,
                     color: isDark ? Colors.white60 : Colors.black54,
                     height: 1.4,
@@ -233,7 +233,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(
                   'Close',
-                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                  style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
                 ),
               ),
               ElevatedButton(
@@ -296,7 +296,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                       )
                     : Text(
                         'Redeem All',
-                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+                        style: GoogleFonts.figtree(fontWeight: FontWeight.w800),
                       ),
               ),
             ],
@@ -475,7 +475,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             const SizedBox(width: 8),
             Text(
               label,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 color: isSelected
@@ -505,7 +505,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
         const SizedBox(width: 8),
         Text(
           title,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 12,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
@@ -564,7 +564,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 const SizedBox(width: 6),
                 Text(
                   'Referral Program',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: isDark ? Colors.white70 : const Color(0xFF475569),
@@ -578,7 +578,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           // Title & Subtitle
           Text(
             'Refer & Earn',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 24,
               fontWeight: FontWeight.w800,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -588,7 +588,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           const SizedBox(height: 6),
           Text(
             'Earn money for life on every referral transaction, plus extra commission on their first funding',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 13,
               fontWeight: FontWeight.w500,
               color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -602,7 +602,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             children: [
               Text(
                 'YOUR AVOTEK ID (LOGIN & REFERRAL ID)',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.8,
@@ -623,7 +623,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 ),
                 child: Text(
                   'Unique ID',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     color: AppColors.primaryCyan,
@@ -655,7 +655,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 Expanded(
                   child: Text(
                     avoId,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.5,
@@ -687,7 +687,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                             : const Color(0xFFCBD5E1),
                       ),
                     ),
-                    textStyle: GoogleFonts.plusJakartaSans(
+                    textStyle: GoogleFonts.figtree(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                     ),
@@ -701,7 +701,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           // YOUR LINK INPUT BOX (Matches exact layout in Screenshot 2)
           Text(
             'YOUR LINK',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 10.5,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
@@ -725,7 +725,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 Expanded(
                   child: Text(
                     referralLink,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -752,7 +752,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    textStyle: GoogleFonts.plusJakartaSans(
+                    textStyle: GoogleFonts.figtree(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w800,
                     ),
@@ -768,7 +768,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             children: [
               Text(
                 'Share via:',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -843,7 +843,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             const SizedBox(width: 6),
             Text(
               label,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
                 color: isDark ? Colors.white : const Color(0xFF1E293B),
@@ -874,7 +874,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               children: [
                 Text(
                   'Grow your network',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -883,7 +883,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 const SizedBox(height: 3),
                 Text(
                   'Each referral earns you lifetime commission',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: isDark
@@ -906,7 +906,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              textStyle: GoogleFonts.plusJakartaSans(
+              textStyle: GoogleFonts.figtree(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
               ),
@@ -933,7 +933,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
         children: [
           Text(
             'How It Works',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1037,7 +1037,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           child: Center(
             child: Text(
               '$stepNumber',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
@@ -1052,7 +1052,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w800,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1061,7 +1061,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               const SizedBox(height: 4),
               Text(
                 description,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w500,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -1166,7 +1166,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           const SizedBox(height: 14),
           Text(
             title,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 11,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
@@ -1176,7 +1176,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           const SizedBox(height: 8),
           Text(
             value,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 24,
               fontWeight: FontWeight.w900,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1206,7 +1206,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             children: [
               Text(
                 'Your Referrals',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1225,7 +1225,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 ),
                 child: Text(
                   '0',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white70 : const Color(0xFF475569),
@@ -1258,7 +1258,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 Expanded(
                   child: RichText(
                     text: TextSpan(
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12,
                         color: isDark
                             ? const Color(0xFFFDE68A)
@@ -1285,7 +1285,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 const SizedBox(height: 12),
                 Text(
                   'No referrals yet',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: isDark ? Colors.white70 : const Color(0xFF475569),
@@ -1294,7 +1294,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Share your referral link to start building your network!',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12,
                     color: isDark
                         ? AppColors.metallicLight
@@ -1347,7 +1347,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               children: [
                 Text(
                   'How AVO Token Works',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1356,7 +1356,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 const SizedBox(height: 6),
                 Text(
                   'AVO Token rewards are not active yet. Points will not be earned or redeemed until the referral rewards are connected to a verified backend.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
                     height: 1.45,
@@ -1397,7 +1397,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   children: [
                     Text(
                       'CURRENT LEVEL',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
@@ -1427,7 +1427,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                           const SizedBox(width: 4),
                           Text(
                             'Jolly',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
                               color: const Color(0xFF78350F),
@@ -1445,7 +1445,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   children: [
                     Text(
                       'TOTAL POINTS',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
@@ -1457,7 +1457,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     const SizedBox(height: 6),
                     Text(
                       '$_userAvoPoints pts',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1472,7 +1472,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   children: [
                     Text(
                       'FROM REFERRALS',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
@@ -1484,7 +1484,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     const SizedBox(height: 6),
                     Text(
                       '$_userAvoPoints pts',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1503,7 +1503,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             children: [
               Text(
                 'Jolly → Berekete',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1511,7 +1511,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               ),
               Text(
                 '0%',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -1539,14 +1539,14 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             children: [
               Text(
                 '0 pts',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 11,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                 ),
               ),
               Text(
                 '201 pts to Berekete',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: AppColors.electricCyan,
@@ -1554,7 +1554,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               ),
               Text(
                 '100 pts',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 11,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                 ),
@@ -1578,7 +1578,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
-                textStyle: GoogleFonts.plusJakartaSans(
+                textStyle: GoogleFonts.figtree(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                 ),
@@ -1644,7 +1644,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
         children: [
           Text(
             'Level Roadmap',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1715,7 +1715,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                             children: [
                               Text(
                                 step['title'] as String,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
                                   color: isDark
@@ -1736,7 +1736,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                                   ),
                                   child: Text(
                                     step['badge'] as String,
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
@@ -1749,7 +1749,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                           const SizedBox(height: 3),
                           Text(
                             step['range'] as String,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: isDark
@@ -1761,7 +1761,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                             const SizedBox(height: 2),
                             Text(
                               step['bonus'] as String,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF10B981),
@@ -1781,7 +1781,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           // Footer note
           Text(
             'Level up to unlock 80% of your accumulated points as redeemable cash. At Chairman level, 100% unlocks.',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -1882,7 +1882,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 children: [
                   Text(
                     'Top Earners',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1891,7 +1891,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   const SizedBox(height: 2),
                   Text(
                     "Real-time platform leaderboard for active Avotek affiliates",
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 12,
                       color: isDark
                           ? AppColors.metallicLight
@@ -1937,7 +1937,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'Leaderboard Open for Champions',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1949,7 +1949,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     child: Text(
                       'No members have accumulated leaderboard points yet. Share your Avotek ID or referral link to earn points on every data recharge and take the #1 spot!',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12.5,
                         color: isDark
                             ? AppColors.metallicLight
@@ -1973,7 +1973,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      textStyle: GoogleFonts.plusJakartaSans(
+                      textStyle: GoogleFonts.figtree(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
                       ),
@@ -2029,7 +2029,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                             )
                           : Text(
                               '$rank',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
                                 color: isDark
@@ -2045,7 +2045,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                       backgroundColor: const Color(0xFF1E2438),
                       child: Text(
                         earner['initial'] as String,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
@@ -2059,7 +2059,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                         children: [
                           Text(
                             earner['name'] as String,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w800,
                               color: isTopThree
@@ -2072,7 +2072,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                           const SizedBox(height: 2),
                           Text(
                             earner['referrals'] as String,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               color: isTopThree
@@ -2096,7 +2096,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                       ),
                       child: Text(
                         earner['badge'] as String,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: earner['badgeColor'] as Color,
@@ -2106,7 +2106,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     const SizedBox(width: 18),
                     Text(
                       earner['points'] as String,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w900,
                         color: isTopThree
@@ -2142,7 +2142,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 Expanded(
                   child: Text(
                     'Keep earning points and climb the ranks on this leaderboard!',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white70 : const Color(0xFF334155),

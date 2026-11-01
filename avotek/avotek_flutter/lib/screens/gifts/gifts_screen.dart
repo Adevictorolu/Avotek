@@ -135,7 +135,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                   const SizedBox(width: 12),
                   Text(
                     'Create Gift Voucher',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 21,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -152,7 +152,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                     children: [
                       Text(
                         'Gift voucher codes are funded directly from your Avotek wallet and can be redeemed instantly by any user.',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 13.5,
                           height: 1.45,
                           color: isDark
@@ -186,7 +186,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                             const SizedBox(width: 10),
                             Text(
                               'Available Wallet Balance: ',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: isDark
@@ -196,7 +196,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                             ),
                             Text(
                               '₦${availableBal.toStringAsFixed(2)}',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFF10B981),
@@ -210,7 +210,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       // Amount Input
                       Text(
                         'Amount (₦)',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: isDark ? Colors.white70 : const Color(0xFF334155),
@@ -220,7 +220,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       TextField(
                         controller: amountCtrl,
                         keyboardType: TextInputType.number,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
                         ),
@@ -249,7 +249,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                           return ActionChip(
                             label: Text(
                               '₦$amt',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -270,7 +270,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       // Recipient
                       Text(
                         'Recipient Name or Phone (Optional)',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: isDark ? Colors.white70 : const Color(0xFF334155),
@@ -279,10 +279,10 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       const SizedBox(height: 8),
                       TextField(
                         controller: recipientCtrl,
-                        style: GoogleFonts.plusJakartaSans(),
+                        style: GoogleFonts.figtree(),
                         decoration: InputDecoration(
                           hintText: 'e.g. 08123456789 or Adewale',
-                          hintStyle: GoogleFonts.plusJakartaSans(
+                          hintStyle: GoogleFonts.figtree(
                             color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                           ),
                           filled: true,
@@ -304,7 +304,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       // Note
                       Text(
                         'Gift Note / Greeting (Optional)',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: isDark ? Colors.white70 : const Color(0xFF334155),
@@ -314,10 +314,10 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       TextField(
                         controller: noteCtrl,
                         maxLines: 2,
-                        style: GoogleFonts.plusJakartaSans(),
+                        style: GoogleFonts.figtree(),
                         decoration: InputDecoration(
                           hintText: 'Happy Birthday! Enjoy your recharge.',
-                          hintStyle: GoogleFonts.plusJakartaSans(
+                          hintStyle: GoogleFonts.figtree(
                             color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                           ),
                           filled: true,
@@ -343,7 +343,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                   onPressed: () => Navigator.pop(ctx),
                   child: Text(
                     'Cancel',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -429,7 +429,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                   ),
                   child: Text(
                     'Create Voucher',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -487,7 +487,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                 Text(
                   'Gift Voucher Ready! 🎁',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -497,7 +497,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                 Text(
                   'Your ₦${amount.toStringAsFixed(2)} voucher code has been issued.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13,
                     color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                   ),
@@ -519,7 +519,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                     children: [
                       Text(
                         'VOUCHER CODE',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.2,
@@ -529,7 +529,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       const SizedBox(height: 6),
                       Text(
                         code,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 24,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 2,
@@ -574,7 +574,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                           claimUrl,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12,
                             color: AppColors.primaryBlue,
                           ),
@@ -605,7 +605,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                     onPressed: () => Navigator.pop(dialogCtx),
                     child: Text(
                       'Done',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
@@ -718,7 +718,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                   const SizedBox(width: 6),
                   Text(
                     'Back to Dashboard',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       color: Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -755,7 +755,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         children: [
                           Text(
                             'Gift Cards & Vouchers',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
@@ -765,7 +765,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                           const SizedBox(height: 2),
                           Text(
                             'Send digital gift vouchers directly from your Avotek wallet',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 13,
                               color: Colors.white.withValues(alpha: 0.85),
                             ),
@@ -827,7 +827,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
             ),
             child: Text(
               filter,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 color: isSelected
@@ -857,7 +857,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
             const SizedBox(height: 18),
             Text(
               'No Gifts Found',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -866,7 +866,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
             const SizedBox(height: 6),
             Text(
               "You haven't created any gifts yet",
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -889,7 +889,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
               ),
               child: Text(
                 'Create Your First Gift',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w800,
                 ),
@@ -944,7 +944,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       children: [
                         Text(
                           gift.code,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: isDark
@@ -967,7 +967,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Recipient: ${gift.recipient} • Created ${DateFormat('MMM dd, yyyy').format(gift.createdAt)}',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12,
                         color: isDark
                             ? AppColors.metallicLight
@@ -982,7 +982,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                 children: [
                   Text(
                     _currencyFormat.format(gift.amount),
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
                       color: isActive ? const Color(0xFF10B981) : Colors.grey,
@@ -1001,7 +1001,7 @@ class _GiftsScreenState extends State<GiftsScreen> {
                     ),
                     child: Text(
                       gift.status,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         color: isActive ? const Color(0xFF10B981) : Colors.grey,

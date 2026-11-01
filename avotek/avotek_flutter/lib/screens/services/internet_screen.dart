@@ -260,7 +260,7 @@ class _InternetScreenState extends State<InternetScreen> {
                           const SizedBox(width: 4),
                           Text(
                             'Back',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: isDark ? Colors.white70 : Colors.black87,
@@ -275,7 +275,7 @@ class _InternetScreenState extends State<InternetScreen> {
                   // Header
                   Text(
                     'Internet Subscriptions',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -284,7 +284,7 @@ class _InternetScreenState extends State<InternetScreen> {
                   const SizedBox(height: 4),
                   Text(
                     'Instant Smile 4G, Spectranet, Swift, and Fibre broadband top-ups',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 14,
                       color: isDark ? Colors.white60 : const Color(0xFF64748B),
                     ),
@@ -341,7 +341,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                   const SizedBox(width: 8),
                                   Text(
                                     'Buy Now',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 0
@@ -392,7 +392,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                   const SizedBox(width: 8),
                                   Text(
                                     'Gift Voucher',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 1
@@ -413,7 +413,7 @@ class _InternetScreenState extends State<InternetScreen> {
                     const SizedBox(height: 10),
                     Text(
                       'This creates a shareable gift link. The recipient redeems it themselves.',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12,
                         color: const Color(0xFF00D2FF),
                         fontWeight: FontWeight.w500,
@@ -438,7 +438,7 @@ class _InternetScreenState extends State<InternetScreen> {
                       children: [
                         Text(
                           'SELECT INTERNET PROVIDER',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
@@ -495,7 +495,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                               Text(
                                                 prov['name'] as String,
                                                 textAlign: TextAlign.center,
-                                                style: GoogleFonts.plusJakartaSans(
+                                                style: GoogleFonts.figtree(
                                                   fontSize: 11.5,
                                                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                                                   color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -547,7 +547,7 @@ class _InternetScreenState extends State<InternetScreen> {
                         children: [
                           Text(
                             'ROUTER / ACCOUNT / PHONE NUMBER',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -559,13 +559,13 @@ class _InternetScreenState extends State<InternetScreen> {
                             controller: _accountController,
                             keyboardType: TextInputType.text,
                             onChanged: (_) => setState(() {}),
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: InputDecoration(
                               hintText: 'e.g. 08012345678 or Device ID',
-                              hintStyle: GoogleFonts.plusJakartaSans(
+                              hintStyle: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
@@ -597,7 +597,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                   child: RichText(
                                     text: TextSpan(
                                       text: 'Pay For Me ',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                         color: isDark ? Colors.white70 : const Color(0xFF334155),
@@ -605,7 +605,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                       children: [
                                         TextSpan(
                                           text: '- get a shareable payment link',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 12,
                                             fontWeight: FontWeight.normal,
                                             color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
@@ -637,7 +637,7 @@ class _InternetScreenState extends State<InternetScreen> {
                         children: [
                           Text(
                             'RECIPIENT PHONE (OPTIONAL)',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -649,13 +649,13 @@ class _InternetScreenState extends State<InternetScreen> {
                             controller: _accountController,
                             keyboardType: TextInputType.text,
                             onChanged: (_) => setState(() {}),
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: InputDecoration(
                               hintText: 'e.g. 08012345678 or Device ID',
-                              hintStyle: GoogleFonts.plusJakartaSans(
+                              hintStyle: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
@@ -671,7 +671,7 @@ class _InternetScreenState extends State<InternetScreen> {
                           const SizedBox(height: 12),
                           Text(
                             'GIFT MESSAGE (OPTIONAL)',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -683,13 +683,13 @@ class _InternetScreenState extends State<InternetScreen> {
                             controller: _giftMessageController,
                             maxLength: 200,
                             maxLines: 2,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: InputDecoration(
                               hintText: 'Enjoy your internet bundle!',
-                              hintStyle: GoogleFonts.plusJakartaSans(
+                              hintStyle: GoogleFonts.figtree(
                                 fontSize: 13,
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
@@ -727,7 +727,7 @@ class _InternetScreenState extends State<InternetScreen> {
                           children: [
                             Text(
                               'SELECT SUBSCRIPTION PLAN',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.8,
@@ -736,7 +736,7 @@ class _InternetScreenState extends State<InternetScreen> {
                             ),
                             Text(
                               '${currentPackages.length} plans',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
@@ -796,7 +796,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           textAlign: TextAlign.center,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 13.5,
                                             fontWeight: FontWeight.w800,
                                             color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -805,7 +805,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                         const SizedBox(height: 5),
                                         Text(
                                           '₦${price.toStringAsFixed(0)}',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 17,
                                             fontWeight: FontWeight.w900,
                                             color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
@@ -859,7 +859,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                 children: [
                                   Text(
                                     'SELECTED INTERNET PLAN',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.8,
@@ -873,7 +873,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                         : 'Choose an internet bundle below',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
                                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -894,7 +894,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                 ),
                                 child: Text(
                                   '₦${((_selectedPackage!['price'] as num).toDouble()).toStringAsFixed(0)}',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
                                     color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
@@ -965,7 +965,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                                 : (_selectedPackage != null
                                                     ? 'Buy Internet Bundle • ₦${((_selectedPackage!['price'] as num).toDouble()).toStringAsFixed(0)}'
                                                     : 'Buy Internet Bundle')),
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 14.5,
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: 0.3,
@@ -986,7 +986,7 @@ class _InternetScreenState extends State<InternetScreen> {
                               Expanded(
                                 child: Text(
                                   validationErrors.first,
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: const Color(0xFFF59E0B),

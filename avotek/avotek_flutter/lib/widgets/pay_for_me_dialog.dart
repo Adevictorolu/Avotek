@@ -116,7 +116,7 @@ class PayForMeDialog extends StatelessWidget {
                 Text(
                   'Pay For Me Link Ready',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -126,7 +126,7 @@ class PayForMeDialog extends StatelessWidget {
                 Text(
                   'Share this link with a sponsor, friend, or family member to pay on your behalf.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13,
                     color: isDark ? Colors.white60 : const Color(0xFF64748B),
                   ),
@@ -149,26 +149,26 @@ class PayForMeDialog extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Service', style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: isDark ? Colors.white60 : const Color(0xFF64748B))),
-                          Text(serviceName, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                          Text('Service', style: GoogleFonts.figtree(fontSize: 12.5, color: isDark ? Colors.white60 : const Color(0xFF64748B))),
+                          Text(serviceName, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A))),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Recipient', style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: isDark ? Colors.white60 : const Color(0xFF64748B))),
-                          Text(recipient, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                          Text('Recipient', style: GoogleFonts.figtree(fontSize: 12.5, color: isDark ? Colors.white60 : const Color(0xFF64748B))),
+                          Text(recipient, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
                         ],
                       ),
                       const Divider(height: 18),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Amount', style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                          Text('Amount', style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A))),
                           Text(
                             '₦${amount.toStringAsFixed(2)}',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
                               color: const Color(0xFF00D2FF),
@@ -200,7 +200,7 @@ class PayForMeDialog extends StatelessWidget {
                           paymentLink,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12,
                             color: isDark ? Colors.white70 : const Color(0xFF334155),
                           ),
@@ -228,7 +228,7 @@ class PayForMeDialog extends StatelessWidget {
                         icon: const Icon(Icons.send_rounded, size: 16, color: Color(0xFF25D366)),
                         label: Text(
                           'WhatsApp',
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13),
+                          style: GoogleFonts.figtree(fontWeight: FontWeight.w700, fontSize: 13),
                         ),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -262,7 +262,7 @@ class PayForMeDialog extends StatelessWidget {
                           ),
                           child: Text(
                             'Copy & Done',
-                            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13),
+                            style: GoogleFonts.figtree(fontWeight: FontWeight.w800, fontSize: 13),
                           ),
                         ),
                       ),

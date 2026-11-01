@@ -145,7 +145,7 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
               Text(
                 _step == 0 ? 'Create Transaction PIN' : 'Confirm Your PIN',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -157,7 +157,7 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
                     ? 'Enter a 4-digit security PIN to authorize transactions.'
                     : 'Re-enter your 4-digit security PIN to confirm.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w500,
                   color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -212,7 +212,7 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
                   child: Text(
                     _errorMessage!,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.error,
@@ -292,7 +292,7 @@ class _OnboardingPinDialogState extends State<OnboardingPinDialog> {
                   ),
                   child: Text(
                     key,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),

@@ -490,7 +490,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                   Text(
                     title,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 19,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -500,7 +500,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                   Text(
                     message ?? 'Transaction delivered successfully.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 12.5,
                       color: isDark ? const Color(0xFFA5B0CD) : AppColors.slateGrey,
                     ),
@@ -522,7 +522,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                       children: [
                         Text(
                           '₦${NumberFormat('#,##0.00').format(amount)}',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
                             color: const Color(0xFF00D2FF),
@@ -534,7 +534,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                           textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: isDark ? Colors.white70 : const Color(0xFF475569),
@@ -568,7 +568,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                                 serviceType.toLowerCase().contains('electricity')
                                     ? '⚡ PREPAID METER TOKEN'
                                     : '🎓 EXAMINATION PIN(S)',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 0.6,
@@ -586,7 +586,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                                     const SizedBox(width: 4),
                                     Text(
                                       'Copy',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 11.5,
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFF00D2FF),
@@ -600,7 +600,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                           const SizedBox(height: 6),
                           SelectableText(
                             displayToken,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w800,
                               color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -611,7 +611,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               'Units: $units',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
                                 color: isDark ? Colors.white70 : Colors.black87,
@@ -661,7 +661,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                             color: isDark ? const Color(0xFF28344D) : const Color(0xFFCBD5E1),
                           ),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          textStyle: GoogleFonts.plusJakartaSans(
+                          textStyle: GoogleFonts.figtree(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -691,7 +691,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              textStyle: GoogleFonts.plusJakartaSans(
+                              textStyle: GoogleFonts.figtree(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -724,7 +724,7 @@ class TransactionSuccessDialog extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: isDark ? const Color(0xFFA5B0CD) : const Color(0xFF64748B),
@@ -739,7 +739,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                 child: Text(
                   value,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
                     color: statusColor ?? (isDark ? Colors.white : const Color(0xFF0F172A)),

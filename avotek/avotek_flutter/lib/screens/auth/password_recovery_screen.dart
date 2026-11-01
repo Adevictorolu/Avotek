@@ -112,7 +112,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                       const SizedBox(height: 12),
                       Text(
                         _errorMessage!,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           color: AppColors.error,
                         ),
                       ),

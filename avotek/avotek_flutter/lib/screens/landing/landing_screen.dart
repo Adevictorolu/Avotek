@@ -131,14 +131,14 @@ class _LandingScreenState extends State<LandingScreen>
                 children: [
                   Text(
                     'Download Avotek App',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontWeight: FontWeight.w800,
                       fontSize: 18,
                     ),
                   ),
                   Text(
                     'Official Android APK ($version)',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontWeight: FontWeight.w600,
                       fontSize: 11.5,
                       color: const Color(0xFF10B981),
@@ -157,7 +157,7 @@ class _LandingScreenState extends State<LandingScreen>
             children: [
               Text(
                 'Get the official Avotek Android app directly for lightning-fast recharge, automated bill processing, and instant push receipts.',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 13,
                   height: 1.5,
                   color: isDark
@@ -190,7 +190,7 @@ class _LandingScreenState extends State<LandingScreen>
                     Expanded(
                       child: Text(
                         'Direct APK build verified for Android 8.0+',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -207,7 +207,7 @@ class _LandingScreenState extends State<LandingScreen>
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Close',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
             ),
           ),
           OutlinedButton.icon(
@@ -222,7 +222,7 @@ class _LandingScreenState extends State<LandingScreen>
             icon: const Icon(Icons.copy_rounded, size: 16),
             label: Text(
               'Copy Link',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
             ),
           ),
           ElevatedButton.icon(
@@ -242,7 +242,7 @@ class _LandingScreenState extends State<LandingScreen>
             icon: const Icon(Icons.download_rounded, size: 18),
             label: Text(
               'Download APK',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+              style: GoogleFonts.figtree(fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -385,7 +385,7 @@ class _LandingScreenState extends State<LandingScreen>
             ),
             child: Text(
               'Sign In',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),
@@ -420,7 +420,7 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               child: Text(
                 'Get Started Free',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
                 ),
@@ -454,7 +454,7 @@ class _LandingScreenState extends State<LandingScreen>
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
           child: Text(
             label,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 13.5,
               fontWeight: FontWeight.w600,
               color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
@@ -578,7 +578,7 @@ class _LandingScreenState extends State<LandingScreen>
       leading: Icon(icon, color: const Color(0xFF00D2FF), size: 20),
       title: Text(
         label,
-        style: GoogleFonts.plusJakartaSans(
+        style: GoogleFonts.figtree(
           fontSize: 14,
           fontWeight: FontWeight.w700,
           color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -660,7 +660,7 @@ class _LandingScreenState extends State<LandingScreen>
               const SizedBox(width: 6),
               Text(
                 '100% Automated VTU & Instant Payment Gateway',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                   color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
@@ -676,7 +676,7 @@ class _LandingScreenState extends State<LandingScreen>
         RichText(
           textAlign: isDesktop ? TextAlign.start : TextAlign.center,
           text: TextSpan(
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: isDesktop ? 50 : 32,
               fontWeight: FontWeight.w900,
               height: 1.15,
@@ -696,7 +696,7 @@ class _LandingScreenState extends State<LandingScreen>
                   ).createShader(bounds),
                   child: Text(
                     'Instant Bills',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: isDesktop ? 50 : 32,
                       fontWeight: FontWeight.w900,
                       height: 1.15,
@@ -717,7 +717,7 @@ class _LandingScreenState extends State<LandingScreen>
           'Recharge airtime with instant 2% cashback, buy cheap SME data bundles from ₦49, '
           'generate WAEC/NECO result checker PINs, and settle electricity tokens in seconds with zero delay.',
           textAlign: isDesktop ? TextAlign.start : TextAlign.center,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: isDesktop ? 16 : 14.5,
             height: 1.6,
             color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
@@ -758,7 +758,7 @@ class _LandingScreenState extends State<LandingScreen>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  textStyle: GoogleFonts.plusJakartaSans(
+                  textStyle: GoogleFonts.figtree(
                     fontWeight: FontWeight.w800,
                     fontSize: 14.5,
                   ),
@@ -783,7 +783,7 @@ class _LandingScreenState extends State<LandingScreen>
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
-                textStyle: GoogleFonts.plusJakartaSans(
+                textStyle: GoogleFonts.figtree(
                   fontWeight: FontWeight.w700,
                   fontSize: 14.5,
                 ),
@@ -807,7 +807,7 @@ class _LandingScreenState extends State<LandingScreen>
             Flexible(
               child: Text(
                 '4.9/5 • Trusted by 10,000+ students & agents across Nigeria',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
                   color: isDark
@@ -880,7 +880,7 @@ class _LandingScreenState extends State<LandingScreen>
                       children: [
                         Text(
                           '9:41',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: Colors.white70,
@@ -925,14 +925,14 @@ class _LandingScreenState extends State<LandingScreen>
                                 children: [
                                   Text(
                                     'Welcome back 👋',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11,
                                       color: const Color(0xFF94A3B8),
                                     ),
                                   ),
                                   Text(
                                     'Adewale Victor',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
@@ -985,7 +985,7 @@ class _LandingScreenState extends State<LandingScreen>
                                   children: [
                                     Text(
                                       'Available Wallet Balance',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 10.5,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.white70,
@@ -1000,7 +1000,7 @@ class _LandingScreenState extends State<LandingScreen>
                                       ),
                                       child: Text(
                                         'Tier 2 KYC 🛡️',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 9,
                                           fontWeight: FontWeight.w800,
                                           color: Colors.white,
@@ -1014,7 +1014,7 @@ class _LandingScreenState extends State<LandingScreen>
                                   children: [
                                     Text(
                                       '₦48,500.00',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 22,
                                         fontWeight: FontWeight.w900,
                                         color: Colors.white,
@@ -1042,8 +1042,8 @@ class _LandingScreenState extends State<LandingScreen>
                                         ),
                                         child: Center(
                                           child: Text(
-                                            '+ Fund Wallet (Paystack)',
-                                            style: GoogleFonts.plusJakartaSans(
+                                            '+ Fund Wallet',
+                                            style: GoogleFonts.figtree(
                                               fontSize: 10.5,
                                               fontWeight: FontWeight.w800,
                                               color: const Color(0xFF0052FF),
@@ -1062,7 +1062,7 @@ class _LandingScreenState extends State<LandingScreen>
                           // Quick Services Grid Inside Mockup
                           Text(
                             'Quick Services',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -1122,7 +1122,7 @@ class _LandingScreenState extends State<LandingScreen>
                                     children: [
                                       Text(
                                         'MTN 2.5GB SME Sent',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
                                           color: Colors.white,
@@ -1130,7 +1130,7 @@ class _LandingScreenState extends State<LandingScreen>
                                       ),
                                       Text(
                                         '0803***8912 • Instant Delivery',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 9.5,
                                           color: const Color(0xFF94A3B8),
                                         ),
@@ -1140,7 +1140,7 @@ class _LandingScreenState extends State<LandingScreen>
                                 ),
                                 Text(
                                   '₦570.00',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w800,
                                     color: const Color(0xFF00D2FF),
@@ -1217,7 +1217,7 @@ class _LandingScreenState extends State<LandingScreen>
           const SizedBox(height: 3),
           Text(
             label,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 9.5,
               fontWeight: FontWeight.w700,
               color: Colors.white,
@@ -1227,7 +1227,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           Text(
             badge,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 8,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF10B981),
@@ -1276,7 +1276,7 @@ class _LandingScreenState extends State<LandingScreen>
             children: [
               Text(
                 title,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -1284,7 +1284,7 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               Text(
                 subtitle,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 9.5,
                   color: const Color(0xFF94A3B8),
                 ),
@@ -1320,7 +1320,7 @@ class _LandingScreenState extends State<LandingScreen>
         children: [
           Text(
             'POWERING ALL MAJOR NIGERIAN TELECOM NETWORKS & UTILITY PROVIDERS',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 11,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.2,
@@ -1373,7 +1373,7 @@ class _LandingScreenState extends State<LandingScreen>
                             const SizedBox(width: 10),
                             Text(
                               p.$1,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w800,
                                 color: isDark
@@ -1438,7 +1438,7 @@ class _LandingScreenState extends State<LandingScreen>
                         children: [
                           Text(
                             m.$1,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 32,
                               fontWeight: FontWeight.w900,
                               color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
@@ -1448,7 +1448,7 @@ class _LandingScreenState extends State<LandingScreen>
                           const SizedBox(height: 4),
                           Text(
                             m.$2,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               color: isDark
@@ -1459,7 +1459,7 @@ class _LandingScreenState extends State<LandingScreen>
                           const SizedBox(height: 2),
                           Text(
                             m.$3,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               color: isDark
                                   ? const Color(0xFF94A3B8)
@@ -1618,7 +1618,7 @@ class _LandingScreenState extends State<LandingScreen>
                                       ),
                                       child: Text(
                                         s.$4,
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 10,
                                           fontWeight: FontWeight.w800,
                                           color: const Color(0xFF10B981),
@@ -1630,7 +1630,7 @@ class _LandingScreenState extends State<LandingScreen>
                                 const SizedBox(height: 18),
                                 Text(
                                   s.$1,
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
                                     color: isDark
@@ -1641,7 +1641,7 @@ class _LandingScreenState extends State<LandingScreen>
                                 const SizedBox(height: 6),
                                 Text(
                                   s.$2,
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12.5,
                                     height: 1.5,
                                     color: isDark
@@ -1673,8 +1673,8 @@ class _LandingScreenState extends State<LandingScreen>
         Icons.timer_outlined,
       ),
       (
-        'Instant Paystack Direct Funding',
-        'Top up your balance instantly using Debit Cards (Verve, Mastercard, Visa), USSD, or Bank App. Plus, get a dedicated personal transfer account.',
+        'Secure wallet funding',
+        'Open Fund Wallet to see available payment options. Your wallet balance updates after payment confirmation.',
         Icons.payment_rounded,
       ),
       (
@@ -1751,7 +1751,7 @@ class _LandingScreenState extends State<LandingScreen>
                                   children: [
                                     Text(
                                       f.$1,
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w800,
                                         color: isDark
@@ -1762,7 +1762,7 @@ class _LandingScreenState extends State<LandingScreen>
                                     const SizedBox(height: 6),
                                     Text(
                                       f.$2,
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 13,
                                         height: 1.55,
                                         color: isDark
@@ -1797,8 +1797,8 @@ class _LandingScreenState extends State<LandingScreen>
       ),
       (
         '02',
-        'Fund Instantly',
-        'Top up your wallet via Paystack Direct (Cards, Bank App, USSD) or dedicated transfer account.',
+        'Fund Wallet',
+        'Open Fund Wallet and complete an available payment method. Your balance updates after the payment is confirmed.',
       ),
       (
         '03',
@@ -1850,7 +1850,7 @@ class _LandingScreenState extends State<LandingScreen>
                             children: [
                               Text(
                                 s.$1,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 34,
                                   fontWeight: FontWeight.w900,
                                   color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
@@ -1859,7 +1859,7 @@ class _LandingScreenState extends State<LandingScreen>
                               const SizedBox(height: 12),
                               Text(
                                 s.$2,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w800,
                                   color: isDark
@@ -1870,7 +1870,7 @@ class _LandingScreenState extends State<LandingScreen>
                               const SizedBox(height: 6),
                               Text(
                                 s.$3,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 13,
                                   height: 1.5,
                                   color: isDark
@@ -1919,11 +1919,6 @@ class _LandingScreenState extends State<LandingScreen>
         'Emmanuel Nwachukwu',
         'Undergraduate, University of Ibadan',
         'Bought my WAEC result checker PIN here without stress. The clean UI and instant verification makes Avotek way ahead of other sites.',
-      ),
-      (
-        'Titi Bakare',
-        'Business Owner, Ogun State',
-        'Zero hidden charges. Paystack Direct wallet funding is 100% reliable and instantaneous. Truly the most dependable VTU platform in Nigeria.',
       ),
     ];
 
@@ -1982,7 +1977,7 @@ class _LandingScreenState extends State<LandingScreen>
                               const SizedBox(height: 14),
                               Text(
                                 '"${r.$3}"',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 13,
                                   height: 1.6,
                                   fontStyle: FontStyle.italic,
@@ -1999,7 +1994,7 @@ class _LandingScreenState extends State<LandingScreen>
                                     backgroundColor: const Color(0xFF0052FF),
                                     child: Text(
                                       r.$1.substring(0, 1),
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w800,
                                         fontSize: 13,
@@ -2014,7 +2009,7 @@ class _LandingScreenState extends State<LandingScreen>
                                       children: [
                                         Text(
                                           r.$1,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w800,
                                             color: isDark
@@ -2024,7 +2019,7 @@ class _LandingScreenState extends State<LandingScreen>
                                         ),
                                         Text(
                                           r.$2,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.figtree(
                                             fontSize: 11,
                                             color: const Color(0xFF00D2FF),
                                             fontWeight: FontWeight.w600,
@@ -2100,7 +2095,7 @@ class _LandingScreenState extends State<LandingScreen>
                           children: [
                             Text(
                               'Get the Official Avotek Android App',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
@@ -2109,7 +2104,7 @@ class _LandingScreenState extends State<LandingScreen>
                             const SizedBox(height: 6),
                             Text(
                               'Download the lightweight APK directly to your phone for instant recharge shortcuts, biometric sign-in, and push notifications.',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 13.5,
                                 color: Colors.white.withValues(alpha: 0.90),
                               ),
@@ -2131,7 +2126,7 @@ class _LandingScreenState extends State<LandingScreen>
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          textStyle: GoogleFonts.plusJakartaSans(
+                          textStyle: GoogleFonts.figtree(
                             fontWeight: FontWeight.w900,
                             fontSize: 14.5,
                           ),
@@ -2157,7 +2152,7 @@ class _LandingScreenState extends State<LandingScreen>
                       Text(
                         'Get the Official Avotek Android App',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
@@ -2167,7 +2162,7 @@ class _LandingScreenState extends State<LandingScreen>
                       Text(
                         'Download the lightweight APK directly to your phone for instant recharge shortcuts and push receipts.',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 12.5,
                           color: Colors.white.withValues(alpha: 0.90),
                         ),
@@ -2187,7 +2182,7 @@ class _LandingScreenState extends State<LandingScreen>
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            textStyle: GoogleFonts.plusJakartaSans(
+                            textStyle: GoogleFonts.figtree(
                               fontWeight: FontWeight.w800,
                               fontSize: 14,
                             ),
@@ -2216,8 +2211,8 @@ class _LandingScreenState extends State<LandingScreen>
         'Select any service (Airtime, Data, Cable, or Electricity), tick the "Pay For Me" checkbox, and generate a secure shareable link. You can send this link via WhatsApp or SMS to a sponsor, parent, or friend to pay for you.',
       ),
       (
-        'How do I fund my wallet without errors?',
-        'Use Paystack Direct on the Fund Wallet screen. It supports Debit Cards (Mastercard, Visa, Verve), Bank Apps, and USSD with 100% instant automated crediting. You also have a dedicated bank transfer account number.',
+        'How do I fund my wallet?',
+        'Open Fund Wallet and follow the payment options shown for your account. Your balance updates after the payment is confirmed.',
       ),
       (
         'How do referral rewards work?',
@@ -2266,7 +2261,7 @@ class _LandingScreenState extends State<LandingScreen>
                       childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
                       title: Text(
                         f.$1,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w800,
                           color: isDark
@@ -2279,7 +2274,7 @@ class _LandingScreenState extends State<LandingScreen>
                           alignment: Alignment.centerLeft,
                           child: Text(
                             f.$2,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 13,
                               height: 1.55,
                               color: isDark
@@ -2328,7 +2323,7 @@ class _LandingScreenState extends State<LandingScreen>
                               const SizedBox(height: 12),
                               Text(
                                 'Nigeria’s premier automated platform for discounted data, airtime cashback, utility bill settlements, and educational PINs.',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 13,
                                   height: 1.55,
                                   color: isDark
@@ -2363,7 +2358,7 @@ class _LandingScreenState extends State<LandingScreen>
                                       const SizedBox(width: 8),
                                       Text(
                                         'Follow Avotek on Facebook',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
                                           color: const Color(0xFF1877F2),
@@ -2386,7 +2381,7 @@ class _LandingScreenState extends State<LandingScreen>
                             children: [
                               Text(
                                 'SERVICES',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 1.0,
@@ -2413,7 +2408,7 @@ class _LandingScreenState extends State<LandingScreen>
                             children: [
                               Text(
                                 'QUICK LINKS',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 1.0,
@@ -2439,7 +2434,7 @@ class _LandingScreenState extends State<LandingScreen>
                         const SizedBox(height: 10),
                         Text(
                           'Nigeria’s premier automated platform for discounted data, airtime cashback, and utility bill settlements.',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12.5,
                             height: 1.5,
                             color: isDark
@@ -2466,7 +2461,7 @@ class _LandingScreenState extends State<LandingScreen>
                                 const SizedBox(width: 8),
                                 Text(
                                   'Follow Avotek on Facebook',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF1877F2),
@@ -2500,7 +2495,7 @@ class _LandingScreenState extends State<LandingScreen>
                   Flexible(
                     child: Text(
                       'Avotek copyright 2022 to 2026. All rights reserved.',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: isDark
@@ -2522,7 +2517,7 @@ class _LandingScreenState extends State<LandingScreen>
                         const SizedBox(width: 4),
                         Text(
                           'Get Android APK',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF10B981),
@@ -2547,7 +2542,7 @@ class _LandingScreenState extends State<LandingScreen>
         onTap: () => context.push(route),
         child: Text(
           label,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 13,
             color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
           ),
@@ -2563,7 +2558,7 @@ class _LandingScreenState extends State<LandingScreen>
         onTap: onTap,
         child: Text(
           label,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 13,
             color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
           ),
@@ -2592,7 +2587,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           child: Text(
             eyebrow,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 10.5,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.0,
@@ -2604,7 +2599,7 @@ class _LandingScreenState extends State<LandingScreen>
         Text(
           title,
           textAlign: TextAlign.center,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 28,
             fontWeight: FontWeight.w900,
             letterSpacing: -0.6,
@@ -2617,7 +2612,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 14,
               height: 1.5,
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),

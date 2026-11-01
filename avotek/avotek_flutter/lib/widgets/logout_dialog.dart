@@ -36,7 +36,7 @@ Future<bool> showLogoutConfirmationDialog(BuildContext context) async {
           Expanded(
             child: Text(
               'Sign Out',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -47,7 +47,7 @@ Future<bool> showLogoutConfirmationDialog(BuildContext context) async {
       ),
       content: Text(
         'Are you sure you want to log out of your Avotek account? You will need your password or Avotek ID to sign in again.',
-        style: GoogleFonts.plusJakartaSans(
+        style: GoogleFonts.figtree(
           fontSize: 13.5,
           height: 1.5,
           color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -67,7 +67,7 @@ Future<bool> showLogoutConfirmationDialog(BuildContext context) async {
           ),
           child: Text(
             'Cancel',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
               color: isDark ? Colors.white70 : const Color(0xFF475569),
@@ -86,7 +86,7 @@ Future<bool> showLogoutConfirmationDialog(BuildContext context) async {
           ),
           child: Text(
             'Yes, Log Out',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 13.5,
               fontWeight: FontWeight.w800,
             ),

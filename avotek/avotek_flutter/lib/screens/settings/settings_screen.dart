@@ -95,7 +95,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         title: Text(
           title,
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+          style: GoogleFonts.figtree(fontWeight: FontWeight.w800),
         ),
         content: SizedBox(
           width: 620,
@@ -105,7 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               for (final section in sections) ...[
                 Text(
                   section.$1,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                   ),
@@ -113,7 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 5),
                 Text(
                   section.$2,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13,
                     height: 1.5,
                     color: isDark
@@ -317,7 +317,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         activePinTab == 0
                             ? 'Change Transaction PIN'
                             : 'Reset Transaction PIN',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 21,
                           fontWeight: FontWeight.w800,
                           color: isDark
@@ -330,7 +330,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         activePinTab == 0
                             ? 'Update your 4-digit transaction PIN'
                             : 'Request OTP to reset your forgotten PIN',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 13,
                           color: isDark
                               ? const Color(0xFFA5B0CD)
@@ -378,7 +378,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   child: Center(
                                     child: Text(
                                       'Change PIN',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w800,
                                         color: activePinTab == 0
@@ -419,7 +419,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   child: Center(
                                     child: Text(
                                       'Reset PIN',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w800,
                                         color: activePinTab == 1
@@ -467,7 +467,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             Expanded(
                               child: RichText(
                                 text: TextSpan(
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12,
                                     color: isDark
                                         ? AppColors.metallicLight
@@ -477,7 +477,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     const TextSpan(text: "Use "),
                                     TextSpan(
                                       text: "Reset PIN",
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.figtree(
                                         fontWeight: FontWeight.w800,
                                         color: isDark
                                             ? Colors.white
@@ -567,7 +567,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Expanded(
                                 child: Text(
                                   "Keep your PIN secure! You'll need it to authorize all transactions.",
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 11.5,
                                     color: isDark
                                         ? AppColors.metallicLight
@@ -678,7 +678,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               children: [
                                 Text(
                                   'Update PIN',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
                                   ),
@@ -717,7 +717,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Expanded(
                                 child: Text(
                                   'Click the button below to receive a one-time password (OTP) via email. You\'ll use this to reset your PIN.',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12.5,
                                     height: 1.45,
                                     color: isDark
@@ -772,7 +772,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               children: [
                                 Text(
                                   'Send OTP to Email',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
                                   ),
@@ -811,7 +811,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: isDark ? Colors.white : const Color(0xFF334155),
@@ -836,7 +836,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   obscureText: obscure,
                   keyboardType: TextInputType.number,
                   maxLength: 4,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -845,7 +845,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     counterText: '',
                     border: InputBorder.none,
                     hintText: hint,
-                    hintStyle: GoogleFonts.plusJakartaSans(
+                    hintStyle: GoogleFonts.figtree(
                       fontSize: 13,
                       color: isDark ? AppColors.slateGrey : Colors.black38,
                     ),
@@ -922,7 +922,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     Text(
                       'API Document',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -973,7 +973,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   'Quickstart',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
                                     color: isDark
@@ -986,7 +986,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(height: 8),
                             Text(
                               'Follow this quick guide to get you setup to start using our api',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 11.5,
                                 color: isDark
                                     ? AppColors.metallicLight
@@ -1025,7 +1025,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   'Authenticate',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
                                     color: isDark
@@ -1038,7 +1038,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(height: 8),
                             Text(
                               'Get Authenticated To Use The API Services',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 11.5,
                                 color: isDark
                                     ? AppColors.metallicLight
@@ -1054,7 +1054,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'Avotek Developer API Routes',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1063,7 +1063,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 6),
                 Text(
                   'Automate your VTU, utility bills, and exam e-PIN purchases with Avotek\'s high-speed REST API. All requests use JSON payloads and require your Avotek Bearer token.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12,
                     height: 1.45,
                     color: isDark
@@ -1092,7 +1092,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: [
                           Text(
                             'BASE ENDPOINT',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.5,
@@ -1107,7 +1107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             child: Text(
                               'v1.0 ACTIVE',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.success,
@@ -1119,7 +1119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 8),
                       SelectableText(
                         'https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/vtu-provider',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.white70 : const Color(0xFF0F172A),
@@ -1128,7 +1128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 10),
                       Text(
                         'Authorization Header:',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -1137,7 +1137,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 4),
                       SelectableText(
                         'Authorization: Bearer <YOUR_AVOTEK_API_KEY>',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 11,
                           color: AppColors.primaryBlue,
                         ),
@@ -1150,7 +1150,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // Available API Endpoints List
                 Text(
                   'Supported Endpoints',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1186,7 +1186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           children: [
                             Text(
                               'Need Production API Whitelisting?',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w800,
                                 color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1195,7 +1195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(height: 2),
                             Text(
                               'Contact Avotek Developer Desk on WhatsApp (+2348167002789) to get dedicated API keys and discounted corporate pricing.',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 11.5,
                                 color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                               ),
@@ -1244,7 +1244,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: Text(
               method,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 color: isPost ? AppColors.primaryBlue : AppColors.success,
@@ -1254,7 +1254,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(width: 10),
           Text(
             path,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1264,7 +1264,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Expanded(
             child: Text(
               description,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 11,
                 color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
               ),
@@ -1302,7 +1302,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(width: 10),
               Text(
                 'Change Password',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontWeight: FontWeight.w800,
                   fontSize: 18,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1337,7 +1337,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
               child: Text(
                 'Cancel',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
               ),
             ),
             ElevatedButton(
@@ -1383,7 +1383,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
               child: Text(
                 'Save Password',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+                style: GoogleFonts.figtree(fontWeight: FontWeight.w800),
               ),
             ),
           ],
@@ -1432,7 +1432,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       children: [
                         Text(
                           'Verify your account and enjoy\nunlimited transactions',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
                             color: isDark
@@ -1444,7 +1444,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         const SizedBox(height: 6),
                         Text(
                           'Your information is safe with us',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 13,
                             color: isDark
                                 ? AppColors.metallicLight
@@ -1492,7 +1492,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       children: [
                         Text(
                           'KYC Verification Progress',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: isDark
@@ -1502,7 +1502,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         Text(
                           '100%',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
                             color: isDark
@@ -1577,7 +1577,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 16),
               Text(
                 'Verification Under Review',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 19,
                   fontWeight: FontWeight.w800,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1588,7 +1588,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   'Your KYC verification has been submitted and is currently being reviewed. This usually takes a few minutes. You will be notified once your verification is complete.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12.5,
                     height: 1.45,
                     color: isDark
@@ -1626,7 +1626,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Expanded(
                       child: Text(
                         'You can close this modal and continue using the app. Your verification status will update automatically.',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 11.5,
                           color: isDark
                               ? AppColors.metallicLight
@@ -1661,7 +1661,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: 6),
         Text(
           title,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.figtree(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: isDark ? AppColors.metallicLight : const Color(0xFF475569),
@@ -1726,7 +1726,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       Text(
                         'Upgrade to Corporate',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
                           color: isDark
@@ -1801,7 +1801,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           const SizedBox(height: 14),
                           Text(
                             'Unlock premium pricing, bulk orders, and exclusive features',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12.5,
                               color: isDark
                                   ? AppColors.metallicLight
@@ -1869,7 +1869,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         const SizedBox(width: 6),
                         Text(
                           'Corporate Benefits',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                             color: isDark
@@ -1912,7 +1912,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           Expanded(
                             child: RichText(
                               text: TextSpan(
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 11.5,
                                   height: 1.45,
                                   color: isDark
@@ -1922,7 +1922,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 children: [
                                   TextSpan(
                                     text: 'Business path ',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontWeight: FontWeight.w800,
                                       color: isDark
                                           ? Colors.white
@@ -1971,7 +1971,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           children: [
                             Text(
                               'Choose Upgrade Path',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -2039,7 +2039,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     children: [
                                       Text(
                                         'Individual Upgrade',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w800,
                                           color: isDark
@@ -2050,7 +2050,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       const SizedBox(height: 2),
                                       Text(
                                         'Pay a one-time fee and get instant corporate access',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 11.5,
                                           color: isDark
                                               ? AppColors.metallicLight
@@ -2074,7 +2074,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               children: [
                                 Text(
                                   '₦10,000',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.electricCyan,
@@ -2083,7 +2083,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   'Instant activation',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12,
                                     color: isDark
                                         ? AppColors.metallicLight
@@ -2118,7 +2118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 children: [
                                   Text(
                                     '✔ Instant Access',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.primaryCyan,
@@ -2126,7 +2126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                                   Text(
                                     '✔ No Documents',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.primaryCyan,
@@ -2134,7 +2134,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                                   Text(
                                     '✔ No Approval Wait',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.primaryCyan,
@@ -2203,7 +2203,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     children: [
                                       Text(
                                         'Business Upgrade',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w800,
                                           color: isDark
@@ -2214,7 +2214,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       const SizedBox(height: 2),
                                       Text(
                                         'Pay ₦3,000 validation fee + upload CAC documents for corporate upgrade',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.figtree(
                                           fontSize: 11.5,
                                           color: isDark
                                               ? AppColors.metallicLight
@@ -2238,7 +2238,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               children: [
                                 Text(
                                   '₦3,000',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.success,
@@ -2247,7 +2247,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   'CAC validation + 24h review',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.figtree(
                                     fontSize: 12,
                                     color: isDark
                                         ? AppColors.metallicLight
@@ -2282,7 +2282,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 children: [
                                   Text(
                                     '✔ ₦5K validation (Avotek covers ₦2K)',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.success,
@@ -2290,7 +2290,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                                   Text(
                                     '✔ Upload CAC',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.success,
@@ -2298,7 +2298,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                                   Text(
                                     '✔ 24h Review',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.figtree(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.success,
@@ -2339,7 +2339,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Back to Overview',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.figtree(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -2386,7 +2386,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 6),
             Text(
               title,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 9.5,
                 fontWeight: FontWeight.w700,
                 color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -2395,7 +2395,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 4),
             Text(
               value,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.figtree(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
                 color:
@@ -2407,7 +2407,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 9.5,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                 ),
@@ -2525,7 +2525,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -2534,7 +2534,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 2),
                 Text(
                   desc,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 10.5,
                     color: isDark
                         ? AppColors.metallicLight
@@ -2567,7 +2567,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           title: Text(
             'Edit Profile Details',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontWeight: FontWeight.w800,
               fontSize: 18,
             ),
@@ -2591,7 +2591,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: () => Navigator.pop(ctx),
               child: Text(
                 'Cancel',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
               ),
             ),
             ElevatedButton(
@@ -2615,7 +2615,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
               child: Text(
                 'Save',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+                style: GoogleFonts.figtree(fontWeight: FontWeight.w800),
               ),
             ),
           ],
@@ -2647,24 +2647,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // Header: Settings - Manage your security, notifications, and preferences
                   Text(
                     'Settings',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Manage your security, notifications, and preferences',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w500,
-                      color: isDark
-                          ? AppColors.metallicLight
-                          : AppColors.slateGrey,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // --- SECTION 1: ACCOUNT (Matches Screenshot 2) ---
                   _buildSectionContainer(
@@ -2677,7 +2666,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.success,
                         iconBg: AppColors.success.withValues(alpha: 0.15),
                         title: 'Account Status (KYC)',
-                        subtitle: 'Your account is fully verified',
+                        subtitle: null,
                         trailing: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -2689,7 +2678,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           child: Text(
                             'Verified',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: AppColors.success,
@@ -2705,7 +2694,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.primaryCyan,
                         iconBg: AppColors.primaryCyan.withValues(alpha: 0.15),
                         title: 'Edit Profile',
-                        subtitle: 'Update your personal information',
+                        subtitle: null,
                         trailing: const Icon(
                           Icons.chevron_right_rounded,
                           color: Colors.grey,
@@ -2719,7 +2708,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.electricCyan,
                         iconBg: AppColors.electricCyan.withValues(alpha: 0.15),
                         title: 'Affiliate Programme',
-                        subtitle: 'Earn lifetime commission on referrals',
+                        subtitle: null,
                         trailing: const Icon(
                           Icons.chevron_right_rounded,
                           color: Colors.grey,
@@ -2733,7 +2722,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.primaryBlue,
                         iconBg: AppColors.primaryBlue.withValues(alpha: 0.15),
                         title: 'API Documentation',
-                        subtitle: 'Provider endpoints and integration status',
+                        subtitle: null,
                         trailing: const Icon(
                           Icons.chevron_right_rounded,
                           color: Colors.grey,
@@ -2747,7 +2736,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.electricCyan,
                         iconBg: AppColors.primaryBlue.withValues(alpha: 0.15),
                         title: 'Upgrade Membership Plan',
-                        subtitle: 'Unlock corporate benefits and pricing',
+                        subtitle: null,
                         trailing: const Icon(
                           Icons.chevron_right_rounded,
                           color: Colors.grey,
@@ -2770,7 +2759,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.primaryCyan,
                         iconBg: AppColors.primaryCyan.withValues(alpha: 0.15),
                         title: 'Change Transaction PIN',
-                        subtitle: 'Update or reset your 4-digit PIN',
+                        subtitle: null,
                         trailing: const Icon(
                           Icons.chevron_right_rounded,
                           color: Colors.grey,
@@ -2784,7 +2773,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.primaryBlue,
                         iconBg: AppColors.primaryBlue.withValues(alpha: 0.15),
                         title: 'Change Password',
-                        subtitle: 'Update your account login password',
+                        subtitle: null,
                         trailing: const Icon(
                           Icons.chevron_right_rounded,
                           color: Colors.grey,
@@ -2831,7 +2820,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           'WhatsApp receipt delivery are not active until '
                           'their server providers are configured. Receipts '
                           'remain available in transaction history.',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 12,
                             height: 1.45,
                             color: isDark
@@ -2844,7 +2833,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                         child: Text(
                           'TRANSACTION UPDATES',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.0,
@@ -2901,7 +2890,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.success,
                         iconBg: AppColors.success.withValues(alpha: 0.15),
                         title: 'WhatsApp Live Support',
-                        subtitle: '+234 816 700 2789 · 24/7 instant chat & resolution',
+                        subtitle: null,
                         trailing: const Icon(
                           Icons.open_in_new_rounded,
                           color: AppColors.success,
@@ -2916,7 +2905,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.electricCyan,
                         iconBg: AppColors.electricCyan.withValues(alpha: 0.15),
                         title: 'FAQs & Service Guides',
-                        subtitle: 'Learn about Pay For Me, Affiliate commissions & vouchers',
+                        subtitle: null,
                         trailing: const Icon(
                           Icons.chevron_right_rounded,
                           color: Colors.grey,
@@ -2962,7 +2951,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           child: Text(
                             'v1.0.0',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
                               color: isDark
@@ -3019,8 +3008,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         iconColor: AppColors.error,
                         iconBg: AppColors.error.withValues(alpha: 0.12),
                         title: 'Sign Out',
-                        subtitle:
-                            'Safely terminate active session on this device',
+                        subtitle: null,
                         trailing: const Icon(
                           Icons.arrow_forward_ios_rounded,
                           color: AppColors.error,
@@ -3046,7 +3034,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Center(
                     child: Text(
                       'Avotek.ng © 2022-2026 By Avotek Technologies',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: isDark ? Colors.white38 : Colors.black38,
@@ -3097,7 +3085,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(width: 10),
                 Text(
                   title,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -3149,7 +3137,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -3159,7 +3147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 11.5,
                         color: isDark
                             ? AppColors.metallicLight
@@ -3202,7 +3190,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(width: 10),
               Text(
                 title,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w700,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -3221,7 +3209,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 child: Text(
                   badge,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 9.5,
                     fontWeight: FontWeight.w800,
                     color: badge == 'ACTIVE'
@@ -3258,7 +3246,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Expanded(
                   child: Text(
                     warningNote,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 10.5,
                       color: badge == 'ACTIVE'
                           ? (isDark

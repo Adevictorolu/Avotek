@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
-import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
@@ -63,7 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Text(
                       'Update Profile',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -78,7 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 6),
                 Text(
                   'Keep your name and Nigerian phone number up to date for fast service delivery and verification.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 12.5,
                     color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                   ),
@@ -86,18 +85,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 20),
                 TextField(
                   controller: nameCtrl,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                   decoration: InputDecoration(
                     labelText: 'Full Name',
-                    labelStyle: GoogleFonts.plusJakartaSans(
+                    labelStyle: GoogleFonts.figtree(
                       color: isDark ? Colors.white70 : const Color(0xFF475569),
                     ),
                     hintText: 'e.g. Victor Ademola',
-                    hintStyle: GoogleFonts.plusJakartaSans(
+                    hintStyle: GoogleFonts.figtree(
                       color: isDark ? Colors.white38 : Colors.black38,
                     ),
                     prefixIcon: const Icon(Icons.person_outline_rounded, size: 18),
@@ -108,18 +107,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 TextField(
                   controller: phoneCtrl,
                   keyboardType: TextInputType.phone,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
-                    labelStyle: GoogleFonts.plusJakartaSans(
+                    labelStyle: GoogleFonts.figtree(
                       color: isDark ? Colors.white70 : const Color(0xFF475569),
                     ),
                     hintText: 'e.g. 08167002789',
-                    hintStyle: GoogleFonts.plusJakartaSans(
+                    hintStyle: GoogleFonts.figtree(
                       color: isDark ? Colors.white38 : Colors.black38,
                     ),
                     prefixIcon: const Icon(Icons.phone_android_rounded, size: 18),
@@ -171,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           )
                         : Text(
                             'Save Changes',
-                            style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800),
+                            style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w800),
                           ),
                   ),
                 ),
@@ -235,7 +234,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Text(
                           'Profile',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
                             color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -244,7 +243,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 2),
                         Text(
                           'Your verified account information',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.figtree(
                             fontSize: 13,
                             color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                           ),
@@ -270,7 +269,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   backgroundColor: AppColors.primaryBlue,
                   child: Text(
                     initials,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
@@ -282,7 +281,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Centered Name
                 Text(
                   fullName,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -391,7 +390,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -403,7 +402,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(width: 2),
                 Text(
                   'Verified',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: AppColors.success,
@@ -414,7 +413,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(width: 2),
                 Text(
                   'Unverified',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.warning,
@@ -426,176 +425,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 6),
           Text(
             value,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.figtree(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showDownloadApkModal() async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    String apkUrl = 'https://github.com/adevictorolu/Avotek/releases/latest/download/avotek.apk';
-    String version = 'v1.2.0';
-
-    try {
-      final fetchedUrl = await SupabaseService.instance.getAppSetting('apk_download_url');
-      if (fetchedUrl != null && fetchedUrl.trim().isNotEmpty) {
-        apkUrl = fetchedUrl.trim();
-      }
-      final fetchedVer = await SupabaseService.instance.getAppSetting('apk_version');
-      if (fetchedVer != null && fetchedVer.trim().isNotEmpty) {
-        version = fetchedVer.trim();
-      }
-    } catch (_) {}
-
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF141722) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: BorderSide(
-            color: isDark ? const Color(0xFF1E2638) : const Color(0xFFE2E8F0),
-            width: 1.5,
-          ),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.android_rounded,
-                color: Color(0xFF10B981),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Download Mobile App',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                    ),
-                  ),
-                  Text(
-                    'Official Android APK ($version)',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 11.5,
-                      color: const Color(0xFF10B981),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Download the official Avotek mobile application directly to your Android device for lightning-fast recharge, biometric login, and push receipts.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  height: 1.5,
-                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1E293B)
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.verified_rounded,
-                      color: Color(0xFF10B981),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Direct APK build verified for Android 8.0+',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Close',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-            ),
-          ),
-          OutlinedButton.icon(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: apkUrl));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('APK download link copied to clipboard!'),
-                  backgroundColor: Color(0xFF10B981),
-                ),
-              );
-            },
-            icon: const Icon(Icons.copy_rounded, size: 16),
-            label: Text(
-              'Copy Link',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-            ),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final uri = Uri.parse(apkUrl);
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            },
-            icon: const Icon(Icons.download_rounded, size: 18),
-            label: Text(
-              'Download APK',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -637,7 +470,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(width: 12),
               Text(
                 'Tier 2 KYC (NIN)',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontWeight: FontWeight.w800,
                   fontSize: 19,
                 ),
@@ -652,7 +485,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Text(
                   'Enter your 11-digit National Identity Number (NIN). This upgrades your account to Tier 2 with unlimited daily limits.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 13,
                     height: 1.45,
                     color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -663,18 +496,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   controller: ninCtrl,
                   keyboardType: TextInputType.number,
                   maxLength: 11,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.figtree(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 2.0,
                   ),
                   decoration: InputDecoration(
                     labelText: 'National Identity Number (NIN)',
-                    labelStyle: GoogleFonts.plusJakartaSans(
+                    labelStyle: GoogleFonts.figtree(
                       color: isDark ? Colors.white70 : const Color(0xFF475569),
                     ),
                     hintText: '11 digits (e.g. 12345678901)',
-                    hintStyle: GoogleFonts.plusJakartaSans(
+                    hintStyle: GoogleFonts.figtree(
                       color: isDark ? Colors.white38 : Colors.black38,
                     ),
                     prefixIcon: const Icon(Icons.badge_rounded, size: 20),
@@ -691,7 +524,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: isSubmitting ? null : () => Navigator.pop(dialogCtx),
               child: Text(
                 'Cancel',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
               ),
             ),
             ElevatedButton(
@@ -747,7 +580,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     )
                   : Text(
                       'Verify NIN',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -796,40 +629,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // Header: Profile - Manage your personal information and account settings
                   Text(
                     'Profile',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Manage your personal information and account settings',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // --- CARD 1: USER PROFILE HEADER ---
                   _buildUserHeaderCard(isDark, fullName, email, phone, initials, isKycVerified, hasPhone),
                   const SizedBox(height: 20),
 
-                  // --- CARD 2: DOWNLOAD OFFICIAL MOBILE APP (APK) ---
-                  _buildDownloadApkCard(isDark),
-                  const SizedBox(height: 20),
-
-                  // --- CARD 3: VERIFICATION / KYC STATUS CARD ---
+                  // --- CARD 2: VERIFICATION / KYC STATUS CARD ---
                   _buildKycStatusCard(isDark, fullName, email, phone, user, hasPhone),
                   const SizedBox(height: 20),
 
-                  // --- CARD 4: SUPPORT, HELP & ACTIVITY (EMBEDDED PROFILE SUPPORT) ---
+                  // --- CARD 3: SUPPORT, HELP & ACTIVITY ---
                   _buildSupportAndHistoryCard(isDark),
                   const SizedBox(height: 24),
 
-                  // --- CARD 5: SIGN OUT ---
+                  // --- CARD 4: SIGN OUT ---
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(22),
@@ -857,18 +677,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               Text(
                                 'Sign Out of Avotek',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.figtree(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.error,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Securely terminate your active session and return to sign-in.',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12.5,
-                                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                                 ),
                               ),
                             ],
@@ -942,7 +754,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   backgroundColor: AppColors.primaryBlue,
                   child: Text(
                     initials,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
@@ -976,7 +788,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: Text(
                         fullName,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1006,7 +818,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: Text(
                         email,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 12.5,
                           color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                         ),
@@ -1038,7 +850,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(width: 4),
                           Text(
                             isKycVerified ? 'Tier 2 Member' : 'Tier 1 (Standard)',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: isDark ? Colors.white70 : const Color(0xFF475569),
@@ -1071,7 +883,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(width: 4),
                           Text(
                             isKycVerified ? 'KYC Verified' : (hasPhone ? 'KYC Pending' : 'KYC Unverified'),
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: isKycVerified ? AppColors.success : AppColors.warning,
@@ -1090,113 +902,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 2. DOWNLOAD OFFICIAL MOBILE APP (APK) PROMO CARD
-  Widget _buildDownloadApkCard(bool isDark) {
-    return InkWell(
-      onTap: _showDownloadApkModal,
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : AppColors.lightCard,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: const Color(0xFF10B981).withValues(alpha: 0.5),
-            width: 1.5,
-          ),
-          gradient: isDark
-              ? const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.darkCardVariant,
-                    AppColors.darkCard,
-                  ],
-                )
-              : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.android_rounded,
-                    color: Color(0xFF10B981),
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Download Official Mobile App (APK)',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      const Icon(Icons.arrow_outward_rounded, size: 16, color: Colors.grey),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Get the official Avotek mobile application directly on your Android phone for ultra-fast transactions, biometric security, and push receipts.',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w500,
-                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildTagPill('OFFICIAL ANDROID APK', isDark),
-                _buildTagPill('FAST RECHARGE', isDark),
-                _buildTagPill('PUSH RECEIPTS', isDark),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTagPill(String text, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF222B3F) : const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.5,
-          color: isDark ? Colors.white70 : const Color(0xFF334155),
-        ),
-      ),
-    );
-  }
-
-  // 3. KYC STATUS / TIERED VERIFICATION CARD
+  // 2. KYC STATUS / TIERED VERIFICATION CARD
   Widget _buildKycStatusCard(
     bool isDark,
     String fullName,
@@ -1243,11 +949,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Expanded(
                 child: Text(
                   isTier2
-                      ? 'Tier 2 KYC Verified (NIN Verified 🛡️)'
+                      ? 'Identity verified'
                       : (isTier1
-                          ? 'Tier 1 KYC Verified (Phone Active ✅)'
-                          : 'Tier 0 (Phone Verification Required ⚠️)'),
-                  style: GoogleFonts.plusJakartaSans(
+                          ? 'Phone verified'
+                          : 'Phone verification needed'),
+                  style: GoogleFonts.figtree(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: isTier2
@@ -1263,11 +969,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 8),
           Text(
             isTier2
-                ? 'Your identity, Nigerian phone number, and National Identity Number (NIN) have been fully verified. Enjoy maximum daily transaction limits.'
+                  ? 'Your identity details are verified.'
                 : (isTier1
-                    ? 'Your Nigerian phone number is recorded. Upgrade to Tier 2 by providing your 11-digit NIN for unlimited transactions and priority service.'
-                    : 'Add your Nigerian phone number to complete Tier 1 KYC and activate automated transfer funding.'),
-            style: GoogleFonts.plusJakartaSans(
+                      ? 'Your phone number is verified.'
+                      : 'Add a Nigerian phone number to continue.'),
+            style: GoogleFonts.figtree(
               fontSize: 12.5,
               fontWeight: FontWeight.w500,
               height: 1.5,
@@ -1297,7 +1003,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ElevatedButton.icon(
                 onPressed: () => _openEditProfileModal(context, fullName, phone),
                 icon: const Icon(Icons.edit_rounded, size: 15),
-                label: Text(hasPhone ? 'Update Phone' : 'Add Phone (Tier 1)'),
+                label: Text(hasPhone ? 'Update phone' : 'Add phone'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBlue,
                   foregroundColor: Colors.white,
@@ -1320,7 +1026,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  textStyle: GoogleFonts.plusJakartaSans(
+                  textStyle: GoogleFonts.figtree(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
@@ -1369,7 +1075,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Text(
                       'Support & Activity Hub',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -1378,7 +1084,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 2),
                     Text(
                       '24/7 dedicated support, Help FAQs, and complete transaction history',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.figtree(
                         fontSize: 12.5,
                         color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                       ),
@@ -1412,7 +1118,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 20),
               label: Text(
                 'Chat on WhatsApp Support (+234 816 700 2789)',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -1446,8 +1152,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildActivityTile(
             icon: Icons.receipt_long_rounded,
             iconColor: const Color(0xFF0052FF),
-            title: 'Transaction & Activity History',
-            subtitle: 'View all bills, airtime, data receipts, token codes & wallet funding logs',
+            title: 'Transactions',
+            subtitle: null,
             isDark: isDark,
             onTap: () => context.push('/transactions'),
           ),
@@ -1455,8 +1161,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildActivityTile(
             icon: Icons.help_outline_rounded,
             iconColor: const Color(0xFF00D2FF),
-            title: 'Avotek Help & Frequently Asked Questions',
-            subtitle: 'Learn how Pay For Me, Airtime Cashback & Gift Vouchers work',
+            title: 'Help & FAQs',
+            subtitle: null,
             isDark: isDark,
             onTap: () => _showHelpFaqModal(context, isDark),
           ),
@@ -1464,8 +1170,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildActivityTile(
             icon: Icons.security_rounded,
             iconColor: const Color(0xFF10B981),
-            title: 'Security & Transaction PIN',
-            subtitle: 'Manage your password, biometrics, and 4-digit transaction authorization PIN',
+            title: 'Security',
+            subtitle: null,
             isDark: isDark,
             onTap: () => context.push('/settings'),
           ),
@@ -1478,7 +1184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required IconData icon,
     required Color iconColor,
     required String title,
-    required String subtitle,
+    String? subtitle,
     required bool isDark,
     required VoidCallback onTap,
   }) {
@@ -1511,20 +1217,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.figtree(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.5,
-                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                  if (subtitle != null && subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.figtree(
+                        fontSize: 11.5,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -1571,9 +1281,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'your receipt history.',
       ),
       (
-        'How do I fund my wallet with Paystack Direct?',
-        'Navigate to Fund Wallet and select Paystack Direct. You can pay via debit cards (Mastercard/Visa/Verve), '
-            'bank transfer, USSD, or Apple Pay with instant zero-delay wallet crediting.',
+        'How do I fund my wallet?',
+        'Open Fund Wallet and follow the payment options shown for your account. Your balance updates after the payment is confirmed.',
       ),
       (
         'My transaction is pending or processing',
@@ -1614,7 +1323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
               Text(
                 'Avotek Help & FAQs',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                 ),
@@ -1622,7 +1331,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 6),
               Text(
                 'Frequently asked questions & instant live assistance',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.figtree(
                   fontSize: 13,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                 ),
@@ -1640,7 +1349,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       childrenPadding: const EdgeInsets.only(bottom: 12),
                       title: Text(
                         faq.$1,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.figtree(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w700,
                         ),
@@ -1650,7 +1359,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             faq.$2,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.figtree(
                               fontSize: 12.5,
                               height: 1.45,
                               color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
