@@ -35,21 +35,78 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
   String? _verifiedCustomerName;
 
   final List<Map<String, String>> _discoList = [
-    {'id': 'ikeja-electric', 'name': 'Ikeja Electric - IKEDC (PHCN)'},
-    {'id': 'eko-electric', 'name': 'Eko Electricity - EKEDC (PHCN)'},
-    {'id': 'kano-electric', 'name': 'Kano Electricity - KEDCO (PHCN)'},
+    {
+      'id': 'ikeja-electric',
+      'name': 'Ikeja Electric (IKEDC)',
+      'code': 'IKEDC',
+      'logo': 'assets/images/brands/ikedc.png',
+    },
+    {
+      'id': 'eko-electric',
+      'name': 'Eko Electricity (EKEDC)',
+      'code': 'EKEDC',
+      'logo': 'assets/images/brands/ekedc.png',
+    },
+    {
+      'id': 'kano-electric',
+      'name': 'Kano Electricity (KEDCO)',
+      'code': 'KEDCO',
+      'logo': 'assets/images/brands/kedco.png',
+    },
     {
       'id': 'portharcourt-electric',
-      'name': 'Port Harcourt Electricity - PHED (PHCN)',
+      'name': 'Port Harcourt (PHED)',
+      'code': 'PHED',
+      'logo': 'assets/images/brands/phed.png',
     },
-    {'id': 'jos-electric', 'name': 'Jos Electricity - JED (PHCN)'},
-    {'id': 'ibadan-electric', 'name': 'Ibadan Electricity - IBEDC (PHCN)'},
-    {'id': 'kaduna-electric', 'name': 'Kaduna Electricity - KAEDCO (PHCN)'},
-    {'id': 'abuja-electric', 'name': 'Abuja Electricity - AEDC (PHCN)'},
-    {'id': 'enugu-electric', 'name': 'Enugu Electricity - EEDC (PHCN)'},
-    {'id': 'benin-electric', 'name': 'Benin Electricity - BEDC (PHCN)'},
-    {'id': 'aba-electric', 'name': 'Aba Electricity - AED (PHCN)'},
-    {'id': 'yola-electric', 'name': 'Yola Electricity - YED (PHCN)'},
+    {
+      'id': 'jos-electric',
+      'name': 'Jos Electricity (JED)',
+      'code': 'JED',
+      'logo': 'assets/images/brands/jed.png',
+    },
+    {
+      'id': 'ibadan-electric',
+      'name': 'Ibadan Electricity (IBEDC)',
+      'code': 'IBEDC',
+      'logo': 'assets/images/brands/ibedc.png',
+    },
+    {
+      'id': 'kaduna-electric',
+      'name': 'Kaduna Electricity (KAEDCO)',
+      'code': 'KAEDCO',
+      'logo': 'assets/images/brands/kaedco.png',
+    },
+    {
+      'id': 'abuja-electric',
+      'name': 'Abuja Electricity (AEDC)',
+      'code': 'AEDC',
+      'logo': 'assets/images/brands/aedc.png',
+    },
+    {
+      'id': 'enugu-electric',
+      'name': 'Enugu Electricity (EEDC)',
+      'code': 'EEDC',
+      'logo': 'assets/images/brands/eedc.png',
+    },
+    {
+      'id': 'benin-electric',
+      'name': 'Benin Electricity (BEDC)',
+      'code': 'BEDC',
+      'logo': 'assets/images/brands/bedc.png',
+    },
+    {
+      'id': 'aba-electric',
+      'name': 'Aba Electricity (AED/APLE)',
+      'code': 'ABA',
+      'logo': 'assets/images/brands/eedc.png',
+    },
+    {
+      'id': 'yola-electric',
+      'name': 'Yola Electricity (YEDC)',
+      'code': 'YEDC',
+      'logo': 'assets/images/brands/kedco.png',
+    },
   ];
 
   final List<double> _quickAmounts = [1000, 2000, 5000, 10000, 20000];
@@ -1176,14 +1233,14 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                         ),
                         const SizedBox(height: 12),
 
-                        // Compact scrollable widget container
+                        // Enlarged scrollable widget container with official DISCO logos
                         Container(
-                          height: 250,
+                          height: 480,
                           decoration: BoxDecoration(
                             color: isDark
                                 ? const Color(0xFF0D1017)
                                 : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: isDark
                                   ? const Color(0xFF1E2230)
@@ -1193,19 +1250,20 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           child: Scrollbar(
                             thumbVisibility: true,
                             child: GridView.builder(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(10),
                               itemCount: _discoList.length,
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: isDesktop ? 3 : 2,
-                                    crossAxisSpacing: 8,
-                                    mainAxisSpacing: 8,
-                                    childAspectRatio: isDesktop ? 2.35 : 1.75,
+                                    crossAxisSpacing: 10,
+                                    mainAxisSpacing: 10,
+                                    childAspectRatio: isDesktop ? 1.55 : 1.35,
                                   ),
                               itemBuilder: (context, index) {
                                 final disco = _discoList[index];
                                 final id = disco['id']!;
                                 final name = disco['name']!;
+                                final logo = disco['logo'] ?? 'assets/images/brands/ikedc.png';
                                 final isSelected = _selectedDisco == id;
 
                                 return InkWell(
@@ -1215,48 +1273,105 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                       _verifiedCustomerName = null;
                                     });
                                   },
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(12),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 6,
-                                    ),
+                                    padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
                                       color: isSelected
                                           ? (isDark
                                                 ? const Color(0xFF172554)
-                                                : const Color(0xFFDBEAFE))
+                                                : const Color(0xFFEFF6FF))
                                           : (isDark
-                                                ? const Color(0xFF1B1E29)
+                                                ? const Color(0xFF181C28)
                                                 : Colors.white),
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSelected
                                             ? const Color(0xFF0038B8)
                                             : (isDark
                                                   ? const Color(0xFF282D3D)
-                                                  : const Color(0xFFCBD5E1)),
+                                                  : const Color(0xFFE2E8F0)),
                                         width: isSelected ? 2 : 1,
                                       ),
+                                      boxShadow: [
+                                        if (isSelected)
+                                          BoxShadow(
+                                            color: const Color(0xFF0038B8).withValues(alpha: 0.18),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          )
+                                        else
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                      ],
                                     ),
-                                    child: Center(
-                                      child: Text(
-                                        name,
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.figtree(
-                                          fontSize: 12.5,
-                                          fontWeight: isSelected
-                                              ? FontWeight.w800
-                                              : FontWeight.w700,
-                                          color: isSelected
-                                              ? const Color(0xFF0038B8)
-                                              : (isDark
-                                                    ? Colors.white70
-                                                    : const Color(0xFF334155)),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        // Official Company Logo Badge
+                                        Container(
+                                          height: 48,
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: isSelected
+                                                  ? const Color(0xFF93C5FD)
+                                                  : const Color(0xFFF1F5F9),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: Image.asset(
+                                            logo,
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (context, error, stackTrace) => const Icon(
+                                              Icons.flash_on_rounded,
+                                              size: 26,
+                                              color: Color(0xFF0038B8),
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                        const SizedBox(height: 8),
+                                        // Company Name & Selection Checkmark
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            if (isSelected) ...[
+                                              const Icon(
+                                                Icons.check_circle_rounded,
+                                                size: 13,
+                                                color: Color(0xFF0038B8),
+                                              ),
+                                              const SizedBox(width: 4),
+                                            ],
+                                            Flexible(
+                                              child: Text(
+                                                name,
+                                                textAlign: TextAlign.center,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.figtree(
+                                                  fontSize: 11.5,
+                                                  fontWeight: isSelected
+                                                      ? FontWeight.w800
+                                                      : FontWeight.w600,
+                                                  color: isSelected
+                                                      ? const Color(0xFF0038B8)
+                                                      : (isDark
+                                                            ? Colors.white
+                                                            : const Color(0xFF0F172A)),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 );

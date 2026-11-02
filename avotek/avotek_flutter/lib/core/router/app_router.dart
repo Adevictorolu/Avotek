@@ -391,6 +391,28 @@ class AppRouter {
           ),
         ),
         GoRoute(
+          path: '/services/data-card',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            ExtraProviderServicesScreen(
+              service: ExtraProviderService.dataCard,
+              onToggleTheme: themeToggle,
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/services/airtime-to-cash',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            ExtraProviderServicesScreen(
+              service: ExtraProviderService.airtimeToCash,
+              onToggleTheme: themeToggle,
+            ),
+          ),
+        ),
+        GoRoute(
           path: '/services/bulk-sms',
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,

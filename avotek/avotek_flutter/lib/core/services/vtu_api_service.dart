@@ -344,6 +344,46 @@ class VtuApiService {
     },
   );
 
+  Future<Map<String, dynamic>> purchaseDataCardPins({
+    required int networkId,
+    required String planName,
+    required double price,
+    required int quantity,
+    String? businessName,
+    String? pin,
+  }) => _invoke(
+    'data_card.purchase',
+    userPin: pin,
+    payload: {
+      'network': networkId,
+      'plan_name': planName,
+      'amount': price,
+      'quantity': quantity,
+      'business_name': businessName ?? 'Avotek Data',
+    },
+  );
+
+  Future<Map<String, dynamic>> convertAirtimeToCash({
+    required int networkId,
+    required double amount,
+    required String phone,
+    String? bankName,
+    String? accountNumber,
+    String? accountName,
+    String? pin,
+  }) => _invoke(
+    'airtime_cash.convert',
+    userPin: pin,
+    payload: {
+      'network': networkId,
+      'amount': amount,
+      'phone': phone,
+      'bank_name': bankName,
+      'account_number': accountNumber,
+      'account_name': accountName,
+    },
+  );
+
   Future<Map<String, dynamic>> getSmsPricing() => _invoke('sms.pricing');
 
   Future<Map<String, dynamic>> initializeSponsorPayment({

@@ -160,7 +160,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
               // 1. MOBILE SERVICES
               _buildCategorySection(
                 title: 'MOBILE SERVICES',
-                count: 4,
+                count: 6,
                 isDark: isDark,
                 cards: [
                   _ServiceCardData(
@@ -184,6 +184,17 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                     title: 'Airtime PIN Generation',
                     icon: Icons.print_rounded,
                     onTap: () => context.push('/services/airtime-pins'),
+                  ),
+                  _ServiceCardData(
+                    title: 'Data Card Printing',
+                    icon: Icons.credit_card_rounded,
+                    isPopular: true,
+                    onTap: () => context.push('/services/data-card'),
+                  ),
+                  _ServiceCardData(
+                    title: 'Airtime to Cash',
+                    icon: Icons.currency_exchange_rounded,
+                    onTap: () => context.push('/services/airtime-to-cash'),
                   ),
                 ],
               ),

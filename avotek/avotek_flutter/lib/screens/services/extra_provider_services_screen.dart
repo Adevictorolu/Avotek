@@ -1,3 +1,4 @@
+import '../../core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,7 +16,7 @@ import '../../widgets/pay_for_me_dialog.dart';
 import '../../widgets/top_notification.dart';
 import '../../widgets/transaction_success_dialog.dart';
 
-enum ExtraProviderService { examPins, bulkSms, airtimePins }
+enum ExtraProviderService { examPins, bulkSms, airtimePins, dataCard, airtimeToCash }
 
 class ExtraProviderServicesScreen extends StatefulWidget {
   final ExtraProviderService service;
@@ -36,12 +37,25 @@ class _ExtraProviderServicesScreenState
     extends State<ExtraProviderServicesScreen> {
   static final List<Map<String, dynamic>> _defaultExamPrices = [
     {
+      'code': 'JAMB',
+      'name': 'JAMB UTME / Direct Entry',
+      'exam_type': 'JAMB',
+      'amount': 8200.0,
+      'badge': 'UTME & DE',
+      'subtitle': 'Candidate Profile & UTME / Direct Entry Registration',
+      'purpose': 'UTME & Direct Entry Registration e-PIN',
+      'color': const Color(0xFF0038B8),
+      'logo': 'assets/images/brands/jamb.png',
+      'icon': Icons.school_rounded,
+    },
+    {
       'code': 'WAEC',
       'name': 'WAEC Result Checker',
       'exam_type': 'WAEC',
       'amount': 5250.0,
       'badge': 'WEST AFRICA',
       'subtitle': 'Official e-PIN for WASSCE / WAEC exams',
+      'purpose': 'WASSCE Result Checking & Verification',
       'color': const Color(0xFF0F9D58),
       'logo': 'assets/images/brands/waec.png',
       'icon': Icons.school_rounded,
@@ -53,6 +67,7 @@ class _ExtraProviderServicesScreenState
       'amount': 2500.0,
       'badge': 'NATIONAL',
       'subtitle': 'Token for June/July & Nov/Dec NECO exams',
+      'purpose': 'SSCE & BECE Result Checking Token',
       'color': const Color(0xFF0052FF),
       'logo': 'assets/images/brands/neco.png',
       'icon': Icons.menu_book_rounded,
@@ -64,20 +79,10 @@ class _ExtraProviderServicesScreenState
       'amount': 1000.0,
       'badge': 'TECHNICAL',
       'subtitle': 'Official NBC / NTC verification e-PIN token',
+      'purpose': 'NBC & NTC Verification Token',
       'color': const Color(0xFF0052FF),
       'logo': 'assets/images/brands/nabteb.png',
       'icon': Icons.engineering_rounded,
-    },
-    {
-      'code': 'JAMB',
-      'name': 'JAMB UTME / Direct Entry',
-      'exam_type': 'JAMB',
-      'amount': 8200.0,
-      'badge': 'TERTIARY',
-      'subtitle': 'Official UTME & Direct Entry Registration e-PIN',
-      'color': const Color(0xFF0D9488),
-      'logo': 'assets/images/brands/waec.png',
-      'icon': Icons.school_rounded,
     },
   ];
 
@@ -118,6 +123,23 @@ class _ExtraProviderServicesScreenState
 
   static const List<int> _airtimePinDenominations = [100, 200, 500, 1000];
 
+  static final List<Map<String, dynamic>> _dataCardPlans = [
+    {'name': '1.5GB (30 Days)', 'price': 480.0, 'code': '1.5GB'},
+    {'name': '2.0GB (30 Days)', 'price': 620.0, 'code': '2.0GB'},
+    {'name': '3.0GB (30 Days)', 'price': 930.0, 'code': '3.0GB'},
+    {'name': '5.0GB (30 Days)', 'price': 1500.0, 'code': '5.0GB'},
+  ];
+  int _selectedDataCardIndex = 0;
+  double get _selectedDataCardPrice => (_dataCardPlans[_selectedDataCardIndex]['price'] as num).toDouble();
+  String get _selectedDataCardName => _dataCardPlans[_selectedDataCardIndex]['name'] as String;
+
+  final _airtimeToCashAmountCtrl = TextEditingController(text: '1000');
+  final _airtimeToCashSenderPhoneCtrl = TextEditingController();
+  final _bankNameCtrl = TextEditingController();
+  final _accountNumberCtrl = TextEditingController();
+  final _accountNameCtrl = TextEditingController();
+  final String _payoutDestination = 'wallet'; // 'wallet' or 'bank'
+
   final _quantityController = TextEditingController(text: '1');
   final _recipientController = TextEditingController();
   final _messageController = TextEditingController();
@@ -147,7 +169,7 @@ class _ExtraProviderServicesScreenState
       return 'assets/images/brands/nabteb.png';
     }
     if (clean.contains('JAMB')) {
-      return 'assets/images/brands/waec.png';
+      return 'assets/images/brands/jamb.png';
     }
     if (clean.contains('WAEC') || clean.contains('WASSCE')) {
       return 'assets/images/brands/waec.png';
@@ -156,6 +178,7 @@ class _ExtraProviderServicesScreenState
   }
 
   static const List<String> _brandLogoAssets = [
+    'assets/images/brands/jamb.png',
     'assets/images/brands/waec.png',
     'assets/images/brands/neco.png',
     'assets/images/brands/nabteb.png',
@@ -174,17 +197,34 @@ class _ExtraProviderServicesScreenState
   }
 
   bool get _isAirtimePins => widget.service == ExtraProviderService.airtimePins;
+  bool get _isDataCard => widget.service == ExtraProviderService.dataCard;
+  bool get _isAirtimeToCash => widget.service == ExtraProviderService.airtimeToCash;
+
   String get _title => _isExam
       ? 'Buy Result Checker'
-      : (_isAirtimePins ? 'Airtime PIN Generation' : 'Bulk SMS');
+      : (_isAirtimePins
+            ? 'Airtime PIN Generation'
+            : (_isDataCard
+                  ? 'Data Card Printing'
+                  : (_isAirtimeToCash ? 'Airtime to Cash' : 'Bulk SMS')));
+
   String get _subtitle => _isExam
-      ? 'Purchase WAEC, NECO, NABTEB, or NBAIS exam pins'
+      ? 'Purchase official JAMB, WAEC, NECO, or NABTEB registration & result checker PINs'
       : (_isAirtimePins
             ? 'Generate instant printable recharge cards with serial numbers'
-            : 'High-speed SMS routing across all Nigerian telecom networks');
+            : (_isDataCard
+                  ? 'Generate printable high-speed data vouchers with serial numbers'
+                  : (_isAirtimeToCash
+                        ? 'Convert excess airtime directly into wallet balance or bank account cash'
+                        : 'High-speed SMS routing across all Nigerian telecom networks')));
+
   String get _route => _isExam
       ? '/services/exam-pins'
-      : (_isAirtimePins ? '/services/airtime-pins' : '/services/bulk-sms');
+      : (_isAirtimePins
+            ? '/services/airtime-pins'
+            : (_isDataCard
+                  ? '/services/data-card'
+                  : (_isAirtimeToCash ? '/services/airtime-to-cash' : '/services/bulk-sms')));
 
   @override
   void initState() {
@@ -280,6 +320,14 @@ class _ExtraProviderServicesScreenState
       return quantity > 0
           ? (_selectedDenomination * quantity).toDouble()
           : null;
+    }
+    if (_isDataCard) {
+      final quantity = int.tryParse(_quantityController.text.trim()) ?? 1;
+      return quantity > 0 ? (_selectedDataCardPrice * quantity) : null;
+    }
+    if (_isAirtimeToCash) {
+      final amt = double.tryParse(_airtimeToCashAmountCtrl.text.trim()) ?? 1000.0;
+      return amt > 0 ? amt : null;
     }
     final cost = _smsCostPerPage;
     final message = _messageController.text.trim();
@@ -495,13 +543,40 @@ class _ExtraProviderServicesScreenState
                         : 'Avotek',
                     userPin: transactionPin,
                   )
-                : await vtu.sendBulkSms(
-                    userId: user.id,
-                    recipients: _recipients(),
-                    message: _messageController.text.trim(),
-                    senderName: _senderController.text.trim(),
-                    userPin: transactionPin!,
-                  ));
+                : (_isDataCard
+                      ? await vtu.buyDataCardPins(
+                          userId: user.id,
+                          networkId: _selectedNetworkId,
+                          networkName: networkObj['code'] as String,
+                          planName: _selectedDataCardName,
+                          price: _selectedDataCardPrice,
+                          quantity: int.parse(_quantityController.text.trim()),
+                          businessName: _businessNameController.text.trim().isNotEmpty
+                              ? _businessNameController.text.trim()
+                              : 'Avotek Data',
+                          userPin: transactionPin,
+                        )
+                      : (_isAirtimeToCash
+                            ? await vtu.convertAirtimeToCash(
+                                userId: user.id,
+                                networkId: _selectedNetworkId,
+                                networkName: networkObj['code'] as String,
+                                amount: double.parse(_airtimeToCashAmountCtrl.text.trim()),
+                                phone: _airtimeToCashSenderPhoneCtrl.text.trim().isNotEmpty
+                                    ? _airtimeToCashSenderPhoneCtrl.text.trim()
+                                    : (user.phone.isNotEmpty ? user.phone : '08167002789'),
+                                bankName: _payoutDestination == 'bank' ? _bankNameCtrl.text.trim() : null,
+                                accountNumber: _payoutDestination == 'bank' ? _accountNumberCtrl.text.trim() : null,
+                                accountName: _payoutDestination == 'bank' ? _accountNameCtrl.text.trim() : null,
+                                userPin: transactionPin,
+                              )
+                            : await vtu.sendBulkSms(
+                                userId: user.id,
+                                recipients: _recipients(),
+                                message: _messageController.text.trim(),
+                                senderName: _senderController.text.trim(),
+                                userPin: transactionPin!,
+                              ))));
 
       await auth.refreshWallet();
       await wallet.fetchWallet(user.id);
@@ -519,17 +594,31 @@ class _ExtraProviderServicesScreenState
           context,
           title: _isExam
               ? 'Exam PIN(s) Ready!'
-              : (_isAirtimePins ? 'Airtime PIN(s) Ready!' : 'Bulk SMS Sent!'),
+              : (_isAirtimePins
+                    ? 'Airtime PIN(s) Ready!'
+                    : (_isDataCard
+                          ? 'Data Card PIN(s) Ready!'
+                          : (_isAirtimeToCash
+                                ? 'Airtime to Cash Request Approved!'
+                                : 'Bulk SMS Sent!'))),
           serviceType: _isExam
               ? '${_selectedExam?['name'] ?? 'Result Checker'} × ${_quantityController.text}'
               : (_isAirtimePins
                     ? '${networkObj['code']} ₦$_selectedDenomination PIN × ${_quantityController.text}'
-                    : 'Bulk SMS (${_recipients().length} recipients)'),
+                    : (_isDataCard
+                          ? '${networkObj['code']} $_selectedDataCardName × ${_quantityController.text}'
+                          : (_isAirtimeToCash
+                                ? '${networkObj['code']} ₦${_airtimeToCashAmountCtrl.text} to Cash'
+                                : 'Bulk SMS (${_recipients().length} recipients)'))),
           recipient: _isExam
               ? (user.name.isNotEmpty ? user.name : (user.phone.isNotEmpty ? user.phone : 'Instant Screen Delivery'))
               : (_isAirtimePins
                     ? '${_businessNameController.text.trim()} / Self'
-                    : _recipients().join(', ')),
+                    : (_isDataCard
+                          ? '${_businessNameController.text.trim()} / Self'
+                          : (_isAirtimeToCash
+                                ? (_payoutDestination == 'bank' ? '${_bankNameCtrl.text} (${_accountNumberCtrl.text})' : 'Avotek Wallet Credit')
+                                : _recipients().join(', ')))),
           amount: amount,
           reference: result.order.id,
           providerReference: result.order.providerReference,
@@ -539,7 +628,11 @@ class _ExtraProviderServicesScreenState
               ? 'Your examination PIN(s) have been generated successfully.'
               : (_isAirtimePins
                     ? 'Your recharge PINs are generated and ready to print or load.'
-                    : 'Bulk SMS submitted successfully.'),
+                    : (_isDataCard
+                          ? 'Your data recharge PINs are generated and ready to print or load.'
+                          : (_isAirtimeToCash
+                                ? 'Your airtime conversion has been registered. Transfer the airtime to complete credit.'
+                                : 'Bulk SMS submitted successfully.'))),
         );
         if (!_isExam && !_isAirtimePins) {
           _messageController.clear();
@@ -834,7 +927,7 @@ class _ExtraProviderServicesScreenState
                   const SizedBox(height: 20),
 
                   // Service Specific UI
-                  if (_isAirtimePins) ...[
+                  if (_isAirtimePins || _isDataCard || _isAirtimeToCash) ...[
                     // Step 1: Select Telecom Network
                     Container(
                       width: double.infinity,
@@ -926,7 +1019,7 @@ class _ExtraProviderServicesScreenState
                                                         size: 26,
                                                         color: isSelected
                                                             ? const Color(
-                                                                0xFF00D2FF,
+                                                                0xFF0038B8,
                                                               )
                                                             : Colors.grey,
                                                       ),
@@ -981,6 +1074,7 @@ class _ExtraProviderServicesScreenState
                     ),
                     const SizedBox(height: 18),
 
+                    if (_isAirtimePins) ...[
                     // Step 2: Select Card Denomination
                     Container(
                       width: double.infinity,
@@ -998,7 +1092,7 @@ class _ExtraProviderServicesScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'SELECT CARD DENOMINATION',
+                            'CHOOSE AIRTIME DENOMINATION',
                             style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -1028,14 +1122,14 @@ class _ExtraProviderServicesScreenState
                                       ),
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? const Color(0xFF0052FF)
+                                            ? const Color(0xFF0038B8)
                                             : (isDark
                                                   ? const Color(0xFF1C202C)
                                                   : const Color(0xFFF1F5F9)),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: isSelected
-                                              ? const Color(0xFF0052FF)
+                                              ? const Color(0xFF0038B8)
                                               : (isDark
                                                     ? const Color(0xFF2C3142)
                                                     : const Color(0xFFCBD5E1)),
@@ -1045,7 +1139,7 @@ class _ExtraProviderServicesScreenState
                                             ? [
                                                 BoxShadow(
                                                   color: const Color(
-                                                    0xFF0052FF,
+                                                    0xFF0038B8,
                                                   ).withOpacity(0.3),
                                                   blurRadius: 8,
                                                 ),
@@ -1078,7 +1172,98 @@ class _ExtraProviderServicesScreenState
                       ),
                     ),
                     const SizedBox(height: 18),
+                    ],
 
+                    if (_isDataCard) ...[
+                    // Step 2: Select Data Card Plan
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF141721) : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'CHOOSE DATA CARD BUNDLE',
+                            style: GoogleFonts.figtree(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: _dataCardPlans.asMap().entries.map((entry) {
+                              final idx = entry.key;
+                              final plan = entry.value;
+                              final isSelected = _selectedDataCardIndex == idx;
+                              final price = (plan['price'] as num).toDouble();
+                              return Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  child: InkWell(
+                                    onTap: () => setState(() => _selectedDataCardIndex = idx),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? const Color(0xFF0038B8)
+                                            : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? const Color(0xFF0038B8)
+                                              : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                          width: isSelected ? 2 : 1,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            plan['code'] as String,
+                                            style: GoogleFonts.figtree(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w800,
+                                              color: isSelected ? Colors.white : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            '₦${price.toStringAsFixed(0)}',
+                                            style: GoogleFonts.figtree(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: isSelected ? const Color(0xFF93C5FD) : const Color(0xFF0038B8),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    ],
+
+                    if (_isAirtimePins || _isDataCard) ...[
                     // Step 3: Quantity Stepper & Chips
                     Container(
                       width: double.infinity,
@@ -1128,7 +1313,7 @@ class _ExtraProviderServicesScreenState
                                     icon: const Icon(
                                       Icons.remove_circle_outline_rounded,
                                     ),
-                                    color: const Color(0xFF0052FF),
+                                    color: const Color(0xFF0038B8),
                                   ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
@@ -1172,7 +1357,7 @@ class _ExtraProviderServicesScreenState
                                     icon: const Icon(
                                       Icons.add_circle_outline_rounded,
                                     ),
-                                    color: const Color(0xFF0052FF),
+                                    color: const Color(0xFF0038B8),
                                   ),
                                 ],
                               ),
@@ -1199,7 +1384,7 @@ class _ExtraProviderServicesScreenState
                                   decoration: BoxDecoration(
                                     color: isCur
                                         ? const Color(
-                                            0xFF0052FF,
+                                            0xFF0038B8,
                                           ).withOpacity(0.18)
                                         : (isDark
                                               ? const Color(0xFF1C202C)
@@ -1207,7 +1392,7 @@ class _ExtraProviderServicesScreenState
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: isCur
-                                          ? const Color(0xFF0052FF)
+                                          ? const Color(0xFF0038B8)
                                           : (isDark
                                                 ? const Color(0xFF2C3142)
                                                 : const Color(0xFFCBD5E1)),
@@ -1221,7 +1406,7 @@ class _ExtraProviderServicesScreenState
                                           ? FontWeight.w800
                                           : FontWeight.w600,
                                       color: isCur
-                                          ? const Color(0xFF00D2FF)
+                                          ? const Color(0xFF0038B8)
                                           : (isDark
                                                 ? Colors.white70
                                                 : const Color(0xFF475569)),
@@ -1253,7 +1438,7 @@ class _ExtraProviderServicesScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'NAME ON RECHARGE CARD (OPTIONAL)',
+                            _isDataCard ? 'NAME ON DATA CARD (OPTIONAL)' : 'NAME ON RECHARGE CARD (OPTIONAL)',
                             style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -1269,13 +1454,13 @@ class _ExtraProviderServicesScreenState
                             style: GoogleFonts.figtree(color: foreground),
                             decoration: InputDecoration(
                               hintText:
-                                  'e.g. Avotek Telecom or My Business Name',
+                                  _isDataCard ? 'e.g. Avotek Data or My Business Name' : 'e.g. Avotek Telecom or My Business Name',
                               hintStyle: GoogleFonts.figtree(
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
                               prefixIcon: const Icon(
                                 Icons.business_rounded,
-                                color: Color(0xFF00D2FF),
+                                color: Color(0xFF0038B8),
                               ),
                               filled: true,
                               fillColor: isDark
@@ -1302,6 +1487,135 @@ class _ExtraProviderServicesScreenState
                         ],
                       ),
                     ),
+                    const SizedBox(height: 18),
+                    ],
+
+                    if (_isAirtimeToCash) ...[
+                    // Step 2 & 3: Airtime to Cash Converter Box
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF141721) : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'AIRTIME AMOUNT TO CONVERT (₦)',
+                            style: GoogleFonts.figtree(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _airtimeToCashAmountCtrl,
+                            keyboardType: TextInputType.number,
+                            onChanged: (_) => setState(() {}),
+                            style: GoogleFonts.figtree(fontSize: 16, fontWeight: FontWeight.w800),
+                            decoration: InputDecoration(
+                              hintText: 'Enter amount (e.g. 2000)',
+                              prefixIcon: const Icon(Icons.currency_exchange_rounded, color: Color(0xFF0038B8)),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            children: [1000, 2000, 5000, 10000, 20000].map((quickAmt) {
+                              return ActionChip(
+                                label: Text('₦$quickAmt'),
+                                onPressed: () => setState(() => _airtimeToCashAmountCtrl.text = quickAmt.toString()),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'SENDER PHONE NUMBER',
+                            style: GoogleFonts.figtree(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _airtimeToCashSenderPhoneCtrl,
+                            keyboardType: TextInputType.phone,
+                            style: GoogleFonts.figtree(fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: 'e.g. 08012345678',
+                              prefixIcon: const Icon(Icons.phone_rounded, color: Color(0xFF0038B8)),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+
+                          // Live Conversion Calculation Box
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF172554) : const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFF0038B8).withValues(alpha: 0.3)),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('Conversion Payout Rate:', style: GoogleFonts.figtree(fontWeight: FontWeight.w600)),
+                                    Text(
+                                      _selectedNetworkId == 1 ? '85% (MTN)' : (_selectedNetworkId == 2 ? '82% (Airtel)' : (_selectedNetworkId == 3 ? '78% (Glo)' : '75% (9mobile)')),
+                                      style: GoogleFonts.figtree(fontWeight: FontWeight.w800, color: const Color(0xFF0038B8)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('You Will Receive (Cash/Wallet):', style: GoogleFonts.figtree(fontWeight: FontWeight.w700)),
+                                    Text(
+                                      '₦${((double.tryParse(_airtimeToCashAmountCtrl.text.trim()) ?? 1000.0) * (_selectedNetworkId == 1 ? 0.85 : (_selectedNetworkId == 2 ? 0.82 : (_selectedNetworkId == 3 ? 0.78 : 0.75)))).toStringAsFixed(2)}',
+                                      style: GoogleFonts.figtree(fontSize: 17, fontWeight: FontWeight.w900, color: AppColors.success),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(height: 16),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.security_rounded, size: 16, color: Color(0xFF0038B8)),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Official Avotek Airtime Receiver: 08167002789. Transfer airtime via your network USSD transfer code after confirmation.',
+                                        style: GoogleFonts.figtree(fontSize: 11.5, color: isDark ? Colors.white70 : const Color(0xFF334155)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    ],
                   ] else if (_isExam) ...[
                     // Exam Type Selector Card
                     Container(
@@ -1407,7 +1721,7 @@ class _ExtraProviderServicesScreenState
                                                         size: 26,
                                                         color: isSelected
                                                             ? const Color(
-                                                                0xFF00D2FF,
+                                                                0xFF0038B8,
                                                               )
                                                             : Colors.grey,
                                                       ),
@@ -1433,7 +1747,7 @@ class _ExtraProviderServicesScreenState
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.w700,
                                                     color: const Color(
-                                                      0xFF00D2FF,
+                                                      0xFF0038B8,
                                                     ),
                                                   ),
                                                 ),
@@ -1467,6 +1781,52 @@ class _ExtraProviderServicesScreenState
                               );
                             }).toList(),
                           ),
+                          if (_selectedExam != null) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (_selectedExam?['code'] == 'JAMB')
+                                    ? (isDark
+                                          ? const Color(0xFF172554)
+                                          : const Color(0xFFEFF6FF))
+                                    : (isDark
+                                          ? const Color(0xFF1E2638)
+                                          : const Color(0xFFF1F5F9)),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFF0038B8).withValues(alpha: 0.35),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.verified_rounded,
+                                    size: 16,
+                                    color: Color(0xFF0038B8),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      (_selectedExam?['code'] == 'JAMB')
+                                          ? 'JAMB Service: Official UTME & Direct Entry (DE) Registration & Profile e-PIN'
+                                          : '${_selectedExam?['name']}: ${_selectedExam?['subtitle'] ?? 'Official Exam Verification Token'}',
+                                      style: GoogleFonts.figtree(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -1722,7 +2082,7 @@ class _ExtraProviderServicesScreenState
                               ),
                               prefixIcon: const Icon(
                                 Icons.badge_rounded,
-                                color: Color(0xFF00D2FF),
+                                color: Color(0xFF0038B8),
                               ),
                               filled: true,
                               fillColor: isDark

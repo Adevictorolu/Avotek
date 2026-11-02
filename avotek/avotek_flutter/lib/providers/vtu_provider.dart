@@ -602,6 +602,65 @@ class VtuProvider extends ChangeNotifier {
     );
   }
 
+  Future<OrderResult> buyDataCardPins({
+    required dynamic userId,
+    required int networkId,
+    required String networkName,
+    required String planName,
+    required double price,
+    required int quantity,
+    String? businessName,
+    String? userPin,
+  }) {
+    final amount = price * quantity;
+    return _purchase(
+      userId: userId,
+      serviceType: 'data_card',
+      network: networkName.toUpperCase(),
+      recipient: '${quantity}x $planName PINs',
+      plan: businessName ?? 'Avotek Data',
+      amount: amount,
+      dispatch: () => VtuApiService.instance.purchaseDataCardPins(
+        networkId: networkId,
+        planName: planName,
+        price: price,
+        quantity: quantity,
+        businessName: businessName,
+        pin: userPin,
+      ),
+    );
+  }
+
+  Future<OrderResult> convertAirtimeToCash({
+    required dynamic userId,
+    required int networkId,
+    required String networkName,
+    required double amount,
+    required String phone,
+    String? bankName,
+    String? accountNumber,
+    String? accountName,
+    String? userPin,
+  }) {
+    return _purchase(
+      userId: userId,
+      serviceType: 'airtime_cash',
+      network: networkName.toUpperCase(),
+      recipient: phone,
+      plan: 'Airtime to Cash (₦${amount.toInt()})',
+      amount: amount,
+      dispatch: () => VtuApiService.instance.convertAirtimeToCash(
+        networkId: networkId,
+        amount: amount,
+        phone: phone,
+        bankName: bankName,
+        accountNumber: accountNumber,
+        accountName: accountName,
+        pin: userPin,
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> fetchSmsPricing() =>
       VtuApiService.instance.getSmsPricing();
 

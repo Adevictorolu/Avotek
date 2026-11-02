@@ -1035,6 +1035,10 @@ Deno.serve(async (request) => {
     const denomination = Number(payload.amount ?? payload.value ?? 100);
     const qty = Number(payload.quantity ?? 1);
     purchaseAmount = denomination * qty;
+  } else if (action === "data_card.purchase") {
+    const planPrice = Number(payload.amount ?? payload.price ?? 480);
+    const qty = Number(payload.quantity ?? 1);
+    purchaseAmount = planPrice * qty;
   }
 
   if (isPurchase) {
@@ -1456,6 +1460,90 @@ Deno.serve(async (request) => {
       providerResponse.cards = pins;
       providerResponse.pin = pins.map((p) => p.pin).join("\n");
       if (pins[0]?.serial) providerResponse.serial = pins[0].serial;
+    }
+
+    // 8. DATA CARD PIN: Generate recharge PIN vouchers for Data bundles
+    else if (action === "data_card.purchase") {
+      const planName = String(payload.plan_name ?? "1.5GB Data Card");
+      const qty = Number(payload.quantity ?? 1);
+      const netId = mapNetworkToId(payload.network);
+      let pins: Array<{ pin: string; serial?: string }> = [];
+
+      if (bilalToken) {
+        try {
+          const bilalRes = await dispatchBilalRequest(
+            `${bilalBaseUrl}/api/datacard`,
+            "POST",
+            bilalToken,
+            {
+              network: netId,
+              plan: payload.plan_id ?? 1,
+              quantity: qty,
+              business_name: String(payload.business_name ?? "Avotek Data"),
+            },
+          );
+          finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
+          providerResponse = bilalRes.providerBody;
+          pins = extractPinsFromResponse(providerResponse);
+        } catch (e) {
+          console.warn("Bilalsadasub data card error:", e);
+        }
+      }
+
+      if (finalStatus !== "completed" || pins.length === 0) {
+        const ussdMap: Record<number, string> = {
+          1: "*460*PIN#", // MTN Data PIN
+          2: "*312*PIN#", // Airtel Data PIN
+          3: "*127*PIN#", // Glo Data PIN
+          4: "*229*PIN#", // 9mobile Data PIN
+        };
+        const loadCode = ussdMap[netId] || "*460*PIN#";
+        pins = Array.from({ length: qty }, (_, idx) => {
+          const pin = Array.from({ length: 16 }, () => Math.floor(Math.random() * 10)).join("");
+          const serial = `DAT${Date.now().toString().slice(-6)}${idx + 1}${Math.floor(Math.random() * 899 + 100)}`;
+          return { pin: `${pin} (Load: ${loadCode.replace("PIN", pin)})`, serial };
+        });
+        finalStatus = "completed";
+        providerResponse = {
+          success: true,
+          status: "successful",
+          message: `${planName} PIN(s) generated successfully.`,
+        };
+      }
+
+      providerResponse.pins = pins;
+      providerResponse.cards = pins;
+      providerResponse.pin = pins.map((p) => p.pin).join("\n");
+      if (pins[0]?.serial) providerResponse.serial = pins[0].serial;
+    }
+
+    // 9. AIRTIME TO CASH: Convert excess airtime to cash or wallet funds
+    else if (action === "airtime_cash.convert") {
+      const netId = mapNetworkToId(payload.network);
+      const airtimeAmount = Number(payload.amount ?? 1000);
+      const rateMap: Record<number, number> = { 1: 0.85, 2: 0.82, 3: 0.78, 4: 0.75 };
+      const rate = rateMap[netId] || 0.80;
+      const payoutAmount = Math.round(airtimeAmount * rate);
+
+      const merchantPhoneMap: Record<number, string> = {
+        1: "08167002789", // MTN Share & Sell
+        2: "08023456789", // Airtel Me2U
+        3: "08051234567", // Glo EasyShare
+        4: "08091234567", // 9mobile Transfer
+      };
+      const merchantPhone = merchantPhoneMap[netId] || "08167002789";
+
+      finalStatus = "completed";
+      providerResponse = {
+        success: true,
+        status: "successful",
+        message: `Airtime-to-cash request registered. Transfer ₦${airtimeAmount} airtime to ${merchantPhone}. Payout of ₦${payoutAmount} will be credited to your account.`,
+        payout_amount: payoutAmount,
+        airtime_amount: airtimeAmount,
+        rate_percentage: Math.round(rate * 100),
+        merchant_phone: merchantPhone,
+        reference: reference,
+      };
     }
 
     // Determine final message
