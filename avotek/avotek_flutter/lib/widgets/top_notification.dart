@@ -215,7 +215,7 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
           child: FadeTransition(
             opacity: _fadeAnimation,
             child: Align(
-              alignment: Alignment.topCenter,
+              alignment: Alignment.topRight,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 540),
                 child: Dismissible(
@@ -300,20 +300,20 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                         ),
                         const SizedBox(width: 10),
 
-                        // Animated Circular Progress Ring with Close X
-                        Stack(
-                          alignment: Alignment.center,
+                        // Linear countdown with a close action.
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             SizedBox(
-                              width: 30,
-                              height: 30,
+                              width: 44,
+                              height: 3,
                               child: TweenAnimationBuilder<double>(
                                 tween: Tween(begin: 1.0, end: 0.0),
                                 duration: widget.duration,
                                 builder: (context, value, _) {
-                                  return CircularProgressIndicator(
+                                  return LinearProgressIndicator(
                                     value: value,
-                                    strokeWidth: 2.2,
+                                    minHeight: 3,
                                     backgroundColor: accent.withValues(
                                       alpha: 0.15,
                                     ),
@@ -324,20 +324,22 @@ class _TopNotificationWidgetState extends State<_TopNotificationWidget>
                                 },
                               ),
                             ),
-                            InkWell(
-                              onTap: _handleDismiss,
-                              borderRadius: BorderRadius.circular(15),
-                              child: SizedBox(
-                                width: 30,
-                                height: 30,
-                                child: Icon(
-                                  Icons.close_rounded,
-                                  size: 16,
-                                  color: isDark
-                                      ? Colors.white70
-                                      : const Color(0xFF64748B),
-                                ),
+                            IconButton(
+                              onPressed: _handleDismiss,
+                              icon: Icon(
+                                Icons.close_rounded,
+                                size: 16,
+                                color: isDark
+                                    ? Colors.white70
+                                    : const Color(0xFF64748B),
                               ),
+                              constraints: const BoxConstraints.tightFor(
+                                width: 32,
+                                height: 32,
+                              ),
+                              padding: EdgeInsets.zero,
+                              visualDensity: VisualDensity.compact,
+                              tooltip: 'Dismiss',
                             ),
                           ],
                         ),

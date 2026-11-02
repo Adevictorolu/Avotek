@@ -48,7 +48,6 @@ class SupabaseService {
   // Fallback cache if Supabase PostgreSQL tables are pending migration in the SQL editor
   final Map<String, UserModel> _fallbackProfiles = {};
   final Map<String, WalletModel> _fallbackWallets = {};
-  final Map<String, List<TransactionModel>> _fallbackTransactions = {};
   final Map<String, List<VtuOrder>> _fallbackOrders = {};
 
   /// Initialize Supabase with the project URL and Anon Key
@@ -282,11 +281,14 @@ class SupabaseService {
 
     // Also persist directly to profiles table for push & email delivery triggers
     try {
-      await client.from('profiles').update({
-        'email_receipts': preferences.emailReceipts,
-        'push_notifications': preferences.pushNotifications,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', user.id);
+      await client
+          .from('profiles')
+          .update({
+            'email_receipts': preferences.emailReceipts,
+            'push_notifications': preferences.pushNotifications,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', user.id);
     } catch (e) {
       debugPrint('Notice updating notification preferences on profiles: $e');
     }
@@ -301,13 +303,16 @@ class SupabaseService {
     Map<String, dynamic>? metadata,
   ]) async {
     try {
-      await client.rpc('record_security_notification', params: {
-        'p_user_id': userId,
-        'p_event_type': eventType,
-        'p_title': title,
-        'p_message': message,
-        'p_metadata': metadata ?? {},
-      });
+      await client.rpc(
+        'record_security_notification',
+        params: {
+          'p_user_id': userId,
+          'p_event_type': eventType,
+          'p_title': title,
+          'p_message': message,
+          'p_metadata': metadata ?? {},
+        },
+      );
     } catch (e) {
       debugPrint('Notice recording security notification: $e');
     }
@@ -513,9 +518,11 @@ class SupabaseService {
           )
           .where((t) {
             // New users shouldn't have active phantom transactions from uncompleted checkout initializations
-            if (t.status.toLowerCase() == 'pending' && t.category == 'wallet_fund') {
+            if (t.status.toLowerCase() == 'pending' &&
+                t.category == 'wallet_fund') {
               final age = DateTime.now().difference(t.createdAt).inMinutes;
-              return age <= 10; // Only keep actively in-progress checkouts under 10 minutes
+              return age <=
+                  10; // Only keep actively in-progress checkouts under 10 minutes
             }
             return true;
           })
@@ -607,7 +614,9 @@ class SupabaseService {
     try {
       final res = await client.rpc('get_referral_leaderboard');
       if (res is List) {
-        return res.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+        return res
+            .map((item) => Map<String, dynamic>.from(item as Map))
+            .toList();
       }
     } catch (e) {
       debugPrint('Error getting referral leaderboard: $e');
@@ -617,9 +626,12 @@ class SupabaseService {
 
   /// Redeem AVO Points to wallet balance
   Future<Map<String, dynamic>> redeemAvoPoints(int pointsToRedeem) async {
-    final res = await client.rpc('redeem_avo_points', params: {
-      'points_to_redeem': pointsToRedeem,
-    });
+    final res = await client.rpc(
+      'redeem_avo_points',
+      params: {
+        'points_to_redeem': pointsToRedeem,
+      },
+    );
     return Map<String, dynamic>.from(res as Map);
   }
 
@@ -646,10 +658,13 @@ class SupabaseService {
     required String newStatus,
   }) async {
     try {
-      await client.rpc('admin_set_user_kyc', params: {
-        'target_user_id': targetUserId,
-        'new_status': newStatus,
-      });
+      await client.rpc(
+        'admin_set_user_kyc',
+        params: {
+          'target_user_id': targetUserId,
+          'new_status': newStatus,
+        },
+      );
       return true;
     } catch (e) {
       debugPrint('Error setting user KYC: $e');
@@ -663,11 +678,14 @@ class SupabaseService {
     required double deltaAmount,
     required String reason,
   }) async {
-    final res = await client.rpc('admin_adjust_user_wallet', params: {
-      'target_user_id': targetUserId,
-      'delta_amount': deltaAmount,
-      'reason': reason,
-    });
+    final res = await client.rpc(
+      'admin_adjust_user_wallet',
+      params: {
+        'target_user_id': targetUserId,
+        'delta_amount': deltaAmount,
+        'reason': reason,
+      },
+    );
     return (res as num).toDouble();
   }
 
@@ -677,44 +695,46 @@ class SupabaseService {
     String recipient = '',
     String note = '',
   }) async {
-    final res = await client.rpc('create_gift_voucher', params: {
-      'p_amount': amount,
-      'p_recipient': recipient,
-      'p_note': note,
-    });
+    final res = await client.rpc(
+      'create_gift_voucher',
+      params: {
+        'p_amount': amount,
+        'p_recipient': recipient,
+        'p_note': note,
+      },
+    );
     return Map<String, dynamic>.from(res as Map);
   }
 
   /// Redeem a gift voucher or coupon code with instant wallet crediting
   Future<Map<String, dynamic>> redeemGiftVoucher(String code) async {
-    final res = await client.rpc('redeem_gift_voucher', params: {
-      'p_code': code.trim(),
-    });
+    final res = await client.rpc(
+      'redeem_gift_voucher',
+      params: {
+        'p_code': code.trim(),
+      },
+    );
     return Map<String, dynamic>.from(res as Map);
   }
 
   /// List gift vouchers created by user
   Future<List<Map<String, dynamic>>> listUserGiftVouchers(String userId) async {
-    try {
-      final data = await client
-          .from('gift_vouchers')
-          .select()
-          .eq('creator_id', userId)
-          .order('created_at', ascending: false);
-      if (data is List) {
-        return data.map((d) => Map<String, dynamic>.from(d as Map)).toList();
-      }
-    } catch (e) {
-      debugPrint('Error listing gift vouchers: $e');
-    }
-    return [];
+    final data = await client
+        .from('gift_vouchers')
+        .select()
+        .eq('creator_id', userId)
+        .order('created_at', ascending: false);
+    return data.map((row) => Map<String, dynamic>.from(row)).toList();
   }
 
   /// Submit 11-digit NIN for Tier 2 KYC verification
   Future<Map<String, dynamic>> submitNinKyc(String nin) async {
-    final res = await client.rpc('submit_nin_kyc', params: {
-      'p_nin': nin.trim(),
-    });
+    final res = await client.rpc(
+      'submit_nin_kyc',
+      params: {
+        'p_nin': nin.trim(),
+      },
+    );
     return Map<String, dynamic>.from(res as Map);
   }
 

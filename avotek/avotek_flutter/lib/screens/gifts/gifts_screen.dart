@@ -81,12 +81,20 @@ class _GiftsScreenState extends State<GiftsScreen> {
             amount: amt,
             recipient: (r['recipient'] ?? 'Friend').toString(),
             status: status[0].toUpperCase() + status.substring(1),
-            createdAt: DateTime.tryParse(r['created_at']?.toString() ?? '') ??
+            createdAt:
+                DateTime.tryParse(r['created_at']?.toString() ?? '') ??
                 DateTime.now(),
           );
         }).toList();
       });
-    } catch (_) {
+    } catch (error) {
+      debugPrint('Loading gift vouchers failed: $error');
+      if (mounted) {
+        TopNotification.showError(
+          context,
+          'Could not load gift vouchers. Try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoadingGifts = false);
     }
@@ -114,7 +122,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
                 side: BorderSide(
-                  color: isDark ? const Color(0xFF1E2638) : const Color(0xFFE2E8F0),
+                  color: isDark
+                      ? const Color(0xFF1E2638)
+                      : const Color(0xFFE2E8F0),
                   width: 1.5,
                 ),
               ),
@@ -170,10 +180,14 @@ class _GiftsScreenState extends State<GiftsScreen> {
                           vertical: 11,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                          color: const Color(
+                            0xFF10B981,
+                          ).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.28),
+                            color: const Color(
+                              0xFF10B981,
+                            ).withValues(alpha: 0.28),
                           ),
                         ),
                         child: Row(
@@ -213,7 +227,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         style: GoogleFonts.figtree(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF334155),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -273,7 +289,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         style: GoogleFonts.figtree(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF334155),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -283,7 +301,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         decoration: InputDecoration(
                           hintText: 'e.g. 08123456789 or Adewale',
                           hintStyle: GoogleFonts.figtree(
-                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                            color: isDark
+                                ? Colors.white38
+                                : const Color(0xFF94A3B8),
                           ),
                           filled: true,
                           fillColor: isDark
@@ -307,7 +327,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         style: GoogleFonts.figtree(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF334155),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -318,7 +340,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         decoration: InputDecoration(
                           hintText: 'Happy Birthday! Enjoy your recharge.',
                           hintStyle: GoogleFonts.figtree(
-                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                            color: isDark
+                                ? Colors.white38
+                                : const Color(0xFF94A3B8),
                           ),
                           filled: true,
                           fillColor: isDark
@@ -381,25 +405,32 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       context,
                       title: 'Confirm Gift Creation',
                       amount: amt,
-                      description: 'Debit ₦${amt.toStringAsFixed(2)} to generate voucher',
+                      description:
+                          'Debit ₦${amt.toStringAsFixed(2)} to generate voucher',
                       onPinSubmit: (pin) async => auth.verifyPin(pin),
                     );
 
                     if (!mounted || confirmed != true) return;
 
                     try {
-                      final res = await SupabaseService.instance.createGiftVoucher(
-                        amount: amt,
-                        recipient: recipientCtrl.text.trim(),
-                        note: noteCtrl.text.trim(),
-                      );
+                      final res = await SupabaseService.instance
+                          .createGiftVoucher(
+                            amount: amt,
+                            recipient: recipientCtrl.text.trim(),
+                            note: noteCtrl.text.trim(),
+                          );
                       if (!mounted) return;
                       await auth.refreshWallet();
                       if (auth.user != null) {
                         await curWallet.fetchWallet(auth.user!.id);
                       }
                       _fetchGifts();
-                      final code = (res['code'] ?? 'AVOGIFT').toString();
+                      final code = (res['code'] ?? '').toString();
+                      if (code.isEmpty) {
+                        throw StateError(
+                          'Voucher was created without a claim code.',
+                        );
+                      }
                       _showVoucherReadyDialog(
                         code: code,
                         amount: amt,
@@ -449,7 +480,8 @@ class _GiftsScreenState extends State<GiftsScreen> {
     required String note,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final claimUrl = 'https://adevictorolu.github.io/Avotek/#/coupons?code=$code';
+    final claimUrl =
+        'https://adevictorolu.github.io/Avotek/#/coupons?code=$code';
 
     showDialog(
       context: context,
@@ -499,7 +531,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.figtree(
                     fontSize: 13,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -509,10 +543,14 @@ class _GiftsScreenState extends State<GiftsScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                    color: isDark
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                      color: isDark
+                          ? const Color(0xFF334155)
+                          : const Color(0xFFCBD5E1),
                     ),
                   ),
                   child: Column(
@@ -523,7 +561,9 @@ class _GiftsScreenState extends State<GiftsScreen> {
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.2,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          color: isDark
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF64748B),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -542,7 +582,10 @@ class _GiftsScreenState extends State<GiftsScreen> {
                         label: const Text('Copy Voucher Code'),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: code));
-                          TopNotification.showSuccess(context, 'Voucher code copied!');
+                          TopNotification.showSuccess(
+                            context,
+                            'Voucher code copied!',
+                          );
                         },
                       ),
                     ],
@@ -555,10 +598,14 @@ class _GiftsScreenState extends State<GiftsScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF131F38) : const Color(0xFFEFF6FF),
+                    color: isDark
+                        ? const Color(0xFF131F38)
+                        : const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFBFDBFE),
+                      color: isDark
+                          ? const Color(0xFF1E3A8A)
+                          : const Color(0xFFBFDBFE),
                     ),
                   ),
                   child: Row(
@@ -583,7 +630,10 @@ class _GiftsScreenState extends State<GiftsScreen> {
                       TextButton(
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: claimUrl));
-                          TopNotification.showSuccess(context, 'Claim link copied!');
+                          TopNotification.showSuccess(
+                            context,
+                            'Claim link copied!',
+                          );
                         },
                         child: const Text('Copy Link'),
                       ),
@@ -957,7 +1007,10 @@ class _GiftsScreenState extends State<GiftsScreen> {
                           icon: const Icon(Icons.copy_rounded, size: 14),
                           onPressed: () {
                             Clipboard.setData(ClipboardData(text: gift.code));
-                            TopNotification.showSuccess(context, 'Voucher code copied!');
+                            TopNotification.showSuccess(
+                              context,
+                              'Voucher code copied!',
+                            );
                           },
                           constraints: const BoxConstraints(),
                           padding: EdgeInsets.zero,

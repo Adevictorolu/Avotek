@@ -82,6 +82,19 @@ class AppRouter {
         );
 
         if (isProtected && !hasSession) {
+          if (path == '/coupons') {
+            final code = state.uri.queryParameters['code'];
+            if (code != null && code.trim().isNotEmpty) {
+              final returnTo = Uri(
+                path: '/coupons',
+                queryParameters: {'code': code.trim()},
+              ).toString();
+              return Uri(
+                path: '/login',
+                queryParameters: {'returnTo': returnTo},
+              ).toString();
+            }
+          }
           return '/login';
         }
 
@@ -90,6 +103,10 @@ class AppRouter {
         }
 
         if (hasSession && (path == '/login' || path == '/register')) {
+          final returnTo = state.uri.queryParameters['returnTo'];
+          if (returnTo != null && returnTo.startsWith('/coupons?code=')) {
+            return returnTo;
+          }
           return authenticatedHomeForEmail(currentUserEmail);
         }
 
@@ -182,7 +199,10 @@ class AppRouter {
           pageBuilder: (context, state) => buildAvotekTransitionPage(
             context,
             state,
-            const LoginScreen(initialSignUp: false),
+            LoginScreen(
+              initialSignUp: false,
+              returnTo: state.uri.queryParameters['returnTo'],
+            ),
           ),
         ),
         GoRoute(
@@ -193,6 +213,7 @@ class AppRouter {
             LoginScreen(
               initialSignUp: true,
               initialReferralCode: state.uri.queryParameters['ref'],
+              returnTo: state.uri.queryParameters['returnTo'],
             ),
           ),
         ),

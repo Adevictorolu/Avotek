@@ -5,11 +5,9 @@ import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/supabase/supabase_service.dart';
-import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
-import '../../widgets/pay_for_me_dialog.dart';
 import '../../widgets/pin_modal.dart';
 import '../../widgets/top_notification.dart';
 import '../../widgets/transaction_success_dialog.dart';
@@ -31,7 +29,6 @@ class _CableScreenState extends State<CableScreen> {
 
   // Options
   bool _autoRenew = false;
-  bool _payForMe = false;
 
   String _selectedProvider = 'GOTV';
   String? _selectedPackage;
@@ -72,10 +69,6 @@ class _CableScreenState extends State<CableScreen> {
   @override
   void initState() {
     super.initState();
-    final auth = context.read<AuthProvider>();
-    if (auth.user?.phone != null && auth.user!.phone!.isNotEmpty) {
-      _phoneController.text = auth.user!.phone!;
-    }
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadLivePackages());
   }
 
@@ -113,14 +106,18 @@ class _CableScreenState extends State<CableScreen> {
               'price': amt,
             };
           })
-          .where((p) => (p['code'] as String).isNotEmpty && (p['price'] as double) > 0)
+          .where(
+            (p) =>
+                (p['code'] as String).isNotEmpty && (p['price'] as double) > 0,
+          )
           .toList();
 
       setState(() {
         _livePackages = formatted;
         _isLoadingPackages = false;
         if (formatted.isEmpty) {
-          _packageLoadError = 'No live packages found for $provider. Please retry.';
+          _packageLoadError =
+              'No live packages found for $provider. Please retry.';
         } else {
           _selectedPackage = formatted.first['code'] as String;
           _packageAmount = formatted.first['price'] as double;
@@ -139,7 +136,10 @@ class _CableScreenState extends State<CableScreen> {
   Future<void> _handleVerifySmartcard() async {
     final card = _smartcardController.text.trim();
     if (card.length < 8) {
-      TopNotification.showWarning(context, 'Please enter a valid smartcard/IUC number (at least 8 digits).');
+      TopNotification.showWarning(
+        context,
+        'Please enter a valid smartcard/IUC number (at least 8 digits).',
+      );
       return;
     }
     setState(() {
@@ -164,9 +164,15 @@ class _CableScreenState extends State<CableScreen> {
       });
 
       if (res.isValid && res.customerName.isNotEmpty) {
-        TopNotification.showSuccess(context, 'Smartcard verified: ${res.customerName}');
+        TopNotification.showSuccess(
+          context,
+          'Smartcard verified: ${res.customerName}',
+        );
       } else {
-        TopNotification.showError(context, 'Could not verify decoder number. Please confirm and retry.');
+        TopNotification.showError(
+          context,
+          'Could not verify decoder number. Please confirm and retry.',
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -185,7 +191,7 @@ class _CableScreenState extends State<CableScreen> {
       if (card.length < 8) {
         errors.add('Enter your IUC/Smart card number (10+ digits)');
       }
-      if (_verifiedCustomerName == null && !_payForMe) {
+      if (_verifiedCustomerName == null) {
         errors.add('Decoder number must be verified first');
       }
       final phone = _phoneController.text.trim();
@@ -200,18 +206,6 @@ class _CableScreenState extends State<CableScreen> {
     final errors = _getValidationErrors();
     if (errors.isNotEmpty) {
       TopNotification.showWarning(context, errors.first);
-      return;
-    }
-
-    // 1. Pay For Me Mode
-    if (_payForMe && _activeMode == 0) {
-      final card = _smartcardController.text.trim();
-      await PayForMeDialog.show(
-        context,
-        serviceName: 'Cable TV ($_selectedProvider: $_selectedPackageName)',
-        recipient: 'Smartcard: $card (${_verifiedCustomerName ?? "Customer"})',
-        amount: _packageAmount,
-      );
       return;
     }
 
@@ -232,7 +226,8 @@ class _CableScreenState extends State<CableScreen> {
         context,
         title: 'Create Cable Gift Voucher',
         amount: _packageAmount,
-        description: 'Voucher for $_selectedProvider - $_selectedPackageName\nRecipient can redeem via coupons.',
+        description:
+            'Voucher for $_selectedProvider - $_selectedPackageName\nRecipient can redeem via coupons.',
         onPinSubmit: (pin) async => auth.verifyPin(pin),
       );
       if (confirmed == true && mounted) {
@@ -241,28 +236,38 @@ class _CableScreenState extends State<CableScreen> {
           final res = await SupabaseService.instance.createGiftVoucher(
             amount: _packageAmount,
             recipient: _phoneController.text.trim(),
-            note: 'Cable TV ($_selectedProvider: $_selectedPackageName) ${message.isNotEmpty ? "• $message" : ""}',
+            note:
+                'Cable TV ($_selectedProvider: $_selectedPackageName) ${message.isNotEmpty ? "• $message" : ""}',
           );
           await auth.refreshWallet();
           await wallet.fetchWallet(auth.user!.id);
 
           if (!mounted) return;
           setState(() => _isProcessing = false);
-          final voucherCode = res['code']?.toString() ?? 'GIFT-CODE';
+          final voucherCode = (res['code'] ?? '').toString().trim();
+          if (voucherCode.isEmpty) {
+            throw StateError('Voucher was created without a claim code.');
+          }
           await TransactionSuccessDialog.show(
             context,
             title: 'Gift Voucher Created!',
             serviceType: 'Cable TV Gift Voucher',
-            recipient: _phoneController.text.isNotEmpty ? _phoneController.text : 'Shareable Link',
+            recipient: _phoneController.text.isNotEmpty
+                ? _phoneController.text
+                : 'Shareable Link',
             amount: _packageAmount,
             reference: voucherCode,
             token: voucherCode,
-            message: 'Gift voucher created successfully! Share the voucher code with the recipient.',
+            message:
+                'Gift voucher created successfully! Share the voucher code with the recipient.',
           );
         } catch (e) {
           if (!mounted) return;
           setState(() => _isProcessing = false);
-          TopNotification.showError(context, 'Failed to create gift voucher: $e');
+          TopNotification.showError(
+            context,
+            'Failed to create gift voucher: $e',
+          );
         }
       }
       return;
@@ -275,7 +280,8 @@ class _CableScreenState extends State<CableScreen> {
       context,
       title: 'Confirm Cable TV Subscription',
       amount: _packageAmount,
-      description: '$_selectedProvider • $card\nSubscriber: $_verifiedCustomerName',
+      description:
+          '$_selectedProvider • $card\nSubscriber: $_verifiedCustomerName',
       onPinSubmit: (pin) async {
         transactionPin = pin;
         return auth.verifyPin(pin);
@@ -306,7 +312,11 @@ class _CableScreenState extends State<CableScreen> {
         setState(() => _isProcessing = false);
 
         if (!result.success || result.order.status == 'failed') {
-          TopNotification.showError(context, result.message, title: 'Subscription Failed');
+          TopNotification.showError(
+            context,
+            result.message,
+            title: 'Subscription Failed',
+          );
           return;
         }
 
@@ -318,7 +328,8 @@ class _CableScreenState extends State<CableScreen> {
           amount: _packageAmount,
           reference: result.order.id,
           providerReference: result.order.providerReference,
-          message: 'Your $_selectedProvider subscription has been renewed successfully.',
+          message:
+              'Your $_selectedProvider subscription has been renewed successfully.',
         );
         _smartcardController.clear();
         setState(() {
@@ -342,7 +353,9 @@ class _CableScreenState extends State<CableScreen> {
     return ResponsiveShell(
       currentRoute: '/services/cable',
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark
+            ? const Color(0xFF0F1117)
+            : const Color(0xFFF8FAFC),
         body: SingleChildScrollView(
           padding: EdgeInsets.symmetric(
             horizontal: isDesktop ? 32 : 16,
@@ -359,15 +372,24 @@ class _CableScreenState extends State<CableScreen> {
                     onTap: () => Navigator.of(context).maybePop(),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF1E2230)
+                            : const Color(0xFFE2E8F0),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.chevron_left, size: 18, color: isDark ? Colors.white70 : Colors.black87),
+                          Icon(
+                            Icons.chevron_left,
+                            size: 18,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Back',
@@ -406,10 +428,14 @@ class _CableScreenState extends State<CableScreen> {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF161922) : const Color(0xFFE2E8F0),
+                      color: isDark
+                          ? const Color(0xFF161922)
+                          : const Color(0xFFE2E8F0),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF262A38) : const Color(0xFFCBD5E1),
+                        color: isDark
+                            ? const Color(0xFF262A38)
+                            : const Color(0xFFCBD5E1),
                       ),
                     ),
                     child: Row(
@@ -423,7 +449,10 @@ class _CableScreenState extends State<CableScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 0
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                        colors: [
+                                          Color(0xFF0047FF),
+                                          Color(0xFF0038B8),
+                                        ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -432,7 +461,9 @@ class _CableScreenState extends State<CableScreen> {
                                 boxShadow: _activeMode == 0
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0038B8).withOpacity(0.35),
+                                          color: const Color(
+                                            0xFF0038B8,
+                                          ).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -447,7 +478,9 @@ class _CableScreenState extends State<CableScreen> {
                                     size: 18,
                                     color: _activeMode == 0
                                         ? Colors.white
-                                        : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                        : (isDark
+                                              ? Colors.white60
+                                              : const Color(0xFF64748B)),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -457,7 +490,9 @@ class _CableScreenState extends State<CableScreen> {
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 0
                                           ? Colors.white
-                                          : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                          : (isDark
+                                                ? Colors.white60
+                                                : const Color(0xFF64748B)),
                                     ),
                                   ),
                                 ],
@@ -474,7 +509,10 @@ class _CableScreenState extends State<CableScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 1
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                        colors: [
+                                          Color(0xFF0047FF),
+                                          Color(0xFF0038B8),
+                                        ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -483,7 +521,9 @@ class _CableScreenState extends State<CableScreen> {
                                 boxShadow: _activeMode == 1
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0038B8).withOpacity(0.35),
+                                          color: const Color(
+                                            0xFF0038B8,
+                                          ).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -498,7 +538,9 @@ class _CableScreenState extends State<CableScreen> {
                                     size: 18,
                                     color: _activeMode == 1
                                         ? Colors.white
-                                        : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                        : (isDark
+                                              ? Colors.white60
+                                              : const Color(0xFF64748B)),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -508,7 +550,9 @@ class _CableScreenState extends State<CableScreen> {
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 1
                                           ? Colors.white
-                                          : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                          : (isDark
+                                                ? Colors.white60
+                                                : const Color(0xFF64748B)),
                                     ),
                                   ),
                                 ],
@@ -541,7 +585,9 @@ class _CableScreenState extends State<CableScreen> {
                       color: isDark ? const Color(0xFF141721) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF222634)
+                            : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
@@ -553,7 +599,9 @@ class _CableScreenState extends State<CableScreen> {
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            color: isDark
+                                ? Colors.white70
+                                : const Color(0xFF475569),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -562,7 +610,9 @@ class _CableScreenState extends State<CableScreen> {
                             final isSelected = _selectedProvider == prov['id'];
                             return Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
                                 child: InkWell(
                                   onTap: () {
                                     if (_selectedProvider != prov['id']) {
@@ -576,20 +626,29 @@ class _CableScreenState extends State<CableScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
                                     height: 82,
-                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 6,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9),
+                                      color: isDark
+                                          ? const Color(0xFF1C202C)
+                                          : const Color(0xFFF1F5F9),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSelected
                                             ? const Color(0xFF0052FF)
-                                            : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                            : (isDark
+                                                  ? const Color(0xFF2C3142)
+                                                  : const Color(0xFFCBD5E1)),
                                         width: isSelected ? 2 : 1,
                                       ),
                                       boxShadow: isSelected
                                           ? [
                                               BoxShadow(
-                                                color: const Color(0xFF0052FF).withOpacity(0.25),
+                                                color: const Color(
+                                                  0xFF0052FF,
+                                                ).withOpacity(0.25),
                                                 blurRadius: 10,
                                                 spreadRadius: 1,
                                               ),
@@ -600,27 +659,39 @@ class _CableScreenState extends State<CableScreen> {
                                       children: [
                                         Center(
                                           child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
                                             children: [
                                               Image.asset(
                                                 prov['logo']!,
                                                 height: 32,
                                                 fit: BoxFit.contain,
-                                                errorBuilder: (ctx, err, stack) => Icon(
-                                                  Icons.tv,
-                                                  size: 26,
-                                                  color: isSelected ? const Color(0xFF00D2FF) : Colors.grey,
-                                                ),
+                                                errorBuilder:
+                                                    (ctx, err, stack) => Icon(
+                                                      Icons.tv,
+                                                      size: 26,
+                                                      color: isSelected
+                                                          ? const Color(
+                                                              0xFF00D2FF,
+                                                            )
+                                                          : Colors.grey,
+                                                    ),
                                               ),
                                               const SizedBox(height: 6),
                                               Text(
                                                 prov['label']!,
                                                 style: GoogleFonts.figtree(
                                                   fontSize: 11,
-                                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                                  fontWeight: isSelected
+                                                      ? FontWeight.w800
+                                                      : FontWeight.w600,
                                                   color: isSelected
                                                       ? const Color(0xFF00D2FF)
-                                                      : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                                      : (isDark
+                                                            ? Colors.white70
+                                                            : const Color(
+                                                                0xFF334155,
+                                                              )),
                                                 ),
                                               ),
                                             ],
@@ -637,7 +708,11 @@ class _CableScreenState extends State<CableScreen> {
                                                 color: Color(0xFF0052FF),
                                                 shape: BoxShape.circle,
                                               ),
-                                              child: const Icon(Icons.check, size: 10, color: Colors.white),
+                                              child: const Icon(
+                                                Icons.check,
+                                                size: 10,
+                                                color: Colors.white,
+                                              ),
                                             ),
                                           ),
                                       ],
@@ -657,12 +732,17 @@ class _CableScreenState extends State<CableScreen> {
                   if (_activeMode == 0) ...[
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -674,7 +754,9 @@ class _CableScreenState extends State<CableScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -684,25 +766,39 @@ class _CableScreenState extends State<CableScreen> {
                                 child: TextField(
                                   controller: _smartcardController,
                                   keyboardType: TextInputType.number,
-                                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
                                   onChanged: (_) {
                                     if (_verifiedCustomerName != null) {
-                                      setState(() => _verifiedCustomerName = null);
+                                      setState(
+                                        () => _verifiedCustomerName = null,
+                                      );
                                     }
                                   },
                                   style: GoogleFonts.figtree(
                                     fontSize: 14,
-                                    color: isDark ? Colors.white : Colors.black87,
+                                    color: isDark
+                                        ? Colors.white
+                                        : Colors.black87,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: 'Enter your decoder / smart card number',
+                                    hintText:
+                                        'Enter your decoder / smart card number',
                                     hintStyle: GoogleFonts.figtree(
                                       fontSize: 13,
-                                      color: isDark ? Colors.white38 : Colors.black38,
+                                      color: isDark
+                                          ? Colors.white38
+                                          : Colors.black38,
                                     ),
                                     filled: true,
-                                    fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    fillColor: isDark
+                                        ? const Color(0xFF1B1E29)
+                                        : const Color(0xFFF1F5F9),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10),
                                       borderSide: BorderSide.none,
@@ -714,19 +810,32 @@ class _CableScreenState extends State<CableScreen> {
                               SizedBox(
                                 height: 44,
                                 child: ElevatedButton(
-                                  onPressed: _isVerifying ? null : _handleVerifySmartcard,
+                                  onPressed: _isVerifying
+                                      ? null
+                                      : _handleVerifySmartcard,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF0038B8),
                                     foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
                                   child: _isVerifying
                                       ? const SizedBox(
                                           width: 16,
                                           height: 16,
-                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
                                         )
-                                      : const Text('Verify', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                                      : const Text(
+                                          'Verify',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ],
@@ -734,15 +843,28 @@ class _CableScreenState extends State<CableScreen> {
                           if (_verifiedCustomerName != null) ...[
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withOpacity(0.12),
+                                color: const Color(
+                                  0xFF10B981,
+                                ).withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFF10B981,
+                                  ).withOpacity(0.4),
+                                ),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 16),
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Color(0xFF10B981),
+                                    size: 16,
+                                  ),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
@@ -765,14 +887,18 @@ class _CableScreenState extends State<CableScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
                           TextField(
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
                             style: GoogleFonts.figtree(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
@@ -784,53 +910,18 @@ class _CableScreenState extends State<CableScreen> {
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              fillColor: isDark
+                                  ? const Color(0xFF1B1E29)
+                                  : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: Checkbox(
-                                  value: _payForMe,
-                                  activeColor: const Color(0xFF0038B8),
-                                  onChanged: (val) => setState(() => _payForMe = val ?? false),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _payForMe = !_payForMe),
-                                  child: RichText(
-                                    text: TextSpan(
-                                      text: 'Pay For Me ',
-                                      style: GoogleFonts.figtree(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark ? Colors.white70 : const Color(0xFF334155),
-                                      ),
-                                      children: [
-                                        TextSpan(
-                                          text: '- get a shareable payment link',
-                                          style: GoogleFonts.figtree(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.normal,
-                                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
                           ),
                         ],
                       ),
@@ -838,12 +929,17 @@ class _CableScreenState extends State<CableScreen> {
                   ] else ...[
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -855,14 +951,18 @@ class _CableScreenState extends State<CableScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
                           TextField(
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
                             style: GoogleFonts.figtree(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
@@ -874,8 +974,13 @@ class _CableScreenState extends State<CableScreen> {
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              fillColor: isDark
+                                  ? const Color(0xFF1B1E29)
+                                  : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
@@ -889,7 +994,9 @@ class _CableScreenState extends State<CableScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -908,7 +1015,9 @@ class _CableScreenState extends State<CableScreen> {
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                              fillColor: isDark
+                                  ? const Color(0xFF1B1E29)
+                                  : const Color(0xFFF1F5F9),
                               contentPadding: const EdgeInsets.all(12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -930,7 +1039,9 @@ class _CableScreenState extends State<CableScreen> {
                       color: isDark ? const Color(0xFF141721) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF222634)
+                            : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
@@ -945,7 +1056,9 @@ class _CableScreenState extends State<CableScreen> {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.8,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                color: isDark
+                                    ? Colors.white70
+                                    : const Color(0xFF475569),
                               ),
                             ),
                             Text(
@@ -953,7 +1066,9 @@ class _CableScreenState extends State<CableScreen> {
                               style: GoogleFonts.figtree(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                color: isDark
+                                    ? Colors.white38
+                                    : const Color(0xFF94A3B8),
                               ),
                             ),
                           ],
@@ -964,7 +1079,9 @@ class _CableScreenState extends State<CableScreen> {
                           const Center(
                             child: Padding(
                               padding: EdgeInsets.all(24),
-                              child: CircularProgressIndicator(color: Color(0xFF0038B8)),
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF0038B8),
+                              ),
                             ),
                           )
                         else if (_packageLoadError != null)
@@ -976,7 +1093,10 @@ class _CableScreenState extends State<CableScreen> {
                                   Text(
                                     _packageLoadError!,
                                     textAlign: TextAlign.center,
-                                    style: GoogleFonts.figtree(color: Colors.redAccent, fontSize: 13),
+                                    style: GoogleFonts.figtree(
+                                      color: Colors.redAccent,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                   const SizedBox(height: 10),
                                   ElevatedButton(
@@ -996,10 +1116,14 @@ class _CableScreenState extends State<CableScreen> {
                           Container(
                             height: 255,
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
+                              color: isDark
+                                  ? const Color(0xFF0D1017)
+                                  : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                                color: isDark
+                                    ? const Color(0xFF1E2230)
+                                    : const Color(0xFFE2E8F0),
                               ),
                             ),
                             child: Scrollbar(
@@ -1007,12 +1131,13 @@ class _CableScreenState extends State<CableScreen> {
                               child: GridView.builder(
                                 padding: const EdgeInsets.all(8),
                                 itemCount: _livePackages.length,
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: isDesktop ? 3 : 2,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                  childAspectRatio: isDesktop ? 2.3 : 1.5,
-                                ),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: isDesktop ? 3 : 2,
+                                      crossAxisSpacing: 8,
+                                      mainAxisSpacing: 8,
+                                      childAspectRatio: isDesktop ? 2.15 : 1.38,
+                                    ),
                                 itemBuilder: (context, index) {
                                   final pkg = _livePackages[index];
                                   final code = pkg['code'] as String;
@@ -1030,22 +1155,33 @@ class _CableScreenState extends State<CableScreen> {
                                     },
                                     borderRadius: BorderRadius.circular(10),
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 8,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? (isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE))
-                                            : (isDark ? const Color(0xFF1B1E29) : Colors.white),
+                                            ? (isDark
+                                                  ? const Color(0xFF172554)
+                                                  : const Color(0xFFDBEAFE))
+                                            : (isDark
+                                                  ? const Color(0xFF1B1E29)
+                                                  : Colors.white),
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
                                           color: isSelected
                                               ? const Color(0xFF0038B8)
-                                              : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
+                                              : (isDark
+                                                    ? const Color(0xFF282D3D)
+                                                    : const Color(0xFFCBD5E1)),
                                           width: isSelected ? 2 : 1,
                                         ),
                                       ),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             name,
@@ -1053,8 +1189,12 @@ class _CableScreenState extends State<CableScreen> {
                                             overflow: TextOverflow.ellipsis,
                                             style: GoogleFonts.figtree(
                                               fontSize: 13.5,
-                                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
-                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                              fontWeight: isSelected
+                                                  ? FontWeight.w800
+                                                  : FontWeight.w700,
+                                              color: isDark
+                                                  ? Colors.white
+                                                  : const Color(0xFF0F172A),
                                             ),
                                           ),
                                           const SizedBox(height: 4),
@@ -1063,7 +1203,9 @@ class _CableScreenState extends State<CableScreen> {
                                             style: GoogleFonts.figtree(
                                               fontSize: 17,
                                               fontWeight: FontWeight.w900,
-                                              color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                              color: isDark
+                                                  ? const Color(0xFF38BDF8)
+                                                  : const Color(0xFF0038B8),
                                               letterSpacing: 0.2,
                                             ),
                                           ),
@@ -1090,12 +1232,16 @@ class _CableScreenState extends State<CableScreen> {
                       border: Border.all(
                         color: isReadyToPay
                             ? const Color(0xFF0038B8)
-                            : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
+                            : (isDark
+                                  ? const Color(0xFF222634)
+                                  : const Color(0xFFE2E8F0)),
                         width: isReadyToPay ? 1.5 : 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
+                          color: isDark
+                              ? Colors.black26
+                              : Colors.black.withOpacity(0.04),
                           blurRadius: 10,
                           offset: const Offset(0, 3),
                         ),
@@ -1118,18 +1264,24 @@ class _CableScreenState extends State<CableScreen> {
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.8,
-                                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                      color: isDark
+                                          ? Colors.white54
+                                          : const Color(0xFF64748B),
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    _selectedPackageName.isNotEmpty ? _selectedPackageName : 'Choose a package below',
+                                    _selectedPackageName.isNotEmpty
+                                        ? _selectedPackageName
+                                        : 'Choose a package below',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.figtree(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark
+                                          ? Colors.white
+                                          : const Color(0xFF0F172A),
                                     ),
                                   ),
                                 ],
@@ -1137,12 +1289,19 @@ class _CableScreenState extends State<CableScreen> {
                             ),
                             if (_packageAmount > 0)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF1E2638) : const Color(0xFFEFF6FF),
+                                  color: isDark
+                                      ? const Color(0xFF1E2638)
+                                      : const Color(0xFFEFF6FF),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: const Color(0xFF0038B8).withOpacity(0.3),
+                                    color: const Color(
+                                      0xFF0038B8,
+                                    ).withOpacity(0.3),
                                   ),
                                 ),
                                 child: Text(
@@ -1150,7 +1309,9 @@ class _CableScreenState extends State<CableScreen> {
                                   style: GoogleFonts.figtree(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
-                                    color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                    color: isDark
+                                        ? const Color(0xFF38BDF8)
+                                        : const Color(0xFF0038B8),
                                   ),
                                 ),
                               ),
@@ -1165,19 +1326,26 @@ class _CableScreenState extends State<CableScreen> {
                           decoration: BoxDecoration(
                             gradient: isReadyToPay && !_isProcessing
                                 ? const LinearGradient(
-                                    colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                    colors: [
+                                      Color(0xFF0047FF),
+                                      Color(0xFF0038B8),
+                                    ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   )
                                 : null,
                             color: isReadyToPay && !_isProcessing
                                 ? null
-                                : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
+                                : (isDark
+                                      ? const Color(0xFF26324D)
+                                      : const Color(0xFFCBD5E1)),
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: isReadyToPay && !_isProcessing
                                 ? [
                                     BoxShadow(
-                                      color: const Color(0xFF0038B8).withOpacity(0.35),
+                                      color: const Color(
+                                        0xFF0038B8,
+                                      ).withOpacity(0.35),
                                       blurRadius: 10,
                                       offset: const Offset(0, 3),
                                     ),
@@ -1185,19 +1353,26 @@ class _CableScreenState extends State<CableScreen> {
                                 : null,
                           ),
                           child: ElevatedButton(
-                            onPressed: isReadyToPay && !_isProcessing ? _handleSubmit : null,
+                            onPressed: isReadyToPay && !_isProcessing
+                                ? _handleSubmit
+                                : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,
                               foregroundColor: Colors.white,
                               disabledForegroundColor: Colors.white38,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                             child: _isProcessing
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   )
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1205,7 +1380,7 @@ class _CableScreenState extends State<CableScreen> {
                                       Icon(
                                         _activeMode == 1
                                             ? Icons.card_giftcard
-                                            : (_payForMe ? Icons.share : Icons.tv_rounded),
+                                            : Icons.tv_rounded,
                                         size: 18,
                                         color: Colors.white,
                                       ),
@@ -1213,11 +1388,9 @@ class _CableScreenState extends State<CableScreen> {
                                       Text(
                                         _activeMode == 1
                                             ? 'Create Gift Voucher'
-                                            : (_payForMe
-                                                ? 'Generate Pay For Me Link'
-                                                : (_packageAmount > 0
-                                                    ? 'Pay Subscription • ₦${_packageAmount.toStringAsFixed(0)}'
-                                                    : 'Pay Subscription')),
+                                            : (_packageAmount > 0
+                                                  ? 'Pay Subscription • ₦${_packageAmount.toStringAsFixed(0)}'
+                                                  : 'Pay Subscription'),
                                         style: GoogleFonts.figtree(
                                           fontSize: 14.5,
                                           fontWeight: FontWeight.w800,
@@ -1234,7 +1407,11 @@ class _CableScreenState extends State<CableScreen> {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.info_outline, size: 14, color: Color(0xFFF59E0B)),
+                              const Icon(
+                                Icons.info_outline,
+                                size: 14,
+                                color: Color(0xFFF59E0B),
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(

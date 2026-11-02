@@ -5,12 +5,12 @@ import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/services/vtu_api_service.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/supabase/supabase_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/pin_modal.dart';
 import '../../widgets/top_notification.dart';
-import '../../widgets/pay_for_me_dialog.dart';
 import '../../widgets/transaction_success_dialog.dart';
 
 enum ExtraProviderService { examPins, bulkSms, airtimePins }
@@ -109,13 +109,11 @@ class _ExtraProviderServicesScreenState
   final _recipientController = TextEditingController();
   final _messageController = TextEditingController();
   final _senderController = TextEditingController();
-  final _candidatePhoneController = TextEditingController();
   final _businessNameController = TextEditingController(text: 'Avotek');
 
   int _selectedNetworkId = 1;
   int _selectedDenomination = 100;
   int _activeMode = 0; // 0: Buy/Send Now, 1: Gift Voucher
-  bool _payForMe = false;
 
   late List<Map<String, dynamic>> _examPrices = List.from(_defaultExamPrices);
   late Map<String, dynamic>? _selectedExam = _examPrices.first;
@@ -158,6 +156,7 @@ class _ExtraProviderServicesScreenState
       precacheImage(ResizeImage(AssetImage(asset), height: 90), context);
     }
   }
+
   bool get _isAirtimePins => widget.service == ExtraProviderService.airtimePins;
   String get _title => _isExam
       ? 'Buy Result Checker'
@@ -165,8 +164,8 @@ class _ExtraProviderServicesScreenState
   String get _subtitle => _isExam
       ? 'Purchase WAEC, NECO, NABTEB, or NBAIS exam pins'
       : (_isAirtimePins
-          ? 'Generate instant printable recharge cards with serial numbers'
-          : 'High-speed SMS routing across all Nigerian telecom networks');
+            ? 'Generate instant printable recharge cards with serial numbers'
+            : 'High-speed SMS routing across all Nigerian telecom networks');
   String get _route => _isExam
       ? '/services/exam-pins'
       : (_isAirtimePins ? '/services/airtime-pins' : '/services/bulk-sms');
@@ -183,7 +182,6 @@ class _ExtraProviderServicesScreenState
     _recipientController.dispose();
     _messageController.dispose();
     _senderController.dispose();
-    _candidatePhoneController.dispose();
     _businessNameController.dispose();
     super.dispose();
   }
@@ -197,8 +195,10 @@ class _ExtraProviderServicesScreenState
         setState(() {
           final valid = prices.where((p) {
             final amt = p['amount'];
-            return (p['code'] ?? p['exam_type']) != null && amt is num && amt > 0;
-            }).toList();
+            return (p['code'] ?? p['exam_type']) != null &&
+                amt is num &&
+                amt > 0;
+          }).toList();
           if (valid.isNotEmpty) {
             _examPrices = valid.map((p) {
               final code = (p['code'] ?? p['exam_type'] ?? '').toString();
@@ -208,7 +208,9 @@ class _ExtraProviderServicesScreenState
                 'logo': _examLogoFor(code),
               };
             }).toList();
-            final currentCode = (_selectedExam?['code'] ?? '').toString().toUpperCase();
+            final currentCode = (_selectedExam?['code'] ?? '')
+                .toString()
+                .toUpperCase();
             _selectedExam = _examPrices.firstWhere(
               (p) => (p['code'] ?? '').toString().toUpperCase() == currentCode,
               orElse: () => _examPrices.first,
@@ -236,9 +238,11 @@ class _ExtraProviderServicesScreenState
     final values = _recipientController.text
         .split(RegExp(r'[\s,;]+'))
         .map((value) => value.replaceAll(RegExp(r'\D'), ''))
-        .map((value) => value.startsWith('234') && value.length == 13
-            ? '0${value.substring(3)}'
-            : value)
+        .map(
+          (value) => value.startsWith('234') && value.length == 13
+              ? '0${value.substring(3)}'
+              : value,
+        )
         .where((value) => value.isNotEmpty)
         .toSet()
         .toList();
@@ -253,7 +257,9 @@ class _ExtraProviderServicesScreenState
     }
     if (_isAirtimePins) {
       final quantity = int.tryParse(_quantityController.text.trim()) ?? 1;
-      return quantity > 0 ? (_selectedDenomination * quantity).toDouble() : null;
+      return quantity > 0
+          ? (_selectedDenomination * quantity).toDouble()
+          : null;
     }
     final cost = _smsCostPerPage;
     final message = _messageController.text.trim();
@@ -275,7 +281,10 @@ class _ExtraProviderServicesScreenState
       return;
     }
     if (amount == null || !amount.isFinite || amount <= 0) {
-      TopNotification.showWarning(context, 'Complete the required fields first.');
+      TopNotification.showWarning(
+        context,
+        'Complete the required fields first.',
+      );
       return;
     }
     if (_isExam) {
@@ -287,13 +296,19 @@ class _ExtraProviderServicesScreenState
     } else if (_isAirtimePins) {
       final quantity = int.tryParse(_quantityController.text.trim());
       if (quantity == null || quantity < 1 || quantity > 50) {
-        TopNotification.showWarning(context, 'Choose between 1 and 50 recharge PINs.');
+        TopNotification.showWarning(
+          context,
+          'Choose between 1 and 50 recharge PINs.',
+        );
         return;
       }
     } else {
       final recipients = _recipients();
       if (recipients.isEmpty) {
-        TopNotification.showWarning(context, 'Please enter at least one recipient.');
+        TopNotification.showWarning(
+          context,
+          'Please enter at least one recipient.',
+        );
         return;
       }
       if (recipients.length > 500 ||
@@ -304,7 +319,9 @@ class _ExtraProviderServicesScreenState
         );
         return;
       }
-      if (!RegExp(r'^[A-Za-z0-9 ]{3,11}$').hasMatch(_senderController.text.trim())) {
+      if (!RegExp(
+        r'^[A-Za-z0-9 ]{3,11}$',
+      ).hasMatch(_senderController.text.trim())) {
         TopNotification.showWarning(
           context,
           'Sender name must be 3 to 11 letters, numbers, or spaces.',
@@ -320,22 +337,74 @@ class _ExtraProviderServicesScreenState
       }
     }
 
-    if (_payForMe) {
-      final networkObj = _airtimePinNetworks.firstWhere(
-        (n) => n['id'] == _selectedNetworkId,
-        orElse: () => _airtimePinNetworks.first,
-      );
-      final serviceName = _isExam
-          ? '${_selectedExam?['name'] ?? 'Result Checker'} (${_quantityController.text} pin${_quantityController.text != "1" ? "s" : ""})'
-          : (_isAirtimePins
-              ? '${networkObj['code']} ₦$_selectedDenomination PIN (${_quantityController.text})'
-              : 'Bulk SMS (${_recipients().length} recipients)');
-      await PayForMeDialog.show(
+    if (_activeMode == 1) {
+      if (wallet.balance < amount) {
+        TopNotification.showError(
+          context,
+          'Insufficient wallet balance. Available: ₦${wallet.balance.toStringAsFixed(2)}.',
+        );
+        return;
+      }
+      final confirmed = await PinModal.show(
         context,
-        serviceName: serviceName,
-        recipient: auth.user?.email ?? auth.user?.phone ?? 'User',
+        title: 'Create $_title Gift Voucher',
         amount: amount,
+        description: 'Redeemable Avotek wallet credit for $_title',
+        onPinSubmit: (pin) async => auth.verifyPin(pin),
       );
+      if (!mounted || confirmed != true) return;
+
+      setState(() => _isPurchasing = true);
+      try {
+        final voucher = await SupabaseService.instance.createGiftVoucher(
+          amount: amount,
+          note: 'Gift voucher for $_title',
+        );
+        await auth.refreshWallet();
+        await wallet.fetchWallet(user.id);
+        if (!mounted) return;
+        final code = (voucher['code'] ?? '').toString();
+        if (code.isEmpty) {
+          throw StateError('Voucher was created without a claim code.');
+        }
+        final claimUrl =
+            'https://adevictorolu.github.io/Avotek/#/coupons?code=${Uri.encodeQueryComponent(code)}';
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text('$_title gift voucher created'),
+            content: SelectableText('Code: $code\n\nClaim link: $claimUrl'),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: claimUrl));
+                  if (dialogContext.mounted) Navigator.pop(dialogContext);
+                  if (mounted) {
+                    TopNotification.showSuccess(
+                      context,
+                      'Voucher claim link copied.',
+                    );
+                  }
+                },
+                child: const Text('Copy claim link'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Done'),
+              ),
+            ],
+          ),
+        );
+      } catch (error) {
+        if (mounted) {
+          TopNotification.showError(
+            context,
+            'Could not create the gift voucher: $error',
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isPurchasing = false);
+      }
       return;
     }
 
@@ -360,8 +429,8 @@ class _ExtraProviderServicesScreenState
       description: _isExam
           ? '${_selectedExam?['name'] ?? 'Exam PIN'} × ${_quantityController.text}'
           : (_isAirtimePins
-              ? '${networkObj['code']} ₦$_selectedDenomination PIN × ${_quantityController.text}'
-              : '${_recipients().length} recipients • ${_senderController.text.trim()}'),
+                ? '${networkObj['code']} ₦$_selectedDenomination PIN × ${_quantityController.text}'
+                : '${_recipients().length} recipients • ${_senderController.text.trim()}'),
       onPinSubmit: (pin) async {
         transactionPin = pin;
         return auth.verifyPin(pin);
@@ -373,41 +442,42 @@ class _ExtraProviderServicesScreenState
       return;
     }
     try {
-      final candidatePhone = _candidatePhoneController.text.trim();
       final result = _isExam
           ? await vtu.buyExamPins(
               userId: user.id,
-              examCode: (_selectedExam?['code'] ??
-                      _selectedExam?['exam_type'] ??
-                      'WAEC')
-                  .toString(),
-              examName: (_selectedExam?['name'] ??
-                      _selectedExam?['exam_type'] ??
-                      'Exam PIN')
-                  .toString(),
+              examCode:
+                  (_selectedExam?['code'] ??
+                          _selectedExam?['exam_type'] ??
+                          'WAEC')
+                      .toString(),
+              examName:
+                  (_selectedExam?['name'] ??
+                          _selectedExam?['exam_type'] ??
+                          'Exam PIN')
+                      .toString(),
               quantity: int.parse(_quantityController.text.trim()),
               unitPrice: (_selectedExam?['amount'] as num).toDouble(),
               userPin: transactionPin,
             )
           : (_isAirtimePins
-              ? await vtu.buyAirtimePins(
-                  userId: user.id,
-                  networkId: _selectedNetworkId,
-                  networkName: networkObj['code'] as String,
-                  denomination: _selectedDenomination.toDouble(),
-                  quantity: int.parse(_quantityController.text.trim()),
-                  businessName: _businessNameController.text.trim().isNotEmpty
-                      ? _businessNameController.text.trim()
-                      : 'Avotek',
-                  userPin: transactionPin,
-                )
-              : await vtu.sendBulkSms(
-                  userId: user.id,
-                  recipients: _recipients(),
-                  message: _messageController.text.trim(),
-                  senderName: _senderController.text.trim(),
-                  userPin: transactionPin!,
-                ));
+                ? await vtu.buyAirtimePins(
+                    userId: user.id,
+                    networkId: _selectedNetworkId,
+                    networkName: networkObj['code'] as String,
+                    denomination: _selectedDenomination.toDouble(),
+                    quantity: int.parse(_quantityController.text.trim()),
+                    businessName: _businessNameController.text.trim().isNotEmpty
+                        ? _businessNameController.text.trim()
+                        : 'Avotek',
+                    userPin: transactionPin,
+                  )
+                : await vtu.sendBulkSms(
+                    userId: user.id,
+                    recipients: _recipients(),
+                    message: _messageController.text.trim(),
+                    senderName: _senderController.text.trim(),
+                    userPin: transactionPin!,
+                  ));
 
       await auth.refreshWallet();
       await wallet.fetchWallet(user.id);
@@ -429,15 +499,13 @@ class _ExtraProviderServicesScreenState
           serviceType: _isExam
               ? '${_selectedExam?['name'] ?? 'Result Checker'} × ${_quantityController.text}'
               : (_isAirtimePins
-                  ? '${networkObj['code']} ₦$_selectedDenomination PIN × ${_quantityController.text}'
-                  : 'Bulk SMS (${_recipients().length} recipients)'),
-          recipient: candidatePhone.isNotEmpty
-              ? candidatePhone
-              : (_isExam
-                  ? 'Candidate / Self'
-                  : (_isAirtimePins
-                      ? '${_businessNameController.text.trim()} / Self'
-                      : _recipients().join(', '))),
+                    ? '${networkObj['code']} ₦$_selectedDenomination PIN × ${_quantityController.text}'
+                    : 'Bulk SMS (${_recipients().length} recipients)'),
+          recipient: _isExam
+              ? 'Candidate / Self'
+              : (_isAirtimePins
+                    ? '${_businessNameController.text.trim()} / Self'
+                    : _recipients().join(', ')),
           amount: amount,
           reference: result.order.id,
           providerReference: result.order.providerReference,
@@ -446,8 +514,8 @@ class _ExtraProviderServicesScreenState
           message: _isExam
               ? 'Your examination PIN(s) have been generated successfully.'
               : (_isAirtimePins
-                  ? 'Your recharge PINs are generated and ready to print or load.'
-                  : 'Bulk SMS submitted successfully.'),
+                    ? 'Your recharge PINs are generated and ready to print or load.'
+                    : 'Bulk SMS submitted successfully.'),
         );
         if (!_isExam && !_isAirtimePins) {
           _messageController.clear();
@@ -456,7 +524,10 @@ class _ExtraProviderServicesScreenState
       }
     } catch (error) {
       if (mounted) {
-        TopNotification.showError(context, '$_title purchase could not be completed: $error');
+        TopNotification.showError(
+          context,
+          '$_title purchase could not be completed: $error',
+        );
       }
     } finally {
       if (mounted) setState(() => _isPurchasing = false);
@@ -475,8 +546,9 @@ class _ExtraProviderServicesScreenState
       currentRoute: _route,
       onToggleTheme: widget.onToggleTheme,
       child: Scaffold(
-        backgroundColor:
-            isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark
+            ? const Color(0xFF0F1117)
+            : const Color(0xFFF8FAFC),
         body: SingleChildScrollView(
           padding: EdgeInsets.symmetric(
             horizontal: isDesktop ? 32 : 16,
@@ -493,15 +565,24 @@ class _ExtraProviderServicesScreenState
                     onTap: () => Navigator.of(context).maybePop(),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF1E2230)
+                            : const Color(0xFFE2E8F0),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.chevron_left, size: 18, color: isDark ? Colors.white70 : Colors.black87),
+                          Icon(
+                            Icons.chevron_left,
+                            size: 18,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Back',
@@ -540,10 +621,14 @@ class _ExtraProviderServicesScreenState
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF161922) : const Color(0xFFE2E8F0),
+                      color: isDark
+                          ? const Color(0xFF161922)
+                          : const Color(0xFFE2E8F0),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF262A38) : const Color(0xFFCBD5E1),
+                        color: isDark
+                            ? const Color(0xFF262A38)
+                            : const Color(0xFFCBD5E1),
                       ),
                     ),
                     child: Row(
@@ -557,7 +642,10 @@ class _ExtraProviderServicesScreenState
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 0
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                        colors: [
+                                          Color(0xFF0047FF),
+                                          Color(0xFF0038B8),
+                                        ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -566,7 +654,9 @@ class _ExtraProviderServicesScreenState
                                 boxShadow: _activeMode == 0
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0038B8).withOpacity(0.35),
+                                          color: const Color(
+                                            0xFF0038B8,
+                                          ).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -583,17 +673,23 @@ class _ExtraProviderServicesScreenState
                                     size: 18,
                                     color: _activeMode == 0
                                         ? Colors.white
-                                        : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                        : (isDark
+                                              ? Colors.white60
+                                              : const Color(0xFF64748B)),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    _isExam || _isAirtimePins ? 'Buy Now' : 'Send Now',
+                                    _isExam || _isAirtimePins
+                                        ? 'Buy Now'
+                                        : 'Send Now',
                                     style: GoogleFonts.figtree(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 0
                                           ? Colors.white
-                                          : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                          : (isDark
+                                                ? Colors.white60
+                                                : const Color(0xFF64748B)),
                                     ),
                                   ),
                                 ],
@@ -610,7 +706,10 @@ class _ExtraProviderServicesScreenState
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 1
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                        colors: [
+                                          Color(0xFF0047FF),
+                                          Color(0xFF0038B8),
+                                        ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -619,7 +718,9 @@ class _ExtraProviderServicesScreenState
                                 boxShadow: _activeMode == 1
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0038B8).withOpacity(0.35),
+                                          color: const Color(
+                                            0xFF0038B8,
+                                          ).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -634,7 +735,9 @@ class _ExtraProviderServicesScreenState
                                     size: 18,
                                     color: _activeMode == 1
                                         ? Colors.white
-                                        : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                        : (isDark
+                                              ? Colors.white60
+                                              : const Color(0xFF64748B)),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -644,7 +747,9 @@ class _ExtraProviderServicesScreenState
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 1
                                           ? Colors.white
-                                          : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                          : (isDark
+                                                ? Colors.white60
+                                                : const Color(0xFF64748B)),
                                     ),
                                   ),
                                 ],
@@ -679,7 +784,9 @@ class _ExtraProviderServicesScreenState
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -691,35 +798,52 @@ class _ExtraProviderServicesScreenState
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 16),
                           Row(
                             children: _airtimePinNetworks.map((net) {
-                              final isSelected = _selectedNetworkId == net['id'];
+                              final isSelected =
+                                  _selectedNetworkId == net['id'];
                               return Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
                                   child: InkWell(
-                                    onTap: () => setState(() => _selectedNetworkId = net['id'] as int),
+                                    onTap: () => setState(
+                                      () =>
+                                          _selectedNetworkId = net['id'] as int,
+                                    ),
                                     borderRadius: BorderRadius.circular(12),
                                     child: Container(
                                       height: 82,
-                                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                        horizontal: 6,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9),
+                                        color: isDark
+                                            ? const Color(0xFF1C202C)
+                                            : const Color(0xFFF1F5F9),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: isSelected
                                               ? const Color(0xFF0052FF)
-                                              : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                              : (isDark
+                                                    ? const Color(0xFF2C3142)
+                                                    : const Color(0xFFCBD5E1)),
                                           width: isSelected ? 2 : 1,
                                         ),
                                         boxShadow: isSelected
                                             ? [
                                                 BoxShadow(
-                                                  color: const Color(0xFF0052FF).withOpacity(0.25),
+                                                  color: const Color(
+                                                    0xFF0052FF,
+                                                  ).withOpacity(0.25),
                                                   blurRadius: 10,
                                                   spreadRadius: 1,
                                                 ),
@@ -730,25 +854,37 @@ class _ExtraProviderServicesScreenState
                                         children: [
                                           Center(
                                             child: Column(
-                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
                                               children: [
                                                 Image.asset(
                                                   net['logo'] as String,
                                                   height: 32,
                                                   fit: BoxFit.contain,
-                                                  errorBuilder: (ctx, err, stack) => Icon(
-                                                    Icons.phone_android,
-                                                    size: 26,
-                                                    color: isSelected ? const Color(0xFF00D2FF) : Colors.grey,
-                                                  ),
+                                                  errorBuilder:
+                                                      (ctx, err, stack) => Icon(
+                                                        Icons.phone_android,
+                                                        size: 26,
+                                                        color: isSelected
+                                                            ? const Color(
+                                                                0xFF00D2FF,
+                                                              )
+                                                            : Colors.grey,
+                                                      ),
                                                 ),
                                                 const SizedBox(height: 6),
                                                 Text(
                                                   net['code'] as String,
                                                   style: GoogleFonts.figtree(
                                                     fontSize: 12,
-                                                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                                    fontWeight: isSelected
+                                                        ? FontWeight.w800
+                                                        : FontWeight.w600,
+                                                    color: isDark
+                                                        ? Colors.white
+                                                        : const Color(
+                                                            0xFF0F172A,
+                                                          ),
                                                   ),
                                                 ),
                                               ],
@@ -759,7 +895,9 @@ class _ExtraProviderServicesScreenState
                                               top: 0,
                                               right: 0,
                                               child: Container(
-                                                padding: const EdgeInsets.all(2),
+                                                padding: const EdgeInsets.all(
+                                                  2,
+                                                ),
                                                 decoration: const BoxDecoration(
                                                   color: Color(0xFF0052FF),
                                                   shape: BoxShape.circle,
@@ -792,7 +930,9 @@ class _ExtraProviderServicesScreenState
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -804,7 +944,9 @@ class _ExtraProviderServicesScreenState
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 14),
@@ -813,27 +955,39 @@ class _ExtraProviderServicesScreenState
                               final isSelected = _selectedDenomination == denom;
                               return Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
                                   child: InkWell(
-                                    onTap: () => setState(() => _selectedDenomination = denom),
+                                    onTap: () => setState(
+                                      () => _selectedDenomination = denom,
+                                    ),
                                     borderRadius: BorderRadius.circular(12),
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: isSelected
                                             ? const Color(0xFF0052FF)
-                                            : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
+                                            : (isDark
+                                                  ? const Color(0xFF1C202C)
+                                                  : const Color(0xFFF1F5F9)),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: isSelected
                                               ? const Color(0xFF0052FF)
-                                              : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                              : (isDark
+                                                    ? const Color(0xFF2C3142)
+                                                    : const Color(0xFFCBD5E1)),
                                           width: isSelected ? 2 : 1,
                                         ),
                                         boxShadow: isSelected
                                             ? [
                                                 BoxShadow(
-                                                  color: const Color(0xFF0052FF).withOpacity(0.3),
+                                                  color: const Color(
+                                                    0xFF0052FF,
+                                                  ).withOpacity(0.3),
                                                   blurRadius: 8,
                                                 ),
                                               ]
@@ -847,7 +1001,11 @@ class _ExtraProviderServicesScreenState
                                             fontWeight: FontWeight.w800,
                                             color: isSelected
                                                 ? Colors.white
-                                                : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                                                : (isDark
+                                                      ? Colors.white
+                                                      : const Color(
+                                                          0xFF0F172A,
+                                                        )),
                                           ),
                                         ),
                                       ),
@@ -870,7 +1028,9 @@ class _ExtraProviderServicesScreenState
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -885,28 +1045,46 @@ class _ExtraProviderServicesScreenState
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
-                                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                  color: isDark
+                                      ? Colors.white70
+                                      : const Color(0xFF475569),
                                 ),
                               ),
                               Row(
                                 children: [
                                   IconButton(
                                     onPressed: () {
-                                      final current = int.tryParse(_quantityController.text.trim()) ?? 1;
+                                      final current =
+                                          int.tryParse(
+                                            _quantityController.text.trim(),
+                                          ) ??
+                                          1;
                                       if (current > 1) {
-                                        setState(() => _quantityController.text = (current - 1).toString());
+                                        setState(
+                                          () => _quantityController.text =
+                                              (current - 1).toString(),
+                                        );
                                       }
                                     },
-                                    icon: const Icon(Icons.remove_circle_outline_rounded),
+                                    icon: const Icon(
+                                      Icons.remove_circle_outline_rounded,
+                                    ),
                                     color: const Color(0xFF0052FF),
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: isDark ? const Color(0xFF1E2230) : const Color(0xFFF1F5F9),
+                                      color: isDark
+                                          ? const Color(0xFF1E2230)
+                                          : const Color(0xFFF1F5F9),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
-                                        color: isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1),
+                                        color: isDark
+                                            ? const Color(0xFF2C3142)
+                                            : const Color(0xFFCBD5E1),
                                       ),
                                     ),
                                     child: Text(
@@ -920,12 +1098,21 @@ class _ExtraProviderServicesScreenState
                                   ),
                                   IconButton(
                                     onPressed: () {
-                                      final current = int.tryParse(_quantityController.text.trim()) ?? 1;
+                                      final current =
+                                          int.tryParse(
+                                            _quantityController.text.trim(),
+                                          ) ??
+                                          1;
                                       if (current < 50) {
-                                        setState(() => _quantityController.text = (current + 1).toString());
+                                        setState(
+                                          () => _quantityController.text =
+                                              (current + 1).toString(),
+                                        );
                                       }
                                     },
-                                    icon: const Icon(Icons.add_circle_outline_rounded),
+                                    icon: const Icon(
+                                      Icons.add_circle_outline_rounded,
+                                    ),
                                     color: const Color(0xFF0052FF),
                                   ),
                                 ],
@@ -937,29 +1124,48 @@ class _ExtraProviderServicesScreenState
                             spacing: 8,
                             runSpacing: 8,
                             children: [1, 2, 5, 10, 20, 50].map((qty) {
-                              final isCur = _quantityController.text == qty.toString();
+                              final isCur =
+                                  _quantityController.text == qty.toString();
                               return InkWell(
-                                onTap: () => setState(() => _quantityController.text = qty.toString()),
+                                onTap: () => setState(
+                                  () =>
+                                      _quantityController.text = qty.toString(),
+                                ),
                                 borderRadius: BorderRadius.circular(8),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: isCur
-                                        ? const Color(0xFF0052FF).withOpacity(0.18)
-                                        : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
+                                        ? const Color(
+                                            0xFF0052FF,
+                                          ).withOpacity(0.18)
+                                        : (isDark
+                                              ? const Color(0xFF1C202C)
+                                              : const Color(0xFFF1F5F9)),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: isCur
                                           ? const Color(0xFF0052FF)
-                                          : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                          : (isDark
+                                                ? const Color(0xFF2C3142)
+                                                : const Color(0xFFCBD5E1)),
                                     ),
                                   ),
                                   child: Text(
                                     '$qty card${qty > 1 ? "s" : ""}',
                                     style: GoogleFonts.figtree(
                                       fontSize: 12,
-                                      fontWeight: isCur ? FontWeight.w800 : FontWeight.w600,
-                                      color: isCur ? const Color(0xFF00D2FF) : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                      fontWeight: isCur
+                                          ? FontWeight.w800
+                                          : FontWeight.w600,
+                                      color: isCur
+                                          ? const Color(0xFF00D2FF)
+                                          : (isDark
+                                                ? Colors.white70
+                                                : const Color(0xFF475569)),
                                     ),
                                   ),
                                 ),
@@ -979,7 +1185,9 @@ class _ExtraProviderServicesScreenState
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -991,7 +1199,9 @@ class _ExtraProviderServicesScreenState
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -999,21 +1209,33 @@ class _ExtraProviderServicesScreenState
                             controller: _businessNameController,
                             style: GoogleFonts.figtree(color: foreground),
                             decoration: InputDecoration(
-                              hintText: 'e.g. Avotek Telecom or My Business Name',
-                              hintStyle: GoogleFonts.figtree(color: isDark ? Colors.white38 : Colors.black38),
-                              prefixIcon: const Icon(Icons.business_rounded, color: Color(0xFF00D2FF)),
+                              hintText:
+                                  'e.g. Avotek Telecom or My Business Name',
+                              hintStyle: GoogleFonts.figtree(
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.business_rounded,
+                                color: Color(0xFF00D2FF),
+                              ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
+                              fillColor: isDark
+                                  ? const Color(0xFF1C202C)
+                                  : const Color(0xFFF8FAFC),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
-                                  color: isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1),
+                                  color: isDark
+                                      ? const Color(0xFF2C3142)
+                                      : const Color(0xFFCBD5E1),
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
-                                  color: isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1),
+                                  color: isDark
+                                      ? const Color(0xFF2C3142)
+                                      : const Color(0xFFCBD5E1),
                                 ),
                               ),
                             ),
@@ -1030,7 +1252,9 @@ class _ExtraProviderServicesScreenState
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -1042,42 +1266,63 @@ class _ExtraProviderServicesScreenState
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 16),
                           Row(
                             children: _examPrices.map((exam) {
-                              final code = (exam['code'] ?? exam['exam_type'] ?? '').toString().toUpperCase();
-                              final isSelected = (_selectedExam?['code'] ?? _selectedExam?['exam_type'] ?? '')
+                              final code =
+                                  (exam['code'] ?? exam['exam_type'] ?? '')
+                                      .toString()
+                                      .toUpperCase();
+                              final isSelected =
+                                  (_selectedExam?['code'] ??
+                                          _selectedExam?['exam_type'] ??
+                                          '')
                                       .toString()
                                       .toUpperCase() ==
                                   code;
-                              final amount = (exam['amount'] as num?)?.toDouble() ?? 0.0;
+                              final amount =
+                                  (exam['amount'] as num?)?.toDouble() ?? 0.0;
                               final logoPath = _examLogoFor(code);
 
                               return Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
                                   child: InkWell(
-                                    onTap: () => setState(() => _selectedExam = exam),
+                                    onTap: () =>
+                                        setState(() => _selectedExam = exam),
                                     borderRadius: BorderRadius.circular(12),
                                     child: Container(
                                       height: 90,
-                                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                        horizontal: 6,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9),
+                                        color: isDark
+                                            ? const Color(0xFF1C202C)
+                                            : const Color(0xFFF1F5F9),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: isSelected
                                               ? const Color(0xFF0052FF)
-                                              : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                              : (isDark
+                                                    ? const Color(0xFF2C3142)
+                                                    : const Color(0xFFCBD5E1)),
                                           width: isSelected ? 2 : 1,
                                         ),
                                         boxShadow: isSelected
                                             ? [
                                                 BoxShadow(
-                                                  color: const Color(0xFF0052FF).withOpacity(0.25),
+                                                  color: const Color(
+                                                    0xFF0052FF,
+                                                  ).withOpacity(0.25),
                                                   blurRadius: 10,
                                                   spreadRadius: 1,
                                                 ),
@@ -1088,7 +1333,8 @@ class _ExtraProviderServicesScreenState
                                         children: [
                                           Center(
                                             child: Column(
-                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
                                               children: [
                                                 Image.asset(
                                                   logoPath,
@@ -1096,19 +1342,30 @@ class _ExtraProviderServicesScreenState
                                                   cacheHeight: 90,
                                                   fit: BoxFit.contain,
                                                   gaplessPlayback: true,
-                                                  errorBuilder: (ctx, err, stack) => Icon(
-                                                    Icons.school,
-                                                    size: 26,
-                                                    color: isSelected ? const Color(0xFF00D2FF) : Colors.grey,
-                                                  ),
+                                                  errorBuilder:
+                                                      (ctx, err, stack) => Icon(
+                                                        Icons.school,
+                                                        size: 26,
+                                                        color: isSelected
+                                                            ? const Color(
+                                                                0xFF00D2FF,
+                                                              )
+                                                            : Colors.grey,
+                                                      ),
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   code,
                                                   style: GoogleFonts.figtree(
                                                     fontSize: 11.5,
-                                                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                                    fontWeight: isSelected
+                                                        ? FontWeight.w800
+                                                        : FontWeight.w600,
+                                                    color: isDark
+                                                        ? Colors.white
+                                                        : const Color(
+                                                            0xFF0F172A,
+                                                          ),
                                                   ),
                                                 ),
                                                 Text(
@@ -1116,7 +1373,9 @@ class _ExtraProviderServicesScreenState
                                                   style: GoogleFonts.figtree(
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.w700,
-                                                    color: const Color(0xFF00D2FF),
+                                                    color: const Color(
+                                                      0xFF00D2FF,
+                                                    ),
                                                   ),
                                                 ),
                                               ],
@@ -1127,12 +1386,18 @@ class _ExtraProviderServicesScreenState
                                               top: 0,
                                               right: 0,
                                               child: Container(
-                                                padding: const EdgeInsets.all(2),
+                                                padding: const EdgeInsets.all(
+                                                  2,
+                                                ),
                                                 decoration: const BoxDecoration(
                                                   color: Color(0xFF0052FF),
                                                   shape: BoxShape.circle,
                                                 ),
-                                                child: const Icon(Icons.check, size: 12, color: Colors.white),
+                                                child: const Icon(
+                                                  Icons.check,
+                                                  size: 12,
+                                                  color: Colors.white,
+                                                ),
                                               ),
                                             ),
                                         ],
@@ -1156,7 +1421,9 @@ class _ExtraProviderServicesScreenState
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -1168,30 +1435,46 @@ class _ExtraProviderServicesScreenState
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 12),
                           Row(
                             children: [1, 2, 5].map((q) {
-                              final isSel = _quantityController.text == q.toString();
+                              final isSel =
+                                  _quantityController.text == q.toString();
                               return Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
                                   child: InkWell(
-                                    onTap: () => setState(() => _quantityController.text = q.toString()),
+                                    onTap: () => setState(
+                                      () => _quantityController.text = q
+                                          .toString(),
+                                    ),
                                     borderRadius: BorderRadius.circular(10),
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: isSel
-                                            ? const Color(0xFF0052FF).withOpacity(0.18)
-                                            : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
+                                            ? const Color(
+                                                0xFF0052FF,
+                                              ).withOpacity(0.18)
+                                            : (isDark
+                                                  ? const Color(0xFF1C202C)
+                                                  : const Color(0xFFF1F5F9)),
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
                                           color: isSel
                                               ? const Color(0xFF0052FF)
-                                              : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                              : (isDark
+                                                    ? const Color(0xFF2C3142)
+                                                    : const Color(0xFFCBD5E1)),
                                           width: isSel ? 2 : 1,
                                         ),
                                       ),
@@ -1200,8 +1483,14 @@ class _ExtraProviderServicesScreenState
                                           '$q pin${q > 1 ? 's' : ''}',
                                           style: GoogleFonts.figtree(
                                             fontSize: 14,
-                                            fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                                            color: isSel ? const Color(0xFF00D2FF) : (isDark ? Colors.white : Colors.black87),
+                                            fontWeight: isSel
+                                                ? FontWeight.w800
+                                                : FontWeight.w600,
+                                            color: isSel
+                                                ? const Color(0xFF00D2FF)
+                                                : (isDark
+                                                      ? Colors.white
+                                                      : Colors.black87),
                                           ),
                                         ),
                                       ),
@@ -1215,53 +1504,6 @@ class _ExtraProviderServicesScreenState
                       ),
                     ),
                     const SizedBox(height: 18),
-
-                    // Candidate Phone
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF141721) : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'CANDIDATE PHONE NUMBER (OPTIONAL)',
-                            style: GoogleFonts.figtree(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          TextField(
-                            controller: _candidatePhoneController,
-                            keyboardType: TextInputType.phone,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            style: GoogleFonts.figtree(color: foreground),
-                            decoration: InputDecoration(
-                              hintText: '08012345678 (where candidate can receive PIN)',
-                              hintStyle: GoogleFonts.figtree(color: isDark ? Colors.white38 : Colors.black38),
-                              prefixIcon: const Icon(Icons.phone_iphone_rounded, color: Color(0xFF00D2FF)),
-                              filled: true,
-                              fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ] else ...[
                     // Bulk SMS UI
                     // 1. Supported Networks with Official Logos
@@ -1272,7 +1514,9 @@ class _ExtraProviderServicesScreenState
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -1287,7 +1531,9 @@ class _ExtraProviderServicesScreenState
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
-                                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                  color: isDark
+                                      ? Colors.white70
+                                      : const Color(0xFF475569),
                                 ),
                               ),
                               Row(
@@ -1318,13 +1564,21 @@ class _ExtraProviderServicesScreenState
                             children: _airtimePinNetworks.map((net) {
                               return Expanded(
                                 child: Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9),
+                                    color: isDark
+                                        ? const Color(0xFF1C202C)
+                                        : const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1),
+                                      color: isDark
+                                          ? const Color(0xFF2C3142)
+                                          : const Color(0xFFCBD5E1),
                                     ),
                                   ),
                                   child: Column(
@@ -1340,7 +1594,9 @@ class _ExtraProviderServicesScreenState
                                         style: GoogleFonts.figtree(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
-                                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                          color: isDark
+                                              ? Colors.white70
+                                              : const Color(0xFF334155),
                                         ),
                                       ),
                                     ],
@@ -1362,7 +1618,9 @@ class _ExtraProviderServicesScreenState
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -1377,14 +1635,18 @@ class _ExtraProviderServicesScreenState
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
-                                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                  color: isDark
+                                      ? Colors.white70
+                                      : const Color(0xFF475569),
                                 ),
                               ),
                               Text(
                                 '${_senderController.text.length}/11 chars',
                                 style: GoogleFonts.figtree(
                                   fontSize: 11,
-                                  color: isDark ? Colors.white38 : Colors.black38,
+                                  color: isDark
+                                      ? Colors.white38
+                                      : Colors.black38,
                                 ),
                               ),
                             ],
@@ -1398,14 +1660,23 @@ class _ExtraProviderServicesScreenState
                             decoration: InputDecoration(
                               counterText: '',
                               hintText: 'e.g. MyStore, Notice, Avotek',
-                              hintStyle: GoogleFonts.figtree(color: isDark ? Colors.white38 : Colors.black38),
-                              prefixIcon: const Icon(Icons.badge_rounded, color: Color(0xFF00D2FF)),
+                              hintStyle: GoogleFonts.figtree(
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.badge_rounded,
+                                color: Color(0xFF00D2FF),
+                              ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
+                              fillColor: isDark
+                                  ? const Color(0xFF1C202C)
+                                  : const Color(0xFFF8FAFC),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
-                                  color: isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1),
+                                  color: isDark
+                                      ? const Color(0xFF2C3142)
+                                      : const Color(0xFFCBD5E1),
                                 ),
                               ),
                             ),
@@ -1423,7 +1694,9 @@ class _ExtraProviderServicesScreenState
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -1438,13 +1711,20 @@ class _ExtraProviderServicesScreenState
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
-                                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                  color: isDark
+                                      ? Colors.white70
+                                      : const Color(0xFF475569),
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF0052FF).withOpacity(0.18),
+                                  color: const Color(
+                                    0xFF0052FF,
+                                  ).withOpacity(0.18),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -1466,14 +1746,22 @@ class _ExtraProviderServicesScreenState
                             style: GoogleFonts.figtree(color: foreground),
                             onChanged: (_) => setState(() {}),
                             decoration: InputDecoration(
-                              hintText: 'Enter Nigerian phone numbers separated by comma or new line\ne.g. 08012345678, 09087654321',
-                              hintStyle: GoogleFonts.figtree(fontSize: 13, color: isDark ? Colors.white38 : Colors.black38),
+                              hintText:
+                                  'Enter Nigerian phone numbers separated by comma or new line\ne.g. 08012345678, 09087654321',
+                              hintStyle: GoogleFonts.figtree(
+                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
+                              fillColor: isDark
+                                  ? const Color(0xFF1C202C)
+                                  : const Color(0xFFF8FAFC),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
-                                  color: isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1),
+                                  color: isDark
+                                      ? const Color(0xFF2C3142)
+                                      : const Color(0xFFCBD5E1),
                                 ),
                               ),
                             ),
@@ -1491,7 +1779,9 @@ class _ExtraProviderServicesScreenState
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -1506,7 +1796,9 @@ class _ExtraProviderServicesScreenState
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
-                                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                  color: isDark
+                                      ? Colors.white70
+                                      : const Color(0xFF475569),
                                 ),
                               ),
                               Text(
@@ -1527,14 +1819,22 @@ class _ExtraProviderServicesScreenState
                             style: GoogleFonts.figtree(color: foreground),
                             onChanged: (_) => setState(() {}),
                             decoration: InputDecoration(
-                              hintText: 'Type your broadcast SMS message here...',
-                              hintStyle: GoogleFonts.figtree(fontSize: 13, color: isDark ? Colors.white38 : Colors.black38),
+                              hintText:
+                                  'Type your broadcast SMS message here...',
+                              hintStyle: GoogleFonts.figtree(
+                                fontSize: 13,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1C202C) : const Color(0xFFF8FAFC),
+                              fillColor: isDark
+                                  ? const Color(0xFF1C202C)
+                                  : const Color(0xFFF8FAFC),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
-                                  color: isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1),
+                                  color: isDark
+                                      ? const Color(0xFF2C3142)
+                                      : const Color(0xFFCBD5E1),
                                 ),
                               ),
                             ),
@@ -1545,14 +1845,18 @@ class _ExtraProviderServicesScreenState
                               Checkbox(
                                 value: _consentConfirmed,
                                 activeColor: const Color(0xFF0052FF),
-                                onChanged: (val) => setState(() => _consentConfirmed = val ?? false),
+                                onChanged: (val) => setState(
+                                  () => _consentConfirmed = val ?? false,
+                                ),
                               ),
                               Expanded(
                                 child: Text(
                                   'I confirm that recipients consented to receive this broadcast message.',
                                   style: GoogleFonts.figtree(
                                     fontSize: 12.5,
-                                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                    color: isDark
+                                        ? Colors.white70
+                                        : const Color(0xFF475569),
                                   ),
                                 ),
                               ),
@@ -1565,48 +1869,38 @@ class _ExtraProviderServicesScreenState
 
                   const SizedBox(height: 16),
 
-                  // Pay For Me Checkbox across all services
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141721) : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                  if (_isExam && _activeMode == 0)
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF141721)
+                            : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Checkbox(
-                          value: _payForMe,
-                          activeColor: const Color(0xFF0052FF),
-                          onChanged: (val) => setState(() => _payForMe = val ?? false),
-                        ),
-                        Expanded(
-                          child: RichText(
-                            text: TextSpan(
-                              text: 'Pay For Me ',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: isDark
+                                ? Colors.white54
+                                : const Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Pay For Me is unavailable until secure sponsor checkout is implemented.',
                               style: GoogleFonts.figtree(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                fontSize: 12,
+                                color: isDark
+                                    ? Colors.white70
+                                    : const Color(0xFF475569),
                               ),
-                              children: [
-                                TextSpan(
-                                  text: '- get a shareable payment link',
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.normal,
-                                    color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
 
                   const SizedBox(height: 18),
 
@@ -1617,7 +1911,9 @@ class _ExtraProviderServicesScreenState
                       color: isDark ? const Color(0xFF141721) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF222634)
+                            : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
@@ -1629,7 +1925,9 @@ class _ExtraProviderServicesScreenState
                               'Wallet Balance',
                               style: GoogleFonts.figtree(
                                 fontSize: 13,
-                                color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                color: isDark
+                                    ? Colors.white60
+                                    : const Color(0xFF64748B),
                               ),
                             ),
                             Text(
@@ -1655,7 +1953,9 @@ class _ExtraProviderServicesScreenState
                               ),
                             ),
                             Text(
-                              price != null ? '₦${price.toStringAsFixed(2)}' : '--',
+                              price != null
+                                  ? '₦${price.toStringAsFixed(2)}'
+                                  : '--',
                               style: GoogleFonts.figtree(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
@@ -1707,13 +2007,11 @@ class _ExtraProviderServicesScreenState
                               ),
                             )
                           : Text(
-                              _payForMe
-                                  ? 'Generate Shareable Payment Link'
-                                  : (_isExam
-                                      ? 'Pay for Exam PIN (${_quantityController.text})'
-                                      : (_isAirtimePins
-                                          ? 'Generate Airtime PIN (${_quantityController.text})'
-                                          : 'Send Bulk SMS')),
+                              _isExam
+                                  ? 'Pay for Exam PIN (${_quantityController.text})'
+                                  : (_isAirtimePins
+                                        ? 'Generate Airtime PIN (${_quantityController.text})'
+                                        : 'Send Bulk SMS'),
                               style: GoogleFonts.figtree(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,

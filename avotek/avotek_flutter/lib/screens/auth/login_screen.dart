@@ -13,11 +13,13 @@ import '../../widgets/top_notification.dart';
 class LoginScreen extends StatefulWidget {
   final bool initialSignUp;
   final String? initialReferralCode;
+  final String? returnTo;
 
   const LoginScreen({
     super.key,
     this.initialSignUp = false,
     this.initialReferralCode,
+    this.returnTo,
   });
 
   @override
@@ -111,6 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           }
         }
+
         return AlertDialog(
           scrollable: true,
           insetPadding: const EdgeInsets.symmetric(
@@ -190,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (auth.user?.id != null) {
         wallet.fetchWallet(auth.user!.id);
       }
-      context.go('/dashboard');
+      context.go(_authenticatedDestination);
     } else {
       _showSnackBar(
         auth.authError ??
@@ -370,7 +373,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (auth.user?.id != null) {
           wallet.fetchWallet(auth.user!.id);
         }
-        context.go('/dashboard');
+        context.go(_authenticatedDestination);
       } else if (auth.emailVerificationPending) {
         await _showVerificationSentDialog(email);
       } else {
@@ -383,9 +386,19 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
-        _showSnackBar('Registration error: ${friendlyAuthError(e)}', AppColors.error);
+        _showSnackBar(
+          'Registration error: ${friendlyAuthError(e)}',
+          AppColors.error,
+        );
       }
     }
+  }
+
+  String get _authenticatedDestination {
+    final destination = widget.returnTo;
+    return destination != null && destination.startsWith('/coupons?code=')
+        ? destination
+        : '/dashboard';
   }
 
   Future<void> _showVerificationSentDialog(String userEmail) async {
@@ -436,14 +449,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.figtree(
                   fontSize: 13,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
                 ),
               ),
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -459,10 +479,14 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF131F38) : const Color(0xFFEFF6FF),
+                  color: isDark
+                      ? const Color(0xFF131F38)
+                      : const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFBFDBFE),
+                    color: isDark
+                        ? const Color(0xFF1E3A8A)
+                        : const Color(0xFFBFDBFE),
                   ),
                 ),
                 child: Row(
@@ -480,7 +504,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: GoogleFonts.figtree(
                           fontSize: 12,
                           height: 1.45,
-                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF1E40AF),
+                          color: isDark
+                              ? const Color(0xFFCBD5E1)
+                              : const Color(0xFF1E40AF),
                         ),
                       ),
                     ),

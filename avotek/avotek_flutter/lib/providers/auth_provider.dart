@@ -6,7 +6,6 @@ import '../core/supabase/supabase_service.dart';
 import '../models/user_model.dart';
 import '../models/wallet_model.dart';
 
-@visibleForTesting
 String friendlyAuthError(Object error) {
   final message = error.toString().replaceFirst('Exception: ', '').trim();
   final normalized = message.toLowerCase();
@@ -106,9 +105,14 @@ class AuthProvider extends ChangeNotifier {
 
     // Load dynamic co-admin authorizations from app settings
     try {
-      final coAdmins = await SupabaseService.instance.getAppSetting('admin_emails');
+      final coAdmins = await SupabaseService.instance.getAppSetting(
+        'admin_emails',
+      );
       if (coAdmins != null && coAdmins.isNotEmpty) {
-        final list = coAdmins.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty);
+        final list = coAdmins
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty);
         UserModel.setAdminEmails(list);
       }
     } catch (_) {}
@@ -458,7 +462,8 @@ class AuthProvider extends ChangeNotifier {
   /// Update User Profile details
   Future<void> updateProfile({String? name, String? phone}) async {
     if (_user == null) return;
-    final hasValidPhone = phone != null &&
+    final hasValidPhone =
+        phone != null &&
         phone.trim().isNotEmpty &&
         phone.trim() != 'Not configured';
     _user = _user!.copyWith(
@@ -467,7 +472,9 @@ class AuthProvider extends ChangeNotifier {
       kycStatus: hasValidPhone
           ? (_user!.isTier2Verified ? 'verified' : 'tier1')
           : _user!.kycStatus,
-      kycTier: hasValidPhone ? (_user!.isTier2Verified ? 2 : 1) : _user!.kycTier,
+      kycTier: hasValidPhone
+          ? (_user!.isTier2Verified ? 2 : 1)
+          : _user!.kycTier,
     );
     AppDatabaseService.instance.cacheUser(_user!);
     try {

@@ -163,7 +163,8 @@ class TransactionSuccessDialog extends StatelessWidget {
 
       final now = DateFormat('MMMM dd, yyyy • hh:mm a').format(DateTime.now());
       final formattedAmount = 'NGN ${NumberFormat('#,##0.00').format(amount)}';
-      final displayToken = token ?? (issuedPins.isNotEmpty ? issuedPins.join('\n') : null);
+      final displayToken =
+          token ?? (issuedPins.isNotEmpty ? issuedPins.join('\n') : null);
 
       doc.addPage(
         pw.Page(
@@ -219,11 +220,13 @@ class TransactionSuccessDialog extends StatelessWidget {
                           ],
                         ),
                         pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          padding: const pw.EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 6,
+                          ),
                           decoration: pw.BoxDecoration(
                             color: const PdfColor.fromInt(0xFFECFDF5),
                             borderRadius: pw.BorderRadius.circular(8),
-                            border: pw.Border.all(color: const PdfColor.fromInt(0xFF10B981)),
                           ),
                           child: pw.Text(
                             'TRANSACTION SUCCESSFUL',
@@ -237,7 +240,6 @@ class TransactionSuccessDialog extends StatelessWidget {
                       ],
                     ),
                     pw.SizedBox(height: 20),
-                    pw.Divider(thickness: 1, color: const PdfColor.fromInt(0xFFE2E8F0)),
                     pw.SizedBox(height: 14),
 
                     // Amount Banner
@@ -247,7 +249,6 @@ class TransactionSuccessDialog extends StatelessWidget {
                       decoration: pw.BoxDecoration(
                         color: const PdfColor.fromInt(0xFFF8FAFC),
                         borderRadius: pw.BorderRadius.circular(12),
-                        border: pw.Border.all(color: const PdfColor.fromInt(0xFFE2E8F0)),
                       ),
                       child: pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -309,7 +310,6 @@ class TransactionSuccessDialog extends StatelessWidget {
                         decoration: pw.BoxDecoration(
                           color: const PdfColor.fromInt(0xFFEFF6FF),
                           borderRadius: pw.BorderRadius.circular(8),
-                          border: pw.Border.all(color: const PdfColor.fromInt(0xFF3B82F6)),
                         ),
                         child: pw.Column(
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -349,24 +349,33 @@ class TransactionSuccessDialog extends StatelessWidget {
                     ),
                     pw.SizedBox(height: 8),
                     pw.Table(
-                      border: pw.TableBorder.all(
-                        color: const PdfColor.fromInt(0xFFE2E8F0),
-                        width: 0.8,
-                      ),
+                      border: const pw.TableBorder(),
                       children: [
                         _buildPdfTableRow('Service Category', serviceType),
-                        _buildPdfTableRow('Recipient / Account / Phone', recipient),
+                        _buildPdfTableRow(
+                          'Recipient / Account / Phone',
+                          recipient,
+                        ),
                         if (reference != null && reference!.isNotEmpty)
-                          _buildPdfTableRow('Transaction ID / Avotek Ref', reference!),
-                        if (providerReference != null && providerReference!.isNotEmpty)
-                          _buildPdfTableRow('Aggregator Reference', providerReference!),
-                        _buildPdfTableRow('Delivery Status', 'COMPLETED / DELIVERED'),
+                          _buildPdfTableRow(
+                            'Transaction ID / Avotek Ref',
+                            reference!,
+                          ),
+                        if (providerReference != null &&
+                            providerReference!.isNotEmpty)
+                          _buildPdfTableRow(
+                            'Aggregator Reference',
+                            providerReference!,
+                          ),
+                        _buildPdfTableRow(
+                          'Delivery Status',
+                          'COMPLETED / DELIVERED',
+                        ),
                       ],
                     ),
                     pw.Spacer(),
 
                     // Signature, Trademark & Footer
-                    pw.Divider(thickness: 1, color: const PdfColor.fromInt(0xFFE2E8F0)),
                     pw.SizedBox(height: 10),
                     pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -393,9 +402,11 @@ class TransactionSuccessDialog extends StatelessWidget {
                           ],
                         ),
                         pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const pw.EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: pw.BoxDecoration(
-                            border: pw.Border.all(color: const PdfColor.fromInt(0xFF0052FF), width: 1),
                             borderRadius: pw.BorderRadius.circular(6),
                           ),
                           child: pw.Text(
@@ -419,11 +430,15 @@ class TransactionSuccessDialog extends StatelessWidget {
 
       await Printing.layoutPdf(
         onLayout: (PdfPageFormat format) async => doc.save(),
-        name: 'Avotek_Receipt_${reference ?? DateTime.now().millisecondsSinceEpoch}.pdf',
+        name:
+            'Avotek_Receipt_${reference ?? DateTime.now().millisecondsSinceEpoch}.pdf',
       );
     } catch (e) {
       if (context.mounted) {
-        TopNotification.showError(context, 'Could not generate PDF receipt: $e');
+        TopNotification.showError(
+          context,
+          'Could not generate PDF receipt: $e',
+        );
       }
     }
   }
@@ -432,24 +447,24 @@ class TransactionSuccessDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final now = DateFormat('MMM dd, yyyy • hh:mm a').format(DateTime.now());
-    final displayToken = token ?? (issuedPins.isNotEmpty ? issuedPins.join('\n') : null);
+    final displayToken =
+        token ?? (issuedPins.isNotEmpty ? issuedPins.join('\n') : null);
 
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
+          constraints: const BoxConstraints(maxWidth: 480),
           child: Container(
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF131722) : Colors.white,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
-              ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0052FF).withOpacity(isDark ? 0.25 : 0.12),
+                  color: const Color(
+                    0xFF0052FF,
+                  ).withOpacity(isDark ? 0.25 : 0.12),
                   blurRadius: 32,
                   offset: const Offset(0, 12),
                 ),
@@ -502,7 +517,9 @@ class TransactionSuccessDialog extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.figtree(
                       fontSize: 12.5,
-                      color: isDark ? const Color(0xFFA5B0CD) : AppColors.slateGrey,
+                      color: isDark
+                          ? const Color(0xFFA5B0CD)
+                          : AppColors.slateGrey,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -510,13 +527,15 @@ class TransactionSuccessDialog extends StatelessWidget {
                   // Amount & Service Header
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF182030) : const Color(0xFFF1F5F9),
+                      color: isDark
+                          ? const Color(0xFF182030)
+                          : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF28344D) : const Color(0xFFE2E8F0),
-                      ),
                     ),
                     child: Column(
                       children: [
@@ -537,7 +556,9 @@ class TransactionSuccessDialog extends StatelessWidget {
                           style: GoogleFonts.figtree(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            color: isDark
+                                ? Colors.white70
+                                : const Color(0xFF475569),
                           ),
                         ),
                       ],
@@ -549,14 +570,13 @@ class TransactionSuccessDialog extends StatelessWidget {
                   if (displayToken != null && displayToken.isNotEmpty) ...[
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF0052FF).withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFF0052FF).withOpacity(0.4),
-                          width: 1.2,
-                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -565,7 +585,9 @@ class TransactionSuccessDialog extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                serviceType.toLowerCase().contains('electricity')
+                                serviceType.toLowerCase().contains(
+                                      'electricity',
+                                    )
                                     ? '⚡ PREPAID METER TOKEN'
                                     : '🎓 EXAMINATION PIN(S)',
                                 style: GoogleFonts.figtree(
@@ -577,12 +599,21 @@ class TransactionSuccessDialog extends StatelessWidget {
                               ),
                               InkWell(
                                 onTap: () {
-                                  Clipboard.setData(ClipboardData(text: displayToken));
-                                  TopNotification.showSuccess(context, 'Token copied to clipboard!');
+                                  Clipboard.setData(
+                                    ClipboardData(text: displayToken),
+                                  );
+                                  TopNotification.showSuccess(
+                                    context,
+                                    'Token copied to clipboard!',
+                                  );
                                 },
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.copy_rounded, size: 13, color: Color(0xFF00D2FF)),
+                                    const Icon(
+                                      Icons.copy_rounded,
+                                      size: 13,
+                                      color: Color(0xFF00D2FF),
+                                    ),
                                     const SizedBox(width: 4),
                                     Text(
                                       'Copy',
@@ -603,7 +634,9 @@ class TransactionSuccessDialog extends StatelessWidget {
                             style: GoogleFonts.figtree(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w800,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
                               letterSpacing: 1.1,
                             ),
                           ),
@@ -626,23 +659,34 @@ class TransactionSuccessDialog extends StatelessWidget {
 
                   // Compact Details Summary
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0E131E) : const Color(0xFFF8FAFC),
+                      color: isDark
+                          ? const Color(0xFF0E131E)
+                          : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF202B42) : const Color(0xFFE2E8F0),
-                      ),
                     ),
                     child: Column(
                       children: [
                         _buildReceiptRow('Date', now, isDark),
                         if (reference != null && reference!.isNotEmpty) ...[
-                          const Divider(height: 12),
-                          _buildReceiptRow('Reference', reference!, isDark, isCopyable: true, context: context),
+                          _buildReceiptRow(
+                            'Reference',
+                            reference!,
+                            isDark,
+                            isCopyable: true,
+                            context: context,
+                          ),
                         ],
-                        const Divider(height: 12),
-                        _buildReceiptRow('Status', 'Delivered', isDark, statusColor: AppColors.success),
+                        _buildReceiptRow(
+                          'Status',
+                          'Delivered',
+                          isDark,
+                          statusColor: AppColors.success,
+                        ),
                       ],
                     ),
                   ),
@@ -656,11 +700,18 @@ class TransactionSuccessDialog extends StatelessWidget {
                         icon: const Icon(Icons.download_rounded, size: 15),
                         label: const Text('Receipt'),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          side: BorderSide(
-                            color: isDark ? const Color(0xFF28344D) : const Color(0xFFCBD5E1),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
                           ),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          side: BorderSide(
+                            color: isDark
+                                ? const Color(0xFF28344D)
+                                : const Color(0xFFCBD5E1),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           textStyle: GoogleFonts.figtree(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -742,7 +793,9 @@ class TransactionSuccessDialog extends StatelessWidget {
                   style: GoogleFonts.figtree(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: statusColor ?? (isDark ? Colors.white : const Color(0xFF0F172A)),
+                    color:
+                        statusColor ??
+                        (isDark ? Colors.white : const Color(0xFF0F172A)),
                   ),
                 ),
               ),
@@ -753,7 +806,11 @@ class TransactionSuccessDialog extends StatelessWidget {
                     Clipboard.setData(ClipboardData(text: value));
                     TopNotification.showSuccess(context, 'Copied $label!');
                   },
-                  child: const Icon(Icons.copy_rounded, size: 13, color: AppColors.electricCyan),
+                  child: const Icon(
+                    Icons.copy_rounded,
+                    size: 13,
+                    color: AppColors.electricCyan,
+                  ),
                 ),
               ],
             ],

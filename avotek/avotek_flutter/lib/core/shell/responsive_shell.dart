@@ -218,9 +218,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     final faqs = <(String, String)>[
       (
         'How does "Pay For Me" (Shareable Link) work?',
-        'Tick "Pay For Me" on any service (Airtime, Data, Cable TV, Electricity, or Result Checker) '
-            'and tap the button to generate a secure shareable link. You can send this link via WhatsApp '
-            'or copy it for a friend, family member, or sponsor to settle the bill for you.',
+        'The option is limited to exam PINs. Sponsor checkout still requires a secure payment-request backend before it can be used.',
       ),
       (
         'How do I earn with the Affiliate Programme?',
@@ -236,15 +234,11 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
       ),
       (
         'How do I create and redeem Gift Vouchers?',
-        'Switch to the "Gift Voucher" tab on any service screen to generate a redeemable code. '
-            'Anyone can redeem the voucher code on the Coupons page to instantly receive the value '
-            'in their wallet balance.',
+        'Create a voucher from a service screen or Gifts. Redeem its code on Coupons; the value is added to the wallet for supported purchases.',
       ),
       (
         'How fast are Data, Electricity, and Cable TV delivered?',
-        'All Avotek transactions are 100% automated with instant direct telecom & DisCo routing. '
-            'Electricity meter tokens and exam PINs are immediately displayed on your screen and saved in '
-            'your receipt history.',
+        'Delivery depends on the provider. Completed transactions appear in your history with the available receipt or token.',
       ),
       (
         'How do I fund my Avotek wallet?',
@@ -300,7 +294,10 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF25D366).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(10),
@@ -363,7 +360,8 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                             faq.$2,
                             style: GoogleFonts.figtree(
                               fontSize: 12.5,
-                              height: 1.45,
+                              height: 1.55,
+                              letterSpacing: 0.15,
                               color: isDark
                                   ? AppColors.metallicLight
                                   : AppColors.slateGrey,
@@ -395,7 +393,11 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   ],
                 ),
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 20),
+                  icon: const Icon(
+                    Icons.chat_bubble_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                   label: Text(
                     'Chat on WhatsApp Support (+234 816 700 2789)',
                     style: GoogleFonts.figtree(
@@ -405,13 +407,22 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     ),
                   ),
                   onPressed: () async {
-                    final uri = Uri.parse('https://wa.me/2348167002789?text=${Uri.encodeComponent("Hello Avotek Support, I need help with my account/transaction.")}');
-                    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    final uri = Uri.parse(
+                      'https://wa.me/2348167002789?text=${Uri.encodeComponent("Hello Avotek Support, I need help with my account/transaction.")}',
+                    );
+                    final opened = await launchUrl(
+                      uri,
+                      mode: LaunchMode.externalApplication,
+                    );
                     if (!opened && sheetContext.mounted) {
-                      Clipboard.setData(const ClipboardData(text: '+2348167002789'));
+                      Clipboard.setData(
+                        const ClipboardData(text: '+2348167002789'),
+                      );
                       ScaffoldMessenger.of(sheetContext).showSnackBar(
                         const SnackBar(
-                          content: Text('WhatsApp number +2348167002789 copied to clipboard!'),
+                          content: Text(
+                            'WhatsApp number +2348167002789 copied to clipboard!',
+                          ),
                         ),
                       );
                     }
@@ -420,7 +431,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -513,7 +526,8 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   activeIcon: Icons.tv_rounded,
                   label: 'Subscriptions',
                   route: '/services/tv',
-                  isActive: currentRoute == '/services/tv' ||
+                  isActive:
+                      currentRoute == '/services/tv' ||
                       currentRoute.startsWith('/services/cable'),
                   isDark: isDark,
                 ),
@@ -662,7 +676,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     Expanded(
                       child: InkWell(
                         onTap: () async {
-                          final confirmed = await showLogoutConfirmationDialog(context);
+                          final confirmed = await showLogoutConfirmationDialog(
+                            context,
+                          );
                           if (confirmed && context.mounted) {
                             await auth.signOut();
                             if (context.mounted) context.go('/login');

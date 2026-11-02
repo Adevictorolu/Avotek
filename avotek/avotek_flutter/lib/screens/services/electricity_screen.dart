@@ -5,11 +5,9 @@ import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/supabase/supabase_service.dart';
-import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
-import '../../widgets/pay_for_me_dialog.dart';
 import '../../widgets/pin_modal.dart';
 import '../../widgets/top_notification.dart';
 import '../../widgets/transaction_success_dialog.dart';
@@ -32,7 +30,6 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
 
   String _selectedDisco = 'ikeja-electric';
   String _selectedMeterType = 'prepaid';
-  bool _payForMe = false;
   bool _isVerifying = false;
   bool _isProcessing = false;
   String? _verifiedCustomerName;
@@ -42,7 +39,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     {'id': 'ikeja-electric', 'name': 'Ikeja Electric - IKEDC (PHCN)'},
     {'id': 'eko-electric', 'name': 'Eko Electricity - EKEDC (PHCN)'},
     {'id': 'kano-electric', 'name': 'Kano Electricity - KEDCO (PHCN)'},
-    {'id': 'portharcourt-electric', 'name': 'Port Harcourt Electricity - PHED (PHCN)'},
+    {
+      'id': 'portharcourt-electric',
+      'name': 'Port Harcourt Electricity - PHED (PHCN)',
+    },
     {'id': 'jos-electric', 'name': 'Jos Electricity - JED (PHCN)'},
     {'id': 'ibadan-electric', 'name': 'Ibadan Electricity - IBEDC (PHCN)'},
     {'id': 'kaduna-electric', 'name': 'Kaduna Electricity - KAEDCO (PHCN)'},
@@ -58,10 +58,6 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
   @override
   void initState() {
     super.initState();
-    final auth = context.read<AuthProvider>();
-    if (auth.user?.phone != null && auth.user!.phone!.isNotEmpty) {
-      _phoneController.text = auth.user!.phone!;
-    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<VtuProvider>().fetchElectricityProviders();
     });
@@ -80,7 +76,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     if (_isVerifying) return;
     final meter = _meterController.text.trim();
     if (meter.length < 8) {
-      TopNotification.showWarning(context, 'Please enter a valid meter number (at least 8 digits).');
+      TopNotification.showWarning(
+        context,
+        'Please enter a valid meter number (at least 8 digits).',
+      );
       return;
     }
 
@@ -107,9 +106,15 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     });
 
     if (result.isValid) {
-      TopNotification.showSuccess(context, 'Meter verified: ${result.customerName}');
+      TopNotification.showSuccess(
+        context,
+        'Meter verified: ${result.customerName}',
+      );
     } else {
-      TopNotification.showError(context, 'Could not verify meter number. Please check details and retry.');
+      TopNotification.showError(
+        context,
+        'Could not verify meter number. Please check details and retry.',
+      );
     }
   }
 
@@ -122,7 +127,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
       if (meter.length < 8) {
         errors.add('Enter a valid meter number (8+ digits)');
       }
-      if (_verifiedCustomerName == null && !_payForMe) {
+      if (_verifiedCustomerName == null) {
         errors.add('Meter number must be verified first');
       }
       final phone = _phoneController.text.trim();
@@ -151,18 +156,6 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
       orElse: () => {'name': _selectedDisco},
     )['name']!;
 
-    // 1. Pay For Me Mode
-    if (_payForMe && _activeMode == 0) {
-      final meter = _meterController.text.trim();
-      await PayForMeDialog.show(
-        context,
-        serviceName: 'Electricity Bill ($discoName)',
-        recipient: 'Meter: $meter ($_selectedMeterType.toUpperCase())',
-        amount: amount,
-      );
-      return;
-    }
-
     final auth = context.read<AuthProvider>();
     final wallet = context.read<WalletProvider>();
     final user = auth.user;
@@ -186,7 +179,8 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
         context,
         title: 'Create Electricity Gift Voucher',
         amount: amount,
-        description: 'Voucher for $discoName (₦${amount.toStringAsFixed(0)})\nRecipient can redeem via coupons.',
+        description:
+            'Voucher for $discoName (₦${amount.toStringAsFixed(0)})\nRecipient can redeem via coupons.',
         onPinSubmit: (pin) async => auth.verifyPin(pin),
       );
 
@@ -196,28 +190,38 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
           final res = await SupabaseService.instance.createGiftVoucher(
             amount: amount,
             recipient: _phoneController.text.trim(),
-            note: 'Electricity Bill ($discoName) ${message.isNotEmpty ? "• $message" : ""}',
+            note:
+                'Electricity Bill ($discoName) ${message.isNotEmpty ? "• $message" : ""}',
           );
           await auth.refreshWallet();
           await wallet.fetchWallet(user.id);
 
           if (!mounted) return;
           setState(() => _isProcessing = false);
-          final voucherCode = res['code']?.toString() ?? 'GIFT-CODE';
+          final voucherCode = (res['code'] ?? '').toString().trim();
+          if (voucherCode.isEmpty) {
+            throw StateError('Voucher was created without a claim code.');
+          }
           await TransactionSuccessDialog.show(
             context,
             title: 'Electricity Voucher Created!',
             serviceType: 'Electricity Gift Voucher ($discoName)',
-            recipient: _phoneController.text.isNotEmpty ? _phoneController.text : 'Shareable Link',
+            recipient: _phoneController.text.isNotEmpty
+                ? _phoneController.text
+                : 'Shareable Link',
             amount: amount,
             reference: voucherCode,
             token: voucherCode,
-            message: 'Gift voucher created! Share the code or link with the recipient to redeem instantly.',
+            message:
+                'Gift voucher created! Share the code or link with the recipient to redeem instantly.',
           );
         } catch (e) {
           if (!mounted) return;
           setState(() => _isProcessing = false);
-          TopNotification.showError(context, 'Failed to create gift voucher: $e');
+          TopNotification.showError(
+            context,
+            'Failed to create gift voucher: $e',
+          );
         }
       }
       return;
@@ -231,7 +235,8 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
       context,
       title: 'Confirm Electricity Purchase',
       amount: amount,
-      description: '$discoName • $meter\nCustomer: ${_verifiedCustomerName ?? "Customer"}',
+      description:
+          '$discoName • $meter\nCustomer: ${_verifiedCustomerName ?? "Customer"}',
       onPinSubmit: (pin) async {
         transactionPin = pin;
         return auth.verifyPin(pin);
@@ -260,7 +265,11 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
         setState(() => _isProcessing = false);
 
         if (!result.success || result.order.status == 'failed') {
-          TopNotification.showError(context, result.message, title: 'Payment Failed');
+          TopNotification.showError(
+            context,
+            result.message,
+            title: 'Payment Failed',
+          );
           return;
         }
 
@@ -300,7 +309,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     return ResponsiveShell(
       currentRoute: '/services/electricity',
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark
+            ? const Color(0xFF0F1117)
+            : const Color(0xFFF8FAFC),
         body: SingleChildScrollView(
           padding: EdgeInsets.symmetric(
             horizontal: isDesktop ? 32 : 16,
@@ -317,15 +328,24 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                     onTap: () => Navigator.of(context).maybePop(),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF1E2230)
+                            : const Color(0xFFE2E8F0),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.chevron_left, size: 18, color: isDark ? Colors.white70 : Colors.black87),
+                          Icon(
+                            Icons.chevron_left,
+                            size: 18,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Back',
@@ -364,10 +384,14 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF161922) : const Color(0xFFE2E8F0),
+                      color: isDark
+                          ? const Color(0xFF161922)
+                          : const Color(0xFFE2E8F0),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF262A38) : const Color(0xFFCBD5E1),
+                        color: isDark
+                            ? const Color(0xFF262A38)
+                            : const Color(0xFFCBD5E1),
                       ),
                     ),
                     child: Row(
@@ -381,7 +405,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 0
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                        colors: [
+                                          Color(0xFF0047FF),
+                                          Color(0xFF0038B8),
+                                        ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -390,7 +417,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 boxShadow: _activeMode == 0
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0038B8).withOpacity(0.35),
+                                          color: const Color(
+                                            0xFF0038B8,
+                                          ).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -405,7 +434,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                     size: 18,
                                     color: _activeMode == 0
                                         ? Colors.white
-                                        : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                        : (isDark
+                                              ? Colors.white60
+                                              : const Color(0xFF64748B)),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -415,7 +446,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 0
                                           ? Colors.white
-                                          : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                          : (isDark
+                                                ? Colors.white60
+                                                : const Color(0xFF64748B)),
                                     ),
                                   ),
                                 ],
@@ -432,7 +465,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 1
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                        colors: [
+                                          Color(0xFF0047FF),
+                                          Color(0xFF0038B8),
+                                        ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -441,7 +477,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 boxShadow: _activeMode == 1
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0038B8).withOpacity(0.35),
+                                          color: const Color(
+                                            0xFF0038B8,
+                                          ).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -456,7 +494,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                     size: 18,
                                     color: _activeMode == 1
                                         ? Colors.white
-                                        : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                        : (isDark
+                                              ? Colors.white60
+                                              : const Color(0xFF64748B)),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -466,7 +506,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 1
                                           ? Colors.white
-                                          : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                          : (isDark
+                                                ? Colors.white60
+                                                : const Color(0xFF64748B)),
                                     ),
                                   ),
                                 ],
@@ -499,7 +541,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                       color: isDark ? const Color(0xFF141721) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF222634)
+                            : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
@@ -511,7 +555,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            color: isDark
+                                ? Colors.white70
+                                : const Color(0xFF475569),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -519,20 +565,32 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           children: [
                             Expanded(
                               child: InkWell(
-                                onTap: () => setState(() => _selectedMeterType = 'prepaid'),
+                                onTap: () => setState(
+                                  () => _selectedMeterType = 'prepaid',
+                                ),
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: _selectedMeterType == 'prepaid'
-                                        ? const Color(0xFF0038B8).withOpacity(0.18)
-                                        : (isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9)),
+                                        ? const Color(
+                                            0xFF0038B8,
+                                          ).withOpacity(0.18)
+                                        : (isDark
+                                              ? const Color(0xFF1B1E29)
+                                              : const Color(0xFFF1F5F9)),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: _selectedMeterType == 'prepaid'
                                           ? const Color(0xFF0038B8)
-                                          : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
-                                      width: _selectedMeterType == 'prepaid' ? 2 : 1,
+                                          : (isDark
+                                                ? const Color(0xFF282D3D)
+                                                : const Color(0xFFCBD5E1)),
+                                      width: _selectedMeterType == 'prepaid'
+                                          ? 2
+                                          : 1,
                                     ),
                                   ),
                                   child: Row(
@@ -543,7 +601,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                         size: 16,
                                         color: _selectedMeterType == 'prepaid'
                                             ? const Color(0xFF0038B8)
-                                            : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                            : (isDark
+                                                  ? Colors.white60
+                                                  : const Color(0xFF64748B)),
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
@@ -553,7 +613,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                           fontWeight: FontWeight.w700,
                                           color: _selectedMeterType == 'prepaid'
                                               ? const Color(0xFF0038B8)
-                                              : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                              : (isDark
+                                                    ? Colors.white70
+                                                    : const Color(0xFF334155)),
                                         ),
                                       ),
                                     ],
@@ -564,20 +626,32 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: InkWell(
-                                onTap: () => setState(() => _selectedMeterType = 'postpaid'),
+                                onTap: () => setState(
+                                  () => _selectedMeterType = 'postpaid',
+                                ),
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: _selectedMeterType == 'postpaid'
-                                        ? const Color(0xFF0038B8).withOpacity(0.18)
-                                        : (isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9)),
+                                        ? const Color(
+                                            0xFF0038B8,
+                                          ).withOpacity(0.18)
+                                        : (isDark
+                                              ? const Color(0xFF1B1E29)
+                                              : const Color(0xFFF1F5F9)),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: _selectedMeterType == 'postpaid'
                                           ? const Color(0xFF0038B8)
-                                          : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
-                                      width: _selectedMeterType == 'postpaid' ? 2 : 1,
+                                          : (isDark
+                                                ? const Color(0xFF282D3D)
+                                                : const Color(0xFFCBD5E1)),
+                                      width: _selectedMeterType == 'postpaid'
+                                          ? 2
+                                          : 1,
                                     ),
                                   ),
                                   child: Row(
@@ -588,7 +662,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                         size: 16,
                                         color: _selectedMeterType == 'postpaid'
                                             ? const Color(0xFF0038B8)
-                                            : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                            : (isDark
+                                                  ? Colors.white60
+                                                  : const Color(0xFF64748B)),
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
@@ -596,9 +672,12 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                         style: GoogleFonts.figtree(
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w700,
-                                          color: _selectedMeterType == 'postpaid'
+                                          color:
+                                              _selectedMeterType == 'postpaid'
                                               ? const Color(0xFF0038B8)
-                                              : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                              : (isDark
+                                                    ? Colors.white70
+                                                    : const Color(0xFF334155)),
                                         ),
                                       ),
                                     ],
@@ -617,12 +696,17 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                   if (_activeMode == 0) ...[
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -634,7 +718,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -644,25 +730,39 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 child: TextField(
                                   controller: _meterController,
                                   keyboardType: TextInputType.number,
-                                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
                                   onChanged: (_) {
                                     if (_verifiedCustomerName != null) {
-                                      setState(() => _verifiedCustomerName = null);
+                                      setState(
+                                        () => _verifiedCustomerName = null,
+                                      );
                                     }
                                   },
                                   style: GoogleFonts.figtree(
                                     fontSize: 14,
-                                    color: isDark ? Colors.white : Colors.black87,
+                                    color: isDark
+                                        ? Colors.white
+                                        : Colors.black87,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: 'Enter your 11-digit meter number',
+                                    hintText:
+                                        'Enter your 11-digit meter number',
                                     hintStyle: GoogleFonts.figtree(
                                       fontSize: 13,
-                                      color: isDark ? Colors.white38 : Colors.black38,
+                                      color: isDark
+                                          ? Colors.white38
+                                          : Colors.black38,
                                     ),
                                     filled: true,
-                                    fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    fillColor: isDark
+                                        ? const Color(0xFF1B1E29)
+                                        : const Color(0xFFF1F5F9),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10),
                                       borderSide: BorderSide.none,
@@ -674,19 +774,32 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               SizedBox(
                                 height: 44,
                                 child: ElevatedButton(
-                                  onPressed: _isVerifying ? null : _handleVerifyMeter,
+                                  onPressed: _isVerifying
+                                      ? null
+                                      : _handleVerifyMeter,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF0038B8),
                                     foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
                                   child: _isVerifying
                                       ? const SizedBox(
                                           width: 16,
                                           height: 16,
-                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
                                         )
-                                      : const Text('Verify', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                                      : const Text(
+                                          'Verify',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ],
@@ -694,15 +807,28 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           if (_verifiedCustomerName != null) ...[
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withOpacity(0.12),
+                                color: const Color(
+                                  0xFF10B981,
+                                ).withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFF10B981,
+                                  ).withOpacity(0.4),
+                                ),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 16),
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Color(0xFF10B981),
+                                    size: 16,
+                                  ),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
@@ -725,14 +851,18 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
                           TextField(
                             controller: _amountController,
                             keyboardType: TextInputType.number,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
                             onChanged: (_) => setState(() {}),
                             style: GoogleFonts.figtree(
                               fontSize: 16,
@@ -746,7 +876,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
                               prefixIcon: Padding(
-                                padding: const EdgeInsets.only(left: 14, right: 6),
+                                padding: const EdgeInsets.only(
+                                  left: 14,
+                                  right: 6,
+                                ),
                                 child: Text(
                                   '₦',
                                   style: GoogleFonts.figtree(
@@ -756,10 +889,18 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                   ),
                                 ),
                               ),
-                              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                              prefixIconConstraints: const BoxConstraints(
+                                minWidth: 0,
+                                minHeight: 0,
+                              ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              fillColor: isDark
+                                  ? const Color(0xFF1B1E29)
+                                  : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
@@ -771,29 +912,53 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                             spacing: 8,
                             runSpacing: 8,
                             children: _quickAmounts.map((amt) {
-                              final isSel = (double.tryParse(_amountController.text.trim()) ?? 0.0) == amt;
+                              final isSel =
+                                  (double.tryParse(
+                                        _amountController.text.trim(),
+                                      ) ??
+                                      0.0) ==
+                                  amt;
                               return InkWell(
-                                onTap: () => setState(() => _amountController.text = amt.toInt().toString()),
+                                onTap: () => setState(
+                                  () => _amountController.text = amt
+                                      .toInt()
+                                      .toString(),
+                                ),
                                 borderRadius: BorderRadius.circular(8),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: isSel
-                                        ? const Color(0xFF0038B8).withOpacity(0.2)
-                                        : (isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9)),
+                                        ? const Color(
+                                            0xFF0038B8,
+                                          ).withOpacity(0.2)
+                                        : (isDark
+                                              ? const Color(0xFF1C202C)
+                                              : const Color(0xFFF1F5F9)),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: isSel
                                           ? const Color(0xFF0038B8)
-                                          : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                          : (isDark
+                                                ? const Color(0xFF2C3142)
+                                                : const Color(0xFFCBD5E1)),
                                     ),
                                   ),
                                   child: Text(
                                     '₦${amt.toInt()}',
                                     style: GoogleFonts.figtree(
                                       fontSize: 11.5,
-                                      fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                                      color: isSel ? const Color(0xFF0038B8) : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                      fontWeight: isSel
+                                          ? FontWeight.w800
+                                          : FontWeight.w600,
+                                      color: isSel
+                                          ? const Color(0xFF0038B8)
+                                          : (isDark
+                                                ? Colors.white70
+                                                : const Color(0xFF334155)),
                                     ),
                                   ),
                                 ),
@@ -807,14 +972,18 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
                           TextField(
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
                             style: GoogleFonts.figtree(
                               fontSize: 14,
                               color: isDark ? Colors.white : Colors.black87,
@@ -826,53 +995,18 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              fillColor: isDark
+                                  ? const Color(0xFF1B1E29)
+                                  : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: Checkbox(
-                                  value: _payForMe,
-                                  activeColor: const Color(0xFF0038B8),
-                                  onChanged: (val) => setState(() => _payForMe = val ?? false),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _payForMe = !_payForMe),
-                                  child: RichText(
-                                    text: TextSpan(
-                                      text: 'Pay For Me ',
-                                      style: GoogleFonts.figtree(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark ? Colors.white70 : const Color(0xFF334155),
-                                      ),
-                                      children: [
-                                        TextSpan(
-                                          text: '- get a shareable payment link',
-                                          style: GoogleFonts.figtree(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.normal,
-                                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
                           ),
                         ],
                       ),
@@ -880,12 +1014,17 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                   ] else ...[
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -897,14 +1036,18 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
                           TextField(
                             controller: _amountController,
                             keyboardType: TextInputType.number,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
                             onChanged: (_) => setState(() {}),
                             style: GoogleFonts.figtree(
                               fontSize: 16,
@@ -918,7 +1061,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
                               prefixIcon: Padding(
-                                padding: const EdgeInsets.only(left: 14, right: 6),
+                                padding: const EdgeInsets.only(
+                                  left: 14,
+                                  right: 6,
+                                ),
                                 child: Text(
                                   '₦',
                                   style: GoogleFonts.figtree(
@@ -928,10 +1074,18 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                   ),
                                 ),
                               ),
-                              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                              prefixIconConstraints: const BoxConstraints(
+                                minWidth: 0,
+                                minHeight: 0,
+                              ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              fillColor: isDark
+                                  ? const Color(0xFF1B1E29)
+                                  : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
@@ -945,7 +1099,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -964,7 +1120,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                              fillColor: isDark
+                                  ? const Color(0xFF1B1E29)
+                                  : const Color(0xFFF1F5F9),
                               contentPadding: const EdgeInsets.all(12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -986,7 +1144,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                       color: isDark ? const Color(0xFF141721) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF222634)
+                            : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
@@ -1001,7 +1161,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.8,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                color: isDark
+                                    ? Colors.white70
+                                    : const Color(0xFF475569),
                               ),
                             ),
                             Text(
@@ -1009,7 +1171,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               style: GoogleFonts.figtree(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                color: isDark
+                                    ? Colors.white38
+                                    : const Color(0xFF94A3B8),
                               ),
                             ),
                           ],
@@ -1020,10 +1184,14 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                         Container(
                           height: 250,
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
+                            color: isDark
+                                ? const Color(0xFF0D1017)
+                                : const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                              color: isDark
+                                  ? const Color(0xFF1E2230)
+                                  : const Color(0xFFE2E8F0),
                             ),
                           ),
                           child: Scrollbar(
@@ -1031,12 +1199,13 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                             child: GridView.builder(
                               padding: const EdgeInsets.all(8),
                               itemCount: _discoList.length,
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: isDesktop ? 3 : 2,
-                                crossAxisSpacing: 8,
-                                mainAxisSpacing: 8,
-                                childAspectRatio: isDesktop ? 2.5 : 1.9,
-                              ),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: isDesktop ? 3 : 2,
+                                    crossAxisSpacing: 8,
+                                    mainAxisSpacing: 8,
+                                    childAspectRatio: isDesktop ? 2.35 : 1.75,
+                                  ),
                               itemBuilder: (context, index) {
                                 final disco = _discoList[index];
                                 final id = disco['id']!;
@@ -1053,16 +1222,25 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                   },
                                   borderRadius: BorderRadius.circular(10),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? (isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE))
-                                          : (isDark ? const Color(0xFF1B1E29) : Colors.white),
+                                          ? (isDark
+                                                ? const Color(0xFF172554)
+                                                : const Color(0xFFDBEAFE))
+                                          : (isDark
+                                                ? const Color(0xFF1B1E29)
+                                                : Colors.white),
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
                                         color: isSelected
                                             ? const Color(0xFF0038B8)
-                                            : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
+                                            : (isDark
+                                                  ? const Color(0xFF282D3D)
+                                                  : const Color(0xFFCBD5E1)),
                                         width: isSelected ? 2 : 1,
                                       ),
                                     ),
@@ -1074,10 +1252,14 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                         overflow: TextOverflow.ellipsis,
                                         style: GoogleFonts.figtree(
                                           fontSize: 12.5,
-                                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                                          fontWeight: isSelected
+                                              ? FontWeight.w800
+                                              : FontWeight.w700,
                                           color: isSelected
                                               ? const Color(0xFF0038B8)
-                                              : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                              : (isDark
+                                                    ? Colors.white70
+                                                    : const Color(0xFF334155)),
                                         ),
                                       ),
                                     ),
@@ -1102,12 +1284,16 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                       border: Border.all(
                         color: isReady
                             ? const Color(0xFF0038B8)
-                            : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
+                            : (isDark
+                                  ? const Color(0xFF222634)
+                                  : const Color(0xFFE2E8F0)),
                         width: isReady ? 1.5 : 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
+                          color: isDark
+                              ? Colors.black26
+                              : Colors.black.withOpacity(0.04),
                           blurRadius: 10,
                           offset: const Offset(0, 3),
                         ),
@@ -1130,7 +1316,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.8,
-                                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                      color: isDark
+                                          ? Colors.white54
+                                          : const Color(0xFF64748B),
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -1141,19 +1329,28 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                     style: GoogleFonts.figtree(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark
+                                          ? Colors.white
+                                          : const Color(0xFF0F172A),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1E2638) : const Color(0xFFEFF6FF),
+                                color: isDark
+                                    ? const Color(0xFF1E2638)
+                                    : const Color(0xFFEFF6FF),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: const Color(0xFF0038B8).withOpacity(0.3),
+                                  color: const Color(
+                                    0xFF0038B8,
+                                  ).withOpacity(0.3),
                                 ),
                               ),
                               child: Text(
@@ -1163,7 +1360,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 style: GoogleFonts.figtree(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
-                                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                  color: isDark
+                                      ? const Color(0xFF38BDF8)
+                                      : const Color(0xFF0038B8),
                                 ),
                               ),
                             ),
@@ -1178,19 +1377,26 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           decoration: BoxDecoration(
                             gradient: isReady && !_isProcessing
                                 ? const LinearGradient(
-                                    colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                    colors: [
+                                      Color(0xFF0047FF),
+                                      Color(0xFF0038B8),
+                                    ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   )
                                 : null,
                             color: isReady && !_isProcessing
                                 ? null
-                                : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
+                                : (isDark
+                                      ? const Color(0xFF26324D)
+                                      : const Color(0xFFCBD5E1)),
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: isReady && !_isProcessing
                                 ? [
                                     BoxShadow(
-                                      color: const Color(0xFF0038B8).withOpacity(0.35),
+                                      color: const Color(
+                                        0xFF0038B8,
+                                      ).withOpacity(0.35),
                                       blurRadius: 10,
                                       offset: const Offset(0, 3),
                                     ),
@@ -1198,19 +1404,26 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 : null,
                           ),
                           child: ElevatedButton(
-                            onPressed: isReady && !_isProcessing ? _handleSubmit : null,
+                            onPressed: isReady && !_isProcessing
+                                ? _handleSubmit
+                                : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,
                               foregroundColor: Colors.white,
                               disabledForegroundColor: Colors.white38,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                             child: _isProcessing
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   )
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1218,7 +1431,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                       Icon(
                                         _activeMode == 1
                                             ? Icons.card_giftcard
-                                            : (_payForMe ? Icons.share : Icons.bolt_rounded),
+                                            : Icons.bolt_rounded,
                                         size: 18,
                                         color: Colors.white,
                                       ),
@@ -1226,11 +1439,11 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                       Text(
                                         _activeMode == 1
                                             ? 'Create Gift Voucher'
-                                            : (_payForMe
-                                                ? 'Generate Pay For Me Link'
-                                                : (_amountController.text.trim().isNotEmpty
-                                                    ? 'Pay Electricity Bill • ₦${_amountController.text.trim()}'
-                                                    : 'Pay Electricity Bill')),
+                                            : (_amountController.text
+                                                      .trim()
+                                                      .isNotEmpty
+                                                  ? 'Pay Electricity Bill • ₦${_amountController.text.trim()}'
+                                                  : 'Pay Electricity Bill'),
                                         style: GoogleFonts.figtree(
                                           fontSize: 14.5,
                                           fontWeight: FontWeight.w800,
@@ -1247,7 +1460,11 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.info_outline, size: 14, color: Color(0xFFF59E0B)),
+                              const Icon(
+                                Icons.info_outline,
+                                size: 14,
+                                color: Color(0xFFF59E0B),
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(

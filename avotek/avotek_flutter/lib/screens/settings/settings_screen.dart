@@ -9,6 +9,7 @@ import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/notification_preferences.dart';
 import '../../widgets/logout_dialog.dart';
+import '../../widgets/top_notification.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 
@@ -41,22 +42,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await SupabaseService.instance.saveNotificationPreferences(preferences);
       if (!mounted) return;
       setState(() => _notificationPreferences = preferences);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Notification preference updated and synced with your account.',
-          ),
-          backgroundColor: AppColors.success,
-        ),
-      );
+      TopNotification.showSuccess(context, 'Notification settings saved.');
     } catch (error) {
       debugPrint('Saving notification preferences failed: $error');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not save notification preferences. Try again.'),
-          backgroundColor: AppColors.error,
-        ),
+      TopNotification.showError(
+        context,
+        'Could not save notification settings. Try again.',
       );
     } finally {
       if (mounted) {
@@ -601,21 +593,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               final newPin = newPinCtrl.text.trim();
                               final confirmPin = confirmPinCtrl.text.trim();
 
-                              if (newPin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(newPin)) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('New PIN must be exactly 4 digits.'),
-                                    backgroundColor: AppColors.error,
-                                  ),
+                              if (newPin.length != 4 ||
+                                  !RegExp(r'^\d{4}$').hasMatch(newPin)) {
+                                TopNotification.showError(
+                                  context,
+                                  'New PIN must be exactly 4 digits.',
                                 );
                                 return;
                               }
                               if (newPin != confirmPin) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('New PINs do not match.'),
-                                    backgroundColor: AppColors.error,
-                                  ),
+                                TopNotification.showError(
+                                  context,
+                                  'New PINs do not match.',
                                 );
                                 return;
                               }
@@ -624,43 +613,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               // If user already has a PIN, verify current PIN first
                               if (!auth.needsPinSetup) {
                                 if (currentPin.length != 4) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Please enter your 4-digit current PIN.'),
-                                      backgroundColor: AppColors.error,
-                                    ),
+                                  TopNotification.showError(
+                                    context,
+                                    'Enter your current 4-digit PIN.',
                                   );
                                   return;
                                 }
-                                final isValid = await auth.verifyPin(currentPin);
+                                final isValid = await auth.verifyPin(
+                                  currentPin,
+                                );
                                 if (!isValid) {
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Current PIN is incorrect. Please try again.'),
-                                      backgroundColor: AppColors.error,
-                                    ),
+                                  if (!mounted || !ctx.mounted) return;
+                                  TopNotification.showError(
+                                    context,
+                                    'Current PIN is incorrect. Please try again.',
                                   );
                                   return;
                                 }
                               }
 
-                              final success = await auth.setTransactionPin(newPin);
-                              if (!context.mounted) return;
+                              final success = await auth.setTransactionPin(
+                                newPin,
+                              );
+                              if (!mounted || !ctx.mounted) return;
                               if (success) {
                                 Navigator.pop(ctx);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Transaction PIN updated successfully!'),
-                                    backgroundColor: AppColors.success,
-                                  ),
+                                TopNotification.showSuccess(
+                                  context,
+                                  'Transaction PIN updated.',
                                 );
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(auth.errorMessage ?? 'Could not update transaction PIN.'),
-                                    backgroundColor: AppColors.error,
-                                  ),
+                                TopNotification.showError(
+                                  context,
+                                  auth.errorMessage ??
+                                      'Could not update transaction PIN.',
                                 );
                               }
                             },
@@ -985,7 +971,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Follow this quick guide to get you setup to start using our api',
+                              'Quick guide to start using the Avotek API.',
                               style: GoogleFonts.figtree(
                                 fontSize: 11.5,
                                 color: isDark
@@ -1037,7 +1023,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Get Authenticated To Use The API Services',
+                              'Authenticate before making API requests.',
                               style: GoogleFonts.figtree(
                                 fontSize: 11.5,
                                 color: isDark
@@ -1062,7 +1048,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Automate your VTU, utility bills, and exam e-PIN purchases with Avotek\'s high-speed REST API. All requests use JSON payloads and require your Avotek Bearer token.',
+                  'Use the Avotek REST API for airtime, data, utilities, and exam e-PINs. Send JSON requests with your API key in the Authorization header.',
                   style: GoogleFonts.figtree(
                     fontSize: 12,
                     height: 1.45,
@@ -1078,10 +1064,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
+                    color: isDark
+                        ? AppColors.darkCardVariant
+                        : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder,
                     ),
                   ),
                   child: Column(
@@ -1100,7 +1090,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.success.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(6),
@@ -1122,7 +1115,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: GoogleFonts.figtree(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white70 : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -1131,7 +1126,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: GoogleFonts.figtree(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          color: isDark
+                              ? AppColors.metallicLight
+                              : AppColors.slateGrey,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -1157,12 +1154,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                _buildEndpointRow('POST', '/airtime', 'Buy Airtime (MTN, AIRTEL, GLO, 9MOBILE)', isDark),
-                _buildEndpointRow('POST', '/data', 'Buy SME & Direct Data Bundles', isDark),
-                _buildEndpointRow('POST', '/cable', 'Recharge DSTV, GOTV & Startimes', isDark),
-                _buildEndpointRow('POST', '/electricity', 'Pay Electricity Bills & Get Instant Token', isDark),
-                _buildEndpointRow('POST', '/exam-pins', 'Buy WAEC, NECO & NABTEB Result Checkers', isDark),
-                _buildEndpointRow('GET', '/wallet/balance', 'Query Live Avotek Wallet Balance', isDark),
+                _buildEndpointRow(
+                  'POST',
+                  '/airtime',
+                  'Buy Airtime (MTN, AIRTEL, GLO, 9MOBILE)',
+                  isDark,
+                ),
+                _buildEndpointRow(
+                  'POST',
+                  '/data',
+                  'Buy SME & Direct Data Bundles',
+                  isDark,
+                ),
+                _buildEndpointRow(
+                  'POST',
+                  '/cable',
+                  'Recharge DSTV, GOTV & Startimes',
+                  isDark,
+                ),
+                _buildEndpointRow(
+                  'POST',
+                  '/electricity',
+                  'Pay Electricity Bills & Get Instant Token',
+                  isDark,
+                ),
+                _buildEndpointRow(
+                  'POST',
+                  '/exam-pins',
+                  'Buy WAEC, NECO & NABTEB Result Checkers',
+                  isDark,
+                ),
+                _buildEndpointRow(
+                  'GET',
+                  '/wallet/balance',
+                  'Query Live Avotek Wallet Balance',
+                  isDark,
+                ),
                 const SizedBox(height: 20),
 
                 // Developer Support Card
@@ -1170,7 +1197,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF132035) : const Color(0xFFEFF6FF),
+                    color: isDark
+                        ? const Color(0xFF132035)
+                        : const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: AppColors.primaryCyan.withValues(alpha: 0.3),
@@ -1178,7 +1207,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.api_rounded, color: AppColors.electricCyan, size: 24),
+                      const Icon(
+                        Icons.api_rounded,
+                        color: AppColors.electricCyan,
+                        size: 24,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -1189,15 +1222,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               style: GoogleFonts.figtree(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Contact Avotek Developer Desk on WhatsApp (+2348167002789) to get dedicated API keys and discounted corporate pricing.',
+                              'Request production API access and pricing from the Avotek Developer Desk.',
                               style: GoogleFonts.figtree(
                                 fontSize: 11.5,
-                                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                color: isDark
+                                    ? AppColors.metallicLight
+                                    : AppColors.slateGrey,
                               ),
                             ),
                           ],
@@ -1206,7 +1243,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(width: 8),
                       IconButton(
                         onPressed: _openWhatsAppSupport,
-                        icon: const Icon(Icons.chat_rounded, color: AppColors.success),
+                        icon: const Icon(
+                          Icons.chat_rounded,
+                          color: AppColors.success,
+                        ),
                         tooltip: 'Message on WhatsApp',
                       ),
                     ],
@@ -1220,7 +1260,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildEndpointRow(String method, String path, String description, bool isDark) {
+  Widget _buildEndpointRow(
+    String method,
+    String path,
+    String description,
+    bool isDark,
+  ) {
     final isPost = method == 'POST';
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -1348,12 +1393,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: () async {
                 final password = newPassCtrl.text;
                 if (password.length < 6 || password != confirmPassCtrl.text) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Enter a matching password with at least 6 characters.',
-                      ),
-                    ),
+                  TopNotification.showError(
+                    context,
+                    'Enter a matching password with at least 6 characters.',
                   );
                   return;
                 }
@@ -1365,19 +1407,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Navigator.pop(ctx);
                   newPassCtrl.dispose();
                   confirmPassCtrl.dispose();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Password updated successfully!'),
-                      backgroundColor: AppColors.success,
-                    ),
+                  TopNotification.showSuccess(
+                    context,
+                    'Password updated successfully.',
                   );
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        auth.errorMessage ?? 'Password update failed.',
-                      ),
-                    ),
+                  TopNotification.showError(
+                    context,
+                    auth.errorMessage ?? 'Password update failed.',
                   );
                 }
               },
@@ -1672,883 +1709,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   // --- MODAL: UPGRADE TO CORPORATE ---
-  void _openUpgradeToCorporateModal() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    int activeView = 0; // 0: Benefits Overview, 1: Select Upgrade Path
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (dialogCtx, setDialogState) => Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 24,
-          ),
-          child: Container(
-            width: 620,
-            padding: const EdgeInsets.all(26),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkCard : Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  blurRadius: 36,
-                  offset: const Offset(0, 14),
-                ),
-              ],
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Top Drag Handle
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkBorder : Colors.black26,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Header with Title and Close (X)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Upgrade to Corporate',
-                        style: GoogleFonts.figtree(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 18),
-                        color: isDark ? Colors.white70 : Colors.black54,
-                        onPressed: () => Navigator.pop(ctx),
-                        style: IconButton.styleFrom(
-                          backgroundColor: isDark
-                              ? AppColors.darkCardVariant
-                              : AppColors.lightCardVariant,
-                          padding: const EdgeInsets.all(6),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-
-                  if (activeView == 0) ...[
-                    // --- VIEW 0: BENEFITS OVERVIEW ---
-                    // Crown Hero Card
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 22,
-                        horizontal: 20,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: isDark
-                              ? [AppColors.darkCardVariant, AppColors.darkCard]
-                              : [Colors.white, const Color(0xFFEFF6FF)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.darkBorder
-                              : AppColors.lightBorder,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              color: AppColors.primaryBlue,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primaryBlue.withValues(
-                                    alpha: 0.4,
-                                  ),
-                                  blurRadius: 20,
-                                ),
-                              ],
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.workspace_premium_rounded,
-                                color: Colors.white,
-                                size: 28,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            'Unlock premium pricing, bulk orders, and exclusive features',
-                            style: GoogleFonts.figtree(
-                              fontSize: 12.5,
-                              color: isDark
-                                  ? AppColors.metallicLight
-                                  : AppColors.slateGrey,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-
-                    // 3 Stat Cards Row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildCorporateStatCard(
-                            icon: Icons.account_balance_wallet_outlined,
-                            iconColor: AppColors.primaryCyan,
-                            title: 'YOUR BALANCE',
-                            value: '₦0.00',
-                            subtitle: null,
-                            isDark: isDark,
-                            onTap: null,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildCorporateStatCard(
-                            icon: Icons.person_outline_rounded,
-                            iconColor: AppColors.electricCyan,
-                            title: 'INDIVIDUAL PATH',
-                            value: '₦10,000',
-                            valueColor: AppColors.electricCyan,
-                            subtitle: 'Instant',
-                            isDark: isDark,
-                            onTap: () => setDialogState(() => activeView = 1),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildCorporateStatCard(
-                            icon: Icons.apartment_rounded,
-                            iconColor: AppColors.success,
-                            title: 'BUSINESS PATH',
-                            value: '₦3,000',
-                            valueColor: AppColors.success,
-                            subtitle: 'CAC validation',
-                            isDark: isDark,
-                            onTap: () => setDialogState(() => activeView = 1),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 22),
-
-                    // Corporate Benefits Header
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.bolt_rounded,
-                          size: 18,
-                          color: AppColors.electricCyan,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Corporate Benefits',
-                          style: GoogleFonts.figtree(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF0F172A),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-
-                    // 2x5 Grid of Corporate Benefits
-                    _buildBenefitsGrid(isDark),
-                    const SizedBox(height: 16),
-
-                    // Business Path CAC Notice Box
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.darkCardVariant
-                            : const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.darkBorder
-                              : const Color(0xFFBFDBFE),
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            Icons.description_outlined,
-                            size: 18,
-                            color: AppColors.primaryCyan,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: RichText(
-                              text: TextSpan(
-                                style: GoogleFonts.figtree(
-                                  fontSize: 11.5,
-                                  height: 1.45,
-                                  color: isDark
-                                      ? AppColors.metallicLight
-                                      : const Color(0xFF0369A1),
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: 'Business path ',
-                                    style: GoogleFonts.figtree(
-                                      fontWeight: FontWeight.w800,
-                                      color: isDark
-                                          ? Colors.white
-                                          : const Color(0xFF0F172A),
-                                    ),
-                                  ),
-                                  const TextSpan(
-                                    text:
-                                        'requires ₦3,000 for CAC validation with our partners (actual cost is ₦5,000 - Avotek covers ₦2,000). The fee covers ONE review - every new review is chargeable.',
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Avotek Brand Button: Choose Upgrade Path ➔
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primaryBlue.withValues(alpha: 0.4),
-                            blurRadius: 20,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () => setDialogState(() => activeView = 1),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Choose Upgrade Path',
-                              style: GoogleFonts.figtree(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Icon(Icons.arrow_forward_rounded, size: 18),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ] else ...[
-                    // --- VIEW 1: SELECT UPGRADE PATH ---
-                    // Card 1: Individual Upgrade
-                    InkWell(
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Individual Corporate Upgrade requested! Processing activation...',
-                            ),
-                            backgroundColor: AppColors.success,
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkCardVariant
-                              : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.darkBorder
-                                : const Color(0xFFCBD5E1),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryBlue.withValues(
-                                      alpha: 0.15,
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                    Icons.person_rounded,
-                                    color: AppColors.electricCyan,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Individual Upgrade',
-                                        style: GoogleFonts.figtree(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w800,
-                                          color: isDark
-                                              ? Colors.white
-                                              : const Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'Pay a one-time fee and get instant corporate access',
-                                        style: GoogleFonts.figtree(
-                                          fontSize: 11.5,
-                                          color: isDark
-                                              ? AppColors.metallicLight
-                                              : AppColors.slateGrey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  color: Colors.grey,
-                                  size: 18,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-
-                            // Price row
-                            Row(
-                              children: [
-                                Text(
-                                  '₦10,000',
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.electricCyan,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Instant activation',
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 12,
-                                    color: isDark
-                                        ? AppColors.metallicLight
-                                        : AppColors.slateGrey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-
-                            // Cyan feature badges box
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppColors.darkCard
-                                    : const Color(0xFFEFF6FF),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isDark
-                                      ? AppColors.darkBorder
-                                      : const Color(0xFFBFDBFE),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    '✔ Instant Access',
-                                    style: GoogleFonts.figtree(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primaryCyan,
-                                    ),
-                                  ),
-                                  Text(
-                                    '✔ No Documents',
-                                    style: GoogleFonts.figtree(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primaryCyan,
-                                    ),
-                                  ),
-                                  Text(
-                                    '✔ No Approval Wait',
-                                    style: GoogleFonts.figtree(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primaryCyan,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Card 2: Business Upgrade
-                    InkWell(
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Business Upgrade requested! CAC verification initiated...',
-                            ),
-                            backgroundColor: AppColors.success,
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkCardVariant
-                              : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppColors.success,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.success.withValues(
-                                      alpha: 0.15,
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                    Icons.apartment_rounded,
-                                    color: AppColors.success,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Business Upgrade',
-                                        style: GoogleFonts.figtree(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w800,
-                                          color: isDark
-                                              ? Colors.white
-                                              : const Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'Pay ₦3,000 validation fee + upload CAC documents for corporate upgrade',
-                                        style: GoogleFonts.figtree(
-                                          fontSize: 11.5,
-                                          color: isDark
-                                              ? AppColors.metallicLight
-                                              : AppColors.slateGrey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  color: Colors.grey,
-                                  size: 18,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-
-                            // Price row
-                            Row(
-                              children: [
-                                Text(
-                                  '₦3,000',
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.success,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'CAC validation + 24h review',
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 12,
-                                    color: isDark
-                                        ? AppColors.metallicLight
-                                        : AppColors.slateGrey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-
-                            // Green feature badges box
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppColors.darkCard
-                                    : const Color(0xFFECFDF5),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isDark
-                                      ? AppColors.darkBorder
-                                      : const Color(0xFFA7F3D0),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    '✔ ₦5K validation (Avotek covers ₦2K)',
-                                    style: GoogleFonts.figtree(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.success,
-                                    ),
-                                  ),
-                                  Text(
-                                    '✔ Upload CAC',
-                                    style: GoogleFonts.figtree(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.success,
-                                    ),
-                                  ),
-                                  Text(
-                                    '✔ 24h Review',
-                                    style: GoogleFonts.figtree(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.success,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-
-                    // Back to Overview Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () => setDialogState(() => activeView = 0),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: isDark
-                              ? Colors.white70
-                              : const Color(0xFF334155),
-                          side: BorderSide(
-                            color: isDark
-                                ? AppColors.darkBorder
-                                : const Color(0xFFCBD5E1),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.arrow_back_rounded, size: 16),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Back to Overview',
-                              style: GoogleFonts.figtree(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCorporateStatCard({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String value,
-    Color? valueColor,
-    String? subtitle,
-    required bool isDark,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isDark ? AppColors.darkBorder : const Color(0xFFCBD5E1),
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 16, color: iconColor),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              style: GoogleFonts.figtree(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w700,
-                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: GoogleFonts.figtree(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color:
-                    valueColor ??
-                    (isDark ? Colors.white : const Color(0xFF0F172A)),
-              ),
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: GoogleFonts.figtree(
-                  fontSize: 9.5,
-                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBenefitsGrid(bool isDark) {
-    final benefits = [
-      (
-        'Lower Service Charges',
-        'Corporate discount on all services',
-        Icons.attach_money_rounded,
-      ),
-      (
-        'Bulk Order',
-        'Bulk data, airtime, and utility orders',
-        Icons.inventory_2_outlined,
-      ),
-      (
-        'Auto-Refund',
-        'AI-assisted auto refund & response',
-        Icons.smart_toy_outlined,
-      ),
-      (
-        'ID & Number Search',
-        'Transaction search by ID or number',
-        Icons.search_rounded,
-      ),
-      ('Priority Support', '24/7 dedicated support', Icons.bolt_rounded),
-      (
-        'Sophisticated Dashboard',
-        'Advanced analytics & reporting',
-        Icons.bar_chart_rounded,
-      ),
-      (
-        'Beta Features',
-        'Early access to new features',
-        Icons.rocket_launch_outlined,
-      ),
-      ('Cheaper Data', 'Buy as low as ₦225/GB', Icons.trending_up_rounded),
-    ];
-
-    return Column(
-      children: [
-        for (int i = 0; i < benefits.length; i += 2)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildBenefitCard(
-                    title: benefits[i].$1,
-                    desc: benefits[i].$2,
-                    icon: benefits[i].$3,
-                    isDark: isDark,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                if (i + 1 < benefits.length)
-                  Expanded(
-                    child: _buildBenefitCard(
-                      title: benefits[i + 1].$1,
-                      desc: benefits[i + 1].$2,
-                      icon: benefits[i + 1].$3,
-                      isDark: isDark,
-                    ),
-                  )
-                else
-                  const Spacer(),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildBenefitCard({
-    required String title,
-    required String desc,
-    required IconData icon,
-    required bool isDark,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: AppColors.primaryBlue.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppColors.primaryBlue.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Icon(icon, size: 15, color: AppColors.electricCyan),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.figtree(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  desc,
-                  style: GoogleFonts.figtree(
-                    fontSize: 10.5,
-                    color: isDark
-                        ? AppColors.metallicLight
-                        : AppColors.slateGrey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _openEditProfileModal(AuthProvider auth) {
     final nameCtrl = TextEditingController(text: auth.user?.name ?? '');
     final phoneCtrl = TextEditingController(text: auth.user?.phone ?? '');
@@ -2730,20 +1890,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onTap: _openApiDocumentationModal,
                         isDark: isDark,
                       ),
-                      _buildDivider(isDark),
-                      _buildSettingTile(
-                        icon: Icons.workspace_premium_rounded,
-                        iconColor: AppColors.electricCyan,
-                        iconBg: AppColors.primaryBlue.withValues(alpha: 0.15),
-                        title: 'Upgrade Membership Plan',
-                        subtitle: null,
-                        trailing: const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Colors.grey,
-                        ),
-                        onTap: _openUpgradeToCorporateModal,
-                        isDark: isDark,
-                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -2816,10 +1962,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
                         child: Text(
-                          'Save your delivery choices below. Email, push, and '
-                          'WhatsApp receipt delivery are not active until '
-                          'their server providers are configured. Receipts '
-                          'remain available in transaction history.',
+                          'Choose which transaction updates to receive.',
                           style: GoogleFonts.figtree(
                             fontSize: 12,
                             height: 1.45,
@@ -2845,10 +1988,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       _buildToggleTile(
                         icon: Icons.phone_android_rounded,
-                        title: 'Push receipt preference',
-                        badge: 'ACTIVE',
+                        title: 'In-app transaction alerts',
+                        badge: 'IN APP',
                         warningNote:
-                            'Active. Real-time in-app alerts and sounds for logins, wallet funding, and orders.',
+                            'Show transaction success and error alerts.',
                         value: _notificationPreferences.pushNotifications,
                         enabled: !_savingNotificationPreferences,
                         onChanged: (value) => _saveNotificationPreferences(
@@ -2861,10 +2004,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildDivider(isDark),
                       _buildToggleTile(
                         icon: Icons.mail_outline_rounded,
-                        title: 'Email receipt preference',
-                        badge: 'ACTIVE',
+                        title: 'Email receipts',
+                        badge: 'EMAIL',
                         warningNote:
-                            'Active. Digital receipts and security sign-in notifications delivered to your inbox.',
+                            'Email receipts for completed transactions.',
                         value: _notificationPreferences.emailReceipts,
                         enabled: !_savingNotificationPreferences,
                         onChanged: (value) => _saveNotificationPreferences(
@@ -2914,7 +2057,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           // Trigger Avotek Help Modal
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Tap the floating Help button at bottom-right for instant FAQs.'),
+                              content: Text(
+                                'Tap the floating Help button at bottom-right for instant FAQs.',
+                              ),
                               backgroundColor: AppColors.primaryBlue,
                             ),
                           );
@@ -3015,7 +2160,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           size: 14,
                         ),
                         onTap: () async {
-                          final confirmed = await showLogoutConfirmationDialog(context);
+                          final confirmed = await showLogoutConfirmationDialog(
+                            context,
+                          );
                           if (confirmed && context.mounted) {
                             final auth = context.read<AuthProvider>();
                             await auth.signOut();
@@ -3203,8 +2350,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: badge == 'ACTIVE'
                       ? AppColors.success.withValues(alpha: 0.15)
                       : (isDark
-                          ? AppColors.darkCardVariant
-                          : AppColors.lightCardVariant),
+                            ? AppColors.darkCardVariant
+                            : AppColors.lightCardVariant),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -3240,7 +2387,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ? Icons.check_circle_rounded
                       : Icons.warning_amber_rounded,
                   size: 12,
-                  color: badge == 'ACTIVE' ? AppColors.success : AppColors.warning,
+                  color: badge == 'ACTIVE'
+                      ? AppColors.success
+                      : AppColors.warning,
                 ),
                 const SizedBox(width: 4),
                 Expanded(
@@ -3250,11 +2399,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       fontSize: 10.5,
                       color: badge == 'ACTIVE'
                           ? (isDark
-                              ? const Color(0xFF86EFAC)
-                              : const Color(0xFF15803D))
+                                ? const Color(0xFF86EFAC)
+                                : const Color(0xFF15803D))
                           : (isDark
-                              ? const Color(0xFFFDE68A)
-                              : const Color(0xFFB45309)),
+                                ? const Color(0xFFFDE68A)
+                                : const Color(0xFFB45309)),
                     ),
                   ),
                 ),

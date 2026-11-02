@@ -4,12 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/supabase/supabase_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/pin_modal.dart';
 import '../../widgets/top_notification.dart';
-import '../../widgets/pay_for_me_dialog.dart';
-import '../../widgets/transaction_success_dialog.dart';
 
 class InternetScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -25,7 +24,6 @@ class _InternetScreenState extends State<InternetScreen> {
   String _selectedProvider = 'smile';
   Map<String, dynamic>? _selectedPackage;
   bool _autoRenew = false;
-  bool _payForMe = false;
   bool _isPurchasing = false;
 
   final _accountController = TextEditingController();
@@ -65,37 +63,162 @@ class _InternetScreenState extends State<InternetScreen> {
 
   static final Map<String, List<Map<String, dynamic>>> _packageData = {
     'smile': [
-      {'name': '1.5GB Smile Data', 'validity': '30 Days', 'price': 1000.0, 'code': 'SMILE_1_5GB'},
-      {'name': '3GB Smile Data', 'validity': '30 Days', 'price': 1500.0, 'code': 'SMILE_3GB'},
-      {'name': '5GB Smile Data', 'validity': '30 Days', 'price': 2000.0, 'code': 'SMILE_5GB'},
-      {'name': '10GB Smile Data', 'validity': '30 Days', 'price': 3000.0, 'code': 'SMILE_10GB'},
-      {'name': '15GB Smile Data', 'validity': '30 Days', 'price': 4000.0, 'code': 'SMILE_15GB'},
-      {'name': '20GB Smile Bigi', 'validity': '30 Days', 'price': 5000.0, 'code': 'SMILE_20GB'},
-      {'name': '50GB Smile Jumbo', 'validity': '30 Days', 'price': 10000.0, 'code': 'SMILE_50GB'},
-      {'name': '100GB Smile Ultra', 'validity': '30 Days', 'price': 18000.0, 'code': 'SMILE_100GB'},
-      {'name': 'Smile Unlimited 30D', 'validity': '30 Days', 'price': 25000.0, 'code': 'SMILE_UNLIMITED'},
+      {
+        'name': '1.5GB Smile Data',
+        'validity': '30 Days',
+        'price': 1000.0,
+        'code': 'SMILE_1_5GB',
+      },
+      {
+        'name': '3GB Smile Data',
+        'validity': '30 Days',
+        'price': 1500.0,
+        'code': 'SMILE_3GB',
+      },
+      {
+        'name': '5GB Smile Data',
+        'validity': '30 Days',
+        'price': 2000.0,
+        'code': 'SMILE_5GB',
+      },
+      {
+        'name': '10GB Smile Data',
+        'validity': '30 Days',
+        'price': 3000.0,
+        'code': 'SMILE_10GB',
+      },
+      {
+        'name': '15GB Smile Data',
+        'validity': '30 Days',
+        'price': 4000.0,
+        'code': 'SMILE_15GB',
+      },
+      {
+        'name': '20GB Smile Bigi',
+        'validity': '30 Days',
+        'price': 5000.0,
+        'code': 'SMILE_20GB',
+      },
+      {
+        'name': '50GB Smile Jumbo',
+        'validity': '30 Days',
+        'price': 10000.0,
+        'code': 'SMILE_50GB',
+      },
+      {
+        'name': '100GB Smile Ultra',
+        'validity': '30 Days',
+        'price': 18000.0,
+        'code': 'SMILE_100GB',
+      },
+      {
+        'name': 'Smile Unlimited 30D',
+        'validity': '30 Days',
+        'price': 25000.0,
+        'code': 'SMILE_UNLIMITED',
+      },
     ],
     'spectranet': [
-      {'name': '4GB Unified Stay Connected', 'validity': '30 Days', 'price': 2000.0, 'code': 'SPEC_4GB'},
-      {'name': '7GB Unified Standard', 'validity': '30 Days', 'price': 3000.0, 'code': 'SPEC_7GB'},
-      {'name': '15GB Unified Value', 'validity': '30 Days', 'price': 5000.0, 'code': 'SPEC_15GB'},
-      {'name': '25GB Mega Value', 'validity': '30 Days', 'price': 7500.0, 'code': 'SPEC_25GB'},
-      {'name': '50GB Mega Boost', 'validity': '30 Days', 'price': 11000.0, 'code': 'SPEC_50GB'},
-      {'name': '100GB Mega Heavy', 'validity': '30 Days', 'price': 19000.0, 'code': 'SPEC_100GB'},
-      {'name': 'Spectranet Unlimited 24/7', 'validity': '30 Days', 'price': 28000.0, 'code': 'SPEC_UNLIMITED'},
+      {
+        'name': '4GB Unified Stay Connected',
+        'validity': '30 Days',
+        'price': 2000.0,
+        'code': 'SPEC_4GB',
+      },
+      {
+        'name': '7GB Unified Standard',
+        'validity': '30 Days',
+        'price': 3000.0,
+        'code': 'SPEC_7GB',
+      },
+      {
+        'name': '15GB Unified Value',
+        'validity': '30 Days',
+        'price': 5000.0,
+        'code': 'SPEC_15GB',
+      },
+      {
+        'name': '25GB Mega Value',
+        'validity': '30 Days',
+        'price': 7500.0,
+        'code': 'SPEC_25GB',
+      },
+      {
+        'name': '50GB Mega Boost',
+        'validity': '30 Days',
+        'price': 11000.0,
+        'code': 'SPEC_50GB',
+      },
+      {
+        'name': '100GB Mega Heavy',
+        'validity': '30 Days',
+        'price': 19000.0,
+        'code': 'SPEC_100GB',
+      },
+      {
+        'name': 'Spectranet Unlimited 24/7',
+        'validity': '30 Days',
+        'price': 28000.0,
+        'code': 'SPEC_UNLIMITED',
+      },
     ],
     'swift': [
-      {'name': '3GB Swift Basic', 'validity': '30 Days', 'price': 2000.0, 'code': 'SWIFT_3GB'},
-      {'name': '7GB Swift Plus', 'validity': '30 Days', 'price': 3500.0, 'code': 'SWIFT_7GB'},
-      {'name': '14GB Swift Max', 'validity': '30 Days', 'price': 6000.0, 'code': 'SWIFT_14GB'},
-      {'name': '30GB Swift Pro', 'validity': '30 Days', 'price': 10000.0, 'code': 'SWIFT_30GB'},
-      {'name': '60GB Swift Heavy', 'validity': '30 Days', 'price': 18000.0, 'code': 'SWIFT_60GB'},
-      {'name': 'Swift 24/7 Unlimited', 'validity': '30 Days', 'price': 27000.0, 'code': 'SWIFT_UNLIMITED'},
+      {
+        'name': '3GB Swift Basic',
+        'validity': '30 Days',
+        'price': 2000.0,
+        'code': 'SWIFT_3GB',
+      },
+      {
+        'name': '7GB Swift Plus',
+        'validity': '30 Days',
+        'price': 3500.0,
+        'code': 'SWIFT_7GB',
+      },
+      {
+        'name': '14GB Swift Max',
+        'validity': '30 Days',
+        'price': 6000.0,
+        'code': 'SWIFT_14GB',
+      },
+      {
+        'name': '30GB Swift Pro',
+        'validity': '30 Days',
+        'price': 10000.0,
+        'code': 'SWIFT_30GB',
+      },
+      {
+        'name': '60GB Swift Heavy',
+        'validity': '30 Days',
+        'price': 18000.0,
+        'code': 'SWIFT_60GB',
+      },
+      {
+        'name': 'Swift 24/7 Unlimited',
+        'validity': '30 Days',
+        'price': 27000.0,
+        'code': 'SWIFT_UNLIMITED',
+      },
     ],
     'fibre': [
-      {'name': '20 Mbps Starter Fibre', 'validity': '30 Days', 'price': 15000.0, 'code': 'FIBRE_20M'},
-      {'name': '40 Mbps Turbo Fibre', 'validity': '30 Days', 'price': 25000.0, 'code': 'FIBRE_40M'},
-      {'name': '100 Mbps Gigabit Enterprise', 'validity': '30 Days', 'price': 45000.0, 'code': 'FIBRE_100M'},
+      {
+        'name': '20 Mbps Starter Fibre',
+        'validity': '30 Days',
+        'price': 15000.0,
+        'code': 'FIBRE_20M',
+      },
+      {
+        'name': '40 Mbps Turbo Fibre',
+        'validity': '30 Days',
+        'price': 25000.0,
+        'code': 'FIBRE_40M',
+      },
+      {
+        'name': '100 Mbps Gigabit Enterprise',
+        'validity': '30 Days',
+        'price': 45000.0,
+        'code': 'FIBRE_100M',
+      },
     ],
   };
 
@@ -136,86 +259,113 @@ class _InternetScreenState extends State<InternetScreen> {
       return;
     }
     if (_selectedPackage == null) {
-      TopNotification.showWarning(context, 'Please select an internet bundle plan.');
-      return;
-    }
-    final account = _accountController.text.trim();
-    if (account.isEmpty || account.length < 5) {
-      TopNotification.showWarning(context, 'Please enter a valid Account / Device Number.');
-      return;
-    }
-
-    if (_payForMe) {
-      final provName = _providers.firstWhere((p) => p['id'] == _selectedProvider)['name'];
-      await PayForMeDialog.show(
+      TopNotification.showWarning(
         context,
-        serviceName: '$provName - ${_selectedPackage!['name']}',
-        recipient: account,
-        amount: amount ?? 0,
+        'Please select an internet bundle plan.',
       );
       return;
     }
-
     if (amount == null || amount <= 0) {
       TopNotification.showWarning(context, 'Invalid subscription amount.');
       return;
     }
-    if (wallet.balance < amount) {
-      TopNotification.showError(
+
+    if (_activeMode == 1) {
+      if (wallet.balance < amount) {
+        TopNotification.showError(
+          context,
+          'Insufficient wallet balance. Available: ₦${wallet.balance.toStringAsFixed(2)}.',
+        );
+        return;
+      }
+      final confirmed = await PinModal.show(
         context,
-        'Insufficient wallet balance. Available: ₦${wallet.balance.toStringAsFixed(2)}.',
+        title: 'Create Internet Gift Voucher',
+        amount: amount,
+        description: 'Voucher for ${_selectedPackage!['name']}',
+        onPinSubmit: (pin) async => auth.verifyPin(pin),
       );
+      if (confirmed != true || !mounted) return;
+
+      setState(() => _isPurchasing = true);
+      try {
+        final voucher = await SupabaseService.instance.createGiftVoucher(
+          amount: amount,
+          note: _giftMessageController.text.trim(),
+        );
+        await auth.refreshWallet();
+        await wallet.fetchWallet(user.id);
+        if (!mounted) return;
+        final code = (voucher['code'] ?? '').toString();
+        if (code.isEmpty) {
+          throw StateError('Voucher was created without a claim code.');
+        }
+        final claimUrl = Uri(
+          scheme: 'https',
+          host: 'adevictorolu.github.io',
+          path: '/Avotek/',
+          fragment: '/coupons?code=$code',
+        ).toString();
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Internet gift voucher created'),
+            content: SelectableText('Code: $code\n\nClaim link: $claimUrl'),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: claimUrl));
+                  if (dialogContext.mounted) Navigator.pop(dialogContext);
+                  if (mounted) {
+                    TopNotification.showSuccess(
+                      context,
+                      'Voucher claim link copied.',
+                    );
+                  }
+                },
+                child: const Text('Copy claim link'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Done'),
+              ),
+            ],
+          ),
+        );
+        _giftMessageController.clear();
+      } catch (error) {
+        if (mounted) {
+          TopNotification.showError(
+            context,
+            'Could not create the gift voucher: $error',
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isPurchasing = false);
+      }
       return;
     }
 
-    final confirmed = await PinModal.show(
-      context,
-      title: 'Confirm Internet Subscription',
-      amount: amount,
-      description: '${_selectedPackage!['name']} • Account: $account',
-      onPinSubmit: (pin) async {
-        return auth.verifyPin(pin);
-      },
-    );
-    if (confirmed != true) return;
-
-    setState(() => _isPurchasing = true);
-    try {
-      // Simulate/Trigger proxy delivery
-      await Future.delayed(const Duration(seconds: 1));
-      await auth.refreshWallet();
-      await wallet.fetchWallet(user.id);
-
-      if (!mounted) return;
-      final ref = 'INT-${DateTime.now().millisecondsSinceEpoch}';
-      await TransactionSuccessDialog.show(
+    final account = _accountController.text.trim();
+    if (account.isEmpty || account.length < 5) {
+      TopNotification.showWarning(
         context,
-        title: 'Internet Subscription Active!',
-        serviceType: '${_selectedPackage!['name']} (${_selectedPackage!['validity']})',
-        recipient: account,
-        amount: amount,
-        reference: ref,
-        message: 'Your broadband internet connection has been renewed and activated successfully.',
+        'Please enter a valid Account / Device Number.',
       );
-      _accountController.clear();
-      _phoneController.clear();
-    } catch (e) {
-      if (mounted) {
-        TopNotification.showError(context, 'Internet subscription error: $e');
-      }
-    } finally {
-      if (mounted) setState(() => _isPurchasing = false);
+      return;
     }
+    TopNotification.showWarning(
+      context,
+      'Internet subscriptions are not connected to a live provider yet. No payment was taken.',
+      title: 'Service unavailable',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final foreground = isDark ? Colors.white : const Color(0xFF172033);
-    final wallet = context.watch<WalletProvider>();
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final currentPackages = _packageData[_selectedProvider] ?? [];
-    final activeProvObj = _providers.firstWhere((p) => p['id'] == _selectedProvider);
 
     final validationErrors = <String>[];
     if (_selectedPackage == null) {
@@ -231,7 +381,9 @@ class _InternetScreenState extends State<InternetScreen> {
       currentRoute: '/services/internet',
       onToggleTheme: widget.onToggleTheme,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark
+            ? const Color(0xFF0F1117)
+            : const Color(0xFFF8FAFC),
         body: SingleChildScrollView(
           padding: EdgeInsets.symmetric(
             horizontal: isDesktop ? 32 : 16,
@@ -248,15 +400,24 @@ class _InternetScreenState extends State<InternetScreen> {
                     onTap: () => Navigator.of(context).maybePop(),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF1E2230)
+                            : const Color(0xFFE2E8F0),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.chevron_left, size: 18, color: isDark ? Colors.white70 : Colors.black87),
+                          Icon(
+                            Icons.chevron_left,
+                            size: 18,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Back',
@@ -295,10 +456,14 @@ class _InternetScreenState extends State<InternetScreen> {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF161922) : const Color(0xFFE2E8F0),
+                      color: isDark
+                          ? const Color(0xFF161922)
+                          : const Color(0xFFE2E8F0),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF262A38) : const Color(0xFFCBD5E1),
+                        color: isDark
+                            ? const Color(0xFF262A38)
+                            : const Color(0xFFCBD5E1),
                       ),
                     ),
                     child: Row(
@@ -312,7 +477,10 @@ class _InternetScreenState extends State<InternetScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 0
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                        colors: [
+                                          Color(0xFF0047FF),
+                                          Color(0xFF0038B8),
+                                        ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -321,7 +489,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                 boxShadow: _activeMode == 0
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0038B8).withOpacity(0.35),
+                                          color: const Color(
+                                            0xFF0038B8,
+                                          ).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -336,7 +506,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                     size: 18,
                                     color: _activeMode == 0
                                         ? Colors.white
-                                        : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                        : (isDark
+                                              ? Colors.white60
+                                              : const Color(0xFF64748B)),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -346,7 +518,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 0
                                           ? Colors.white
-                                          : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                          : (isDark
+                                                ? Colors.white60
+                                                : const Color(0xFF64748B)),
                                     ),
                                   ),
                                 ],
@@ -363,7 +537,10 @@ class _InternetScreenState extends State<InternetScreen> {
                               decoration: BoxDecoration(
                                 gradient: _activeMode == 1
                                     ? const LinearGradient(
-                                        colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                        colors: [
+                                          Color(0xFF0047FF),
+                                          Color(0xFF0038B8),
+                                        ],
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       )
@@ -372,7 +549,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                 boxShadow: _activeMode == 1
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF0038B8).withOpacity(0.35),
+                                          color: const Color(
+                                            0xFF0038B8,
+                                          ).withOpacity(0.35),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -387,7 +566,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                     size: 18,
                                     color: _activeMode == 1
                                         ? Colors.white
-                                        : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                        : (isDark
+                                              ? Colors.white60
+                                              : const Color(0xFF64748B)),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -397,7 +578,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                       fontWeight: FontWeight.w700,
                                       color: _activeMode == 1
                                           ? Colors.white
-                                          : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                          : (isDark
+                                                ? Colors.white60
+                                                : const Color(0xFF64748B)),
                                     ),
                                   ),
                                 ],
@@ -430,7 +613,9 @@ class _InternetScreenState extends State<InternetScreen> {
                       color: isDark ? const Color(0xFF141721) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF222634)
+                            : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
@@ -442,7 +627,9 @@ class _InternetScreenState extends State<InternetScreen> {
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            color: isDark
+                                ? Colors.white70
+                                : const Color(0xFF475569),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -454,26 +641,38 @@ class _InternetScreenState extends State<InternetScreen> {
 
                             return Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
                                 child: InkWell(
-                                  onTap: () => _onProviderChanged(prov['id'] as String),
+                                  onTap: () =>
+                                      _onProviderChanged(prov['id'] as String),
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
                                     height: 82,
-                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 6,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: isDark ? const Color(0xFF1C202C) : const Color(0xFFF1F5F9),
+                                      color: isDark
+                                          ? const Color(0xFF1C202C)
+                                          : const Color(0xFFF1F5F9),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSelected
                                             ? const Color(0xFF0052FF)
-                                            : (isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1)),
+                                            : (isDark
+                                                  ? const Color(0xFF2C3142)
+                                                  : const Color(0xFFCBD5E1)),
                                         width: isSelected ? 2 : 1,
                                       ),
                                       boxShadow: isSelected
                                           ? [
                                               BoxShadow(
-                                                color: const Color(0xFF0052FF).withOpacity(0.25),
+                                                color: const Color(
+                                                  0xFF0052FF,
+                                                ).withOpacity(0.25),
                                                 blurRadius: 10,
                                                 spreadRadius: 1,
                                               ),
@@ -484,12 +683,15 @@ class _InternetScreenState extends State<InternetScreen> {
                                       children: [
                                         Center(
                                           child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
                                             children: [
                                               Icon(
                                                 icon,
                                                 size: 28,
-                                                color: isSelected ? const Color(0xFF00D2FF) : provColor,
+                                                color: isSelected
+                                                    ? const Color(0xFF00D2FF)
+                                                    : provColor,
                                               ),
                                               const SizedBox(height: 6),
                                               Text(
@@ -497,8 +699,12 @@ class _InternetScreenState extends State<InternetScreen> {
                                                 textAlign: TextAlign.center,
                                                 style: GoogleFonts.figtree(
                                                   fontSize: 11.5,
-                                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                                  fontWeight: isSelected
+                                                      ? FontWeight.w800
+                                                      : FontWeight.w600,
+                                                  color: isDark
+                                                      ? Colors.white
+                                                      : const Color(0xFF0F172A),
                                                 ),
                                               ),
                                             ],
@@ -514,7 +720,11 @@ class _InternetScreenState extends State<InternetScreen> {
                                                 color: Color(0xFF0052FF),
                                                 shape: BoxShape.circle,
                                               ),
-                                              child: const Icon(Icons.check, size: 12, color: Colors.white),
+                                              child: const Icon(
+                                                Icons.check,
+                                                size: 12,
+                                                color: Colors.white,
+                                              ),
                                             ),
                                           ),
                                       ],
@@ -534,12 +744,17 @@ class _InternetScreenState extends State<InternetScreen> {
                   if (_activeMode == 0) ...[
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -551,7 +766,9 @@ class _InternetScreenState extends State<InternetScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -570,53 +787,18 @@ class _InternetScreenState extends State<InternetScreen> {
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              fillColor: isDark
+                                  ? const Color(0xFF1B1E29)
+                                  : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: Checkbox(
-                                  value: _payForMe,
-                                  activeColor: const Color(0xFF0038B8),
-                                  onChanged: (val) => setState(() => _payForMe = val ?? false),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _payForMe = !_payForMe),
-                                  child: RichText(
-                                    text: TextSpan(
-                                      text: 'Pay For Me ',
-                                      style: GoogleFonts.figtree(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark ? Colors.white70 : const Color(0xFF334155),
-                                      ),
-                                      children: [
-                                        TextSpan(
-                                          text: '- get a shareable payment link',
-                                          style: GoogleFonts.figtree(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.normal,
-                                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
                           ),
                         ],
                       ),
@@ -624,12 +806,17 @@ class _InternetScreenState extends State<InternetScreen> {
                   ] else ...[
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF141721) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                          color: isDark
+                              ? const Color(0xFF222634)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Column(
@@ -641,7 +828,9 @@ class _InternetScreenState extends State<InternetScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -660,8 +849,13 @@ class _InternetScreenState extends State<InternetScreen> {
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              fillColor: isDark
+                                  ? const Color(0xFF1B1E29)
+                                  : const Color(0xFFF1F5F9),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
@@ -675,7 +869,9 @@ class _InternetScreenState extends State<InternetScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -694,7 +890,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                 color: isDark ? Colors.white38 : Colors.black38,
                               ),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B1E29) : const Color(0xFFF1F5F9),
+                              fillColor: isDark
+                                  ? const Color(0xFF1B1E29)
+                                  : const Color(0xFFF1F5F9),
                               contentPadding: const EdgeInsets.all(12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -716,7 +914,9 @@ class _InternetScreenState extends State<InternetScreen> {
                       color: isDark ? const Color(0xFF141721) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF222634)
+                            : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
@@ -731,7 +931,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.8,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                color: isDark
+                                    ? Colors.white70
+                                    : const Color(0xFF475569),
                               ),
                             ),
                             Text(
@@ -739,7 +941,9 @@ class _InternetScreenState extends State<InternetScreen> {
                               style: GoogleFonts.figtree(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                color: isDark
+                                    ? Colors.white38
+                                    : const Color(0xFF94A3B8),
                               ),
                             ),
                           ],
@@ -749,10 +953,14 @@ class _InternetScreenState extends State<InternetScreen> {
                         Container(
                           height: 255,
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0D1017) : const Color(0xFFF8FAFC),
+                            color: isDark
+                                ? const Color(0xFF0D1017)
+                                : const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isDark ? const Color(0xFF1E2230) : const Color(0xFFE2E8F0),
+                              color: isDark
+                                  ? const Color(0xFF1E2230)
+                                  : const Color(0xFFE2E8F0),
                             ),
                           ),
                           child: Scrollbar(
@@ -760,36 +968,49 @@ class _InternetScreenState extends State<InternetScreen> {
                             child: GridView.builder(
                               padding: const EdgeInsets.all(8),
                               itemCount: currentPackages.length,
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: isDesktop ? 3 : 2,
-                                childAspectRatio: isDesktop ? 2.3 : 1.5,
-                                crossAxisSpacing: 8,
-                                mainAxisSpacing: 8,
-                              ),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: isDesktop ? 3 : 2,
+                                    childAspectRatio: isDesktop ? 2.3 : 1.5,
+                                    crossAxisSpacing: 8,
+                                    mainAxisSpacing: 8,
+                                  ),
                               itemBuilder: (context, index) {
                                 final pkg = currentPackages[index];
-                                final isSel = _selectedPackage?['code'] == pkg['code'];
+                                final isSel =
+                                    _selectedPackage?['code'] == pkg['code'];
                                 final price = (pkg['price'] as num).toDouble();
 
                                 return InkWell(
-                                  onTap: () => setState(() => _selectedPackage = pkg),
+                                  onTap: () =>
+                                      setState(() => _selectedPackage = pkg),
                                   borderRadius: BorderRadius.circular(10),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 8,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: isSel
-                                          ? (isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE))
-                                          : (isDark ? const Color(0xFF1B1E29) : Colors.white),
+                                          ? (isDark
+                                                ? const Color(0xFF172554)
+                                                : const Color(0xFFDBEAFE))
+                                          : (isDark
+                                                ? const Color(0xFF1B1E29)
+                                                : Colors.white),
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
                                         color: isSel
                                             ? const Color(0xFF0038B8)
-                                            : (isDark ? const Color(0xFF282D3D) : const Color(0xFFCBD5E1)),
+                                            : (isDark
+                                                  ? const Color(0xFF282D3D)
+                                                  : const Color(0xFFCBD5E1)),
                                         width: isSel ? 2 : 1,
                                       ),
                                     ),
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Text(
                                           pkg['name'] as String,
@@ -799,7 +1020,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                           style: GoogleFonts.figtree(
                                             fontSize: 13.5,
                                             fontWeight: FontWeight.w800,
-                                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                            color: isDark
+                                                ? Colors.white
+                                                : const Color(0xFF0F172A),
                                           ),
                                         ),
                                         const SizedBox(height: 5),
@@ -808,7 +1031,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                           style: GoogleFonts.figtree(
                                             fontSize: 17,
                                             fontWeight: FontWeight.w900,
-                                            color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                            color: isDark
+                                                ? const Color(0xFF38BDF8)
+                                                : const Color(0xFF0038B8),
                                             letterSpacing: 0.2,
                                           ),
                                         ),
@@ -835,12 +1060,16 @@ class _InternetScreenState extends State<InternetScreen> {
                       border: Border.all(
                         color: isReady
                             ? const Color(0xFF0038B8)
-                            : (isDark ? const Color(0xFF222634) : const Color(0xFFE2E8F0)),
+                            : (isDark
+                                  ? const Color(0xFF222634)
+                                  : const Color(0xFFE2E8F0)),
                         width: isReady ? 1.5 : 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
+                          color: isDark
+                              ? Colors.black26
+                              : Colors.black.withOpacity(0.04),
                           blurRadius: 10,
                           offset: const Offset(0, 3),
                         ),
@@ -863,7 +1092,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.8,
-                                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                      color: isDark
+                                          ? Colors.white54
+                                          : const Color(0xFF64748B),
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -876,7 +1107,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                     style: GoogleFonts.figtree(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark
+                                          ? Colors.white
+                                          : const Color(0xFF0F172A),
                                     ),
                                   ),
                                 ],
@@ -884,12 +1117,19 @@ class _InternetScreenState extends State<InternetScreen> {
                             ),
                             if (_selectedPackage != null)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF1E2638) : const Color(0xFFEFF6FF),
+                                  color: isDark
+                                      ? const Color(0xFF1E2638)
+                                      : const Color(0xFFEFF6FF),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: const Color(0xFF0038B8).withOpacity(0.3),
+                                    color: const Color(
+                                      0xFF0038B8,
+                                    ).withOpacity(0.3),
                                   ),
                                 ),
                                 child: Text(
@@ -897,7 +1137,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                   style: GoogleFonts.figtree(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
-                                    color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                                    color: isDark
+                                        ? const Color(0xFF38BDF8)
+                                        : const Color(0xFF0038B8),
                                   ),
                                 ),
                               ),
@@ -912,19 +1154,26 @@ class _InternetScreenState extends State<InternetScreen> {
                           decoration: BoxDecoration(
                             gradient: isReady && !isProcessing
                                 ? const LinearGradient(
-                                    colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                                    colors: [
+                                      Color(0xFF0047FF),
+                                      Color(0xFF0038B8),
+                                    ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   )
                                 : null,
                             color: isReady && !isProcessing
                                 ? null
-                                : (isDark ? const Color(0xFF26324D) : const Color(0xFFCBD5E1)),
+                                : (isDark
+                                      ? const Color(0xFF26324D)
+                                      : const Color(0xFFCBD5E1)),
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: isReady && !isProcessing
                                 ? [
                                     BoxShadow(
-                                      color: const Color(0xFF0038B8).withOpacity(0.35),
+                                      color: const Color(
+                                        0xFF0038B8,
+                                      ).withOpacity(0.35),
                                       blurRadius: 10,
                                       offset: const Offset(0, 3),
                                     ),
@@ -932,19 +1181,26 @@ class _InternetScreenState extends State<InternetScreen> {
                                 : null,
                           ),
                           child: ElevatedButton(
-                            onPressed: isReady && !isProcessing ? _handlePurchase : null,
+                            onPressed: isReady && !isProcessing
+                                ? _handlePurchase
+                                : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,
                               foregroundColor: Colors.white,
                               disabledForegroundColor: Colors.white38,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                             child: isProcessing
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   )
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -952,7 +1208,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                       Icon(
                                         _activeMode == 1
                                             ? Icons.card_giftcard
-                                            : (_payForMe ? Icons.share : Icons.wifi_rounded),
+                                            : Icons.wifi_rounded,
                                         size: 18,
                                         color: Colors.white,
                                       ),
@@ -960,11 +1216,9 @@ class _InternetScreenState extends State<InternetScreen> {
                                       Text(
                                         _activeMode == 1
                                             ? 'Create Gift Voucher'
-                                            : (_payForMe
-                                                ? 'Generate Pay For Me Link'
-                                                : (_selectedPackage != null
-                                                    ? 'Buy Internet Bundle • ₦${((_selectedPackage!['price'] as num).toDouble()).toStringAsFixed(0)}'
-                                                    : 'Buy Internet Bundle')),
+                                            : (_selectedPackage != null
+                                                  ? 'Buy Internet Bundle • ₦${((_selectedPackage!['price'] as num).toDouble()).toStringAsFixed(0)}'
+                                                  : 'Buy Internet Bundle'),
                                         style: GoogleFonts.figtree(
                                           fontSize: 14.5,
                                           fontWeight: FontWeight.w800,
@@ -981,7 +1235,11 @@ class _InternetScreenState extends State<InternetScreen> {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.info_outline, size: 14, color: Color(0xFFF59E0B)),
+                              const Icon(
+                                Icons.info_outline,
+                                size: 14,
+                                color: Color(0xFFF59E0B),
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
