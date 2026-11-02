@@ -452,6 +452,14 @@ class TransactionSuccessDialog extends StatelessWidget {
 
     return Dialog(
       backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide.none,
+      ),
+      clipBehavior: Clip.none,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Center(
         child: ConstrainedBox(

@@ -491,7 +491,10 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   activeIcon: Icons.grid_view_rounded,
                   label: 'Services',
                   route: '/services',
-                  isActive: currentRoute.startsWith('/services'),
+                  isActive:
+                      currentRoute.startsWith('/services') &&
+                      !currentRoute.startsWith('/services/cable') &&
+                      currentRoute != '/services/tv',
                   isDark: isDark,
                 ),
                 _buildNavItem(

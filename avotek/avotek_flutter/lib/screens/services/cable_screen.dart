@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
@@ -23,6 +24,7 @@ class _CableScreenState extends State<CableScreen> {
   final _smartcardController = TextEditingController();
   final _phoneController = TextEditingController();
   final _giftMessageController = TextEditingController();
+  final _packageScrollController = ScrollController();
 
   // Mode: 0 = Buy Now, 1 = Gift Voucher
   int _activeMode = 0;
@@ -77,6 +79,7 @@ class _CableScreenState extends State<CableScreen> {
     _smartcardController.dispose();
     _phoneController.dispose();
     _giftMessageController.dispose();
+    _packageScrollController.dispose();
     super.dispose();
   }
 
@@ -369,7 +372,7 @@ class _CableScreenState extends State<CableScreen> {
                 children: [
                   // Back button
                   InkWell(
-                    onTap: () => Navigator.of(context).maybePop(),
+                    onTap: () => context.go('/services'),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -1127,8 +1130,10 @@ class _CableScreenState extends State<CableScreen> {
                               ),
                             ),
                             child: Scrollbar(
+                              controller: _packageScrollController,
                               thumbVisibility: true,
                               child: GridView.builder(
+                                controller: _packageScrollController,
                                 padding: const EdgeInsets.all(8),
                                 itemCount: _livePackages.length,
                                 gridDelegate:
