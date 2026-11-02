@@ -142,13 +142,18 @@ class _DataScreenState extends State<DataScreen> {
                 ? '$size$vol'
                 : (fallbackName.isNotEmpty ? fallbackName : '$type Data');
 
+            final planCode = p['code']?.toString() ??
+                (p['provider'] == 'bigisub' ? 'BIGI-$id' : 'BILAL-$id');
+            final planProvider = p['provider']?.toString() ?? 'bilalsadasub';
+
             return {
               'id': id,
               'volume': displayVol,
               'price': amt,
               'validity': val,
               'plantype': type,
-              'code': 'BILAL-$id',
+              'code': planCode,
+              'provider': planProvider,
               'fullName': '$displayVol $type ($val)',
             };
           })
@@ -1343,14 +1348,14 @@ class _DataScreenState extends State<DataScreen> {
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(
-                                        _activeMode == 1
-                                            ? Icons.card_giftcard
-                                            : Icons.flash_on_rounded,
-                                        size: 18,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(width: 8),
+                                      if (_activeMode == 1) ...[
+                                        const Icon(
+                                          Icons.card_giftcard,
+                                          size: 18,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 8),
+                                      ],
                                       Text(
                                         _activeMode == 1
                                             ? 'Create Gift Voucher'

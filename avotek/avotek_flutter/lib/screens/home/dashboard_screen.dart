@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -809,157 +808,80 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Show Paystack-assigned account if available; otherwise show a large Fund Account button.
-              if (wallet.hasDedicatedAccount) ...[
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'PERSONAL BANK ACCOUNT',
-                            style: GoogleFonts.figtree(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.7,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            wallet.walletSummary!.virtualAccountNumber!,
-                            style: GoogleFonts.figtree(
-                              fontSize: isDesktop ? 21 : 18,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.1,
-                              color: Colors.white,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '${wallet.walletSummary!.virtualAccountBank} · ${wallet.walletSummary!.virtualAccountName ?? cardHolder}',
-                            style: GoogleFonts.figtree(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white70,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+              // Large Solid White Fund Wallet Card
+              InkWell(
+                onTap: () => context.push('/wallet/fund'),
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.16),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                    IconButton(
-                      tooltip: 'Copy account number',
-                      onPressed: () {
-                        Clipboard.setData(
-                          ClipboardData(
-                            text: wallet.walletSummary!.virtualAccountNumber!,
-                          ),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Account number copied.'),
-                            backgroundColor: AppColors.success,
-                          ),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.copy_rounded,
-                        size: 17,
-                        color: Colors.white,
-                      ),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white.withValues(alpha: 0.15),
-                        minimumSize: const Size(38, 38),
-                      ),
-                    ),
-                  ],
-                ),
-              ] else ...[
-                // Large Fund Account Button as requested
-                InkWell(
-                  onTap: () => context.push('/wallet/fund'),
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF00D2FF), Color(0xFF0052FF)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF0052FF).withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0052FF).withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.22),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.add_card_rounded,
-                            size: 20,
-                            color: Colors.white,
-                          ),
+                        child: const Icon(
+                          Icons.account_balance_wallet_rounded,
+                          size: 20,
+                          color: Color(0xFF0052FF),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'FUND ACCOUNT',
-                                style: GoogleFonts.figtree(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.8,
-                                  color: Colors.white,
-                                ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'FUND WALLET',
+                              style: GoogleFonts.figtree(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.8,
+                                color: const Color(0xFF0F172A),
                               ),
-                              Text(
-                                'Instant Automated Card, Transfer & USSD Top-up',
-                                style: GoogleFonts.figtree(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'Instant Automated Card, Bank Transfer & USSD',
+                              style: GoogleFonts.figtree(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF64748B),
                               ),
-                            ],
-                          ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 15,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 15,
+                        color: Color(0xFF0052FF),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
               const SizedBox(height: 12),
               const Divider(color: Colors.white12, height: 1),
               const SizedBox(height: 10),
 
-              // Cardholder Name & Instant Fund Action
+              // Cardholder Name & Active Status Pill
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -975,45 +897,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  InkWell(
-                    onTap: () => context.push('/wallet/fund'),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF00D2FF), Color(0xFF0052FF)],
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.25),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF10B981),
+                            shape: BoxShape.circle,
                           ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.add_rounded,
-                            size: 15,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Active Account',
+                          style: GoogleFonts.figtree(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Fund Wallet',
-                            style: GoogleFonts.figtree(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

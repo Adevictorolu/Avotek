@@ -23,11 +23,8 @@ class FundWalletScreen extends StatefulWidget {
 
 class _FundWalletScreenState extends State<FundWalletScreen> {
   final _amountController = TextEditingController();
-  final _fullNameController = TextEditingController();
-  final _phoneController = TextEditingController();
   bool _isStartingPayment = false;
   bool _isCheckingPayment = false;
-  bool _isRefreshingTransfer = false;
   String? _lastVerifiedReference;
   String? _callbackReference;
   String? _verificationMessage;
@@ -45,8 +42,6 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
   @override
   void dispose() {
     _amountController.dispose();
-    _fullNameController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
@@ -54,92 +49,8 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     final auth = context.read<AuthProvider>();
     final wallet = context.read<WalletProvider>();
     final user = auth.user;
-    if (user == null) return;
-
-    if (_fullNameController.text.isEmpty &&
-        user.name.isNotEmpty &&
-        user.name.toLowerCase() != 'avotek user') {
-      _fullNameController.text = user.name;
-    }
-    if (_phoneController.text.isEmpty && user.phone.isNotEmpty) {
-      _phoneController.text = user.phone;
-    }
-
-    await wallet.fetchWallet(user.id);
-  }
-
-  Future<void> _activateDedicatedAccount() async {
-    final auth = context.read<AuthProvider>();
-    final wallet = context.read<WalletProvider>();
-    final user = auth.user;
-    if (user == null) return;
-
-    final fullName = _fullNameController.text.trim().isNotEmpty
-        ? _fullNameController.text.trim()
-        : user.name;
-    final phone = _phoneController.text.trim().isNotEmpty
-        ? _phoneController.text.trim()
-        : user.phone;
-
-    final result = await wallet.ensureDedicatedAccount(
-      user.id,
-      fullName: fullName.isNotEmpty ? fullName : null,
-      phone: phone.isNotEmpty ? phone : null,
-    );
-    if (!mounted) return;
-
-    if (result != null && result.isAssigned) {
-      TopNotification.showSuccess(
-        context,
-        'Your dedicated ${result.bankName} account (${result.accountNumber}) is ready!',
-        title: 'Dedicated Account Activated',
-      );
-    } else {
-      TopNotification.showInfo(
-        context,
-        wallet.dedicatedAccountMessage ??
-            'Your personal bank account is not available yet. Check Fund Wallet for available options.',
-        title: 'Dedicated Account Status',
-      );
-    }
-  }
-
-  Future<void> _refreshTransferBalance() async {
-    final auth = context.read<AuthProvider>();
-    final wallet = context.read<WalletProvider>();
-    final userId = auth.user?.id;
-    if (userId == null || _isRefreshingTransfer) return;
-
-    final previousBalance = wallet.balance;
-    setState(() => _isRefreshingTransfer = true);
-    try {
-      try {
-        await PaystackPaymentService.instance.verifyLatest();
-      } catch (_) {}
-      await Future.wait([
-        auth.refreshWallet(),
-        wallet.fetchWallet(userId),
-      ]);
-      if (!mounted) return;
-      final newBalance = wallet.balance;
-      if (newBalance > previousBalance) {
-        final credited = newBalance - previousBalance;
-        TopNotification.showSuccess(
-          context,
-          '₦${credited.toStringAsFixed(2)} transfer received! New balance: ₦${newBalance.toStringAsFixed(2)}.',
-          title: 'Wallet credited',
-        );
-      } else {
-        TopNotification.showInfo(
-          context,
-          'Wallet refreshed. Once Paystack confirms your bank transfer, your balance updates automatically.',
-          title: 'Balance up to date',
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isRefreshingTransfer = false);
-      }
+    if (user != null) {
+      await wallet.fetchWallet(user.id);
     }
   }
 
@@ -523,22 +434,39 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
+                              horizontal: 9,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF10B981,
-                              ).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '⚡ 100% INSTANT',
-                              style: GoogleFonts.figtree(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF10B981),
+                              color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.28),
+                                width: 1,
                               ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF10B981),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  '100% Instant',
+                                  style: GoogleFonts.figtree(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.2,
+                                    color: const Color(0xFF10B981),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -652,7 +580,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           helperText:
-                              'Minimum ₦100; maximum ₦1,000,000 • 100% Instant Credit',
+                              'Minimum ₦100; maximum ₦1,000,000',
                           helperStyle: GoogleFonts.figtree(
                             fontSize: 11,
                             color: isDark
@@ -884,9 +812,6 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                // 2. Dedicated Virtual Account Card
-                _buildDedicatedAccountSection(context, wallet, isDark),
               ],
             ),
           ),
@@ -895,246 +820,4 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     );
   }
 
-  Widget _buildDedicatedAccountSection(
-    BuildContext context,
-    WalletProvider wallet,
-    bool isDark,
-  ) {
-    final summary = wallet.walletSummary;
-    final hasDedicated =
-        wallet.hasDedicatedAccount &&
-        summary != null &&
-        summary.virtualAccountNumber != null &&
-        summary.virtualAccountNumber!.isNotEmpty &&
-        summary.virtualAccountBank != null &&
-        summary.virtualAccountBank!.isNotEmpty;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0052FF).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.badge_outlined,
-                  color: Color(0xFF0052FF),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Dedicated Virtual Account',
-                      style: GoogleFonts.figtree(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    Text(
-                      hasDedicated
-                          ? 'Automated 24/7 instant funding account'
-                          : 'Permanent dedicated Nigerian bank account',
-                      style: GoogleFonts.figtree(
-                        fontSize: 11.5,
-                        color: isDark
-                            ? const Color(0xFF94A3B8)
-                            : const Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (hasDedicated)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '● ACTIVE',
-                    style: GoogleFonts.figtree(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF10B981),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (hasDedicated) ...[
-            Column(
-              children: [
-                _buildAccountDetailRow(
-                  'Bank Name',
-                  summary.virtualAccountBank ?? 'Paystack Partner Bank',
-                  isDark,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Account Number',
-                            style: GoogleFonts.figtree(
-                              fontSize: 11.5,
-                              color: isDark
-                                  ? const Color(0xFF94A3B8)
-                                  : const Color(0xFF64748B),
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            summary.virtualAccountNumber!,
-                            style: GoogleFonts.figtree(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.2,
-                              color: const Color(0xFF0052FF),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        Clipboard.setData(
-                          ClipboardData(text: summary.virtualAccountNumber!),
-                        );
-                        TopNotification.showSuccess(
-                          context,
-                          'Account number copied.',
-                        );
-                      },
-                      icon: const Icon(Icons.copy_rounded, size: 18),
-                      tooltip: 'Copy account number',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                _buildAccountDetailRow(
-                  'Account Name',
-                  summary.virtualAccountName ?? 'Avotek User',
-                  isDark,
-                ),
-              ],
-            ),
-          ] else ...[
-            Text(
-              'A dedicated virtual account provides a personal Nigerian bank account number permanently assigned to your Avotek wallet. Any money sent to this account from any banking app credits your wallet automatically.',
-              style: GoogleFonts.figtree(
-                fontSize: 12.5,
-                height: 1.5,
-                color: isDark
-                    ? const Color(0xFF94A3B8)
-                    : const Color(0xFF475569),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: wallet.isProvisioningDedicatedAccount
-                      ? null
-                      : _activateDedicatedAccount,
-                  icon: wallet.isProvisioningDedicatedAccount
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.verified_outlined, size: 18),
-                  label: Text(
-                    wallet.isProvisioningDedicatedAccount
-                        ? 'Checking Paystack...'
-                        : 'Check / Request Dedicated Account',
-                    style: GoogleFonts.figtree(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0052FF),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (wallet.dedicatedAccountMessage != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                wallet.dedicatedAccountMessage!,
-                style: GoogleFonts.figtree(
-                  fontSize: 11.5,
-                  color: isDark
-                      ? const Color(0xFFCBD5E1)
-                      : const Color(0xFF64748B),
-                ),
-              ),
-            ],
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAccountDetailRow(String label, String value, bool isDark) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 92,
-          child: Text(
-            label,
-            style: GoogleFonts.figtree(
-              fontSize: 12,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.figtree(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }

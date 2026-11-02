@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -61,7 +60,6 @@ class _WalletScreenState extends State<WalletScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final wallet = context.watch<WalletProvider>();
-    final summary = wallet.walletSummary;
 
     final allTxs = wallet.transactions;
     final fundingTxs = allTxs.where((t) => t.isCredit).toList();
@@ -90,7 +88,7 @@ class _WalletScreenState extends State<WalletScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Bar: Title & Refresh Button (Matches Screenshot 2)
+              // Top Bar: Title & Action Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -103,32 +101,65 @@ class _WalletScreenState extends State<WalletScreen> {
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: _refresh,
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                    label: Text(
-                      'Refresh Wallet',
-                      style: GoogleFonts.figtree(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => context.push('/wallet/fund'),
+                        icon: const Icon(
+                          Icons.add_rounded,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          'Fund Wallet',
+                          style: GoogleFonts.figtree(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryBlue,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                      OutlinedButton.icon(
+                        onPressed: _refresh,
+                        icon: Icon(
+                          Icons.refresh_rounded,
+                          size: 16,
+                          color: isDark ? Colors.white70 : AppColors.primaryBlue,
+                        ),
+                        label: Text(
+                          'Refresh',
+                          style: GoogleFonts.figtree(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white70 : AppColors.primaryBlue,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          side: BorderSide(
+                            color: isDark ? Colors.white24 : AppColors.primaryBlue.withValues(alpha: 0.3),
+                          ),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -154,104 +185,6 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                   ),
                 ),
-
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 20),
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [const Color(0xFF131B2F), const Color(0xFF0F172A)]
-                        : [const Color(0xFFEFF6FF), const Color(0xFFFFFFFF)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: isDark
-                        ? const Color(0xFF23304B)
-                        : const Color(0xFFBFDBFE),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0052FF).withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.bolt_rounded,
-                        color: Color(0xFF0052FF),
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'Instant Wallet Funding',
-                                style: GoogleFonts.figtree(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: isDark
-                                      ? Colors.white
-                                      : const Color(0xFF0F172A),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  'PAYSTACK DIRECT',
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF10B981),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Debit Card, Direct Bank Transfer & USSD — 100% Instant Credit',
-                            style: GoogleFonts.figtree(
-                              fontSize: 12,
-                              color: isDark
-                                  ? AppColors.metallicLight
-                                  : AppColors.slateGrey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () => context.push('/wallet/fund'),
-                      icon: const Icon(Icons.add_rounded, size: 16),
-                      label: const Text('Fund'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0052FF),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
               // Tabs Row: Transaction Summary | Funding History
               Row(

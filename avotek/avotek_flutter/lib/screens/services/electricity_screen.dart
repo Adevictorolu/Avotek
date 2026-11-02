@@ -33,7 +33,6 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
   bool _isVerifying = false;
   bool _isProcessing = false;
   String? _verifiedCustomerName;
-  String? _verificationDetails;
 
   final List<Map<String, String>> _discoList = [
     {'id': 'ikeja-electric', 'name': 'Ikeja Electric - IKEDC (PHCN)'},
@@ -86,7 +85,6 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     setState(() {
       _isVerifying = true;
       _verifiedCustomerName = null;
-      _verificationDetails = null;
     });
 
     final vtu = context.read<VtuProvider>();
@@ -101,7 +99,6 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
       _isVerifying = false;
       if (result.isValid) {
         _verifiedCustomerName = result.customerName;
-        _verificationDetails = result.details;
       }
     });
 
@@ -289,7 +286,6 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
         _meterController.clear();
         setState(() {
           _verifiedCustomerName = null;
-          _verificationDetails = null;
         });
       } catch (e) {
         if (!mounted) return;
@@ -1217,7 +1213,6 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                     setState(() {
                                       _selectedDisco = id;
                                       _verifiedCustomerName = null;
-                                      _verificationDetails = null;
                                     });
                                   },
                                   borderRadius: BorderRadius.circular(10),
@@ -1428,14 +1423,14 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(
-                                        _activeMode == 1
-                                            ? Icons.card_giftcard
-                                            : Icons.bolt_rounded,
-                                        size: 18,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(width: 8),
+                                      if (_activeMode == 1) ...[
+                                        const Icon(
+                                          Icons.card_giftcard,
+                                          size: 18,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 8),
+                                      ],
                                       Text(
                                         _activeMode == 1
                                             ? 'Create Gift Voucher'

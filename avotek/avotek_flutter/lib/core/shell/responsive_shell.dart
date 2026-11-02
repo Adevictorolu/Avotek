@@ -494,7 +494,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   isActive:
                       currentRoute.startsWith('/services') &&
                       !currentRoute.startsWith('/services/cable') &&
-                      currentRoute != '/services/tv',
+                      currentRoute != '/services/tv' &&
+                      !currentRoute.startsWith('/services/exam-pins') &&
+                      !currentRoute.startsWith('/services/exam'),
                   isDark: isDark,
                 ),
                 _buildNavItem(
@@ -523,6 +525,16 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   isActive:
                       currentRoute == '/services/tv' ||
                       currentRoute.startsWith('/services/cable'),
+                  isDark: isDark,
+                ),
+                _buildNavItem(
+                  icon: Icons.school_outlined,
+                  activeIcon: Icons.school_rounded,
+                  label: 'Result Checker',
+                  route: '/services/exam-pins',
+                  isActive:
+                      currentRoute.startsWith('/services/exam-pins') ||
+                      currentRoute.startsWith('/services/exam'),
                   isDark: isDark,
                 ),
                 _buildNavItem(

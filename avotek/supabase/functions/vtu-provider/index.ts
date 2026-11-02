@@ -503,37 +503,48 @@ Deno.serve(async (request) => {
     });
   }
 
-  // --- DATA PLANS ---
+  // --- DATA PLANS (Combine BilalSadaSub & Bigisub catalogs) ---
   if (action === "data.plans") {
     const networkName = mapNetworkToName(payload.network);
+    const netId = mapNetworkToId(payload.network);
     let url = `${bilalBaseUrl}/api/v1/plans/data?network=${encodeURIComponent(networkName)}`;
     const planType = String(payload.plantype ?? payload.plan_type ?? "").trim().toUpperCase();
     if (planType && planType !== "ALL") {
       url += `&plan_type=${encodeURIComponent(planType)}`;
     }
-    const { upstream, providerBody } = await dispatchBilalRequest(url, "GET", bilalToken);
-    let plans = extractList(providerBody, ["data", "plans"]);
 
-    // If Bilal plans query fails or empty, fallback to Bigisub data plans
-    if ((!upstream.ok || plans.length === 0) && bigisubToken) {
+    // 1. Fetch BilalSadaSub plans
+    const { upstream: bilalUpstream, providerBody: bilalBody } = await dispatchBilalRequest(url, "GET", bilalToken);
+    const bilalPlans = extractList(bilalBody, ["data", "plans"]).map((p) => ({
+      ...p,
+      provider: "bilalsadasub",
+      code: `BILAL-${p.plan_id ?? p.id}`,
+    }));
+
+    // 2. Fetch Bigisub plans
+    let bigiPlans: JsonMap[] = [];
+    if (bigisubToken) {
       try {
-        const netId = mapNetworkToId(payload.network);
         const bigiRes = await dispatchBigisubRequest(
           `${bigisubBaseUrl}/api/v2/vtu/data/plans/?network=${netId}`,
           "GET",
           bigisubToken,
         );
-        const bigiPlans = extractList(bigiRes.providerBody, ["plans", "data", "variations"]);
-        if (bigiPlans.length > 0) {
-          plans = bigiPlans;
-        }
+        bigiPlans = extractList(bigiRes.providerBody, ["plans", "data", "variations"]).map((p) => ({
+          ...p,
+          provider: "bigisub",
+          code: `BIGI-${p.id ?? p.plan_id ?? p.variation_code}`,
+        }));
       } catch (_) {}
     }
+
+    // Merge both provider catalogs into unified live plan list
+    const mergedPlans = [...bilalPlans, ...bigiPlans];
 
     return jsonResponse({
       status: "success",
       success: true,
-      data: plans,
+      data: mergedPlans.length > 0 ? mergedPlans : bilalPlans,
     });
   }
 
@@ -992,31 +1003,16 @@ Deno.serve(async (request) => {
   let finalMessage = "The purchase could not be completed.";
 
   try {
-    // 1. DATA PURCHASE: BilalSadaSub primary (cheaper), Bigisub fallback
+    // 1. DATA PURCHASE: Dual-engine routing (BilalSadaSub & Bigisub mixed)
     if (action === "data.purchase") {
       const netId = mapNetworkToId(payload.network);
       const phone = cleanPhone(payload.phone_number ?? payload.phone);
       const dataPlan = Number(payload.plan ?? payload.data_plan);
+      const variationCode = String(payload.variation_code ?? payload.code ?? "").toUpperCase();
+      const isBigisubSelected = variationCode.startsWith("BIGI-") || String(payload.provider ?? "").toLowerCase() === "bigisub";
 
-      // Attempt via BilalSadaSub
-      const bilalPayload: JsonMap = {
-        network: netId,
-        phone,
-        data_plan: dataPlan,
-        bypass: false,
-        "request-id": reference,
-      };
-      const bilalRes = await dispatchBilalRequest(
-        `${bilalBaseUrl}/api/data`,
-        "POST",
-        bilalToken,
-        bilalPayload,
-      );
-      finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
-      providerResponse = bilalRes.providerBody;
-
-      // Failover to Bigisub if BilalSadaSub failed
-      if (finalStatus === "failed" && bigisubToken) {
+      if (isBigisubSelected && bigisubToken) {
+        // Dispatch to Bigisub primary
         try {
           const bigiPayload: JsonMap = {
             network: netId,
@@ -1031,12 +1027,72 @@ Deno.serve(async (request) => {
             bigisubToken,
             bigiPayload,
           );
-          const bigiStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
-          if (bigiStatus === "completed" || bigiStatus === "pending") {
-            finalStatus = bigiStatus;
-            providerResponse = bigiRes.providerBody;
-          }
+          finalStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
+          providerResponse = bigiRes.providerBody;
         } catch (_) {}
+
+        // Fallback to BilalSadaSub if Bigisub fails
+        if (finalStatus === "failed") {
+          const bilalPayload: JsonMap = {
+            network: netId,
+            phone,
+            data_plan: dataPlan,
+            bypass: false,
+            "request-id": reference,
+          };
+          const bilalRes = await dispatchBilalRequest(
+            `${bilalBaseUrl}/api/data`,
+            "POST",
+            bilalToken,
+            bilalPayload,
+          );
+          const bilalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
+          if (bilalStatus === "completed" || bilalStatus === "pending") {
+            finalStatus = bilalStatus;
+            providerResponse = bilalRes.providerBody;
+          }
+        }
+      } else {
+        // Attempt via BilalSadaSub primary
+        const bilalPayload: JsonMap = {
+          network: netId,
+          phone,
+          data_plan: dataPlan,
+          bypass: false,
+          "request-id": reference,
+        };
+        const bilalRes = await dispatchBilalRequest(
+          `${bilalBaseUrl}/api/data`,
+          "POST",
+          bilalToken,
+          bilalPayload,
+        );
+        finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
+        providerResponse = bilalRes.providerBody;
+
+        // Failover to Bigisub if BilalSadaSub failed
+        if (finalStatus === "failed" && bigisubToken) {
+          try {
+            const bigiPayload: JsonMap = {
+              network: netId,
+              plan: dataPlan,
+              phone_number: phone,
+              ported_number: true,
+              pin: bigisubPin,
+            };
+            const bigiRes = await dispatchBigisubRequest(
+              `${bigisubBaseUrl}/api/v2/vtu/data/purchase/`,
+              "POST",
+              bigisubToken,
+              bigiPayload,
+            );
+            const bigiStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
+            if (bigiStatus === "completed" || bigiStatus === "pending") {
+              finalStatus = bigiStatus;
+              providerResponse = bigiRes.providerBody;
+            }
+          } catch (_) {}
+        }
       }
 
       if (finalStatus !== "failed") {
