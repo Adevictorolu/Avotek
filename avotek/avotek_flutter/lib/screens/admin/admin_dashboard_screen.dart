@@ -46,6 +46,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final _pricingWaecController = TextEditingController(text: '5250');
   final _pricingNecoController = TextEditingController(text: '2500');
   final _pricingNabtebController = TextEditingController(text: '1000');
+  final _pricingJambController = TextEditingController(text: '8200');
   final _dataMarginController = TextEditingController(text: '5');
   final _airtimeCashbackController = TextEditingController(text: '2.0');
   final _cableFeeController = TextEditingController(text: '50');
@@ -123,6 +124,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             if (decoded['waec'] != null) _pricingWaecController.text = decoded['waec'].toString();
             if (decoded['neco'] != null) _pricingNecoController.text = decoded['neco'].toString();
             if (decoded['nabteb'] != null) _pricingNabtebController.text = decoded['nabteb'].toString();
+            if (decoded['jamb'] != null) _pricingJambController.text = decoded['jamb'].toString();
             if (decoded['data_margin'] != null) _dataMarginController.text = decoded['data_margin'].toString();
             if (decoded['airtime_cashback'] != null) _airtimeCashbackController.text = decoded['airtime_cashback'].toString();
             if (decoded['cable_fee'] != null) _cableFeeController.text = decoded['cable_fee'].toString();
@@ -555,27 +557,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildKpiGrid(bool isDark) {
-    final totalUsers = _systemStats?['total_users'] ?? _users.length;
-    final kycVerified = _systemStats?['kyc_verified_users'] ??
-        _users.where((u) => (u['kyc_status'] as String? ?? '').toLowerCase() == 'verified').length;
-    final kycUnverified = _systemStats?['kyc_unverified_users'] ?? (totalUsers - kycVerified);
-    final totalBalance = ((_systemStats?['total_wallets_balance'] as num?)?.toDouble() ??
-        _users.fold<double>(0.0, (acc, u) => acc + ((u['wallet_balance'] as num?)?.toDouble() ?? 0.0)));
-    final totalOrders = _systemStats?['total_vtu_orders'] ?? 0;
+    final totalUsers = (_systemStats?['total_users'] as num?)?.toInt() ?? _users.length;
+    final totalSpent = ((_systemStats?['total_spent'] as num?)?.toDouble() ??
+        _users.fold<double>(0.0, (acc, u) => acc + ((u['total_spent'] as num?)?.toDouble() ?? 0.0)));
+    final totalBalance = ((_systemStats?['total_balance'] as num?)?.toDouble() ??
+        _users.fold<double>(0.0, (acc, u) => acc + ((u['balance'] as num?)?.toDouble() ?? (u['wallet_balance'] as num?)?.toDouble() ?? 0.0)));
+    final totalOrders = (_systemStats?['total_orders'] as num?)?.toInt() ?? (_systemStats?['total_vtu_orders'] as num?)?.toInt() ?? 0;
+    final successfulOrders = (_systemStats?['successful_orders'] as num?)?.toInt() ?? 0;
+    final bal = _providerBalance ?? -1.0;
 
     final cards = [
       _buildKpiCard(
         title: 'TOTAL REGISTERED USERS',
-        value: '$totalUsers',
+        value: '$totalUsers Accounts',
         icon: Icons.people_alt_rounded,
         color: AppColors.primaryBlue,
         isDark: isDark,
       ),
       _buildKpiCard(
-        title: 'KYC VERIFIED / PENDING',
-        value: '$kycVerified / $kycUnverified',
-        icon: Icons.verified_rounded,
-        color: AppColors.success,
+        title: 'GROSS SALES & SPENT',
+        value: '₦${totalSpent.toStringAsFixed(2)}',
+        icon: Icons.trending_up_rounded,
+        color: const Color(0xFF10B981),
         isDark: isDark,
       ),
       _buildKpiCard(
@@ -586,17 +589,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         isDark: isDark,
       ),
       _buildKpiCard(
-        title: 'TOTAL VTU ORDERS',
-        value: '$totalOrders',
+        title: 'VTU ORDERS COMPLETED',
+        value: '$successfulOrders / $totalOrders',
         icon: Icons.receipt_long_rounded,
         color: const Color(0xFFA855F7),
+        isDark: isDark,
+      ),
+      _buildKpiCard(
+        title: 'PROVIDER API FLOAT',
+        value: bal >= 0 ? '₦${bal.toStringAsFixed(2)}' : 'Connected',
+        icon: Icons.hub_rounded,
+        color: const Color(0xFFF59E0B),
+        isDark: isDark,
+      ),
+      _buildKpiCard(
+        title: 'PAYSTACK GATEWAY',
+        value: 'Automated 100%',
+        icon: Icons.bolt_rounded,
+        color: const Color(0xFF0052FF),
         isDark: isDark,
       ),
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final count = constraints.maxWidth >= 900 ? 4 : (constraints.maxWidth >= 550 ? 2 : 1);
+        final count = constraints.maxWidth >= 900 ? 3 : (constraints.maxWidth >= 550 ? 2 : 1);
         return GridView.count(
           crossAxisCount: count,
           shrinkWrap: true,
@@ -912,13 +929,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     Expanded(
                       flex: 2,
-                      child: Text(
-                        '₦${walletBal.toStringAsFixed(2)}',
-                        style: GoogleFonts.figtree(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.electricCyan,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Bal: ₦${walletBal.toStringAsFixed(2)}',
+                            style: GoogleFonts.figtree(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.electricCyan,
+                            ),
+                          ),
+                          Text(
+                            'Paid: ₦${((u['total_spent'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}',
+                            style: GoogleFonts.figtree(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white60 : Colors.black54,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     InkWell(
@@ -980,88 +1010,140 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final emailCtrl = TextEditingController();
     final nameCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
+    final balanceCtrl = TextEditingController(text: '0');
+    String selectedRole = 'user';
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'Provision New User',
-          style: GoogleFonts.figtree(fontWeight: FontWeight.w800, fontSize: 18),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: 'User Email Address',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(
+            'Provision New User Account',
+            style: GoogleFonts.figtree(fontWeight: FontWeight.w800, fontSize: 18),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'User Email Address',
+                    prefixIcon: const Icon(Icons.email_outlined, size: 18),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Full Name',
+                    prefixIcon: const Icon(Icons.person_outline, size: 18),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number (11 digits)',
+                    prefixIcon: const Icon(Icons.phone_outlined, size: 18),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: balanceCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'Initial Wallet Balance (₦)',
+                    prefixIcon: const Icon(Icons.account_balance_wallet_outlined, size: 18),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedRole,
+                  decoration: InputDecoration(
+                    labelText: 'Account Role',
+                    prefixIcon: const Icon(Icons.badge_outlined, size: 18),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'user', child: Text('Regular User')),
+                    DropdownMenuItem(value: 'agent', child: Text('Reseller / Agent')),
+                    DropdownMenuItem(value: 'admin', child: Text('Administrator')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setDialogState(() => selectedRole = val);
+                    }
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: nameCtrl,
-              decoration: InputDecoration(
-                labelText: 'Full Name',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('Cancel'),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: phoneCtrl,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: 'Phone Number (11 digits)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ElevatedButton(
+              onPressed: () async {
+                final email = emailCtrl.text.trim();
+                final name = nameCtrl.text.trim();
+                final phone = phoneCtrl.text.trim();
+                final initBal = double.tryParse(balanceCtrl.text.trim()) ?? 0.0;
+                if (email.isEmpty || !email.contains('@')) {
+                  TopNotification.showWarning(context, 'Please enter a valid email address.');
+                  return;
+                }
+                Navigator.pop(dialogCtx);
+                try {
+                  final insertRes = await SupabaseService.instance.client.from('profiles').insert({
+                    'email': email,
+                    'full_name': name.isNotEmpty ? name : 'Avotek User',
+                    'phone': phone,
+                    'kyc_status': 'verified',
+                    'role': selectedRole,
+                    'created_at': DateTime.now().toIso8601String(),
+                  }).select('id').maybeSingle();
+
+                  if (insertRes != null && insertRes['id'] != null) {
+                    final newUserId = insertRes['id'].toString();
+                    await SupabaseService.instance.client.from('wallets').upsert({
+                      'user_id': newUserId,
+                      'balance': initBal,
+                      'total_spent': 0.0,
+                      'updated_at': DateTime.now().toIso8601String(),
+                    });
+                  }
+
+                  if (mounted) {
+                    TopNotification.showSuccess(context, 'User $email provisioned successfully!');
+                    _loadAdminData();
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    TopNotification.showError(context, 'Failed to provision user: $e');
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
+              child: const Text('Provision User'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final email = emailCtrl.text.trim();
-              final name = nameCtrl.text.trim();
-              final phone = phoneCtrl.text.trim();
-              if (email.isEmpty || !email.contains('@')) {
-                TopNotification.showWarning(context, 'Please enter a valid email address.');
-                return;
-              }
-              Navigator.pop(dialogCtx);
-              try {
-                await SupabaseService.instance.client.from('profiles').insert({
-                  'email': email,
-                  'full_name': name.isNotEmpty ? name : 'Avotek User',
-                  'phone': phone,
-                  'kyc_status': 'verified',
-                  'role': 'user',
-                  'created_at': DateTime.now().toIso8601String(),
-                });
-                if (mounted) {
-                  TopNotification.showSuccess(context, 'User $email provisioned successfully!');
-                  _loadAdminData();
-                }
-              } catch (e) {
-                if (mounted) {
-                  TopNotification.showError(context, 'Failed to provision user: $e');
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Provision User'),
-          ),
-        ],
       ),
     );
   }
@@ -1207,23 +1289,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const SizedBox(width: 12),
               ElevatedButton.icon(
-                onPressed: () {
-                  final email = _newCoAdminController.text.trim().toLowerCase();
-                  if (email.isEmpty || !email.contains('@')) {
-                    TopNotification.showWarning(context, 'Please enter a valid email.');
-                    return;
-                  }
-                  if (_coAdmins.contains(email)) {
-                    TopNotification.showWarning(context, 'This email is already a co-admin.');
-                    return;
-                  }
-                  setState(() {
-                    _coAdmins.add(email);
-                    _newCoAdminController.clear();
-                  });
-                  _saveCoAdmins();
-                },
-                icon: const Icon(Icons.person_add_rounded, size: 16),
+                onPressed: _isSavingCoAdmins
+                    ? null
+                    : () {
+                        final email = _newCoAdminController.text.trim().toLowerCase();
+                        if (email.isEmpty || !email.contains('@')) {
+                          TopNotification.showWarning(context, 'Please enter a valid email.');
+                          return;
+                        }
+                        if (_coAdmins.contains(email)) {
+                          TopNotification.showWarning(context, 'This email is already a co-admin.');
+                          return;
+                        }
+                        setState(() {
+                          _coAdmins.add(email);
+                          _newCoAdminController.clear();
+                        });
+                        _saveCoAdmins();
+                      },
+                icon: _isSavingCoAdmins
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.person_add_rounded, size: 16),
                 label: const Text('Add Co-Admin'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBlue,
@@ -1271,15 +1361,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         'waec': double.tryParse(_pricingWaecController.text.trim()) ?? 5250.0,
         'neco': double.tryParse(_pricingNecoController.text.trim()) ?? 2500.0,
         'nabteb': double.tryParse(_pricingNabtebController.text.trim()) ?? 1000.0,
+        'jamb': double.tryParse(_pricingJambController.text.trim()) ?? 8200.0,
         'data_margin': double.tryParse(_dataMarginController.text.trim()) ?? 5.0,
         'airtime_cashback': double.tryParse(_airtimeCashbackController.text.trim()) ?? 2.0,
         'cable_fee': double.tryParse(_cableFeeController.text.trim()) ?? 50.0,
         'electricity_fee': double.tryParse(_electricityFeeController.text.trim()) ?? 100.0,
         'sms_cost': double.tryParse(_smsCostController.text.trim()) ?? 4.50,
       };
-      await SupabaseService.instance.setAppSetting('pricing_overrides', jsonEncode(pricingMap));
+      await Future.wait([
+        SupabaseService.instance.setAppSetting('pricing_overrides', jsonEncode(pricingMap)),
+        SupabaseService.instance.setAppSetting('pricing_waec', _pricingWaecController.text.trim()),
+        SupabaseService.instance.setAppSetting('pricing_neco', _pricingNecoController.text.trim()),
+        SupabaseService.instance.setAppSetting('pricing_nabteb', _pricingNabtebController.text.trim()),
+        SupabaseService.instance.setAppSetting('pricing_jamb', _pricingJambController.text.trim()),
+        SupabaseService.instance.setAppSetting('data_margin_percentage', _dataMarginController.text.trim()),
+      ]);
       if (mounted) {
-        TopNotification.showSuccess(context, 'Service pricing, cashback rates, and margin settings saved successfully.');
+        TopNotification.showSuccess(context, 'Service pricing, JAMB ePIN, and data margins saved successfully.');
       }
     } catch (e) {
       if (mounted) {
@@ -1514,6 +1612,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   decoration: InputDecoration(
                     labelText: 'NABTEB PIN (₦)',
                     helperText: 'Default: ₦1,000',
+                    prefixText: '₦ ',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _pricingJambController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'JAMB e-PIN (₦)',
+                    helperText: 'UTME / Direct Entry',
                     prefixText: '₦ ',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),

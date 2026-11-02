@@ -541,10 +541,44 @@ Deno.serve(async (request) => {
     // Merge both provider catalogs into unified live plan list
     const mergedPlans = [...bilalPlans, ...bigiPlans];
 
+    // Apply custom margin if configured by admin in app_settings
+    let dataMarginPct = 0;
+    try {
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && serviceRoleKey) {
+        const admin = createClient(supabaseUrl, serviceRoleKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+        const { data: marginRow } = await admin
+          .from("app_settings")
+          .select("value")
+          .eq("key", "data_margin_percentage")
+          .maybeSingle();
+        if (marginRow && !isNaN(Number(marginRow.value))) {
+          dataMarginPct = Number(marginRow.value);
+        }
+      }
+    } catch (_) {}
+
+    const baseList = mergedPlans.length > 0 ? mergedPlans : bilalPlans;
+    const finalizedPlans = baseList.map((p) => {
+      const rawPrice = Number(p.amount ?? p.price ?? p.plan_amount ?? 0);
+      if (dataMarginPct > 0 && rawPrice > 0) {
+        const adjusted = Math.round(rawPrice * (1 + dataMarginPct / 100));
+        return {
+          ...p,
+          amount: adjusted,
+          price: adjusted,
+          plan_amount: adjusted,
+        };
+      }
+      return p;
+    });
+
     return jsonResponse({
       status: "success",
       success: true,
-      data: mergedPlans.length > 0 ? mergedPlans : bilalPlans,
+      data: finalizedPlans,
     });
   }
 
@@ -673,15 +707,42 @@ Deno.serve(async (request) => {
     });
   }
 
-  // --- EDUCATION PRICES (Retain Bigisub Retail Prices as requested) ---
+  // --- EDUCATION PRICES (Retain Bigisub Retail Prices & Admin Overrides) ---
   if (action === "education.prices") {
-    // Retain Bigisub retail pricing (WAEC ₦5,250, NECO ₦2,500, NABTEB ₦1,000)
-    // While utilizing BilalSadaSub API under the hood for purchase fulfillment!
+    let waecAmt = 5250;
+    let necoAmt = 2500;
+    let nabtebAmt = 1000;
+    let jambAmt = 8200;
+
+    try {
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && serviceRoleKey) {
+        const admin = createClient(supabaseUrl, serviceRoleKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+        const { data: settings } = await admin
+          .from("app_settings")
+          .select("key, value")
+          .in("key", ["pricing_waec", "pricing_neco", "pricing_nabteb", "pricing_jamb"]);
+        if (settings) {
+          for (const s of settings) {
+            const num = Number(s.value);
+            if (!isNaN(num) && num > 0) {
+              if (s.key === "pricing_waec") waecAmt = num;
+              if (s.key === "pricing_neco") necoAmt = num;
+              if (s.key === "pricing_nabteb") nabtebAmt = num;
+              if (s.key === "pricing_jamb") jambAmt = num;
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
     const retailPrices = [
-      { code: "waec", exam_id: "1", exam: "WAEC", name: "WAEC Result Checker", amount: 5250, mode: "quantity" },
-      { code: "neco", exam_id: "2", exam: "NECO", name: "NECO Result Checker", amount: 2500, mode: "quantity" },
-      { code: "nabteb", exam_id: "3", exam: "NABTEB", name: "NABTEB Result Checker", amount: 1000, mode: "quantity" },
-      { code: "jamb", exam_id: "4", exam: "JAMB UTME", name: "JAMB UTME E-PIN", amount: 5000, mode: "profile_code" },
+      { code: "waec", exam_id: "1", exam: "WAEC", name: "WAEC Result Checker", amount: waecAmt, mode: "quantity" },
+      { code: "neco", exam_id: "2", exam: "NECO", name: "NECO Result Checker", amount: necoAmt, mode: "quantity" },
+      { code: "nabteb", exam_id: "3", exam: "NABTEB", name: "NABTEB Result Checker", amount: nabtebAmt, mode: "quantity" },
+      { code: "jamb", exam_id: "4", exam: "JAMB UTME", name: "JAMB UTME / Direct Entry", amount: jambAmt, mode: "profile_code" },
     ];
     return jsonResponse({
       status: "success",

@@ -28,7 +28,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _OnboardingSlideData(
       title: 'Seamless Bill Payments',
       subtitle:
-          'Pay electricity tokens, Cable TV subscriptions (DStv, GOtv, Startimes), and business CAC registrations with instant automated receipt generation.',
+          'Pay electricity tokens, Cable TV subscriptions (DStv, GOtv, Startimes), and WAEC/JAMB exam e-PINs with instant automated receipt generation.',
       badge: 'BILLS & UTILITIES',
       illustrationType: 1,
     ),

@@ -68,6 +68,17 @@ class _ExtraProviderServicesScreenState
       'logo': 'assets/images/brands/nabteb.png',
       'icon': Icons.engineering_rounded,
     },
+    {
+      'code': 'JAMB',
+      'name': 'JAMB UTME / Direct Entry',
+      'exam_type': 'JAMB',
+      'amount': 8200.0,
+      'badge': 'TERTIARY',
+      'subtitle': 'Official UTME & Direct Entry Registration e-PIN',
+      'color': const Color(0xFF0D9488),
+      'logo': 'assets/images/brands/waec.png',
+      'icon': Icons.school_rounded,
+    },
   ];
 
   static final List<Map<String, dynamic>> _airtimePinNetworks = [
@@ -127,7 +138,7 @@ class _ExtraProviderServicesScreenState
 
   bool get _isExam => widget.service == ExtraProviderService.examPins;
 
-  /// Official exam-board logo by code. Distinct logos for WAEC, NECO & NABTEB.
+  /// Official exam-board logo by code.
   String _examLogoFor(String code) {
     final clean = code.toUpperCase();
     if (clean.contains('NECO')) {
@@ -135,6 +146,9 @@ class _ExtraProviderServicesScreenState
     }
     if (clean.contains('NABTEB')) {
       return 'assets/images/brands/nabteb.png';
+    }
+    if (clean.contains('JAMB')) {
+      return 'assets/images/brands/waec.png';
     }
     if (clean.contains('WAEC') || clean.contains('WASSCE')) {
       return 'assets/images/brands/waec.png';

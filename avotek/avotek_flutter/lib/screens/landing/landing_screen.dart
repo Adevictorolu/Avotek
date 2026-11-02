@@ -1,13 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/supabase/supabase_service.dart';
-import '../../core/theme/app_theme.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/avotek_logo.dart';
 import '../../widgets/service_brand_logo.dart';
@@ -79,10 +75,8 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   Future<void> _showDownloadApkModal() async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     String apkUrl =
         'https://github.com/adevictorolu/Avotek/releases/latest/download/avotek.apk';
-    String version = 'v1.2.0';
 
     try {
       final fetchedUrl = await SupabaseService.instance.getAppSetting(
@@ -91,165 +85,10 @@ class _LandingScreenState extends State<LandingScreen>
       if (fetchedUrl != null && fetchedUrl.trim().isNotEmpty) {
         apkUrl = fetchedUrl.trim();
       }
-      final fetchedVer = await SupabaseService.instance.getAppSetting(
-        'apk_version',
-      );
-      if (fetchedVer != null && fetchedVer.trim().isNotEmpty) {
-        version = fetchedVer.trim();
-      }
     } catch (_) {}
 
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF141722) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: BorderSide(
-            color: isDark ? const Color(0xFF1E2638) : const Color(0xFFE2E8F0),
-            width: 1.5,
-          ),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.android_rounded,
-                color: Color(0xFF10B981),
-                size: 26,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Download Avotek App',
-                    style: GoogleFonts.figtree(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                    ),
-                  ),
-                  Text(
-                    'Official Android APK ($version)',
-                    style: GoogleFonts.figtree(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 11.5,
-                      color: const Color(0xFF10B981),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 460),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Get the official Avotek Android app directly for lightning-fast recharge, automated bill processing, and instant push receipts.',
-                style: GoogleFonts.figtree(
-                  fontSize: 13,
-                  height: 1.5,
-                  color: isDark
-                      ? const Color(0xFFCBD5E1)
-                      : const Color(0xFF475569),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1E293B)
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark
-                        ? const Color(0xFF334155)
-                        : const Color(0xFFCBD5E1),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.verified_rounded,
-                      color: Color(0xFF10B981),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Direct APK build verified for Android 8.0+',
-                        style: GoogleFonts.figtree(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Close',
-              style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
-            ),
-          ),
-          OutlinedButton.icon(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: apkUrl));
-              Navigator.pop(ctx);
-              TopNotification.showSuccess(
-                context,
-                'APK download link copied to clipboard!',
-              );
-            },
-            icon: const Icon(Icons.copy_rounded, size: 16),
-            label: Text(
-              'Copy Link',
-              style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
-            ),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final uri = Uri.parse(apkUrl);
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            },
-            icon: const Icon(Icons.download_rounded, size: 18),
-            label: Text(
-              'Download APK',
-              style: GoogleFonts.figtree(fontWeight: FontWeight.w800),
-            ),
-          ),
-        ],
-      ),
-    );
+    final uri = Uri.parse(apkUrl);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -663,42 +502,7 @@ class _LandingScreenState extends State<LandingScreen>
           ? CrossAxisAlignment.start
           : CrossAxisAlignment.center,
       children: [
-        // Floating Pill Badge
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0052FF).withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFF00D2FF).withValues(alpha: 0.35),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.bolt_rounded,
-                color: isDark
-                    ? const Color(0xFF38BDF8)
-                    : const Color(0xFF0038B8),
-                size: 16,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '100% Automated VTU & Instant Payment Gateway',
-                style: GoogleFonts.figtree(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: isDark
-                      ? const Color(0xFF38BDF8)
-                      : const Color(0xFF0038B8),
-                  letterSpacing: 0.2,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
+
 
         // Main Title
         RichText(
@@ -798,7 +602,7 @@ class _LandingScreenState extends State<LandingScreen>
             OutlinedButton.icon(
               onPressed: _showDownloadApkModal,
               icon: const Icon(Icons.download_rounded, size: 18),
-              label: const Text('Download Android APK'),
+              label: const Text('Download APK'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: isDark
                     ? Colors.white
@@ -2210,7 +2014,7 @@ class _LandingScreenState extends State<LandingScreen>
                           Icons.download_rounded,
                           color: Color(0xFF0052FF),
                         ),
-                        label: const Text('Download APK Now'),
+                        label: const Text('Download APK'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF0052FF),
@@ -2271,7 +2075,7 @@ class _LandingScreenState extends State<LandingScreen>
                             Icons.download_rounded,
                             color: Color(0xFF0052FF),
                           ),
-                          label: const Text('Download APK Now'),
+                          label: const Text('Download APK'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: const Color(0xFF0052FF),
@@ -2558,7 +2362,7 @@ class _LandingScreenState extends State<LandingScreen>
                                 isDark,
                               ),
                               _footerActionLink(
-                                'Download Android APK',
+                                'Download APK',
                                 _showDownloadApkModal,
                                 isDark,
                               ),

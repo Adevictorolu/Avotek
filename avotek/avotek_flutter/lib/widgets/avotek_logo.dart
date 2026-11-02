@@ -43,6 +43,11 @@ class AvotekLogo extends StatelessWidget {
       logoWidget = _buildVectorLogo(effectiveDark);
     }
 
+    final roundedLogo = ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: logoWidget,
+    );
+
     if (hasFrame) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -69,14 +74,11 @@ class AvotekLogo extends StatelessWidget {
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(borderRadius > 4 ? borderRadius - 2 : 4),
-          child: logoWidget,
-        ),
+        child: roundedLogo,
       );
     }
 
-    return logoWidget;
+    return roundedLogo;
   }
 
   Widget _buildVectorLogo(bool effectiveDark) {
@@ -173,6 +175,11 @@ class AvotekBrandAsset extends StatelessWidget {
       },
     );
 
+    final roundedImage = ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: imageWidget,
+    );
+
     if (hasFrame) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -199,14 +206,11 @@ class AvotekBrandAsset extends StatelessWidget {
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(borderRadius > 4 ? borderRadius - 2 : 4),
-          child: imageWidget,
-        ),
+        child: roundedImage,
       );
     }
 
-    return imageWidget;
+    return roundedImage;
   }
 }
 

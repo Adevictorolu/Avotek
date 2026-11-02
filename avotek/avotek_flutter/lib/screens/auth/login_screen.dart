@@ -669,6 +669,7 @@ class _LoginScreenState extends State<LoginScreen> {
         AvotekBrandAsset(
           height: 52,
           isDark: isDark,
+          borderRadius: 16,
         ),
         const SizedBox(height: 44),
 
@@ -683,15 +684,26 @@ class _LoginScreenState extends State<LoginScreen> {
               color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
             children: [
-              TextSpan(text: 'Leveraging technology,\n'),
-              TextSpan(text: 'in one '),
+              const TextSpan(text: 'Leveraging technology,\n'),
+              const TextSpan(text: 'in '),
               TextSpan(
-                text: 'smart',
+                text: 'one smart app.',
                 style: TextStyle(
                   color: isDark ? AppColors.primaryCyan : AppColors.primaryBlue,
+                  shadows: [
+                    Shadow(
+                      color: (isDark ? AppColors.primaryCyan : AppColors.primaryBlue)
+                          .withValues(alpha: 0.8),
+                      blurRadius: 24,
+                    ),
+                    Shadow(
+                      color: (isDark ? AppColors.primaryCyan : AppColors.primaryBlue)
+                          .withValues(alpha: 0.4),
+                      blurRadius: 36,
+                    ),
+                  ],
                 ),
               ),
-              TextSpan(text: ' app.'),
             ],
           ),
         ),
@@ -699,7 +711,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Subtitle
         Text(
-          'Airtime, high-speed SME & corporate data bundles, electricity prepaid tokens, cable TV, and corporate CAC registration across Nigeria.',
+          'Airtime recharge, high-speed data bundles, electricity prepaid tokens, cable TV subscriptions, and instant WAEC & JAMB e-PINs across Nigeria.',
           style: GoogleFonts.figtree(
             fontSize: 15,
             height: 1.5,
@@ -711,14 +723,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Feature Showcase & Phone Mockups Display
         SizedBox(
-          height: 210,
+          height: 220,
           child: Stack(
-            alignment: Alignment.center,
+            clipBehavior: Clip.none,
             children: [
+              // Mini Phone Mockups (Back + Front)
+              Positioned(
+                left: 170,
+                child: _buildMiniPhoneMockup(scale: 0.9, isSelected: false),
+              ),
+              Positioned(
+                left: 215,
+                child: _buildMiniPhoneMockup(scale: 1.05, isSelected: true),
+              ),
+
               // Floating Chip Left: SME Data Bundle
               Positioned(
                 left: 0,
-                top: 36,
+                top: 24,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
@@ -769,14 +791,69 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              // Mini Phone Mockups (Back + Front)
+              // Floating Chip Right: WAEC & JAMB e-PIN (Glowing)
               Positioned(
-                left: 170,
-                child: _buildMiniPhoneMockup(scale: 0.9, isSelected: false),
-              ),
-              Positioned(
-                left: 215,
-                child: _buildMiniPhoneMockup(scale: 1.05, isSelected: true),
+                right: -20,
+                bottom: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF131B2E),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.6),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.35),
+                        blurRadius: 20,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.school_rounded,
+                          color: Color(0xFF10B981),
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'WAEC & JAMB e-PIN',
+                            style: GoogleFonts.figtree(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            'Instant PIN Delivery • 100% Valid',
+                            style: GoogleFonts.figtree(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF10B981),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -910,6 +987,7 @@ class _LoginScreenState extends State<LoginScreen> {
         AvotekBrandAsset(
           height: 48,
           isDark: isDark,
+          borderRadius: 14,
         ),
         const SizedBox(height: 14),
         Text(
