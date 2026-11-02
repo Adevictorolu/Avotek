@@ -64,7 +64,7 @@ class _ExtraProviderServicesScreenState
       'amount': 1000.0,
       'badge': 'TECHNICAL',
       'subtitle': 'Official NBC / NTC verification e-PIN token',
-      'color': const Color(0xFF00D2FF),
+      'color': const Color(0xFF0052FF),
       'logo': 'assets/images/brands/nabteb.png',
       'icon': Icons.engineering_rounded,
     },
@@ -119,7 +119,6 @@ class _ExtraProviderServicesScreenState
   static const List<int> _airtimePinDenominations = [100, 200, 500, 1000];
 
   final _quantityController = TextEditingController(text: '1');
-  final _examPhoneController = TextEditingController();
   final _recipientController = TextEditingController();
   final _messageController = TextEditingController();
   final _senderController = TextEditingController();
@@ -191,10 +190,6 @@ class _ExtraProviderServicesScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = context.read<AuthProvider>().user;
-      if (user != null && user.phone.isNotEmpty && _examPhoneController.text.isEmpty) {
-        _examPhoneController.text = user.phone;
-      }
       _loadPricingSilently();
     });
   }
@@ -202,7 +197,6 @@ class _ExtraProviderServicesScreenState
   @override
   void dispose() {
     _quantityController.dispose();
-    _examPhoneController.dispose();
     _recipientController.dispose();
     _messageController.dispose();
     _senderController.dispose();
@@ -484,9 +478,7 @@ class _ExtraProviderServicesScreenState
                       .toString(),
               quantity: int.parse(_quantityController.text.trim()),
               unitPrice: (_selectedExam?['amount'] as num).toDouble(),
-              phone: _examPhoneController.text.trim().isNotEmpty
-                  ? _examPhoneController.text.trim()
-                  : user.phone,
+              phone: user.phone.isNotEmpty ? user.phone : '08000000000',
               userPin: transactionPin,
             )
           : (_isAirtimePins
@@ -532,7 +524,7 @@ class _ExtraProviderServicesScreenState
                     ? '${networkObj['code']} ₦$_selectedDenomination PIN × ${_quantityController.text}'
                     : 'Bulk SMS (${_recipients().length} recipients)'),
           recipient: _isExam
-              ? 'Candidate / Self'
+              ? (user.name.isNotEmpty ? user.name : (user.phone.isNotEmpty ? user.phone : 'Instant Screen Delivery'))
               : (_isAirtimePins
                     ? '${_businessNameController.text.trim()} / Self'
                     : _recipients().join(', ')),
@@ -583,22 +575,15 @@ class _ExtraProviderServicesScreenState
         .toString()
         .toLowerCase();
 
-    final phone = _examPhoneController.text.trim().isNotEmpty
-        ? _examPhoneController.text.trim()
-        : (context.read<AuthProvider>().user?.phone ?? '');
-
-    if (phone.isEmpty) {
-      TopNotification.showError(
-        context,
-        'Please enter candidate phone number so your sponsor knows who they are paying for.',
-      );
-      return;
-    }
+    final user = context.read<AuthProvider>().user;
+    final recipient = (user?.name.isNotEmpty == true)
+        ? user!.name
+        : ((user?.phone.isNotEmpty == true) ? user!.phone : 'Self');
 
     PayForMeDialog.show(
       context,
       serviceName: '$examName ($qty PIN${qty > 1 ? 's' : ''})',
-      recipient: phone,
+      recipient: recipient,
       amount: total,
       examCode: examCode,
       quantity: qty,
@@ -839,7 +824,7 @@ class _ExtraProviderServicesScreenState
                       'This creates a shareable gift link. The recipient redeems it themselves.',
                       style: GoogleFonts.figtree(
                         fontSize: 12,
-                        color: const Color(0xFF00D2FF),
+                        color: const Color(0xFF0052FF),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -1558,8 +1543,7 @@ class _ExtraProviderServicesScreenState
                                             fontWeight: isSel
                                                 ? FontWeight.w800
                                                 : FontWeight.w600,
-                                            color: isSel
-                                                ? const Color(0xFF00D2FF)
+                                            color: isSel ? const Color(0xFF0052FF)
                                                 : (isDark
                                                       ? Colors.white
                                                       : Colors.black87),
@@ -1575,80 +1559,7 @@ class _ExtraProviderServicesScreenState
                         ],
                       ),
                     ),
-                    // Candidate Delivery Phone Number Card
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF141721) : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF222634)
-                              : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'CANDIDATE PHONE NUMBER',
-                                style: GoogleFonts.figtree(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.8,
-                                  color: isDark
-                                      ? Colors.white70
-                                      : const Color(0xFF475569),
-                                ),
-                              ),
-                              Text(
-                                'PIN linked & delivered here',
-                                style: GoogleFonts.figtree(
-                                  fontSize: 11,
-                                  color: const Color(0xFF00D2FF),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: _examPhoneController,
-                            keyboardType: TextInputType.phone,
-                            style: GoogleFonts.figtree(color: foreground),
-                            decoration: InputDecoration(
-                              prefixIcon: const Icon(
-                                Icons.phone_android_rounded,
-                                color: Color(0xFF00D2FF),
-                                size: 20,
-                              ),
-                              hintText: 'e.g. 08012345678',
-                              hintStyle: GoogleFonts.figtree(
-                                fontSize: 13,
-                                color: isDark ? Colors.white38 : Colors.black38,
-                              ),
-                              filled: true,
-                              fillColor: isDark
-                                  ? const Color(0xFF1C202C)
-                                  : const Color(0xFFF8FAFC),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: isDark
-                                      ? const Color(0xFF2C3142)
-                                      : const Color(0xFFCBD5E1),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                  ] else ...[
+                    ] else ...[
                     // Bulk SMS UI
                     // 1. Supported Networks with Official Logos
                     Container(
@@ -1876,7 +1787,7 @@ class _ExtraProviderServicesScreenState
                                   style: GoogleFonts.figtree(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF00D2FF),
+                                    color: const Color(0xFF0052FF),
                                   ),
                                 ),
                               ),
@@ -1950,7 +1861,7 @@ class _ExtraProviderServicesScreenState
                                 style: GoogleFonts.figtree(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF00D2FF),
+                                  color: const Color(0xFF0052FF),
                                 ),
                               ),
                             ],
@@ -2048,7 +1959,7 @@ class _ExtraProviderServicesScreenState
                                 ),
                                 child: const Icon(
                                   Icons.volunteer_activism_rounded,
-                                  color: Color(0xFF00D2FF),
+                                  color: Color(0xFF0052FF),
                                   size: 22,
                                 ),
                               ),
@@ -2165,7 +2076,7 @@ class _ExtraProviderServicesScreenState
                               style: GoogleFonts.figtree(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFF00D2FF),
+                                color: const Color(0xFF0052FF),
                               ),
                             ),
                           ],

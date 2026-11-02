@@ -92,9 +92,7 @@ class PayForMeDialog extends StatelessWidget {
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF131722) : Colors.white,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isDark ? const Color(0xFF222B42) : const Color(0xFFE2E8F0),
-              ),
+              border: null,
               boxShadow: [
                 BoxShadow(
                   color: AppColors.primaryBlue.withOpacity(0.18),
@@ -112,7 +110,7 @@ class PayForMeDialog extends StatelessWidget {
                   height: 58,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                      colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -154,9 +152,7 @@ class PayForMeDialog extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF1B2030) : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isDark ? const Color(0xFF2B344D) : const Color(0xFFE2E8F0),
-                    ),
+                    border: null,
                   ),
                   child: Column(
                     children: [
@@ -175,7 +171,7 @@ class PayForMeDialog extends StatelessWidget {
                           Text(recipient, style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
                         ],
                       ),
-                      const Divider(height: 18),
+                      const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -185,7 +181,7 @@ class PayForMeDialog extends StatelessWidget {
                             style: GoogleFonts.figtree(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
-                              color: const Color(0xFF00D2FF),
+                              color: const Color(0xFF0052FF),
                             ),
                           ),
                         ],
@@ -201,13 +197,11 @@ class PayForMeDialog extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF151926) : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDark ? const Color(0xFF28324A) : const Color(0xFFCBD5E1),
-                    ),
+                    border: null,
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.link_rounded, size: 18, color: Color(0xFF00D2FF)),
+                      const Icon(Icons.link_rounded, size: 18, color: Color(0xFF0052FF)),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -222,7 +216,7 @@ class PayForMeDialog extends StatelessWidget {
                       ),
                       IconButton(
                         tooltip: 'Copy Payment Link',
-                        icon: const Icon(Icons.copy_rounded, size: 18, color: Color(0xFF00D2FF)),
+                        icon: const Icon(Icons.copy_rounded, size: 18, color: Color(0xFF0052FF)),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: paymentLink));
                           TopNotification.showSuccess(context, 'Payment link copied to clipboard!');

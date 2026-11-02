@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -173,12 +174,34 @@ class TransactionSuccessDialog extends StatelessWidget {
           build: (pw.Context ctx) {
             return pw.Stack(
               children: [
-                // Watermark across the page
+                // Tilted 45-degree rounded border-radius transparent logo watermark pattern
                 if (logoImage != null)
-                  pw.Center(
+                  pw.Positioned.fill(
                     child: pw.Opacity(
-                      opacity: 0.06,
-                      child: pw.Image(logoImage, width: 360, height: 360),
+                      opacity: 0.05,
+                      child: pw.Column(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+                        children: List.generate(4, (rowIdx) {
+                          return pw.Row(
+                            mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+                            children: List.generate(3, (colIdx) {
+                              return pw.Transform.rotate(
+                                angle: -0.785398,
+                                child: pw.ClipRRect(
+                                  horizontalRadius: 16,
+                                  verticalRadius: 16,
+                                  child: pw.Image(
+                                    logoImage!,
+                                    width: 85,
+                                    height: 85,
+                                    fit: pw.BoxFit.contain,
+                                  ),
+                                ),
+                              );
+                            }),
+                          );
+                        }),
+                      ),
                     ),
                   ),
                 pw.Column(
@@ -349,7 +372,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                     ),
                     pw.SizedBox(height: 8),
                     pw.Table(
-                      border: const pw.TableBorder(),
+                      border: null,
                       children: [
                         _buildPdfTableRow('Service Category', serviceType),
                         _buildPdfTableRow(
@@ -469,8 +492,32 @@ class TransactionSuccessDialog extends StatelessWidget {
               color: isDark ? const Color(0xFF131722) : Colors.white,
               borderRadius: BorderRadius.circular(24),
             ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Opacity(
+                      opacity: isDark ? 0.03 : 0.04,
+                      child: Center(
+                        child: Transform.rotate(
+                          angle: -0.785398,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              width: 170,
+                              height: 170,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -649,16 +696,22 @@ class TransactionSuccessDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
 
-                  // Actions: Download Receipt & Done in Avotek Gradient
+                  // Actions: Download Receipt, Share Link & Done in Avotek Gradient
                   Row(
                     children: [
                       OutlinedButton.icon(
                         onPressed: () => _downloadPdfReceipt(context),
                         icon: const Icon(Icons.download_rounded, size: 15),
-                        label: const Text('Receipt'),
+                        label: Text(
+                          'Receipt',
+                          style: GoogleFonts.figtree(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
+                            horizontal: 12,
                             vertical: 12,
                           ),
                           side: BorderSide(
@@ -669,18 +722,56 @@ class TransactionSuccessDialog extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          textStyle: GoogleFonts.figtree(
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          final origin = kIsWeb
+                              ? '${Uri.base.origin}${Uri.base.path}'
+                              : 'https://adevictorolu.github.io/Avotek/';
+                          final cleanOrigin = origin.endsWith('/')
+                              ? origin.substring(0, origin.length - 1)
+                              : origin;
+                          final refParam = reference != null && reference!.isNotEmpty
+                              ? '?ref=$reference'
+                              : '';
+                          final receiptLink = '$cleanOrigin/#/transactions$refParam';
+                          Clipboard.setData(ClipboardData(text: receiptLink));
+                          TopNotification.showSuccess(
+                            context,
+                            'Receipt link copied to clipboard!',
+                          );
+                        },
+                        icon: const Icon(Icons.link_rounded, size: 15),
+                        label: Text(
+                          'Share Link',
+                          style: GoogleFonts.figtree(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          side: BorderSide(
+                            color: isDark
+                                ? const Color(0xFF28344D)
+                                : const Color(0xFFCBD5E1),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Container(
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF0052FF), Color(0xFF00D2FF)],
+                              colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -713,10 +804,12 @@ class TransactionSuccessDialog extends StatelessWidget {
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildReceiptRow(

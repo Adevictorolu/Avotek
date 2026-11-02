@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -685,7 +686,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? const Color(0xFF141722) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide.none),
         title: Row(
           children: [
             const Icon(Icons.receipt_rounded, color: AppColors.electricCyan),
@@ -718,6 +719,30 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           ],
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () async {
+              final origin = kIsWeb
+                  ? '${Uri.base.origin}${Uri.base.path}'
+                  : 'https://adevictorolu.github.io/Avotek/';
+              final cleanOrigin = origin.endsWith('/')
+                  ? origin.substring(0, origin.length - 1)
+                  : origin;
+              final receiptLink = '$cleanOrigin/#/transactions?ref=${tx.reference}';
+              await Clipboard.setData(ClipboardData(text: receiptLink));
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Receipt link copied to clipboard!'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            },
+            icon: const Icon(Icons.link_rounded, size: 16),
+            label: Text(
+              'Share Link',
+              style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
+            ),
+          ),
           TextButton.icon(
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: tx.reference));
@@ -776,9 +801,39 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         pw.Page(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(42),
-          build: (context) => pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+          build: (context) => pw.Stack(
             children: [
+              pw.Positioned.fill(
+                child: pw.Opacity(
+                  opacity: 0.05,
+                  child: pw.Column(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+                    children: List.generate(4, (rowIdx) {
+                      return pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+                        children: List.generate(3, (colIdx) {
+                          return pw.Transform.rotate(
+                            angle: -0.785398,
+                            child: pw.ClipRRect(
+                              horizontalRadius: 16,
+                              verticalRadius: 16,
+                              child: pw.Image(
+                                logo,
+                                width: 85,
+                                height: 85,
+                                fit: pw.BoxFit.contain,
+                              ),
+                            ),
+                          );
+                        }),
+                      );
+                    }),
+                  ),
+                ),
+              ),
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
               pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
@@ -868,8 +923,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               ),
             ],
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 
       final safeReference = tx.reference.replaceAll(
         RegExp(r'[^A-Za-z0-9_-]'),

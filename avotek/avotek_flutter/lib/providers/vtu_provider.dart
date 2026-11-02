@@ -301,10 +301,18 @@ class VtuProvider extends ChangeNotifier {
       token =
           data['token']?.toString() ??
           data['meter_token']?.toString() ??
+          data['pin']?.toString() ??
+          data['pin_code']?.toString() ??
+          response['pin']?.toString() ??
           response['token']?.toString();
       units = data['units']?.toString();
       issuedPins = _extractPinList(
-        data['pins'] ?? data['cards'] ?? response['pins'] ?? response['cards'],
+        data['pins'] ??
+            data['cards'] ??
+            response['pins'] ??
+            response['cards'] ??
+            response['pin'] ??
+            data['pin'],
       );
       if (issuedPins.isNotEmpty) {
         token = issuedPins.join('\n');
@@ -411,6 +419,23 @@ class VtuProvider extends ChangeNotifier {
   List<String> _extractPinList(Object? rawPins) {
     if (rawPins is String && rawPins.trim().isNotEmpty) {
       return [rawPins.trim()];
+    }
+    if (rawPins is Map) {
+      final pin =
+          rawPins['pin']?.toString() ??
+          rawPins['token']?.toString() ??
+          rawPins['pin_code']?.toString() ??
+          '';
+      final serial =
+          rawPins['serial']?.toString() ??
+          rawPins['serial_number']?.toString() ??
+          rawPins['serial_no']?.toString() ??
+          '';
+      if (pin.isNotEmpty && serial.isNotEmpty) {
+        return ['PIN: $pin (Serial: $serial)'];
+      } else if (pin.isNotEmpty) {
+        return [pin];
+      }
     }
     if (rawPins is! List || rawPins.isEmpty) return const [];
     final items = <String>[];
