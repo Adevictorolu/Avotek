@@ -22,7 +22,11 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  void _openEditProfileModal(BuildContext context, String currentName, String currentPhone) {
+  void _openEditProfileModal(
+    BuildContext context,
+    String currentName,
+    String currentPhone,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final nameCtrl = TextEditingController(text: currentName);
     final phoneCtrl = TextEditingController(
@@ -35,7 +39,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (dialogCtx) => StatefulBuilder(
         builder: (ctx, setDialogState) => Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
           child: Container(
             width: 480,
             padding: const EdgeInsets.all(26),
@@ -79,7 +86,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   'Keep your name and Nigerian phone number up to date for fast service delivery and verification.',
                   style: GoogleFonts.figtree(
                     fontSize: 12.5,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -99,8 +108,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     hintStyle: GoogleFonts.figtree(
                       color: isDark ? Colors.white38 : Colors.black38,
                     ),
-                    prefixIcon: const Icon(Icons.person_outline_rounded, size: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(
+                      Icons.person_outline_rounded,
+                      size: 18,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -121,8 +135,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     hintStyle: GoogleFonts.figtree(
                       color: isDark ? Colors.white38 : Colors.black38,
                     ),
-                    prefixIcon: const Icon(Icons.phone_android_rounded, size: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(
+                      Icons.phone_android_rounded,
+                      size: 18,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 22),
@@ -135,7 +154,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             final name = nameCtrl.text.trim();
                             final phone = phoneCtrl.text.trim();
                             if (name.isEmpty) {
-                              TopNotification.showWarning(context, 'Please enter your full name.');
+                              TopNotification.showWarning(
+                                context,
+                                'Please enter your full name.',
+                              );
                               return;
                             }
                             setDialogState(() => isSaving = true);
@@ -147,12 +169,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               );
                               if (dialogCtx.mounted) Navigator.pop(dialogCtx);
                               if (context.mounted) {
-                                TopNotification.showSuccess(context, 'Profile updated successfully!');
+                                TopNotification.showSuccess(
+                                  context,
+                                  'Profile updated successfully!',
+                                );
                               }
                             } catch (e) {
                               setDialogState(() => isSaving = false);
                               if (context.mounted) {
-                                TopNotification.showError(context, 'Could not update profile: $e');
+                                TopNotification.showError(
+                                  context,
+                                  'Could not update profile: $e',
+                                );
                               }
                             }
                           },
@@ -160,17 +188,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: isSaving
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : Text(
                             'Save Changes',
-                            style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w800),
+                            style: GoogleFonts.figtree(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                   ),
                 ),
@@ -195,7 +231,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final firstName = nameParts.isNotEmpty ? nameParts.first : 'User';
     final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
     final initials = fullName.isNotEmpty
-        ? fullName.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join()
+        ? fullName
+              .split(' ')
+              .map((n) => n.isNotEmpty ? n[0] : '')
+              .take(2)
+              .join()
         : 'AV';
 
     showDialog(
@@ -237,7 +277,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: GoogleFonts.figtree(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -245,7 +287,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           'Your verified account information',
                           style: GoogleFonts.figtree(
                             fontSize: 13,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            color: isDark
+                                ? AppColors.metallicLight
+                                : AppColors.slateGrey,
                           ),
                         ),
                       ],
@@ -255,7 +299,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: isDark ? Colors.white70 : Colors.black54,
                       onPressed: () => Navigator.pop(ctx),
                       style: IconButton.styleFrom(
-                        backgroundColor: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                        backgroundColor: isDark
+                            ? AppColors.darkCardVariant
+                            : AppColors.lightCardVariant,
                         padding: const EdgeInsets.all(8),
                       ),
                     ),
@@ -335,7 +381,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.workspace_premium_outlined,
                   label: 'Account Tier',
                   isVerified: isKycVerified,
-                  value: isKycVerified ? 'Tier 2 (KYC Verified)' : 'Tier 1 (Standard User)',
+                  value: isKycVerified
+                      ? 'Tier 2 (KYC Verified)'
+                      : 'Tier 1 (Standard User)',
                   isDark: isDark,
                 ),
                 const SizedBox(height: 20),
@@ -352,7 +400,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     label: const Text('Edit Name & Phone Number'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -386,7 +436,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
+              Icon(
+                icon,
+                size: 14,
+                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+              ),
               const SizedBox(width: 6),
               Text(
                 label,
@@ -398,7 +452,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(width: 8),
               if (isVerified) ...[
-                const Icon(Icons.check_rounded, size: 13, color: AppColors.success),
+                const Icon(
+                  Icons.check_rounded,
+                  size: 13,
+                  color: AppColors.success,
+                ),
                 const SizedBox(width: 2),
                 Text(
                   'Verified',
@@ -409,7 +467,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ] else ...[
-                const Icon(Icons.info_outline_rounded, size: 13, color: AppColors.warning),
+                const Icon(
+                  Icons.info_outline_rounded,
+                  size: 13,
+                  color: AppColors.warning,
+                ),
                 const SizedBox(width: 2),
                 Text(
                   'Unverified',
@@ -488,7 +550,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: GoogleFonts.figtree(
                     fontSize: 13,
                     height: 1.45,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -564,7 +628,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF10B981),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 13,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -606,9 +673,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final rawPhone = user?.phone.trim() ?? '';
     final hasPhone = rawPhone.isNotEmpty && rawPhone != 'Not configured';
     final phone = hasPhone ? rawPhone : 'Not configured';
-    final isKycVerified = (user?.kycStatus ?? '').toLowerCase() == 'verified' && hasPhone;
+    final isKycVerified =
+        (user?.kycStatus ?? '').toLowerCase() == 'verified' && hasPhone;
     final initials = fullName.isNotEmpty
-        ? fullName.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join()
+        ? fullName
+              .split(' ')
+              .map((n) => n.isNotEmpty ? n[0] : '')
+              .take(2)
+              .join()
         : 'AV';
 
     return ResponsiveShell(
@@ -638,11 +710,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 20),
 
                   // --- CARD 1: USER PROFILE HEADER ---
-                  _buildUserHeaderCard(isDark, fullName, email, phone, initials, isKycVerified, hasPhone),
+                  _buildUserHeaderCard(
+                    isDark,
+                    fullName,
+                    email,
+                    phone,
+                    initials,
+                    isKycVerified,
+                    hasPhone,
+                  ),
                   const SizedBox(height: 20),
 
                   // --- CARD 2: VERIFICATION / KYC STATUS CARD ---
-                  _buildKycStatusCard(isDark, fullName, email, phone, user, hasPhone),
+                  _buildKycStatusCard(
+                    isDark,
+                    fullName,
+                    email,
+                    phone,
+                    user,
+                    hasPhone,
+                  ),
                   const SizedBox(height: 20),
 
                   // --- CARD 3: SUPPORT, HELP & ACTIVITY ---
@@ -656,7 +743,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.darkCard : Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.error.withOpacity(0.35)),
+                      border: Border.all(
+                        color: AppColors.error.withOpacity(0.35),
+                      ),
                       boxShadow: isDark
                           ? null
                           : [
@@ -689,7 +778,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 16),
                         ElevatedButton.icon(
                           onPressed: () async {
-                            final confirmed = await showLogoutConfirmationDialog(context);
+                            final confirmed =
+                                await showLogoutConfirmationDialog(context);
                             if (confirmed && context.mounted) {
                               final auth = context.read<AuthProvider>();
                               await auth.signOut();
@@ -703,8 +793,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.error,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ],
@@ -770,7 +865,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: AppColors.primaryCyan,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.edit_rounded, size: 12, color: Colors.white),
+                    child: const Icon(
+                      Icons.edit_rounded,
+                      size: 12,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],
@@ -791,7 +890,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: GoogleFonts.figtree(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -800,7 +901,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     IconButton(
                       icon: const Icon(Icons.edit_outlined, size: 16),
                       tooltip: 'Edit name & phone',
-                      onPressed: () => _openEditProfileModal(context, fullName, phone),
+                      onPressed: () =>
+                          _openEditProfileModal(context, fullName, phone),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -812,7 +914,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Icon(
                       Icons.mail_outline_rounded,
                       size: 14,
-                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                      color: isDark
+                          ? AppColors.metallicLight
+                          : AppColors.slateGrey,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
@@ -820,7 +924,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         email,
                         style: GoogleFonts.figtree(
                           fontSize: 12.5,
-                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          color: isDark
+                              ? AppColors.metallicLight
+                              : AppColors.slateGrey,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -835,32 +941,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   runSpacing: 6,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkCardVariant : AppColors.lightCardVariant,
+                        color: isDark
+                            ? AppColors.darkCardVariant
+                            : AppColors.lightCardVariant,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
                         ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star_outline_rounded, size: 12, color: Colors.grey),
+                          const Icon(
+                            Icons.star_outline_rounded,
+                            size: 12,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 4),
                           Text(
-                            isKycVerified ? 'Tier 2 Member' : 'Tier 1 (Standard)',
+                            isKycVerified
+                                ? 'Tier 2 Member'
+                                : 'Tier 1 (Standard)',
                             style: GoogleFonts.figtree(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: isKycVerified
                             ? AppColors.success.withValues(alpha: 0.15)
@@ -876,17 +1000,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            isKycVerified ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+                            isKycVerified
+                                ? Icons.check_circle_rounded
+                                : Icons.info_outline_rounded,
                             size: 12,
-                            color: isKycVerified ? AppColors.success : AppColors.warning,
+                            color: isKycVerified
+                                ? AppColors.success
+                                : AppColors.warning,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            isKycVerified ? 'KYC Verified' : (hasPhone ? 'KYC Pending' : 'KYC Unverified'),
+                            isKycVerified
+                                ? 'KYC Verified'
+                                : (hasPhone ? 'KYC Pending' : 'KYC Unverified'),
                             style: GoogleFonts.figtree(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
-                              color: isKycVerified ? AppColors.success : AppColors.warning,
+                              color: isKycVerified
+                                  ? AppColors.success
+                                  : AppColors.warning,
                             ),
                           ),
                         ],
@@ -924,8 +1056,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           color: isTier2
               ? AppColors.success.withValues(alpha: 0.4)
               : (isTier1
-                  ? const Color(0xFF0052FF).withValues(alpha: 0.4)
-                  : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
+                    ? const Color(0xFF0052FF).withValues(alpha: 0.4)
+                    : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
           width: 1.5,
         ),
       ),
@@ -938,8 +1070,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 isTier2
                     ? Icons.check_circle_rounded
                     : (isTier1
-                        ? Icons.verified_user_rounded
-                        : Icons.pending_actions_rounded),
+                          ? Icons.verified_user_rounded
+                          : Icons.pending_actions_rounded),
                 color: isTier2
                     ? AppColors.success
                     : (isTier1 ? const Color(0xFF0052FF) : AppColors.warning),
@@ -951,16 +1083,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   isTier2
                       ? 'Identity verified'
                       : (isTier1
-                          ? 'Phone verified'
-                          : 'Phone verification needed'),
+                            ? 'Phone verified'
+                            : 'Phone verification needed'),
                   style: GoogleFonts.figtree(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: isTier2
                         ? AppColors.success
                         : (isTier1
-                            ? (isDark ? Colors.white : const Color(0xFF0052FF))
-                            : (isDark ? Colors.white : const Color(0xFF0F172A))),
+                              ? (isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0052FF))
+                              : (isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A))),
                   ),
                 ),
               ),
@@ -969,7 +1105,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 8),
           Text(
             isTier2
-                  ? 'Your identity details are verified.'
+                ? 'Your identity details are verified.'
                 : (isTier1
                       ? 'Your phone number is verified.'
                       : 'Add a Nigerian phone number to continue.'),
@@ -996,20 +1132,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ElevatedButton.icon(
-                onPressed: () => _openEditProfileModal(context, fullName, phone),
+                onPressed: () =>
+                    _openEditProfileModal(context, fullName, phone),
                 icon: const Icon(Icons.edit_rounded, size: 15),
                 label: Text(hasPhone ? 'Update phone' : 'Add phone'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBlue,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               OutlinedButton.icon(
@@ -1024,8 +1171,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: const Icon(Icons.person_outline_rounded, size: 16),
                 label: const Text('View Profile'),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   textStyle: GoogleFonts.figtree(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -1086,7 +1238,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       '24/7 dedicated support, Help FAQs, and complete transaction history',
                       style: GoogleFonts.figtree(
                         fontSize: 12.5,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
                   ],
@@ -1115,7 +1269,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
             child: ElevatedButton.icon(
-              icon: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 20),
+              icon: const Icon(
+                Icons.chat_bubble_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               label: Text(
                 'Chat on WhatsApp Support (+234 816 700 2789)',
                 style: GoogleFonts.figtree(
@@ -1128,9 +1286,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 final uri = Uri.parse(
                   'https://wa.me/2348167002789?text=${Uri.encodeComponent("Hello Avotek Support, I need help with my account/transaction.")}',
                 );
-                final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                final opened = await launchUrl(
+                  uri,
+                  mode: LaunchMode.externalApplication,
+                );
                 if (!opened && mounted) {
-                  Clipboard.setData(const ClipboardData(text: '+2348167002789'));
+                  Clipboard.setData(
+                    const ClipboardData(text: '+2348167002789'),
+                  );
                   TopNotification.showSuccess(
                     context,
                     'WhatsApp number +2348167002789 copied to clipboard.',
@@ -1142,7 +1305,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
                 padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
           ),
@@ -1252,47 +1417,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showHelpFaqModal(BuildContext context, bool isDark) {
     final faqs = <(String, String)>[
       (
-        'How does "Pay For Me" (Shareable Link) work?',
-        'Tick "Pay For Me" on any service (Airtime, Data, Cable TV, Electricity, or Result Checker) '
-            'and tap the button to generate a secure shareable link. You can send this link via WhatsApp '
-            'or copy it for a friend, family member, or sponsor to settle the bill for you.',
+        'Which services can I use?',
+        'Open Services to see the available airtime, data, bill-payment, and PIN options.',
       ),
       (
-        'How do I earn with the Referral & Affiliate Programme?',
-        'Share your unique referral link or Avotek ID with friends. When they register, you receive '
-            '₦50 credited to your wallet balance plus 100 AVO token points, and your friend gets a ₦25 '
-            'welcome bonus instantly! You also earn lifetime commissions on all their recharges.',
+        'Where can I see the price?',
+        'Review the displayed price and total before confirming a purchase.',
       ),
       (
-        'How does Airtime Cashback work?',
-        'When you recharge airtime on Avotek, you receive an instant cashback discount credited '
-            'back to your balance or deducted from your total bill immediately upon checkout.',
+        'How do gift vouchers work?',
+        'Create a voucher from a supported service or Gifts. Redeem its code on Coupons; the value is added to your wallet.',
       ),
       (
-        'How do I create and redeem Gift Vouchers?',
-        'Switch to the "Gift Voucher" tab on any service screen to generate a redeemable code. '
-            'Anyone can redeem the voucher code on the Coupons page to instantly receive the value '
-            'in their wallet balance.',
-      ),
-      (
-        'How fast are Data, Electricity, and Cable TV delivered?',
-        'All Avotek transactions are 100% automated with instant direct telecom & DisCo routing. '
-            'Electricity meter tokens and exam PINs are immediately displayed on your screen and saved in '
-            'your receipt history.',
+        'Where can I find a receipt or token?',
+        'Open Transactions and select a completed purchase to view its receipt and any available token.',
       ),
       (
         'How do I fund my wallet?',
-        'Open Fund Wallet and follow the payment options shown for your account. Your balance updates after the payment is confirmed.',
+        'Open Fund Wallet and follow the payment options shown for your account. Your balance updates after payment is confirmed.',
       ),
       (
-        'My transaction is pending or processing',
-        'Check Transactions. If your transaction shows pending, our automated system continuously '
-            'requeries the provider. If it does not update within 2 minutes, reach out to our WhatsApp support team.',
+        'What if a transaction is pending?',
+        'Check Transactions for an update. If it remains pending, contact support with the transaction reference.',
       ),
       (
-        'How do I reset my password or transaction PIN?',
-        'For passwords, use "Forgot password" on the Sign In page. For transaction PINs, navigate to '
-            'Settings > Security > Change Transaction PIN to verify via email OTP and set a new 4-digit code.',
+        'How do I change my password or PIN?',
+        'Use Forgot password on the sign-in page, or open Settings to update your transaction PIN.',
       ),
     ];
 
@@ -1330,7 +1480,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Frequently asked questions & instant live assistance',
+                'Quick answers about Avotek services.',
                 style: GoogleFonts.figtree(
                   fontSize: 13,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -1362,7 +1512,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: GoogleFonts.figtree(
                               fontSize: 12.5,
                               height: 1.45,
-                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                              color: isDark
+                                  ? AppColors.metallicLight
+                                  : AppColors.slateGrey,
                             ),
                           ),
                         ),

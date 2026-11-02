@@ -217,44 +217,32 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final faqs = <(String, String)>[
       (
-        'How does "Pay For Me" (Shareable Link) work?',
-        'The option is limited to exam PINs. Sponsor checkout still requires a secure payment-request backend before it can be used.',
+        'Which services can I use?',
+        'Open Services to see the available airtime, data, bill-payment, and PIN options.',
       ),
       (
-        'How do I earn with the Affiliate Programme?',
-        'Visit the Affiliate section in your dashboard or menu to copy your unique referral link. '
-            'You earn automatic lifetime commission on every VTU transaction, airtime recharge, and '
-            'bill payment performed by users registered through your link. Payouts can be withdrawn '
-            'directly into your bank or wallet.',
+        'Where can I see the price?',
+        'Review the displayed price and total before confirming a purchase.',
       ),
       (
-        'How does Airtime Cashback work?',
-        'When you recharge airtime on Avotek, you receive an instant cashback discount credited '
-            'back to your balance or deducted from your total bill immediately upon checkout.',
+        'How do gift vouchers work?',
+        'Create a voucher from a supported service or Gifts. Redeem its code on Coupons; the value is added to your wallet.',
       ),
       (
-        'How do I create and redeem Gift Vouchers?',
-        'Create a voucher from a service screen or Gifts. Redeem its code on Coupons; the value is added to the wallet for supported purchases.',
+        'Where can I find a receipt or token?',
+        'Open Transactions and select a completed purchase to view its receipt and any available token.',
       ),
       (
-        'How fast are Data, Electricity, and Cable TV delivered?',
-        'Delivery depends on the provider. Completed transactions appear in your history with the available receipt or token.',
+        'How do I fund my wallet?',
+        'Open Fund Wallet and follow the payment options shown for your account. Your balance updates after payment is confirmed.',
       ),
       (
-        'How do I fund my Avotek wallet?',
-        'Navigate to Fund Wallet from your Dashboard or the Wallet menu. Enter the amount you wish to deposit, '
-            'then tap "Proceed with Instant Paystack Funding". You can complete payment seamlessly via Debit Card, '
-            'Direct Bank Transfer, or USSD code. Your wallet is credited instantly upon completion.',
+        'What if a transaction is pending?',
+        'Check Transactions for an update. If it remains pending, contact support with the transaction reference.',
       ),
       (
-        'My transaction is pending or processing',
-        'Check Transactions. If your transaction shows pending, our automated system continuously '
-            'requeries the provider. If it does not update within 2 minutes, reach out to our WhatsApp support team.',
-      ),
-      (
-        'How do I reset my password or transaction PIN?',
-        'For passwords, use "Forgot password" on the Sign In page. For transaction PINs, navigate to '
-            'Settings > Security > Change Transaction PIN to verify via email OTP and set a new 4-digit code.',
+        'How do I change my password or PIN?',
+        'Use Forgot password on the sign-in page, or open Settings to update your transaction PIN.',
       ),
     ];
 
@@ -315,7 +303,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '24/7 Active',
+                          'SUPPORT',
                           style: GoogleFonts.figtree(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -329,7 +317,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Frequently asked questions & instant live assistance',
+                'Quick answers about Avotek services.',
                 style: GoogleFonts.figtree(
                   fontSize: 13,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
@@ -360,7 +348,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                             faq.$2,
                             style: GoogleFonts.figtree(
                               fontSize: 12.5,
-                              height: 1.55,
+                              height: 1.5,
                               letterSpacing: 0.15,
                               color: isDark
                                   ? AppColors.metallicLight
@@ -809,18 +797,22 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
               ),
               const SizedBox(width: 12),
-              Text(
-                label,
-                style: GoogleFonts.figtree(
-                  fontSize: 13,
-                  fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                  color: isActive
-                      ? (isDark
-                            ? AppColors.electricCyan
-                            : AppColors.primaryBlue)
-                      : (isDark
-                            ? const Color(0xFF94A3B8)
-                            : const Color(0xFF475569)),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.figtree(
+                    fontSize: 13,
+                    fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+                    color: isActive
+                        ? (isDark
+                              ? AppColors.electricCyan
+                              : AppColors.primaryBlue)
+                        : (isDark
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF475569)),
+                  ),
                 ),
               ),
             ],

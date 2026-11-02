@@ -85,13 +85,15 @@ class _LandingScreenState extends State<LandingScreen>
     String version = 'v1.2.0';
 
     try {
-      final fetchedUrl =
-          await SupabaseService.instance.getAppSetting('apk_download_url');
+      final fetchedUrl = await SupabaseService.instance.getAppSetting(
+        'apk_download_url',
+      );
       if (fetchedUrl != null && fetchedUrl.trim().isNotEmpty) {
         apkUrl = fetchedUrl.trim();
       }
-      final fetchedVer =
-          await SupabaseService.instance.getAppSetting('apk_version');
+      final fetchedVer = await SupabaseService.instance.getAppSetting(
+        'apk_version',
+      );
       if (fetchedVer != null && fetchedVer.trim().isNotEmpty) {
         version = fetchedVer.trim();
       }
@@ -257,7 +259,9 @@ class _LandingScreenState extends State<LandingScreen>
     final isDesktop = screenWidth >= 1024;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF07090E) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? const Color(0xFF07090E)
+          : const Color(0xFFF8FAFC),
       endDrawer: !isDesktop ? _buildMobileDrawer(isDark) : null,
       body: CustomScrollView(
         controller: _scrollController,
@@ -332,8 +336,9 @@ class _LandingScreenState extends State<LandingScreen>
           .withValues(alpha: 0.94),
       titleSpacing: isDesktop ? 48 : 20,
       title: Row(
-        mainAxisAlignment:
-            isDesktop ? MainAxisAlignment.start : MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: isDesktop
+            ? MainAxisAlignment.start
+            : MainAxisAlignment.spaceBetween,
         children: [
           InkWell(
             onTap: () => context.go('/'),
@@ -345,9 +350,15 @@ class _LandingScreenState extends State<LandingScreen>
             _buildNavLink('Services', () => _scrollToKey(_servicesKey), isDark),
             _buildNavLink('Features', () => _scrollToKey(_featuresKey), isDark),
             _buildNavLink(
-                'How It Works', () => _scrollToKey(_howItWorksKey), isDark),
+              'How It Works',
+              () => _scrollToKey(_howItWorksKey),
+              isDark,
+            ),
             _buildNavLink(
-                'Testimonials', () => _scrollToKey(_testimonialsKey), isDark),
+              'Testimonials',
+              () => _scrollToKey(_testimonialsKey),
+              isDark,
+            ),
             _buildNavLink('FAQs', () => _scrollToKey(_faqKey), isDark),
           ],
         ],
@@ -412,8 +423,10 @@ class _LandingScreenState extends State<LandingScreen>
                 backgroundColor: Colors.transparent,
                 foregroundColor: Colors.white,
                 shadowColor: Colors.transparent,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -488,7 +501,10 @@ class _LandingScreenState extends State<LandingScreen>
             const Divider(height: 1),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 children: [
                   _drawerItem('Services', Icons.grid_view_rounded, () {
                     Navigator.pop(context);
@@ -573,7 +589,11 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   Widget _drawerItem(
-      String label, IconData icon, VoidCallback onTap, bool isDark) {
+    String label,
+    IconData icon,
+    VoidCallback onTap,
+    bool isDark,
+  ) {
     return ListTile(
       leading: Icon(icon, color: const Color(0xFF00D2FF), size: 20),
       title: Text(
@@ -639,8 +659,9 @@ class _LandingScreenState extends State<LandingScreen>
 
   Widget _buildHeroCopy(bool isDesktop, bool isDark) {
     return Column(
-      crossAxisAlignment:
-          isDesktop ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: isDesktop
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
       children: [
         // Floating Pill Badge
         Container(
@@ -655,15 +676,22 @@ class _LandingScreenState extends State<LandingScreen>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.bolt_rounded,
-                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8), size: 16),
+              Icon(
+                Icons.bolt_rounded,
+                color: isDark
+                    ? const Color(0xFF38BDF8)
+                    : const Color(0xFF0038B8),
+                size: 16,
+              ),
               const SizedBox(width: 6),
               Text(
                 '100% Automated VTU & Instant Payment Gateway',
                 style: GoogleFonts.figtree(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
+                  color: isDark
+                      ? const Color(0xFF38BDF8)
+                      : const Color(0xFF0038B8),
                   letterSpacing: 0.2,
                 ),
               ),
@@ -754,7 +782,9 @@ class _LandingScreenState extends State<LandingScreen>
                   foregroundColor: Colors.white,
                   shadowColor: Colors.transparent,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 16),
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -770,16 +800,19 @@ class _LandingScreenState extends State<LandingScreen>
               icon: const Icon(Icons.download_rounded, size: 18),
               label: const Text('Download Android APK'),
               style: OutlinedButton.styleFrom(
-                foregroundColor:
-                    isDark ? Colors.white : const Color(0xFF0F172A),
+                foregroundColor: isDark
+                    ? Colors.white
+                    : const Color(0xFF0F172A),
                 side: BorderSide(
                   color: isDark
                       ? const Color(0xFF334155)
                       : const Color(0xFFCBD5E1),
                   width: 1.5,
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 16,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -795,8 +828,9 @@ class _LandingScreenState extends State<LandingScreen>
 
         // Social Trust Proof Badge
         Row(
-          mainAxisAlignment:
-              isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
+          mainAxisAlignment: isDesktop
+              ? MainAxisAlignment.start
+              : MainAxisAlignment.center,
           children: [
             const Icon(Icons.star_rounded, color: Color(0xFFFFB800), size: 18),
             const Icon(Icons.star_rounded, color: Color(0xFFFFB800), size: 18),
@@ -897,11 +931,17 @@ class _LandingScreenState extends State<LandingScreen>
                         ),
                         const Row(
                           children: [
-                            Icon(Icons.wifi_rounded,
-                                size: 14, color: Colors.white70),
+                            Icon(
+                              Icons.wifi_rounded,
+                              size: 14,
+                              color: Colors.white70,
+                            ),
                             SizedBox(width: 4),
-                            Icon(Icons.battery_full_rounded,
-                                size: 16, color: Colors.white70),
+                            Icon(
+                              Icons.battery_full_rounded,
+                              size: 16,
+                              color: Colors.white70,
+                            ),
                           ],
                         ),
                       ],
@@ -969,8 +1009,9 @@ class _LandingScreenState extends State<LandingScreen>
                               borderRadius: BorderRadius.circular(18),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF0052FF)
-                                      .withValues(alpha: 0.35),
+                                  color: const Color(
+                                    0xFF0052FF,
+                                  ).withValues(alpha: 0.35),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -993,9 +1034,13 @@ class _LandingScreenState extends State<LandingScreen>
                                     ),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 6, vertical: 2),
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.2),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
@@ -1037,8 +1082,9 @@ class _LandingScreenState extends State<LandingScreen>
                                         height: 30,
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: Center(
                                           child: Text(
@@ -1073,18 +1119,36 @@ class _LandingScreenState extends State<LandingScreen>
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              _buildMockupServiceChip('Airtime', '2% Back',
-                                  Icons.phone_android_rounded),
                               _buildMockupServiceChip(
-                                  'Data', '₦49 SME', Icons.wifi_rounded),
+                                'Airtime',
+                                '2% Back',
+                                Icons.phone_android_rounded,
+                              ),
                               _buildMockupServiceChip(
-                                  'Cable TV', 'Replay', Icons.tv_rounded),
+                                'Data',
+                                '₦49 SME',
+                                Icons.wifi_rounded,
+                              ),
                               _buildMockupServiceChip(
-                                  'Power', 'Token', Icons.flash_on_rounded),
-                              _buildMockupServiceChip('Exam PIN', 'WAEC/NECO',
-                                  Icons.school_rounded),
-                              _buildMockupServiceChip('Pay For Me', 'Share link',
-                                  Icons.share_rounded),
+                                'Cable TV',
+                                'Replay',
+                                Icons.tv_rounded,
+                              ),
+                              _buildMockupServiceChip(
+                                'Power',
+                                'Token',
+                                Icons.flash_on_rounded,
+                              ),
+                              _buildMockupServiceChip(
+                                'Exam PIN',
+                                'WAEC/NECO',
+                                Icons.school_rounded,
+                              ),
+                              _buildMockupServiceChip(
+                                'Pay For Me',
+                                'Share link',
+                                Icons.share_rounded,
+                              ),
                             ],
                           ),
                           const SizedBox(height: 14),
@@ -1104,8 +1168,9 @@ class _LandingScreenState extends State<LandingScreen>
                                 Container(
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF10B981)
-                                        .withValues(alpha: 0.15),
+                                    color: const Color(
+                                      0xFF10B981,
+                                    ).withValues(alpha: 0.15),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
@@ -1334,57 +1399,59 @@ class _LandingScreenState extends State<LandingScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(width: 24),
-                ...partners.map((p) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF131724)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: isDark
-                                ? const Color(0xFF222B3D)
-                                : const Color(0xFFE2E8F0),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.asset(
-                                p.$2,
-                                width: 28,
-                                height: 28,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) =>
-                                    ServiceBrandLogo(provider: p.$1, size: 28),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              p.$1,
-                              style: GoogleFonts.figtree(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF0F172A),
-                              ),
-                            ),
-                          ],
-                        ),
+                ...partners.map(
+                  (p) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
                       ),
-                    )),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF131724) : Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF222B3D)
+                              : const Color(0xFFE2E8F0),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              p.$2,
+                              width: 28,
+                              height: 28,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) =>
+                                  ServiceBrandLogo(provider: p.$1, size: 28),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            p.$1,
+                            style: GoogleFonts.figtree(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 24),
               ],
             ),
@@ -1419,56 +1486,58 @@ class _LandingScreenState extends State<LandingScreen>
             runSpacing: 20,
             alignment: WrapAlignment.center,
             children: metrics
-                .map((m) => Container(
-                      width: isDesktop ? 275 : double.infinity,
-                      padding: const EdgeInsets.all(22),
-                      decoration: BoxDecoration(
+                .map(
+                  (m) => Container(
+                    width: isDesktop ? 275 : double.infinity,
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF101420) : Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
                         color: isDark
-                            ? const Color(0xFF101420)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF222C42)
-                              : const Color(0xFFE2E8F0),
+                            ? const Color(0xFF222C42)
+                            : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          m.$1,
+                          style: GoogleFonts.figtree(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            color: isDark
+                                ? const Color(0xFF38BDF8)
+                                : const Color(0xFF0038B8),
+                            letterSpacing: -1.0,
+                          ),
                         ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            m.$1,
-                            style: GoogleFonts.figtree(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
-                              letterSpacing: -1.0,
-                            ),
+                        const SizedBox(height: 4),
+                        Text(
+                          m.$2,
+                          style: GoogleFonts.figtree(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            m.$2,
-                            style: GoogleFonts.figtree(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF0F172A),
-                            ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          m.$3,
+                          style: GoogleFonts.figtree(
+                            fontSize: 12,
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            m.$3,
-                            style: GoogleFonts.figtree(
-                              fontSize: 12,
-                              color: isDark
-                                  ? const Color(0xFF94A3B8)
-                                  : const Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ))
+                        ),
+                      ],
+                    ),
+                  ),
+                )
                 .toList(),
           ),
         ),
@@ -1563,96 +1632,103 @@ class _LandingScreenState extends State<LandingScreen>
                 runSpacing: 20,
                 alignment: WrapAlignment.center,
                 children: services
-                    .map((s) => InkWell(
-                          onTap: () => context.push(s.$5),
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            width: isDesktop ? 285 : double.infinity,
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
+                    .map(
+                      (s) => InkWell(
+                        onTap: () => context.push(s.$5),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: isDesktop ? 285 : double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF101420)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
                               color: isDark
-                                  ? const Color(0xFF101420)
-                                  : Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isDark
-                                    ? const Color(0xFF222C42)
-                                    : const Color(0xFFE2E8F0),
+                                  ? const Color(0xFF222C42)
+                                  : const Color(0xFFE2E8F0),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.03),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF0052FF)
-                                            .withValues(alpha: 0.12),
-                                        borderRadius:
-                                            BorderRadius.circular(14),
-                                      ),
-                                      child: Icon(
-                                        s.$3,
-                                        color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
-                                        size: 24,
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF10B981)
-                                            .withValues(alpha: 0.14),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        s.$4,
-                                        style: GoogleFonts.figtree(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w800,
-                                          color: const Color(0xFF10B981),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 18),
-                                Text(
-                                  s.$1,
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF0F172A),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  s.$2,
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 12.5,
-                                    height: 1.5,
-                                    color: isDark
-                                        ? const Color(0xFF94A3B8)
-                                        : const Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            ],
                           ),
-                        ))
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF0052FF,
+                                      ).withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: Icon(
+                                      s.$3,
+                                      color: isDark
+                                          ? const Color(0xFF38BDF8)
+                                          : const Color(0xFF0038B8),
+                                      size: 24,
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF10B981,
+                                      ).withValues(alpha: 0.14),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      s.$4,
+                                      style: GoogleFonts.figtree(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF10B981),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 18),
+                              Text(
+                                s.$1,
+                                style: GoogleFonts.figtree(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                s.$2,
+                                style: GoogleFonts.figtree(
+                                  fontSize: 12.5,
+                                  height: 1.5,
+                                  color: isDark
+                                      ? const Color(0xFF94A3B8)
+                                      : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ],
@@ -1714,68 +1790,73 @@ class _LandingScreenState extends State<LandingScreen>
                 runSpacing: 24,
                 alignment: WrapAlignment.center,
                 children: features
-                    .map((f) => Container(
-                          width: isDesktop ? 570 : double.infinity,
-                          padding: const EdgeInsets.all(26),
-                          decoration: BoxDecoration(
+                    .map(
+                      (f) => Container(
+                        width: isDesktop ? 570 : double.infinity,
+                        padding: const EdgeInsets.all(26),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF111624)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(
                             color: isDark
-                                ? const Color(0xFF111624)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF24304A)
-                                  : const Color(0xFFE2E8F0),
+                                ? const Color(0xFF24304A)
+                                : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF0052FF,
+                                ).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(
+                                f.$3,
+                                color: isDark
+                                    ? const Color(0xFF38BDF8)
+                                    : const Color(0xFF0038B8),
+                                size: 24,
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF0052FF)
-                                      .withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: Icon(
-                                  f.$3,
-                                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      f.$1,
-                                      style: GoogleFonts.figtree(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w800,
-                                        color: isDark
-                                            ? Colors.white
-                                            : const Color(0xFF0F172A),
-                                      ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    f.$1,
+                                    style: GoogleFonts.figtree(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: isDark
+                                          ? Colors.white
+                                          : const Color(0xFF0F172A),
                                     ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      f.$2,
-                                      style: GoogleFonts.figtree(
-                                        fontSize: 13,
-                                        height: 1.55,
-                                        color: isDark
-                                            ? const Color(0xFF94A3B8)
-                                            : const Color(0xFF64748B),
-                                      ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    f.$2,
+                                    style: GoogleFonts.figtree(
+                                      fontSize: 13,
+                                      height: 1.55,
+                                      color: isDark
+                                          ? const Color(0xFF94A3B8)
+                                          : const Color(0xFF64748B),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ))
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ],
@@ -1831,56 +1912,60 @@ class _LandingScreenState extends State<LandingScreen>
                 runSpacing: 24,
                 alignment: WrapAlignment.center,
                 children: steps
-                    .map((s) => Container(
-                          width: isDesktop ? 370 : double.infinity,
-                          padding: const EdgeInsets.all(26),
-                          decoration: BoxDecoration(
+                    .map(
+                      (s) => Container(
+                        width: isDesktop ? 370 : double.infinity,
+                        padding: const EdgeInsets.all(26),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF101420)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(
                             color: isDark
-                                ? const Color(0xFF101420)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF222C42)
-                                  : const Color(0xFFE2E8F0),
+                                ? const Color(0xFF222C42)
+                                : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              s.$1,
+                              style: GoogleFonts.figtree(
+                                fontSize: 34,
+                                fontWeight: FontWeight.w900,
+                                color: isDark
+                                    ? const Color(0xFF38BDF8)
+                                    : const Color(0xFF0038B8),
+                              ),
                             ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                s.$1,
-                                style: GoogleFonts.figtree(
-                                  fontSize: 34,
-                                  fontWeight: FontWeight.w900,
-                                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0038B8),
-                                ),
+                            const SizedBox(height: 12),
+                            Text(
+                              s.$2,
+                              style: GoogleFonts.figtree(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
                               ),
-                              const SizedBox(height: 12),
-                              Text(
-                                s.$2,
-                                style: GoogleFonts.figtree(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                  color: isDark
-                                      ? Colors.white
-                                      : const Color(0xFF0F172A),
-                                ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              s.$3,
+                              style: GoogleFonts.figtree(
+                                fontSize: 13,
+                                height: 1.5,
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF64748B),
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                s.$3,
-                                style: GoogleFonts.figtree(
-                                  fontSize: 13,
-                                  height: 1.5,
-                                  color: isDark
-                                      ? const Color(0xFF94A3B8)
-                                      : const Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ))
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ],
@@ -1947,92 +2032,94 @@ class _LandingScreenState extends State<LandingScreen>
                 runSpacing: 20,
                 alignment: WrapAlignment.center,
                 children: reviews
-                    .map((r) => Container(
-                          width: isDesktop ? 370 : double.infinity,
-                          padding: const EdgeInsets.all(22),
-                          decoration: BoxDecoration(
+                    .map(
+                      (r) => Container(
+                        width: isDesktop ? 370 : double.infinity,
+                        padding: const EdgeInsets.all(22),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF111624)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
                             color: isDark
-                                ? const Color(0xFF111624)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF24304A)
-                                  : const Color(0xFFE2E8F0),
+                                ? const Color(0xFF24304A)
+                                : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: List.generate(
+                                5,
+                                (i) => const Icon(
+                                  Icons.star_rounded,
+                                  color: Color(0xFFFFB800),
+                                  size: 17,
+                                ),
+                              ),
                             ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: List.generate(
-                                  5,
-                                  (i) => const Icon(
-                                    Icons.star_rounded,
-                                    color: Color(0xFFFFB800),
-                                    size: 17,
+                            const SizedBox(height: 14),
+                            Text(
+                              '"${r.$3}"',
+                              style: GoogleFonts.figtree(
+                                fontSize: 13,
+                                height: 1.6,
+                                fontStyle: FontStyle.italic,
+                                color: isDark
+                                    ? const Color(0xFFCBD5E1)
+                                    : const Color(0xFF334155),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: const Color(0xFF0052FF),
+                                  child: Text(
+                                    r.$1.substring(0, 1),
+                                    style: GoogleFonts.figtree(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 14),
-                              Text(
-                                '"${r.$3}"',
-                                style: GoogleFonts.figtree(
-                                  fontSize: 13,
-                                  height: 1.6,
-                                  fontStyle: FontStyle.italic,
-                                  color: isDark
-                                      ? const Color(0xFFCBD5E1)
-                                      : const Color(0xFF334155),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 18,
-                                    backgroundColor: const Color(0xFF0052FF),
-                                    child: Text(
-                                      r.$1.substring(0, 1),
-                                      style: GoogleFonts.figtree(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 13,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        r.$1,
+                                        style: GoogleFonts.figtree(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w800,
+                                          color: isDark
+                                              ? Colors.white
+                                              : const Color(0xFF0F172A),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          r.$1,
-                                          style: GoogleFonts.figtree(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w800,
-                                            color: isDark
-                                                ? Colors.white
-                                                : const Color(0xFF0F172A),
-                                          ),
+                                      Text(
+                                        r.$2,
+                                        style: GoogleFonts.figtree(
+                                          fontSize: 11,
+                                          color: const Color(0xFF00D2FF),
+                                          fontWeight: FontWeight.w600,
                                         ),
-                                        Text(
-                                          r.$2,
-                                          style: GoogleFonts.figtree(
-                                            fontSize: 11,
-                                            color: const Color(0xFF00D2FF),
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ))
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ],
@@ -2060,7 +2147,11 @@ class _LandingScreenState extends State<LandingScreen>
             padding: EdgeInsets.all(isDesktop ? 44 : 26),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF071B3E), Color(0xFF002F9E), Color(0xFF0047FF)],
+                colors: [
+                  Color(0xFF071B3E),
+                  Color(0xFF002F9E),
+                  Color(0xFF0047FF),
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -2115,14 +2206,18 @@ class _LandingScreenState extends State<LandingScreen>
                       const SizedBox(width: 24),
                       ElevatedButton.icon(
                         onPressed: _showDownloadApkModal,
-                        icon: const Icon(Icons.download_rounded,
-                            color: Color(0xFF0052FF)),
+                        icon: const Icon(
+                          Icons.download_rounded,
+                          color: Color(0xFF0052FF),
+                        ),
                         label: const Text('Download APK Now'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF0052FF),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 18),
+                            horizontal: 24,
+                            vertical: 18,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -2172,8 +2267,10 @@ class _LandingScreenState extends State<LandingScreen>
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: _showDownloadApkModal,
-                          icon: const Icon(Icons.download_rounded,
-                              color: Color(0xFF0052FF)),
+                          icon: const Icon(
+                            Icons.download_rounded,
+                            color: Color(0xFF0052FF),
+                          ),
                           label: const Text('Download APK Now'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
@@ -2203,24 +2300,24 @@ class _LandingScreenState extends State<LandingScreen>
   Widget _buildFaqSection(bool isDesktop, bool isDark) {
     final faqs = [
       (
-        'How fast is airtime, data, and bill delivery?',
-        'All purchases on Avotek are 100% automated with direct API telecom links. Transactions complete in under 3 seconds. Electricity tokens and exam PINs appear instantly on your screen and in your transaction history.',
+        'Which services are available?',
+        'Open Services to see the available airtime, data, bill-payment, and PIN options.',
       ),
       (
-        'How does "Pay For Me" (Shareable Link) work?',
-        'Select any service (Airtime, Data, Cable, or Electricity), tick the "Pay For Me" checkbox, and generate a secure shareable link. You can send this link via WhatsApp or SMS to a sponsor, parent, or friend to pay for you.',
+        'Where can I see the price?',
+        'Review the displayed price and total before confirming a purchase.',
       ),
       (
         'How do I fund my wallet?',
-        'Open Fund Wallet and follow the payment options shown for your account. Your balance updates after the payment is confirmed.',
+        'Open Fund Wallet and follow the payment options shown for your account. Your balance updates after payment is confirmed.',
       ),
       (
-        'How do referral rewards work?',
-        'When someone registers with your referral code or Avotek ID, you receive ₦50 wallet balance + 100 AVO points, and your friend gets a ₦25 welcome bonus instantly! You also earn lifetime commissions on their recharges.',
+        'How do gift vouchers work?',
+        'Create a voucher from a supported service or Gifts. Redeem its code on Coupons; the value is added to your wallet.',
       ),
       (
-        'Are there any hidden monthly or transaction fees?',
-        'None. What you see is what you pay. Airtime even comes with an instant 2% cashback discount credited directly to your balance.',
+        'Where can I find my transaction details?',
+        'Open Transactions and select a completed purchase to view its receipt and any available token.',
       ),
     ];
 
@@ -2238,54 +2335,55 @@ class _LandingScreenState extends State<LandingScreen>
               _buildSectionHeader(
                 eyebrow: 'GOT QUESTIONS?',
                 title: 'Frequently Asked Questions',
-                subtitle:
-                    'Everything you need to know about using Avotek for everyday digital payments.',
+                subtitle: 'Quick answers about Avotek services and payments.',
                 isDark: isDark,
               ),
               const SizedBox(height: 38),
-              ...faqs.map((f) => Container(
-                    margin: const EdgeInsets.only(bottom: 14),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF101420) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark
-                            ? const Color(0xFF222C42)
-                            : const Color(0xFFE2E8F0),
+              ...faqs.map(
+                (f) => Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF101420) : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFF222C42)
+                          : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  child: ExpansionTile(
+                    shape: const Border(),
+                    tilePadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 6,
+                    ),
+                    childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+                    title: Text(
+                      f.$1,
+                      style: GoogleFonts.figtree(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
                       ),
                     ),
-                    child: ExpansionTile(
-                      shape: const Border(),
-                      tilePadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 6),
-                      childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
-                      title: Text(
-                        f.$1,
-                        style: GoogleFonts.figtree(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            f.$2,
-                            style: GoogleFonts.figtree(
-                              fontSize: 13,
-                              height: 1.55,
-                              color: isDark
-                                  ? const Color(0xFF94A3B8)
-                                  : const Color(0xFF475569),
-                            ),
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          f.$2,
+                          style: GoogleFonts.figtree(
+                            fontSize: 13,
+                            height: 1.55,
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF475569),
                           ),
                         ),
-                      ],
-                    ),
-                  )),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -2338,10 +2436,13 @@ class _LandingScreenState extends State<LandingScreen>
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 14, vertical: 8),
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF1877F2)
-                                        .withValues(alpha: 0.15),
+                                    color: const Color(
+                                      0xFF1877F2,
+                                    ).withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: const Color(0xFF1877F2),
@@ -2391,11 +2492,31 @@ class _LandingScreenState extends State<LandingScreen>
                                 ),
                               ),
                               const SizedBox(height: 14),
-                              _footerLink('Buy Cheap Data', '/services/data', isDark),
-                              _footerLink('Buy Airtime (2% Cashback)', '/services/airtime', isDark),
-                              _footerLink('Cable TV Subscriptions', '/services/tv', isDark),
-                              _footerLink('Electricity Tokens', '/services/electricity', isDark),
-                              _footerLink('Result Checker PINs', '/services/exam-pins', isDark),
+                              _footerLink(
+                                'Buy Cheap Data',
+                                '/services/data',
+                                isDark,
+                              ),
+                              _footerLink(
+                                'Buy Airtime (2% Cashback)',
+                                '/services/airtime',
+                                isDark,
+                              ),
+                              _footerLink(
+                                'Cable TV Subscriptions',
+                                '/services/tv',
+                                isDark,
+                              ),
+                              _footerLink(
+                                'Electricity Tokens',
+                                '/services/electricity',
+                                isDark,
+                              ),
+                              _footerLink(
+                                'Result Checker PINs',
+                                '/services/exam-pins',
+                                isDark,
+                              ),
                             ],
                           ),
                         ),
@@ -2418,10 +2539,26 @@ class _LandingScreenState extends State<LandingScreen>
                                 ),
                               ),
                               const SizedBox(height: 14),
-                              _footerActionLink('Services Overview', () => _scrollToKey(_servicesKey), isDark),
-                              _footerActionLink('Customer Testimonials', () => _scrollToKey(_testimonialsKey), isDark),
-                              _footerActionLink('Frequently Asked Questions', () => _scrollToKey(_faqKey), isDark),
-                              _footerActionLink('Download Android APK', _showDownloadApkModal, isDark),
+                              _footerActionLink(
+                                'Services Overview',
+                                () => _scrollToKey(_servicesKey),
+                                isDark,
+                              ),
+                              _footerActionLink(
+                                'Customer Testimonials',
+                                () => _scrollToKey(_testimonialsKey),
+                                isDark,
+                              ),
+                              _footerActionLink(
+                                'Frequently Asked Questions',
+                                () => _scrollToKey(_faqKey),
+                                isDark,
+                              ),
+                              _footerActionLink(
+                                'Download Android APK',
+                                _showDownloadApkModal,
+                                isDark,
+                              ),
                             ],
                           ),
                         ),
@@ -2447,17 +2584,26 @@ class _LandingScreenState extends State<LandingScreen>
                           onTap: () => _openExternalUrl(_facebookUrl),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1877F2).withValues(alpha: 0.15),
+                              color: const Color(
+                                0xFF1877F2,
+                              ).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFF1877F2)),
+                              border: Border.all(
+                                color: const Color(0xFF1877F2),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.facebook_rounded,
-                                    color: Color(0xFF1877F2), size: 18),
+                                const Icon(
+                                  Icons.facebook_rounded,
+                                  color: Color(0xFF1877F2),
+                                  size: 18,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Follow Avotek on Facebook',
@@ -2476,10 +2622,26 @@ class _LandingScreenState extends State<LandingScreen>
                           spacing: 16,
                           runSpacing: 8,
                           children: [
-                            _footerActionLink('Services', () => _scrollToKey(_servicesKey), isDark),
-                            _footerActionLink('Reviews', () => _scrollToKey(_testimonialsKey), isDark),
-                            _footerActionLink('FAQs', () => _scrollToKey(_faqKey), isDark),
-                            _footerActionLink('Download APK', _showDownloadApkModal, isDark),
+                            _footerActionLink(
+                              'Services',
+                              () => _scrollToKey(_servicesKey),
+                              isDark,
+                            ),
+                            _footerActionLink(
+                              'Reviews',
+                              () => _scrollToKey(_testimonialsKey),
+                              isDark,
+                            ),
+                            _footerActionLink(
+                              'FAQs',
+                              () => _scrollToKey(_faqKey),
+                              isDark,
+                            ),
+                            _footerActionLink(
+                              'Download APK',
+                              _showDownloadApkModal,
+                              isDark,
+                            ),
                           ],
                         ),
                       ],

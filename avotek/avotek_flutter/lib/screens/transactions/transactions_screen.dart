@@ -12,6 +12,7 @@ import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/vtu_api_service.dart';
+import '../../core/utils/user_facing_error.dart';
 import '../../models/transaction_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
@@ -86,7 +87,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not recheck transaction: $error')),
+        SnackBar(
+          content: Text(
+            'Could not recheck transaction: ${userFacingError(error)}',
+          ),
+        ),
       );
     } finally {
       if (mounted) {
@@ -521,7 +526,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          DateFormat('dd MMM yyyy • hh:mm a').format(tx.createdAt),
+                                          DateFormat(
+                                            'dd MMM yyyy • hh:mm a',
+                                          ).format(tx.createdAt),
                                           style: GoogleFonts.figtree(
                                             fontSize: 11.5,
                                             color: isDark
@@ -539,12 +546,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                       tx.category != 'wallet_fund')
                                     IconButton(
                                       tooltip: 'Recheck provider status',
-                                      onPressed: _requeryingReferences
-                                              .contains(tx.reference)
+                                      onPressed:
+                                          _requeryingReferences.contains(
+                                            tx.reference,
+                                          )
                                           ? null
                                           : () => _requeryTransaction(tx),
-                                      icon: _requeryingReferences
-                                              .contains(tx.reference)
+                                      icon:
+                                          _requeryingReferences.contains(
+                                            tx.reference,
+                                          )
                                           ? const SizedBox(
                                               width: 18,
                                               height: 18,
@@ -879,7 +890,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not create the PDF receipt: $error'),
+          content: Text(
+            'Could not create the PDF receipt: ${userFacingError(error)}',
+          ),
           backgroundColor: AppColors.error,
         ),
       );

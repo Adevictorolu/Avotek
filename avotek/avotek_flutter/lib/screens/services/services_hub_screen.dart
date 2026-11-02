@@ -111,7 +111,9 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                     )
                   else
                     IconButton.filledTonal(
-                      tooltip: _isHubbleView ? 'Switch to list view' : 'Switch to grid view',
+                      tooltip: _isHubbleView
+                          ? 'Switch to list view'
+                          : 'Switch to grid view',
                       onPressed: () =>
                           setState(() => _isHubbleView = !_isHubbleView),
                       icon: Icon(
@@ -344,12 +346,11 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: filtered.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isDesktop ? 4 : 2,
-            mainAxisSpacing: 14,
+            crossAxisCount: !_isHubbleView ? 1 : (isDesktop ? 4 : 2),
+            mainAxisSpacing: 12,
             crossAxisSpacing: 14,
-            childAspectRatio: !_isHubbleView
-                ? (isDesktop ? 5.5 : 3.1)
-                : (isDesktop ? 1.7 : 1.0),
+            mainAxisExtent: _isHubbleView ? null : 76,
+            childAspectRatio: isDesktop ? 1.7 : 1.0,
           ),
           itemBuilder: (context, idx) {
             final item = filtered[idx];
@@ -374,7 +375,9 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
       onTap: item.onTap,
       borderRadius: BorderRadius.circular(18),
       child: Container(
-        padding: EdgeInsets.all(compact ? 14 : 12),
+        padding: compact
+            ? const EdgeInsets.symmetric(horizontal: 14, vertical: 10)
+            : const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF131722) : Colors.white,
           borderRadius: BorderRadius.circular(22),

@@ -455,7 +455,7 @@ class TransactionSuccessDialog extends StatelessWidget {
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
+          constraints: const BoxConstraints(maxWidth: 420),
           child: Container(
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF131722) : Colors.white,
@@ -524,171 +524,110 @@ class TransactionSuccessDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Amount & Service Header
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 16,
+                  Text(
+                    '₦${NumberFormat('#,##0.00').format(amount)}',
+                    style: GoogleFonts.figtree(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF0052FF),
                     ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF182030)
-                          : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '₦${NumberFormat('#,##0.00').format(amount)}',
-                          style: GoogleFonts.figtree(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFF00D2FF),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          '$serviceType • $recipient',
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.figtree(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? Colors.white70
-                                : const Color(0xFF475569),
-                          ),
-                        ),
-                      ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '$serviceType • $recipient',
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.figtree(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white70 : const Color(0xFF475569),
                     ),
                   ),
                   const SizedBox(height: 14),
 
-                  // Token / PIN Highlight (if Electricity or Exam PIN)
+                  // Token / PIN details remain plain text instead of a large panel.
                   if (displayToken != null && displayToken.isNotEmpty) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0052FF).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                serviceType.toLowerCase().contains(
-                                      'electricity',
-                                    )
-                                    ? '⚡ PREPAID METER TOKEN'
-                                    : '🎓 EXAMINATION PIN(S)',
-                                style: GoogleFonts.figtree(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.6,
-                                  color: const Color(0xFF00D2FF),
-                                ),
-                              ),
-                              InkWell(
-                                onTap: () {
-                                  Clipboard.setData(
-                                    ClipboardData(text: displayToken),
-                                  );
-                                  TopNotification.showSuccess(
-                                    context,
-                                    'Token copied to clipboard!',
-                                  );
-                                },
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.copy_rounded,
-                                      size: 13,
-                                      color: Color(0xFF00D2FF),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Copy',
-                                      style: GoogleFonts.figtree(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF00D2FF),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          SelectableText(
-                            displayToken,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            serviceType.toLowerCase().contains('electricity')
+                                ? 'PREPAID METER TOKEN'
+                                : 'EXAMINATION PIN(S)',
                             style: GoogleFonts.figtree(
-                              fontSize: 14.5,
+                              fontSize: 10.5,
                               fontWeight: FontWeight.w800,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF0F172A),
-                              letterSpacing: 1.1,
+                              letterSpacing: 0.4,
+                              color: const Color(0xFF0052FF),
                             ),
                           ),
-                          if (units != null && units!.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              'Units: $units',
-                              style: GoogleFonts.figtree(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white70 : Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ],
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            Clipboard.setData(
+                              ClipboardData(text: displayToken),
+                            );
+                            TopNotification.showSuccess(
+                              context,
+                              'Token copied to clipboard.',
+                            );
+                          },
+                          icon: const Icon(Icons.copy_rounded, size: 13),
+                          label: const Text('Copy'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF0052FF),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    SelectableText(
+                      displayToken,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.figtree(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        letterSpacing: 0.6,
                       ),
                     ),
+                    if (units != null && units!.isNotEmpty)
+                      Text(
+                        'Units: $units',
+                        style: GoogleFonts.figtree(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
                     const SizedBox(height: 14),
                   ],
 
                   // Compact Details Summary
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF0E131E)
-                          : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildReceiptRow('Date', now, isDark),
-                        if (reference != null && reference!.isNotEmpty) ...[
-                          _buildReceiptRow(
-                            'Reference',
-                            reference!,
-                            isDark,
-                            isCopyable: true,
-                            context: context,
-                          ),
-                        ],
+                  Column(
+                    children: [
+                      _buildReceiptRow('Date', now, isDark),
+                      if (reference != null && reference!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
                         _buildReceiptRow(
-                          'Status',
-                          'Delivered',
+                          'Reference',
+                          reference!,
                           isDark,
-                          statusColor: AppColors.success,
+                          isCopyable: true,
+                          context: context,
                         ),
                       ],
-                    ),
+                      const SizedBox(height: 8),
+                      _buildReceiptRow(
+                        'Status',
+                        'Delivered',
+                        isDark,
+                        statusColor: AppColors.success,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 18),
 

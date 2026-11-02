@@ -302,7 +302,8 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
         channels: channels,
       );
       if (!mounted) return;
-      final isBankTransfer = channels != null &&
+      final isBankTransfer =
+          channels != null &&
           channels.length == 1 &&
           channels.first == 'bank_transfer';
       setState(() {
@@ -426,7 +427,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF0052FF).withValues(alpha: 0.12),
+                                  color: const Color(
+                                    0xFF0052FF,
+                                  ).withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Icon(
@@ -453,7 +456,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                             style: GoogleFonts.figtree(
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
                             ),
                           ),
                         ],
@@ -471,7 +476,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF00D2FF).withValues(alpha: 0.15),
+                              color: const Color(
+                                0xFF00D2FF,
+                              ).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
@@ -490,7 +497,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                   style: GoogleFonts.figtree(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A),
                                   ),
                                 ),
                                 Text(
@@ -506,9 +515,14 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                              color: const Color(
+                                0xFF10B981,
+                              ).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -528,15 +542,20 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         style: GoogleFonts.figtree(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                          color: isDark
+                              ? const Color(0xFFCBD5E1)
+                              : const Color(0xFF334155),
                         ),
                       ),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: [500, 1000, 2000, 5000, 10000, 20000].map((preset) {
-                          final isSelected = _amountController.text == preset.toString();
+                        children: [500, 1000, 2000, 5000, 10000, 20000].map((
+                          preset,
+                        ) {
+                          final isSelected =
+                              _amountController.text == preset.toString();
                           return InkWell(
                             onTap: () {
                               setState(() {
@@ -545,16 +564,23 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                             },
                             borderRadius: BorderRadius.circular(8),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? const Color(0xFF0052FF)
-                                    : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                                    : (isDark
+                                          ? const Color(0xFF1E293B)
+                                          : const Color(0xFFF1F5F9)),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: isSelected
                                       ? const Color(0xFF00D2FF)
-                                      : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                      : (isDark
+                                            ? const Color(0xFF334155)
+                                            : const Color(0xFFE2E8F0)),
                                 ),
                               ),
                               child: Text(
@@ -564,7 +590,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                   fontWeight: FontWeight.w700,
                                   color: isSelected
                                       ? Colors.white
-                                      : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                      : (isDark
+                                            ? Colors.white70
+                                            : const Color(0xFF334155)),
                                 ),
                               ),
                             ),
@@ -590,12 +618,16 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         style: GoogleFonts.figtree(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                         decoration: InputDecoration(
                           labelText: 'Amount (NGN)',
                           labelStyle: GoogleFonts.figtree(
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            color: isDark
+                                ? Colors.white70
+                                : const Color(0xFF475569),
                           ),
                           hintText: 'Enter custom amount e.g. 1000',
                           hintStyle: GoogleFonts.figtree(
@@ -605,15 +637,20 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           prefixStyle: GoogleFonts.figtree(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? AppColors.electricCyan : const Color(0xFF0038B8),
+                            color: isDark
+                                ? AppColors.electricCyan
+                                : const Color(0xFF0038B8),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          helperText: 'Minimum ₦100; maximum ₦1,000,000 • 100% Instant Credit',
+                          helperText:
+                              'Minimum ₦100; maximum ₦1,000,000 • 100% Instant Credit',
                           helperStyle: GoogleFonts.figtree(
                             fontSize: 11,
-                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                            color: isDark
+                                ? Colors.white38
+                                : const Color(0xFF94A3B8),
                           ),
                         ),
                       ),
@@ -629,18 +666,22 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0052FF).withValues(alpha: 0.35),
+                              color: const Color(
+                                0xFF0052FF,
+                              ).withValues(alpha: 0.35),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: ElevatedButton.icon(
-                          onPressed: _isStartingPayment ||
+                          onPressed:
+                              _isStartingPayment ||
                                   _isCheckingPayment ||
                                   _authorizationUri != null
                               ? null
-                              : () => _startPayment(channels: ['bank_transfer']),
+                              : () =>
+                                    _startPayment(channels: ['bank_transfer']),
                           icon: _isStartingPayment
                               ? const SizedBox(
                                   width: 18,
@@ -679,11 +720,14 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         width: double.infinity,
                         height: 48,
                         child: OutlinedButton.icon(
-                          onPressed: _isStartingPayment ||
+                          onPressed:
+                              _isStartingPayment ||
                                   _isCheckingPayment ||
                                   _authorizationUri != null
                               ? null
-                              : () => _startPayment(channels: ['card', 'ussd', 'bank']),
+                              : () => _startPayment(
+                                  channels: ['card', 'ussd', 'bank'],
+                                ),
                           icon: const Icon(Icons.credit_card_rounded, size: 18),
                           label: Text(
                             'Pay with Debit Card or USSD',
@@ -694,7 +738,10 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF0052FF),
-                            side: const BorderSide(color: Color(0xFF0052FF), width: 1.4),
+                            side: const BorderSide(
+                              color: Color(0xFF0052FF),
+                              width: 1.4,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -707,10 +754,14 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0052FF).withValues(alpha: 0.08),
+                            color: const Color(
+                              0xFF0052FF,
+                            ).withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: const Color(0xFF0052FF).withValues(alpha: 0.3),
+                              color: const Color(
+                                0xFF0052FF,
+                              ).withValues(alpha: 0.3),
                             ),
                           ),
                           child: Column(
@@ -721,7 +772,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                 style: GoogleFonts.figtree(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 13,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -730,7 +783,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                 style: GoogleFonts.figtree(
                                   fontSize: 12,
                                   height: 1.45,
-                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                                  color: isDark
+                                      ? const Color(0xFF94A3B8)
+                                      : const Color(0xFF475569),
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -739,14 +794,23 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                   Expanded(
                                     child: ElevatedButton.icon(
                                       onPressed: _openCheckout,
-                                      icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                                      icon: const Icon(
+                                        Icons.open_in_new_rounded,
+                                        size: 16,
+                                      ),
                                       label: const Text('Open Checkout Window'),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF0052FF),
+                                        backgroundColor: const Color(
+                                          0xFF0052FF,
+                                        ),
                                         foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -755,11 +819,19 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                                   OutlinedButton.icon(
                                     onPressed: _isCheckingPayment
                                         ? null
-                                        : () => _verifyPayment(_callbackReference!),
-                                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                                        : () => _verifyPayment(
+                                            _callbackReference!,
+                                          ),
+                                    icon: const Icon(
+                                      Icons.refresh_rounded,
+                                      size: 16,
+                                    ),
                                     label: const Text('Verify Payment'),
                                     style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 12,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
                                       ),
@@ -775,7 +847,9 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                         const SizedBox(height: 16),
                         const LinearProgressIndicator(),
                         const SizedBox(height: 8),
-                        const Text('Verifying your payment securely with Paystack...'),
+                        const Text(
+                          'Verifying your payment securely with Paystack...',
+                        ),
                       ],
                       if (_callbackReference != null) ...[
                         const SizedBox(height: 14),
@@ -820,7 +894,8 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     bool isDark,
   ) {
     final summary = wallet.walletSummary;
-    final hasDedicated = wallet.hasDedicatedAccount &&
+    final hasDedicated =
+        wallet.hasDedicatedAccount &&
         summary != null &&
         summary.virtualAccountNumber != null &&
         summary.virtualAccountNumber!.isNotEmpty &&
@@ -829,14 +904,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF141720) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF26334D) : const Color(0xFFE2E8F0),
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -883,7 +951,10 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
               ),
               if (hasDedicated)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -901,27 +972,18 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
           ),
           const SizedBox(height: 16),
           if (hasDedicated) ...[
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0D1117) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: const Color(0xFF0052FF).withValues(alpha: 0.25),
+            Column(
+              children: [
+                _buildAccountDetailRow(
+                  'Bank Name',
+                  summary.virtualAccountBank ?? 'Paystack Partner Bank',
+                  isDark,
                 ),
-              ),
-              child: Column(
-                children: [
-                  _buildAccountDetailRow(
-                    'Bank Name',
-                    summary.virtualAccountBank ?? 'Paystack Partner Bank',
-                    isDark,
-                  ),
-                  const Divider(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
@@ -945,29 +1007,29 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                           ),
                         ],
                       ),
-                      IconButton.filledTonal(
-                        onPressed: () {
-                          Clipboard.setData(
-                            ClipboardData(text: summary.virtualAccountNumber!),
-                          );
-                          TopNotification.showSuccess(
-                            context,
-                            'Account number copied to clipboard!',
-                          );
-                        },
-                        icon: const Icon(Icons.copy_rounded, size: 18),
-                        tooltip: 'Copy account number',
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 20),
-                  _buildAccountDetailRow(
-                    'Account Name',
-                    summary.virtualAccountName ?? 'Avotek User',
-                    isDark,
-                  ),
-                ],
-              ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Clipboard.setData(
+                          ClipboardData(text: summary.virtualAccountNumber!),
+                        );
+                        TopNotification.showSuccess(
+                          context,
+                          'Account number copied.',
+                        );
+                      },
+                      icon: const Icon(Icons.copy_rounded, size: 18),
+                      tooltip: 'Copy account number',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                _buildAccountDetailRow(
+                  'Account Name',
+                  summary.virtualAccountName ?? 'Avotek User',
+                  isDark,
+                ),
+              ],
             ),
           ] else ...[
             Text(
@@ -1040,21 +1102,29 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
 
   Widget _buildAccountDetailRow(String label, String value, bool isDark) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: GoogleFonts.figtree(
-            fontSize: 12,
-            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+        SizedBox(
+          width: 92,
+          child: Text(
+            label,
+            style: GoogleFonts.figtree(
+              fontSize: 12,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            ),
           ),
         ),
-        Text(
-          value,
-          style: GoogleFonts.figtree(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.figtree(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
           ),
         ),
       ],

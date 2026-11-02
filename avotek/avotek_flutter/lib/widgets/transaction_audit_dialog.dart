@@ -96,8 +96,9 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
         : (successfulCount / totalCount * 100);
 
     // Financial summary: total debits completed
-    final completedDebits =
-        txs.where((t) => t.isDebit && t.isCompleted).toList();
+    final completedDebits = txs
+        .where((t) => t.isDebit && t.isCompleted)
+        .toList();
     final totalSpent = completedDebits.fold<double>(
       0.0,
       (acc, t) => acc + t.amount,
@@ -126,8 +127,9 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
       topServiceCount = serviceCounts[topService] ?? 0;
       topServiceAmount = serviceAmounts[topService] ?? 0.0;
     }
-    final topServicePercent =
-        totalCount == 0 ? 1.0 : (topServiceCount / totalCount);
+    final topServicePercent = totalCount == 0
+        ? 1.0
+        : (topServiceCount / totalCount);
 
     // Recent activity: generate last 7 days for the selected timeframe
     final recentDays = List.generate(7, (i) {
@@ -154,17 +156,11 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 620, maxHeight: 780),
+          constraints: const BoxConstraints(maxWidth: 540, maxHeight: 780),
           child: Container(
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF0F131D) : Colors.white,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isDark
-                    ? const Color(0xFF26324D)
-                    : const Color(0xFFE2E8F0),
-                width: 1.2,
-              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(isDark ? 0.6 : 0.2),
@@ -189,8 +185,9 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0052FF)
-                                    .withOpacity(0.14),
+                                color: const Color(
+                                  0xFF0052FF,
+                                ).withOpacity(0.14),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(
@@ -256,111 +253,105 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                               ),
                             ),
                             child: Row(
-                              children: [
-                                'Today',
-                                'Week',
-                                'Month',
-                                'Year',
-                                'All Time'
-                              ].map((f) {
-                                final isSelected = _selectedFilter == f;
-                                return Expanded(
-                                  child: GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _selectedFilter = f),
-                                    child: AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 200),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8),
-                                      decoration: BoxDecoration(
-                                        gradient: isSelected
-                                            ? const LinearGradient(
-                                                colors: [
-                                                  Color(0xFF0047FF),
-                                                  Color(0xFF0038B8)
-                                                ],
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                              )
-                                            : null,
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                        boxShadow: isSelected
-                                            ? [
-                                                BoxShadow(
-                                                  color: const Color(0xFF0038B8)
-                                                      .withOpacity(0.35),
-                                                  blurRadius: 6,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ]
-                                            : null,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          f,
-                                          style: GoogleFonts.figtree(
-                                            fontSize: 12,
-                                            fontWeight: isSelected
-                                                ? FontWeight.w800
-                                                : FontWeight.w600,
-                                            color: isSelected
-                                                ? Colors.white
-                                                : (isDark
-                                                    ? const Color(0xFF94A3B8)
-                                                    : const Color(0xFF64748B)),
+                              children:
+                                  [
+                                    'Today',
+                                    'Week',
+                                    'Month',
+                                    'Year',
+                                    'All Time',
+                                  ].map((f) {
+                                    final isSelected = _selectedFilter == f;
+                                    return Expanded(
+                                      child: GestureDetector(
+                                        onTap: () =>
+                                            setState(() => _selectedFilter = f),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(
+                                            milliseconds: 200,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 8,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            gradient: isSelected
+                                                ? const LinearGradient(
+                                                    colors: [
+                                                      Color(0xFF0047FF),
+                                                      Color(0xFF0038B8),
+                                                    ],
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                  )
+                                                : null,
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                            boxShadow: isSelected
+                                                ? [
+                                                    BoxShadow(
+                                                      color: const Color(
+                                                        0xFF0038B8,
+                                                      ).withOpacity(0.35),
+                                                      blurRadius: 6,
+                                                      offset: const Offset(
+                                                        0,
+                                                        2,
+                                                      ),
+                                                    ),
+                                                  ]
+                                                : null,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              f,
+                                              style: GoogleFonts.figtree(
+                                                fontSize: 12,
+                                                fontWeight: isSelected
+                                                    ? FontWeight.w800
+                                                    : FontWeight.w600,
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : (isDark
+                                                          ? const Color(
+                                                              0xFF94A3B8,
+                                                            )
+                                                          : const Color(
+                                                              0xFF64748B,
+                                                            )),
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                                    );
+                                  }).toList(),
                             ),
                           ),
                           const SizedBox(height: 14),
 
                           // --- DATE RANGE PILL ---
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF141926)
-                                  : const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_rounded,
+                                size: 15,
                                 color: isDark
-                                    ? const Color(0xFF222C42)
-                                    : const Color(0xFFE2E8F0),
+                                    ? AppColors.electricCyan
+                                    : const Color(0xFF0052FF),
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  size: 15,
+                              const SizedBox(width: 8),
+                              Text(
+                                _dateRangeText,
+                                style: GoogleFonts.figtree(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
                                   color: isDark
-                                      ? AppColors.electricCyan
-                                      : const Color(0xFF0052FF),
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _dateRangeText,
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF0F172A),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 22),
 
@@ -389,8 +380,7 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                               const SizedBox(width: 8),
                               _buildMetricTile(
                                 label: 'SUCCESS\nRATE',
-                                value:
-                                    '${successRate.toStringAsFixed(1)}%',
+                                value: '${successRate.toStringAsFixed(1)}%',
                                 valueColor: const Color(0xFF10B981),
                                 isDark: isDark,
                               ),
@@ -434,100 +424,18 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                           Row(
                             children: [
                               Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF0047FF),
-                                        Color(0xFF0038B8)
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFF0038B8)
-                                            .withOpacity(0.35),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Total Spent',
-                                        style: GoogleFonts.figtree(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white70,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        '₦${NumberFormat('#,##0.00').format(totalSpent)}',
-                                        style: GoogleFonts.figtree(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: -0.5,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                child: _buildFinancialSummary(
+                                  'Total Spent',
+                                  totalSpent,
+                                  isDark,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 16),
                               Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF0052FF),
-                                        Color(0xFF002B9E)
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFF002B9E)
-                                            .withOpacity(0.35),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Average Transaction',
-                                        style: GoogleFonts.figtree(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white70,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        '₦${NumberFormat('#,##0.00').format(averageTx)}',
-                                        style: GoogleFonts.figtree(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: -0.5,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                child: _buildFinancialSummary(
+                                  'Average Transaction',
+                                  averageTx,
+                                  isDark,
                                 ),
                               ),
                             ],
@@ -546,65 +454,51 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF141926)
-                                  : const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: isDark
-                                    ? const Color(0xFF222C42)
-                                    : const Color(0xFFE2E8F0),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      topService,
-                                      style: GoogleFonts.figtree(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w800,
-                                        color: isDark
-                                            ? Colors.white
-                                            : const Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                    Text(
-                                      '$topServiceCount txns • ₦${NumberFormat('#,##0.00').format(topServiceAmount)}',
-                                      style: GoogleFonts.figtree(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark
-                                            ? AppColors.electricCyan
-                                            : const Color(0xFF0052FF),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: LinearProgressIndicator(
-                                    value: topServicePercent.clamp(0.05, 1.0),
-                                    minHeight: 7,
-                                    backgroundColor: isDark
-                                        ? const Color(0xFF222C42)
-                                        : const Color(0xFFE2E8F0),
-                                    valueColor:
-                                        const AlwaysStoppedAnimation<Color>(
-                                      Color(0xFF0052FF),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    topService,
+                                    style: GoogleFonts.figtree(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: isDark
+                                          ? Colors.white
+                                          : const Color(0xFF0F172A),
                                     ),
                                   ),
+                                  Text(
+                                    '$topServiceCount txns • ₦${NumberFormat('#,##0.00').format(topServiceAmount)}',
+                                    style: GoogleFonts.figtree(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark
+                                          ? AppColors.electricCyan
+                                          : const Color(0xFF0052FF),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: LinearProgressIndicator(
+                                  value: topServicePercent.clamp(0.05, 1.0),
+                                  minHeight: 7,
+                                  backgroundColor: isDark
+                                      ? const Color(0xFF222C42)
+                                      : const Color(0xFFE2E8F0),
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                        Color(0xFF0052FF),
+                                      ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 22),
 
@@ -622,22 +516,9 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                           const SizedBox(height: 10),
                           Column(
                             children: recentDays.map((item) {
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 8),
+                              return Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? const Color(0xFF141926)
-                                      : const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isDark
-                                        ? const Color(0xFF222C42)
-                                        : const Color(0xFFE2E8F0),
-                                  ),
+                                  vertical: 8,
                                 ),
                                 child: Row(
                                   mainAxisAlignment:
@@ -692,8 +573,10 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                                             color: item.spent > 0
                                                 ? const Color(0xFF10B981)
                                                 : (isDark
-                                                    ? const Color(0xFF64748B)
-                                                    : const Color(0xFF94A3B8)),
+                                                      ? const Color(0xFF64748B)
+                                                      : const Color(
+                                                          0xFF94A3B8,
+                                                        )),
                                           ),
                                         ),
                                       ],
@@ -718,6 +601,32 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
     );
   }
 
+  Widget _buildFinancialSummary(String label, double value, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.figtree(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '₦${NumberFormat('#,##0.00').format(value)}',
+          style: GoogleFonts.figtree(
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.3,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildMetricTile({
     required String label,
     required String value,
@@ -725,40 +634,28 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
     required bool isDark,
   }) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF141926) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark ? const Color(0xFF222C42) : const Color(0xFFE2E8F0),
+      child: Column(
+        children: [
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.figtree(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            ),
           ),
-        ),
-        child: Column(
-          children: [
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.figtree(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
-                color: isDark
-                    ? const Color(0xFF94A3B8)
-                    : const Color(0xFF64748B),
-              ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: GoogleFonts.figtree(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: valueColor,
             ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: GoogleFonts.figtree(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: valueColor,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../core/utils/user_facing_error.dart';
 import '../core/theme/app_theme.dart';
 
 enum TopNotificationType { error, success, info, warning }
@@ -85,7 +86,9 @@ class TopNotification {
 
     _currentEntry = OverlayEntry(
       builder: (ctx) => _TopNotificationWidget(
-        message: message,
+        message: type == TopNotificationType.error
+            ? userFacingError(message)
+            : message,
         title: title,
         type: type,
         duration: duration,
