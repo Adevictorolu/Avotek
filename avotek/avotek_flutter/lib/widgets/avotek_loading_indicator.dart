@@ -105,9 +105,12 @@ class _AvotekLoadingIndicatorState extends State<AvotekLoadingIndicator>
                   ],
                 ),
                 child: Center(
-                  child: AvotekLogo(
-                    size: widget.logoSize * 0.65,
-                    showText: false,
+                  child: Transform.translate(
+                    offset: Offset(widget.logoSize * 0.039, 0),
+                    child: AvotekLogo(
+                      size: widget.logoSize * 0.65,
+                      showText: false,
+                    ),
                   ),
                 ),
               ),
