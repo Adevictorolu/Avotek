@@ -2463,7 +2463,7 @@ class _LandingScreenState extends State<LandingScreen>
                 children: [
                   Flexible(
                     child: Text(
-                      'avotek.com.ng Copyright 2023 - ${DateTime.now().year} By Avotek Technologies',
+                      'avotek.com.ng Copyright 2023 - ${DateTime.now().year}',
                       style: GoogleFonts.figtree(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

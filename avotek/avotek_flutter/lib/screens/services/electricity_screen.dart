@@ -628,16 +628,14 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: _selectedMeterType == 'prepaid'
-                                        ? const Color(
-                                            0xFF0038B8,
-                                          ).withOpacity(0.18)
+                                        ? const Color(0xFF0038B8)
                                         : (isDark
                                               ? const Color(0xFF1B1E29)
                                               : const Color(0xFFF1F5F9)),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: _selectedMeterType == 'prepaid'
-                                          ? const Color(0xFF0038B8)
+                                          ? const Color(0xFF60A5FA)
                                           : (isDark
                                                 ? const Color(0xFF282D3D)
                                                 : const Color(0xFFCBD5E1)),
@@ -653,7 +651,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                         Icons.bolt_rounded,
                                         size: 16,
                                         color: _selectedMeterType == 'prepaid'
-                                            ? const Color(0xFF0038B8)
+                                            ? Colors.white
                                             : (isDark
                                                   ? Colors.white60
                                                   : const Color(0xFF64748B)),
@@ -665,7 +663,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w700,
                                           color: _selectedMeterType == 'prepaid'
-                                              ? const Color(0xFF0038B8)
+                                              ? Colors.white
                                               : (isDark
                                                     ? Colors.white70
                                                     : const Color(0xFF334155)),
@@ -689,16 +687,14 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: _selectedMeterType == 'postpaid'
-                                        ? const Color(
-                                            0xFF0038B8,
-                                          ).withOpacity(0.18)
+                                        ? const Color(0xFF0038B8)
                                         : (isDark
                                               ? const Color(0xFF1B1E29)
                                               : const Color(0xFFF1F5F9)),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: _selectedMeterType == 'postpaid'
-                                          ? const Color(0xFF0038B8)
+                                          ? const Color(0xFF60A5FA)
                                           : (isDark
                                                 ? const Color(0xFF282D3D)
                                                 : const Color(0xFFCBD5E1)),
@@ -714,7 +710,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                         Icons.receipt_long_rounded,
                                         size: 16,
                                         color: _selectedMeterType == 'postpaid'
-                                            ? const Color(0xFF0038B8)
+                                            ? Colors.white
                                             : (isDark
                                                   ? Colors.white60
                                                   : const Color(0xFF64748B)),
@@ -727,7 +723,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                           fontWeight: FontWeight.w700,
                                           color:
                                               _selectedMeterType == 'postpaid'
-                                              ? const Color(0xFF0038B8)
+                                              ? Colors.white
                                               : (isDark
                                                     ? Colors.white70
                                                     : const Color(0xFF334155)),
@@ -1278,20 +1274,18 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? (isDark
-                                                ? const Color(0xFF172554)
-                                                : const Color(0xFFEFF6FF))
+                                          ? const Color(0xFF0038B8)
                                           : (isDark
                                                 ? const Color(0xFF181C28)
                                                 : Colors.white),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSelected
-                                            ? const Color(0xFF0038B8)
+                                            ? const Color(0xFF60A5FA)
                                             : (isDark
                                                   ? const Color(0xFF282D3D)
                                                   : const Color(0xFFE2E8F0)),
-                                        width: isSelected ? 2 : 1,
+                                        width: isSelected ? 2.5 : 1,
                                       ),
                                       boxShadow: [
                                         if (isSelected)
@@ -1346,7 +1340,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                               const Icon(
                                                 Icons.check_circle_rounded,
                                                 size: 13,
-                                                color: Color(0xFF0038B8),
+                                                color: Colors.white,
                                               ),
                                               const SizedBox(width: 4),
                                             ],
@@ -1362,7 +1356,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                                       ? FontWeight.w800
                                                       : FontWeight.w600,
                                                   color: isSelected
-                                                      ? const Color(0xFF0038B8)
+                                                      ? Colors.white
                                                       : (isDark
                                                             ? Colors.white
                                                             : const Color(0xFF0F172A)),

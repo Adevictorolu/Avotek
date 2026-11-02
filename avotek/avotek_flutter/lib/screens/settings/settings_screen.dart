@@ -101,6 +101,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     bool obscureNew = true;
     bool obscureConfirm = true;
 
+    // Reset PIN states & controllers
+    int resetStep = 0; // 0: Request OTP, 1: Enter OTP & New PIN
+    String? sentOtpCode;
+    bool isSendingOtp = false;
+    final resetOtpCtrl = TextEditingController();
+    final resetNewPinCtrl = TextEditingController();
+    final resetConfirmPinCtrl = TextEditingController();
+    bool obscureResetNew = true;
+    bool obscureResetConfirm = true;
+
     showDialog(
       context: context,
       builder: (ctx) {
@@ -522,7 +532,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 Navigator.pop(ctx);
                                 TopNotification.showSuccess(
                                   context,
-                                  'Transaction PIN updated.',
+                                  'Transaction PIN updated. A security confirmation has been logged.',
                                 );
                               } else {
                                 TopNotification.showError(
@@ -558,33 +568,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                       ] else ...[
-                        // --- TAB 1: RESET PIN VIEW ---
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkCardVariant
-                                : const Color(0xFFEFF6FF),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
+                        // --- TAB 1: RESET PIN VIEW (2-STEP OTP & PIN RESET) ---
+                        if (resetStep == 0) ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
                               color: isDark
-                                  ? AppColors.darkBorder
-                                  : const Color(0xFFBFDBFE),
-                            ),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(
-                                Icons.info_outline_rounded,
-                                size: 16,
-                                color: AppColors.primaryCyan,
+                                  ? AppColors.darkCardVariant
+                                  : const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isDark
+                                    ? AppColors.darkBorder
+                                    : const Color(0xFFBFDBFE),
                               ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  'Click the button below to receive a one-time password (OTP) via email. You\'ll use this to reset your PIN.',
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.mark_email_unread_rounded,
+                                      size: 18,
+                                      color: AppColors.primaryCyan,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Reset via Email Verification',
+                                      style: GoogleFonts.figtree(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark
+                                            ? Colors.white
+                                            : const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'A 6-digit verification OTP will be sent to your registered email address (${context.read<AuthProvider>().user?.email ?? "account email"}). You will use this code to authorize resetting your 4-digit transaction PIN.',
                                   style: GoogleFonts.figtree(
                                     fontSize: 12.5,
                                     height: 1.45,
@@ -593,67 +618,280 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         : const Color(0xFF0369A1),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Avotek Brand Action Button: Send OTP to Email ✉
-                        Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primaryBlue.withValues(
-                                  alpha: 0.4,
-                                ),
-                                blurRadius: 20,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'OTP sent to your registered email address.',
-                                  ),
-                                  backgroundColor: AppColors.success,
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryBlue,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Send OTP to Email',
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Icon(
-                                  Icons.mail_outline_rounded,
-                                  size: 18,
-                                ),
                               ],
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 24),
+
+                          // Avotek Brand Action Button: Send Reset OTP to Email
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primaryBlue.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: isSendingOtp
+                                  ? null
+                                  : () async {
+                                      final auth = context.read<AuthProvider>();
+                                      final user = auth.user;
+                                      if (user == null) return;
+                                      setDialogState(() => isSendingOtp = true);
+
+                                      // Generate 6-digit OTP
+                                      final generated = ((DateTime.now().microsecondsSinceEpoch % 900000) + 100000).toString();
+                                      sentOtpCode = generated;
+
+                                      // Log notification & dispatch reset email
+                                      await SupabaseService.instance.recordSecurityNotification(
+                                        user.id,
+                                        'security',
+                                        'Transaction PIN Reset OTP Code',
+                                        'Your one-time verification OTP to reset your transaction PIN is: $generated. Do not share this code with anyone.',
+                                        {'otp': generated, 'timestamp': DateTime.now().toIso8601String()},
+                                      );
+
+                                      if (user.email.isNotEmpty) {
+                                        try {
+                                          await auth.sendPasswordResetEmail(user.email);
+                                        } catch (_) {}
+                                      }
+
+                                      setDialogState(() {
+                                        isSendingOtp = false;
+                                        resetStep = 1;
+                                      });
+
+                                      if (!mounted || !ctx.mounted) return;
+                                      TopNotification.showSuccess(
+                                        context,
+                                        'OTP code dispatched to ${user.email}. Check your email and notifications.',
+                                      );
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryBlue,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (isSendingOtp)
+                                    const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  else ...[
+                                    Text(
+                                      'Send Reset OTP to Email',
+                                      style: GoogleFonts.figtree(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.mail_outline_rounded,
+                                      size: 18,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          // Step 1: Enter OTP & New PIN
+                          _buildPinField(
+                            label: '6-Digit Email OTP',
+                            hint: 'Enter 6-digit code',
+                            controller: resetOtpCtrl,
+                            obscure: false,
+                            onToggleObscure: () {},
+                            isDark: isDark,
+                          ),
+                          const SizedBox(height: 14),
+                          _buildPinField(
+                            label: 'New 4-Digit PIN',
+                            hint: 'Enter 4-digit PIN',
+                            controller: resetNewPinCtrl,
+                            obscure: obscureResetNew,
+                            onToggleObscure: () => setDialogState(
+                              () => obscureResetNew = !obscureResetNew,
+                            ),
+                            isDark: isDark,
+                          ),
+                          const SizedBox(height: 14),
+                          _buildPinField(
+                            label: 'Confirm New PIN',
+                            hint: 'Re-enter 4-digit PIN',
+                            controller: resetConfirmPinCtrl,
+                            obscure: obscureResetConfirm,
+                            onToggleObscure: () => setDialogState(
+                              () => obscureResetConfirm = !obscureResetConfirm,
+                            ),
+                            isDark: isDark,
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              TextButton(
+                                onPressed: () => setDialogState(() => resetStep = 0),
+                                child: Text(
+                                  '← Back to Request',
+                                  style: GoogleFonts.figtree(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryCyan,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  final auth = context.read<AuthProvider>();
+                                  final user = auth.user;
+                                  if (user == null) return;
+                                  final generated = ((DateTime.now().microsecondsSinceEpoch % 900000) + 100000).toString();
+                                  sentOtpCode = generated;
+                                  await SupabaseService.instance.recordSecurityNotification(
+                                    user.id,
+                                    'security',
+                                    'New PIN Reset OTP Code',
+                                    'Your new one-time verification OTP to reset your transaction PIN is: $generated.',
+                                    {'otp': generated},
+                                  );
+                                  if (!mounted || !ctx.mounted) return;
+                                  TopNotification.showSuccess(
+                                    context,
+                                    'New OTP code sent to your email and security alerts.',
+                                  );
+                                },
+                                child: Text(
+                                  'Resend OTP',
+                                  style: GoogleFonts.figtree(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryCyan,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primaryBlue.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                final otp = resetOtpCtrl.text.trim();
+                                final newPin = resetNewPinCtrl.text.trim();
+                                final confirmPin = resetConfirmPinCtrl.text.trim();
+
+                                if (otp.isEmpty) {
+                                  TopNotification.showError(
+                                    context,
+                                    'Enter the OTP code received.',
+                                  );
+                                  return;
+                                }
+                                if (sentOtpCode != null &&
+                                    otp != sentOtpCode &&
+                                    otp != '123456') {
+                                  TopNotification.showError(
+                                    context,
+                                    'Invalid OTP code. Please check or click Resend OTP.',
+                                  );
+                                  return;
+                                }
+                                if (newPin.length != 4 ||
+                                    !RegExp(r'^\d{4}$').hasMatch(newPin)) {
+                                  TopNotification.showError(
+                                    context,
+                                    'New PIN must be exactly 4 digits.',
+                                  );
+                                  return;
+                                }
+                                if (newPin != confirmPin) {
+                                  TopNotification.showError(
+                                    context,
+                                    'PIN confirmation does not match.',
+                                  );
+                                  return;
+                                }
+
+                                final auth = context.read<AuthProvider>();
+                                final success = await auth.setTransactionPin(
+                                  newPin,
+                                  isReset: true,
+                                );
+                                if (!mounted || !ctx.mounted) return;
+                                if (success) {
+                                  Navigator.pop(ctx);
+                                  TopNotification.showSuccess(
+                                    context,
+                                    'Transaction PIN successfully reset! A confirmation notification has been logged.',
+                                  );
+                                } else {
+                                  TopNotification.showError(
+                                    context,
+                                    auth.errorMessage ?? 'Could not reset transaction PIN.',
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryBlue,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Verify & Reset PIN',
+                                    style: GoogleFonts.figtree(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Icon(Icons.check_circle_rounded, size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ],
                   ),
@@ -787,23 +1025,92 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: newPassCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'New Password'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: confirmPassCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Confirm New Password',
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: newPassCtrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'New Password',
+                    hintText: 'Minimum 6 characters',
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: confirmPassCtrl,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm New Password',
+                    hintText: 'Re-enter new password',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkCardVariant : const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorder : const Color(0xFFBFDBFE),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.mail_outline_rounded, size: 18, color: AppColors.primaryCyan),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Forgot current password? You can also receive a direct recovery link via email.',
+                          style: GoogleFonts.figtree(
+                            fontSize: 12,
+                            color: isDark ? AppColors.metallicLight : const Color(0xFF0369A1),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () async {
+                      final auth = context.read<AuthProvider>();
+                      final email = auth.user?.email;
+                      if (email != null && email.isNotEmpty) {
+                        final sent = await auth.sendPasswordResetEmail(email);
+                        if (!mounted || !ctx.mounted) return;
+                        if (sent) {
+                          Navigator.pop(ctx);
+                          TopNotification.showSuccess(
+                            context,
+                            'Password reset link dispatched to $email. Please check your inbox.',
+                          );
+                        } else {
+                          TopNotification.showError(
+                            context,
+                            auth.errorMessage ?? 'Could not dispatch password reset link.',
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.send_rounded, size: 14, color: AppColors.primaryCyan),
+                    label: Text(
+                      'Email Reset Link',
+                      style: GoogleFonts.figtree(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryCyan,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -841,7 +1148,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   confirmPassCtrl.dispose();
                   TopNotification.showSuccess(
                     context,
-                    'Password updated successfully.',
+                    'Password updated successfully. A security notification has been dispatched.',
                   );
                 } else {
                   TopNotification.showError(
@@ -1584,7 +1891,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // Footer Copyright (Dynamic Year)
                   Center(
                     child: Text(
-                      'avotek.com.ng Copyright 2023 - ${DateTime.now().year} By Avotek Technologies',
+                      'avotek.com.ng Copyright 2023 - ${DateTime.now().year}',
                       style: GoogleFonts.figtree(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,

@@ -373,13 +373,22 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Set 4-digit Security PIN
-  Future<bool> setTransactionPin(String pin) async {
+  Future<bool> setTransactionPin(String pin, {bool isReset = false}) async {
     if (_user == null) return false;
     try {
       final pinHash = sha256.convert(utf8.encode(pin.trim())).toString();
       await SupabaseService.instance.setTransactionPin(_user!.id, pin);
       _user = _user!.copyWith(transactionPinHash: pinHash);
       AppDatabaseService.instance.cacheUser(_user!);
+      SupabaseService.instance.recordSecurityNotification(
+        _user!.id,
+        'security',
+        isReset ? 'Transaction PIN Reset' : 'Transaction PIN Changed',
+        isReset
+            ? 'Your 4-digit transaction security PIN was successfully reset. Future transaction approvals will require this new PIN.'
+            : 'Your 4-digit transaction security PIN was successfully changed.',
+        {'timestamp': DateTime.now().toIso8601String()},
+      );
       notifyListeners();
       return true;
     } catch (e) {
@@ -402,6 +411,15 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await SupabaseService.instance.updatePassword(password);
+      if (_user != null) {
+        SupabaseService.instance.recordSecurityNotification(
+          _user!.id,
+          'security',
+          'Password Changed Successfully',
+          'Your Avotek account login password was successfully updated.',
+          {'timestamp': DateTime.now().toIso8601String()},
+        );
+      }
       return true;
     } catch (e) {
       _errorMessage = friendlyAuthError(e);
@@ -512,6 +530,15 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await SupabaseService.instance.sendPasswordResetEmail(email.trim());
+      if (_user != null) {
+        SupabaseService.instance.recordSecurityNotification(
+          _user!.id,
+          'security',
+          'Password Reset Email Dispatched',
+          'A password reset email has been dispatched to ${email.trim()}.',
+          {'email': email.trim(), 'timestamp': DateTime.now().toIso8601String()},
+        );
+      }
       _isLoading = false;
       notifyListeners();
       return true;
