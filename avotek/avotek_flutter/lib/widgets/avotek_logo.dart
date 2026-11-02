@@ -36,7 +36,7 @@ class AvotekLogo extends StatelessWidget {
         assetPath,
         height: size,
         fit: BoxFit.contain,
-        alignment: Alignment.centerLeft,
+        alignment: Alignment.center,
         errorBuilder: (context, error, stackTrace) => _buildVectorLogo(effectiveDark),
       );
     } else {
@@ -162,6 +162,7 @@ class AvotekBrandAsset extends StatelessWidget {
       height: height,
       width: width,
       fit: BoxFit.contain,
+      alignment: Alignment.center,
       errorBuilder: (context, error, stackTrace) {
         return AvotekLogo(
           size: height,

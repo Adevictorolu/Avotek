@@ -524,24 +524,43 @@ class TransactionSuccessDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  Text(
-                    '₦${NumberFormat('#,##0.00').format(amount)}',
-                    style: GoogleFonts.figtree(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF0052FF),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '$serviceType • $recipient',
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.figtree(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF0E131E)
+                          : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          '₦${NumberFormat('#,##0.00').format(amount)}',
+                          style: GoogleFonts.figtree(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF0052FF),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '$serviceType • $recipient',
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.figtree(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? Colors.white70
+                                : const Color(0xFF475569),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 14),

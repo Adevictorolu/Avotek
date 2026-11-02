@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:avotek_flutter/core/theme/app_theme.dart';
 import 'package:avotek_flutter/models/user_model.dart';
+import 'package:avotek_flutter/widgets/avotek_loading_indicator.dart';
 import 'package:avotek_flutter/widgets/avotek_logo.dart';
 
 void main() {
@@ -53,6 +54,22 @@ void main() {
 
       expect(find.byType(AvotekLogo), findsOneWidget);
       expect(find.byType(CustomPaint), findsWidgets);
+    });
+
+    testWidgets('loading indicator centers the logo inside its rotating ring', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Center(child: AvotekLoadingIndicator()),
+          ),
+        ),
+      );
+
+      final logoCenter = tester.getCenter(find.byType(AvotekLogo));
+      final ringCenter = tester.getCenter(find.byType(Stack).first);
+      expect((logoCenter - ringCenter).distance, lessThan(0.01));
     });
   });
 }

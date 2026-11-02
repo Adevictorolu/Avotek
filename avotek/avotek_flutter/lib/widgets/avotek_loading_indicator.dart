@@ -77,11 +77,16 @@ class _AvotekLoadingIndicatorState extends State<AvotekLoadingIndicator>
               ),
 
               // Framed Avotek Logo in the exact center
-              AvotekLogo(
-                size: widget.logoSize,
-                hasFrame: true,
-                showText: false,
-                borderRadius: widget.logoSize * 0.35,
+              SizedBox.square(
+                dimension: widget.logoSize * 1.6,
+                child: Center(
+                  child: AvotekLogo(
+                    size: widget.logoSize,
+                    hasFrame: true,
+                    showText: false,
+                    borderRadius: widget.logoSize * 0.35,
+                  ),
+                ),
               ),
             ],
           ),

@@ -454,51 +454,65 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    topService,
-                                    style: GoogleFonts.figtree(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: isDark
-                                          ? Colors.white
-                                          : const Color(0xFF0F172A),
-                                    ),
-                                  ),
-                                  Text(
-                                    '$topServiceCount txns • ₦${NumberFormat('#,##0.00').format(topServiceAmount)}',
-                                    style: GoogleFonts.figtree(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark
-                                          ? AppColors.electricCyan
-                                          : const Color(0xFF0052FF),
-                                    ),
-                                  ),
-                                ],
+                          Container(
+                            padding: const EdgeInsets.all(13),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF141926)
+                                  : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFF222C42)
+                                    : const Color(0xFFE2E8F0),
                               ),
-                              const SizedBox(height: 10),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: LinearProgressIndicator(
-                                  value: topServicePercent.clamp(0.05, 1.0),
-                                  minHeight: 7,
-                                  backgroundColor: isDark
-                                      ? const Color(0xFF222C42)
-                                      : const Color(0xFFE2E8F0),
-                                  valueColor:
-                                      const AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF0052FF),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      topService,
+                                      style: GoogleFonts.figtree(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        color: isDark
+                                            ? Colors.white
+                                            : const Color(0xFF0F172A),
                                       ),
+                                    ),
+                                    Text(
+                                      '$topServiceCount txns • ₦${NumberFormat('#,##0.00').format(topServiceAmount)}',
+                                      style: GoogleFonts.figtree(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark
+                                            ? AppColors.electricCyan
+                                            : const Color(0xFF0052FF),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 10),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: LinearProgressIndicator(
+                                    value: topServicePercent.clamp(0.05, 1.0),
+                                    minHeight: 7,
+                                    backgroundColor: isDark
+                                        ? const Color(0xFF222C42)
+                                        : const Color(0xFFE2E8F0),
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                          Color(0xFF0052FF),
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 22),
 
@@ -516,9 +530,22 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
                           const SizedBox(height: 10),
                           Column(
                             children: recentDays.map((item) {
-                              return Padding(
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
+                                  horizontal: 13,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? const Color(0xFF141926)
+                                      : const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? const Color(0xFF222C42)
+                                        : const Color(0xFFE2E8F0),
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisAlignment:
@@ -602,28 +629,52 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
   }
 
   Widget _buildFinancialSummary(String label, double value, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.figtree(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const SizedBox(height: 4),
-        Text(
-          '₦${NumberFormat('#,##0.00').format(value)}',
-          style: GoogleFonts.figtree(
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.3,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0038B8).withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-      ],
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.figtree(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withOpacity(0.82),
+            ),
+          ),
+          const SizedBox(height: 5),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '₦${NumberFormat('#,##0.00').format(value)}',
+              style: GoogleFonts.figtree(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.3,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -634,28 +685,40 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
     required bool isDark,
   }) {
     return Expanded(
-      child: Column(
-        children: [
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.figtree(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-            ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF141926) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? const Color(0xFF222C42) : const Color(0xFFE2E8F0),
           ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: GoogleFonts.figtree(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: valueColor,
+        ),
+        child: Column(
+          children: [
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.figtree(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+                color: isDark
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xFF64748B),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: GoogleFonts.figtree(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: valueColor,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
