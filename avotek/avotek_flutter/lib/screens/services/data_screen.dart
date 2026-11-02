@@ -122,7 +122,7 @@ class _DataScreenState extends State<DataScreen> {
                 .toString()
                 .trim()
                 .toUpperCase();
-            final val = (p['validity'] ?? p['month_validate'] ?? '30 Days')
+            final val = (p['validity'] ?? p['month_validate'] ?? p['plan_day'] ?? '30 Days')
                 .toString()
                 .trim();
             final fallbackName =
@@ -148,7 +148,7 @@ class _DataScreenState extends State<DataScreen> {
               'price': amt,
               'validity': val,
               'plantype': type,
-              'code': 'BIGISUB-$id',
+              'code': 'BILAL-$id',
               'fullName': '$displayVol $type ($val)',
             };
           })
@@ -1070,9 +1070,9 @@ class _DataScreenState extends State<DataScreen> {
                             ),
                           )
                         else
-                          // Roomy scrollable widget container with enhanced typography
+                          // Roomy scrollable widget container with enhanced typography (Enlarged height for better UX)
                           Container(
-                            height: 255,
+                            height: isDesktop ? 440 : 380,
                             decoration: BoxDecoration(
                               color: isDark
                                   ? const Color(0xFF0D1017)

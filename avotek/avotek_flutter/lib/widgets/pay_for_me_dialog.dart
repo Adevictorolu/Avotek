@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -26,12 +27,24 @@ class PayForMeDialog extends StatelessWidget {
     required String serviceName,
     required String recipient,
     required double amount,
+    String? examCode,
+    int? quantity,
     String? note,
   }) async {
     final ref = 'PFM${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}';
     final encService = Uri.encodeComponent(serviceName);
     final encRecip = Uri.encodeComponent(recipient);
-    final link = 'https://adevictorolu.github.io/Avotek/#/pay?ref=$ref&service=$encService&amt=${amount.toInt()}&to=$encRecip';
+    final examParam =
+        examCode != null && examCode.isNotEmpty ? '&exam=${Uri.encodeComponent(examCode)}' : '';
+    final qtyParam = quantity != null ? '&qty=$quantity' : '&qty=1';
+    final noteParam =
+        note != null && note.isNotEmpty ? '&note=${Uri.encodeComponent(note)}' : '';
+
+    final origin =
+        kIsWeb ? '${Uri.base.origin}${Uri.base.path}' : 'https://adevictorolu.github.io/Avotek/';
+    final cleanOrigin = origin.endsWith('/') ? origin.substring(0, origin.length - 1) : origin;
+    final link =
+        '$cleanOrigin/#/pay?ref=$ref&service=$encService$examParam$qtyParam&amt=${amount.toInt()}&to=$encRecip$noteParam';
 
     return showDialog<void>(
       context: context,
@@ -47,7 +60,8 @@ class PayForMeDialog extends StatelessWidget {
   }
 
   Future<void> _shareToWhatsApp(BuildContext context) async {
-    final text = 'Hi! Please help me pay ₦${amount.toStringAsFixed(0)} for $serviceName ($recipient) on Avotek using this link: $paymentLink';
+    final text =
+        'Hi! Please help me pay ₦${amount.toStringAsFixed(0)} for $serviceName ($recipient) on Avotek using this secure link:\n\n$paymentLink';
     final url = Uri.parse('https://api.whatsapp.com/send?text=${Uri.encodeComponent(text)}');
     try {
       final launched = await launchUrl(url, mode: LaunchMode.externalApplication);

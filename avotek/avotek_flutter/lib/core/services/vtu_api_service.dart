@@ -308,11 +308,16 @@ class VtuApiService {
   Future<Map<String, dynamic>> purchaseExamPins({
     required String examCode,
     required int quantity,
+    String? phone,
     String? pin,
   }) => _invoke(
     'education.purchase',
     userPin: pin,
-    payload: {'exam': examCode, 'quantity': quantity},
+    payload: {
+      'exam': examCode,
+      'quantity': quantity,
+      if (phone != null && phone.isNotEmpty) 'phone': phone,
+    },
   );
 
   Future<Map<String, dynamic>> purchaseAirtimePins({
@@ -333,6 +338,46 @@ class VtuApiService {
   );
 
   Future<Map<String, dynamic>> getSmsPricing() => _invoke('sms.pricing');
+
+  Future<Map<String, dynamic>> initializeSponsorPayment({
+    required String email,
+    required double amount,
+    required String reference,
+    required String service,
+    required String recipient,
+    required String exam,
+    required int quantity,
+    String? origin,
+  }) =>
+      _invoke(
+        'sponsor.initialize',
+        payload: {
+          'email': email.trim(),
+          'amount': amount,
+          'reference': reference,
+          'service': service,
+          'recipient': recipient,
+          'exam': exam,
+          'quantity': quantity,
+          if (origin != null && origin.isNotEmpty) 'origin': origin,
+        },
+      );
+
+  Future<Map<String, dynamic>> verifySponsorPayment({
+    required String reference,
+    required String exam,
+    required int quantity,
+    required String phone,
+  }) =>
+      _invoke(
+        'sponsor.verify',
+        payload: {
+          'reference': reference,
+          'exam': exam,
+          'quantity': quantity,
+          'phone': phone,
+        },
+      );
 
   Future<Map<String, dynamic>> sendBulkSms({
     required List<String> recipients,

@@ -25,6 +25,7 @@ import '../../screens/services/data_screen.dart';
 import '../../screens/services/electricity_screen.dart';
 import '../../screens/services/extra_provider_services_screen.dart';
 import '../../screens/services/internet_screen.dart';
+import '../../screens/services/pay_for_me_screen.dart';
 import '../../screens/services/services_hub_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/stats/statistics_screen.dart';
@@ -154,6 +155,24 @@ class AppRouter {
             context,
             state,
             const PricingScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/pay',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            PayForMeScreen(
+              reference: state.uri.queryParameters['ref'],
+              serviceName: state.uri.queryParameters['service'],
+              examCode: state.uri.queryParameters['exam'],
+              quantity: int.tryParse(state.uri.queryParameters['qty'] ?? '1') ?? 1,
+              amount: double.tryParse(state.uri.queryParameters['amt'] ?? '5250') ?? 5250.0,
+              recipient: state.uri.queryParameters['to'],
+              note: state.uri.queryParameters['note'],
+              status: state.uri.queryParameters['status'],
+              onToggleTheme: themeToggle,
+            ),
           ),
         ),
         GoRoute(

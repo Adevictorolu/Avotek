@@ -527,6 +527,7 @@ class VtuProvider extends ChangeNotifier {
     required String examName,
     required int quantity,
     required double unitPrice,
+    String? phone,
     String? userPin,
   }) {
     final amount = unitPrice * quantity;
@@ -534,12 +535,13 @@ class VtuProvider extends ChangeNotifier {
       userId: userId,
       serviceType: 'education',
       network: examCode.toUpperCase(),
-      recipient: 'exam pins',
+      recipient: phone != null && phone.isNotEmpty ? phone : 'exam pins',
       plan: '$examName x$quantity',
       amount: amount,
       dispatch: () => VtuApiService.instance.purchaseExamPins(
         examCode: examCode,
         quantity: quantity,
+        phone: phone,
         pin: userPin,
       ),
     );

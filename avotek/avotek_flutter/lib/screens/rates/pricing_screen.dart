@@ -21,57 +21,61 @@ class _PricingScreenState extends State<PricingScreen> {
 
   final Map<String, List<Map<String, dynamic>>> _dataPlans = {
     'MTN': [
-      {'plan': '500MB SME', 'validity': '30 days', 'was': 400, 'price': 340},
-      {'plan': '1GB SME', 'validity': '30 days', 'was': 700, 'price': 620},
-      {'plan': '2GB SME', 'validity': '30 days', 'was': 1400, 'price': 1240},
-      {'plan': '3GB SME', 'validity': '30 days', 'was': 2100, 'price': 1860},
-      {'plan': '5GB SME', 'validity': '30 days', 'was': 3500, 'price': 3100},
-      {'plan': '10GB SME', 'validity': '30 days', 'was': 4000, 'price': 3400},
-      {'plan': '15GB SME', 'validity': '30 days', 'was': 6000, 'price': 5100},
-      {'plan': '20GB SME', 'validity': '30 days', 'was': 8000, 'price': 6800},
+      {'plan': '500MB SME', 'validity': '30 days', 'was': 400, 'price': 290},
+      {'plan': '1GB SME', 'validity': '30 days', 'was': 700, 'price': 450},
+      {'plan': '2GB SME', 'validity': '30 days', 'was': 1400, 'price': 850},
+      {'plan': '3GB SME', 'validity': '30 days', 'was': 2100, 'price': 1250},
+      {'plan': '5GB SME', 'validity': '30 days', 'was': 3500, 'price': 1850},
+      {'plan': '10GB SME', 'validity': '30 days', 'was': 5000, 'price': 3650},
+      {'plan': '15GB SME', 'validity': '30 days', 'was': 7500, 'price': 5400},
+      {'plan': '20GB SME', 'validity': '30 days', 'was': 10000, 'price': 7200},
     ],
     'Glo': [
-      {'plan': '1GB Corporate', 'validity': '30 days', 'was': 350, 'price': 280},
-      {'plan': '2GB Corporate', 'validity': '30 days', 'was': 700, 'price': 560},
-      {'plan': '3GB Corporate', 'validity': '30 days', 'was': 1050, 'price': 840},
-      {'plan': '5GB Corporate', 'validity': '30 days', 'was': 1750, 'price': 1400},
-      {'plan': '10GB Corporate', 'validity': '30 days', 'was': 3500, 'price': 2800},
-      {'plan': '20GB Corporate', 'validity': '30 days', 'was': 7000, 'price': 5600},
+      {'plan': '1.5GB Gifting', 'validity': '30 days', 'was': 600, 'price': 500},
+      {'plan': '2.9GB Gifting', 'validity': '30 days', 'was': 1300, 'price': 1050},
+      {'plan': '4.1GB Gifting', 'validity': '30 days', 'was': 1800, 'price': 1450},
+      {'plan': '5.8GB Gifting', 'validity': '30 days', 'was': 2500, 'price': 2050},
+      {'plan': '7.7GB Gifting', 'validity': '30 days', 'was': 3200, 'price': 2550},
+      {'plan': '10GB Gifting', 'validity': '30 days', 'was': 4000, 'price': 3100},
     ],
     'Airtel': [
-      {'plan': '500MB Gifting', 'validity': '30 days', 'was': 400, 'price': 350},
-      {'plan': '1GB Gifting', 'validity': '30 days', 'was': 750, 'price': 640},
-      {'plan': '2GB Gifting', 'validity': '30 days', 'was': 1500, 'price': 1280},
-      {'plan': '5GB Gifting', 'validity': '30 days', 'was': 3750, 'price': 3200},
-      {'plan': '10GB Gifting', 'validity': '30 days', 'was': 4500, 'price': 4000},
-      {'plan': '15GB Gifting', 'validity': '30 days', 'was': 6800, 'price': 6000},
+      {'plan': '500MB SME', 'validity': '7 days', 'was': 700, 'price': 550},
+      {'plan': '1GB SME', 'validity': '7 days', 'was': 1100, 'price': 850},
+      {'plan': '2GB SME', 'validity': '30 days', 'was': 2200, 'price': 1650},
+      {'plan': '5GB SME', 'validity': '30 days', 'was': 5500, 'price': 4100},
+      {'plan': '10GB SME', 'validity': '30 days', 'was': 10500, 'price': 8000},
     ],
     '9mobile': [
-      {'plan': '1GB SME', 'validity': '30 days', 'was': 400, 'price': 300},
-      {'plan': '2GB SME', 'validity': '30 days', 'was': 800, 'price': 600},
-      {'plan': '3GB SME', 'validity': '30 days', 'was': 1200, 'price': 900},
-      {'plan': '5GB SME', 'validity': '30 days', 'was': 2000, 'price': 1500},
-      {'plan': '10GB SME', 'validity': '30 days', 'was': 4000, 'price': 3000},
-      {'plan': '20GB SME', 'validity': '30 days', 'was': 8000, 'price': 6000},
+      {'plan': '500MB Corporate', 'validity': '30 days', 'was': 400, 'price': 290},
+      {'plan': '1GB Corporate', 'validity': '30 days', 'was': 800, 'price': 580},
+      {'plan': '2GB Corporate', 'validity': '30 days', 'was': 1500, 'price': 1150},
+      {'plan': '3GB Corporate', 'validity': '30 days', 'was': 2200, 'price': 1700},
+      {'plan': '5GB Corporate', 'validity': '30 days', 'was': 3600, 'price': 2800},
+      {'plan': '10GB Corporate', 'validity': '30 days', 'was': 7000, 'price': 5500},
     ],
   };
 
   final List<Map<String, dynamic>> _airtimeRates = [
-    {'network': 'MTN airtime', 'type': 'Instant top-up', 'discount': '3.0% off'},
-    {'network': 'Glo airtime', 'type': 'Instant top-up', 'discount': '5.0% off'},
-    {'network': 'Airtel airtime', 'type': 'Instant top-up', 'discount': '3.5% off'},
-    {'network': '9mobile airtime', 'type': 'Instant top-up', 'discount': '5.5% off'},
+    {'network': 'MTN airtime', 'type': 'Instant VTU & SNS top-up', 'discount': '2.5% off'},
+    {'network': 'Glo airtime', 'type': 'Instant VTU top-up', 'discount': '4.0% off'},
+    {'network': 'Airtel airtime', 'type': 'Instant VTU top-up', 'discount': '3.0% off'},
+    {'network': '9mobile / T2 airtime', 'type': 'Instant VTU top-up', 'discount': '4.5% off'},
   ];
 
   final List<Map<String, dynamic>> _cableAndUtility = [
+    {'item': 'GOtv Smallie', 'cat': 'Cable TV', 'price': '₦1,900'},
+    {'item': 'GOtv Jinja', 'cat': 'Cable TV', 'price': '₦3,900'},
+    {'item': 'GOtv Jolli', 'cat': 'Cable TV', 'price': '₦5,800'},
+    {'item': 'GOtv Max', 'cat': 'Cable TV', 'price': '₦8,500'},
+    {'item': 'GOtv Supa', 'cat': 'Cable TV', 'price': '₦16,800'},
     {'item': 'DStv Padi', 'cat': 'Cable TV', 'price': '₦4,400'},
     {'item': 'DStv Yanga', 'cat': 'Cable TV', 'price': '₦6,000'},
     {'item': 'DStv Compact', 'cat': 'Cable TV', 'price': '₦19,000'},
-    {'item': 'GOtv Smallie', 'cat': 'Cable TV', 'price': '₦1,900'},
-    {'item': 'GOtv Jinja', 'cat': 'Cable TV', 'price': '₦3,900'},
     {'item': 'Startimes Nova', 'cat': 'Cable TV', 'price': '₦1,900'},
-    {'item': 'IKEDC / EKEDC Prepaid', 'cat': 'Electricity', 'price': 'Face Value'},
-    {'item': 'AEDC / IBEDC Prepaid', 'cat': 'Electricity', 'price': 'Face Value'},
+    {'item': 'WAEC Result Checker Pin', 'cat': 'Exam E-Pin', 'price': '₦5,150'},
+    {'item': 'NECO Result Checker Pin', 'cat': 'Exam E-Pin', 'price': '₦2,120'},
+    {'item': 'NABTEB Result Checker Pin', 'cat': 'Exam E-Pin', 'price': '₦860'},
+    {'item': 'All Electricity Discos (Prepaid/Postpaid)', 'cat': 'Electricity', 'price': 'Face Value'},
   ];
 
   @override
@@ -307,7 +311,7 @@ class _PricingScreenState extends State<PricingScreen> {
           ),
           ...plans.map((p) {
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 19),
               decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder)),
               ),
@@ -423,7 +427,7 @@ class _PricingScreenState extends State<PricingScreen> {
           ),
           ..._airtimeRates.map((r) {
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
               decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder)),
               ),
@@ -509,7 +513,7 @@ class _PricingScreenState extends State<PricingScreen> {
           ),
           ..._cableAndUtility.map((item) {
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
               decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder)),
               ),

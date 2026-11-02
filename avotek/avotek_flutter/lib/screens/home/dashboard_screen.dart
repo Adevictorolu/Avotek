@@ -809,25 +809,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Show the Paystack-assigned account instead of an internal ID.
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'PERSONAL BANK ACCOUNT',
-                          style: GoogleFonts.figtree(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.7,
-                            color: Colors.white70,
+              // Show Paystack-assigned account if available; otherwise show a large Fund Account button.
+              if (wallet.hasDedicatedAccount) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'PERSONAL BANK ACCOUNT',
+                            style: GoogleFonts.figtree(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.7,
+                              color: Colors.white70,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        if (wallet.hasDedicatedAccount) ...[
+                          const SizedBox(height: 4),
                           Text(
                             wallet.walletSummary!.virtualAccountNumber!,
                             style: GoogleFonts.figtree(
@@ -850,24 +850,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ] else
-                          Text(
-                            wallet.isProvisioningDedicatedAccount
-                                ? 'Preparing your account…'
-                                : (wallet.dedicatedAccountMessage ??
-                                      'Use Fund Wallet to set up your account.'),
-                            style: GoogleFonts.figtree(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  if (wallet.hasDedicatedAccount)
                     IconButton(
                       tooltip: 'Copy account number',
                       onPressed: () {
@@ -892,9 +877,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         backgroundColor: Colors.white.withValues(alpha: 0.15),
                         minimumSize: const Size(38, 38),
                       ),
-                    )
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                // Large Fund Account Button as requested
+                InkWell(
+                  onTap: () => context.push('/wallet/fund'),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF00D2FF), Color(0xFF0052FF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0052FF).withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.22),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.add_card_rounded,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'FUND ACCOUNT',
+                                style: GoogleFonts.figtree(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.8,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                'Instant Automated Card, Transfer & USSD Top-up',
+                                style: GoogleFonts.figtree(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 15,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               const Divider(color: Colors.white12, height: 1),
               const SizedBox(height: 10),

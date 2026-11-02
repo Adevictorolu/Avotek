@@ -29,9 +29,6 @@ class _CableScreenState extends State<CableScreen> {
   // Mode: 0 = Buy Now, 1 = Gift Voucher
   int _activeMode = 0;
 
-  // Options
-  bool _autoRenew = false;
-
   String _selectedProvider = 'GOTV';
   String? _selectedPackage;
   double _packageAmount = 0.0;
@@ -99,10 +96,19 @@ class _CableScreenState extends State<CableScreen> {
       if (!mounted || provider != _selectedProvider) return;
       final formatted = pkgs
           .map((p) {
-            final amt = (p['amount'] as num?)?.toDouble() ?? 0.0;
+            final rawAmt = p['plan_price'] ?? p['amount'] ?? p['price'];
+            final amt = rawAmt is num
+                ? rawAmt.toDouble()
+                : double.tryParse(rawAmt?.toString() ?? '') ?? 0.0;
             final code =
-                p['variation_code']?.toString() ?? p['id']?.toString() ?? '';
-            final name = p['product_name']?.toString() ?? code;
+                p['plan_id']?.toString() ??
+                p['variation_code']?.toString() ??
+                p['id']?.toString() ??
+                '';
+            final name =
+                p['plan_name']?.toString() ??
+                p['product_name']?.toString() ??
+                code;
             return {
               'code': code,
               'name': name,
@@ -1115,9 +1121,9 @@ class _CableScreenState extends State<CableScreen> {
                             ),
                           )
                         else
-                          // Roomy scrollable widget container with enhanced typography
+                          // Roomy scrollable widget container with enhanced typography (Enlarged height for better UX)
                           Container(
-                            height: 255,
+                            height: isDesktop ? 440 : 380,
                             decoration: BoxDecoration(
                               color: isDark
                                   ? const Color(0xFF0D1017)

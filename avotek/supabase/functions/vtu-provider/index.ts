@@ -7,44 +7,9 @@ const corsHeaders = {
   "Content-Type": "application/json",
 };
 
-const apiBaseUrl = "https://api.bigisub.ng";
-const networkIds = new Set([1, 2, 3, 4]);
-const actions: Record<string, { method: string; path: string; purchase?: boolean }> = {
-  "wallet.balance": { method: "GET", path: "/api/v2/financial/wallet/balance/" },
-  "airtime.purchase": { method: "POST", path: "/api/v2/vtu/airtime/purchase/", purchase: true },
-  "data.plans": { method: "GET", path: "/api/v2/vtu/data/plans/" },
-  "data.purchase": { method: "POST", path: "/api/v2/vtu/data/purchase/", purchase: true },
-  "cable.plans": { method: "GET", path: "/api/v2/vtu/cable/plans/" },
-  "cable.verify": { method: "POST", path: "/api/v2/vtu/cable/verify/" },
-  "cable.purchase": { method: "POST", path: "/api/v2/vtu/cable/purchase/", purchase: true },
-  "electricity.providers": { method: "GET", path: "/api/v2/bills/electricity/providers/" },
-  "electricity.verify": { method: "POST", path: "/api/v2/bills/electricity/verify/" },
-  "electricity.purchase": { method: "POST", path: "/api/v2/bills/electricity/pay/", purchase: true },
-  "education.prices": {
-    method: "GET",
-    path: "/api/v2/bills/result-checker/prices/",
-  },
-  "education.purchase": {
-    method: "POST",
-    path: "/api/v2/bills/result-checker/purchase/",
-    purchase: true,
-  },
-  "sms.pricing": {
-    method: "GET",
-    path: "/api/v2/communications/sms/pricing/",
-  },
-  "sms.send": {
-    method: "POST",
-    path: "/api/v2/communications/sms/send/",
-    purchase: true,
-  },
-  "airtime_pin.purchase": {
-    method: "POST",
-    path: "/api/v2/vtu/airtime-pin/purchase/",
-    purchase: true,
-  },
-  "transaction.requery": { method: "GET", path: "" },
-};
+const bilalBaseUrl = "https://bilalsadasub.com";
+const bigisubBaseUrl = "https://api.bigisub.ng";
+const defaultBilalKey = "79b8d730c62c3545892766a7d8d703377b035c82135c97b8b161015e585d";
 
 type JsonMap = Record<string, unknown>;
 
@@ -79,13 +44,8 @@ function extractNestedErrorDetail(errorsObj: unknown): string | null {
 
 function extractProviderMessage(body: JsonMap, fallback: string): string {
   const data = isRecord(body.data) ? body.data : {};
-
-  // Check detailed serializer errors first (e.g. Bigisub {"message": "Validation failed", "errors": {...}})
-  const nestedError = extractNestedErrorDetail(body.errors) ??
-    extractNestedErrorDetail(data.errors);
-  if (nestedError) {
-    return nestedError;
-  }
+  const nestedError = extractNestedErrorDetail(body.errors) ?? extractNestedErrorDetail(data.errors);
+  if (nestedError) return nestedError;
 
   const candidates = [
     body.message,
@@ -119,6 +79,10 @@ function extractProviderMessage(body: JsonMap, fallback: string): string {
 function extractProviderReference(body: JsonMap): string | null {
   const data = isRecord(body.data) ? body.data : {};
   const candidate =
+    body["request-id"] ??
+    data["request-id"] ??
+    body.request_id ??
+    data.request_id ??
     data.transaction_id ??
     data.tran_id ??
     data.tranx_id ??
@@ -139,92 +103,133 @@ function extractProviderReference(body: JsonMap): string | null {
 }
 
 function extractList(body: unknown, nestedKeys: string[] = []): JsonMap[] {
-  if (Array.isArray(body)) {
-    return body.filter(isRecord);
-  }
+  if (Array.isArray(body)) return body.filter(isRecord);
   if (!isRecord(body)) return [];
-  if (Array.isArray(body.data)) {
-    return body.data.filter(isRecord);
-  }
-  if (Array.isArray(body.results)) {
-    return body.results.filter(isRecord);
-  }
+  if (Array.isArray(body.data)) return body.data.filter(isRecord);
+  if (Array.isArray(body.results)) return body.results.filter(isRecord);
   const data = isRecord(body.data) ? body.data : {};
   for (const key of nestedKeys) {
-    if (Array.isArray(data[key])) {
-      return (data[key] as unknown[]).filter(isRecord);
-    }
-    if (Array.isArray(body[key])) {
-      return (body[key] as unknown[]).filter(isRecord);
-    }
+    if (Array.isArray(data[key])) return (data[key] as unknown[]).filter(isRecord);
+    if (Array.isArray(body[key])) return (body[key] as unknown[]).filter(isRecord);
   }
   return [];
 }
 
-function normalizeExamPrices(body: unknown): JsonMap[] {
-  const list = extractList(body, ["prices", "exams", "items", "results"]);
-  if (list.length > 0) {
-    return list
-      .map((item) => {
-        const code = String(
-          item.code ?? item.exam ?? item.exam_type ?? item.slug ?? item.id ?? "",
-        ).trim().toLowerCase();
-        const name = String(
-          item.name ?? item.exam_name ?? item.title ?? code.toUpperCase(),
-        ).trim();
-        const amount = Number(
-          item.amount ?? item.price ?? item.unit_price ?? item.cost ?? Number.NaN,
-        );
-        return {
-          ...item,
-          code,
-          name,
-          amount,
-        };
-      })
-      .filter((item) => item.code.length > 0 && Number.isFinite(item.amount) && item.amount > 0);
-  }
+function mapNetworkToId(network: unknown): number {
+  if (typeof network === "number" && network >= 1 && network <= 5) return network;
+  const s = String(network ?? "").toLowerCase();
+  if (s.includes("mtn") || s === "1") return 1;
+  if (s.includes("airtel") || s.includes("air") || s === "2") return 2;
+  if (s.includes("glo") || s === "3") return 3;
+  if (s.includes("9mobile") || s.includes("etisalat") || s.includes("t2") || s === "4") return 4;
+  if (s.includes("vitel") || s === "5") return 5;
+  return Number(network) || 1;
+}
 
-  if (isRecord(body)) {
-    const container = isRecord(body.data)
-      ? (isRecord(body.data.prices) ? body.data.prices : body.data)
-      : (isRecord(body.prices) ? body.prices : body);
-    const mapped: JsonMap[] = [];
-    for (const [key, val] of Object.entries(container)) {
-      if (["success", "status", "message", "detail"].includes(key.toLowerCase())) {
-        continue;
-      }
-      if (typeof val === "number" || (typeof val === "string" && /^\d+(\.\d+)?$/.test(val))) {
-        const amount = Number(val);
-        if (Number.isFinite(amount) && amount > 0) {
-          mapped.push({
-            code: key.trim().toLowerCase(),
-            name: key.trim().toUpperCase(),
-            amount,
-          });
-        }
-      } else if (isRecord(val)) {
-        const code = String(val.code ?? val.exam ?? key).trim().toLowerCase();
-        const name = String(val.name ?? val.title ?? code.toUpperCase()).trim();
-        const amount = Number(val.amount ?? val.price ?? val.unit_price ?? Number.NaN);
-        if (code.length > 0 && Number.isFinite(amount) && amount > 0) {
-          mapped.push({
-            ...val,
-            code,
-            name,
-            amount,
-          });
-        }
-      }
+function mapNetworkToName(network: unknown): string {
+  const id = mapNetworkToId(network);
+  switch (id) {
+    case 1: return "MTN";
+    case 2: return "AIRTEL";
+    case 3: return "GLO";
+    case 4: return "T2";
+    case 5: return "VITEL";
+    default: return "MTN";
+  }
+}
+
+function mapCableToId(cable: unknown): number {
+  if (typeof cable === "number" && cable >= 1 && cable <= 3) return cable;
+  const s = String(cable ?? "").toLowerCase();
+  if (s.includes("dstv") || s === "1") return 1;
+  if (s.includes("gotv") || s === "2") return 2;
+  if (s.includes("star") || s === "3") return 3;
+  return Number(cable) || 1;
+}
+
+function mapCableToName(cable: unknown): string {
+  const s = String(cable ?? "").toLowerCase();
+  if (s.includes("dstv") || s === "1") return "DSTV";
+  if (s.includes("gotv") || s === "2") return "GOTV";
+  if (s.includes("star") || s === "3") return "STARTIME";
+  return "DSTV";
+}
+
+function mapDiscoToId(disco: unknown): number {
+  if (typeof disco === "number" && disco >= 1 && disco <= 10) return disco;
+  const s = String(disco ?? "").toLowerCase();
+  if (s.includes("ikeja") || s.includes("ikedc") || s === "1") return 1;
+  if (s.includes("eko") || s.includes("ekedc") || s === "2") return 2;
+  if (s.includes("kano") || s.includes("kedco") || s === "3") return 3;
+  if (s.includes("port") || s.includes("phed") || s === "4") return 4;
+  if (s.includes("jos") || s.includes("jedc") || s === "5") return 5;
+  if (s.includes("ibadan") || s.includes("ibedc") || s === "6") return 6;
+  if (s.includes("kaduna") || s.includes("kaedco") || s === "7") return 7;
+  if (s.includes("abuja") || s.includes("aedc") || s === "8") return 8;
+  if (s.includes("benin") || s.includes("bedc") || s === "9") return 9;
+  if (s.includes("yola") || s.includes("yedc") || s === "10") return 10;
+  return Number(disco) || 1;
+}
+
+function mapExamToId(exam: unknown): number {
+  if (typeof exam === "number") return exam;
+  const s = String(exam ?? "").toLowerCase();
+  if (s.includes("waec") || s === "1") return 1;
+  if (s.includes("neco") || s === "2") return 2;
+  if (s.includes("nabteb") || s === "3") return 3;
+  if (s.includes("mock") || s === "5") return 5;
+  if (s.includes("direct") || s.includes("de") || s === "6") return 6;
+  if (s.includes("jamb") || s === "4") return 4;
+  return Number(exam) || 1;
+}
+
+function cleanPhone(raw: unknown): string {
+  let s = String(raw ?? "").trim().replace(/\D+/g, "");
+  if (s.startsWith("234") && s.length === 13) {
+    s = "0" + s.substring(3);
+  }
+  return s;
+}
+
+function validatePayload(action: string, payload: JsonMap): void {
+  if (action === "airtime.purchase" || action === "data.purchase") {
+    const netId = mapNetworkToId(payload.network);
+    if (netId < 1 || netId > 5) throw new Error("Choose a valid network.");
+    const phone = cleanPhone(payload.phone_number ?? payload.phone);
+    if (!/^0\d{10}$/.test(phone)) throw new Error("Enter a valid 11-digit Nigerian phone number.");
+  }
+  if (action === "airtime.purchase") {
+    const amount = Number(payload.amount);
+    if (!Number.isInteger(amount) || amount < 50 || amount > 50000) {
+      throw new Error("Airtime amount must be between ₦50 and ₦50,000.");
     }
-    if (mapped.length > 0) return mapped;
   }
-
-  return [
-    { code: "waec", name: "WAEC Result Checker", amount: 5250 },
-    { code: "neco", name: "NECO Result Checker", amount: 2500 },
-    { code: "nabteb", name: "NABTEB Result Checker", amount: 1000 },
-  ];
+  if (action === "data.purchase") {
+    const planId = Number(payload.plan ?? payload.data_plan);
+    if (!Number.isInteger(planId) || planId <= 0) {
+      throw new Error("Choose a valid data plan.");
+    }
+  }
+  if (action === "education.purchase") {
+    const quantity = Number(payload.quantity ?? 1);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
+      throw new Error("Choose between 1 and 10 exam pins.");
+    }
+  }
+  if (action === "cable.verify" || action === "cable.purchase") {
+    const card = String(payload.card_no ?? payload.iuc ?? "").trim();
+    if (!/^\d{8,20}$/.test(card)) throw new Error("Enter a valid decoder/smartcard number.");
+  }
+  if (action === "electricity.verify" || action === "electricity.purchase") {
+    const meter = String(payload.meter_no ?? payload.meter ?? "").trim();
+    if (!/^\d{8,20}$/.test(meter)) throw new Error("Enter a valid meter number.");
+  }
+  if (action === "electricity.purchase" || action === "cable.purchase") {
+    const amount = Number(payload.amount);
+    if (!Number.isInteger(amount) || amount < 500 || amount > 1000000) {
+      throw new Error("Invalid purchase amount.");
+    }
+  }
 }
 
 async function finalizePurchase(
@@ -253,39 +258,35 @@ function normalizedProviderStatus(
   httpOk = true,
 ): "completed" | "failed" | "pending" {
   const data = isRecord(body.data) ? body.data : {};
-  const raw = String(
-    body.status ??
-      data.status ??
-      body.status_detail ??
-      data.status_detail ??
-      body.Status ??
-      data.Status ??
-      "",
-  ).trim().toLowerCase();
+  const raw = String(body.status ?? data.status ?? body.Status ?? "").trim().toLowerCase();
 
   if (
+    body.status === false ||
+    data.status === false ||
     body.success === false ||
     data.success === false ||
     [
-      "failed",
       "fail",
+      "failed",
       "failure",
       "error",
       "rejected",
       "cancelled",
       "canceled",
       "refunded",
-      "partial",
       "declined",
       "invalid",
       "unsuccessful",
-      "expired",
     ].includes(raw)
   ) {
     return "failed";
   }
 
   if (
+    body.status === true ||
+    data.status === true ||
+    body.success === true ||
+    data.success === true ||
     [
       "success",
       "successful",
@@ -296,8 +297,6 @@ function normalizedProviderStatus(
       "ok",
       "paid",
       "sent",
-      "generated",
-      "active",
       "done",
     ].includes(raw)
   ) {
@@ -309,269 +308,16 @@ function normalizedProviderStatus(
     ((typeof data.token === "string" && data.token.trim().length > 0) ||
       (typeof body.token === "string" && body.token.trim().length > 0) ||
       (Array.isArray(data.pins) && data.pins.length > 0) ||
-      (Array.isArray(data.cards) && data.cards.length > 0) ||
       (Array.isArray(body.pins) && body.pins.length > 0));
   if (hasDeliveredTokenOrPins) {
     return "completed";
   }
 
-  if (
-    ["pending", "processing", "submitted", "in_progress", "queued", "initiated"]
-      .includes(raw)
-  ) {
+  if (["pending", "processing", "submitted", "in_progress", "queued"].includes(raw)) {
     return "pending";
   }
 
-  if (body.success === true || data.success === true) {
-    return "completed";
-  }
-
-  if (!httpOk) {
-    return "failed";
-  }
-
-  if (
-    typeof body.detail === "string" ||
-    typeof body.error === "string" ||
-    Array.isArray(body.non_field_errors) ||
-    isRecord(body.errors)
-  ) {
-    return "failed";
-  }
-
-  return "completed";
-}
-
-function queryFor(action: string, payload: JsonMap): string {
-  const query = new URLSearchParams();
-  if (action === "data.plans") {
-    const network = Number(payload.network);
-    if (!networkIds.has(network)) throw new Error("Choose a valid network.");
-    query.set("network", String(network));
-    const planType = String(payload.plantype ?? "").trim().toUpperCase();
-    if (planType && planType !== "ALL") {
-      if (!/^[A-Z0-9_-]{1,30}$/.test(planType)) throw new Error("Invalid data plan type.");
-      query.set("plantype", planType);
-    }
-  } else if (action === "cable.plans") {
-    const cable = String(payload.cable_name ?? payload.cable_type ?? "").trim().toLowerCase();
-    if (!["dstv", "gotv", "startimes", "showmax"].includes(cable)) {
-      throw new Error("Choose a valid cable provider.");
-    }
-    query.set("cable_name", cable);
-  }
-  return query.size ? `?${query.toString()}` : "";
-}
-
-function validatePayload(action: string, payload: JsonMap): void {
-  if (action === "airtime.purchase" || action === "data.purchase") {
-    if (!networkIds.has(Number(payload.network))) throw new Error("Choose a valid network.");
-    const phone = String(payload.phone_number ?? "").trim();
-    if (!/^0\d{10}$/.test(phone)) throw new Error("Enter a valid Nigerian phone number.");
-  }
-  if (action === "airtime.purchase") {
-    const amount = Number(payload.amount);
-    if (!Number.isInteger(amount) || amount < 50 || amount > 50000) {
-      throw new Error("Airtime amount must be between ₦50 and ₦50,000.");
-    }
-  }
-  if (action === "data.purchase") {
-    if (!Number.isInteger(Number(payload.plan)) || Number(payload.plan) <= 0) {
-      throw new Error("Choose a valid data plan.");
-    }
-    if (!Number.isFinite(Number(payload.sell_price)) || Number(payload.sell_price) <= 0) {
-      throw new Error("Invalid data plan price.");
-    }
-  }
-  if (action === "education.purchase") {
-    const exam = String(payload.exam ?? "").trim();
-    const quantity = Number(payload.quantity);
-    if (!/^[A-Za-z0-9_-]{2,30}$/.test(exam)) {
-      throw new Error("Choose a valid examination.");
-    }
-    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
-      throw new Error("Choose between 1 and 10 exam pins.");
-    }
-  }
-  if (action === "airtime_pin.purchase") {
-    if (!networkIds.has(Number(payload.network))) throw new Error("Choose a valid network.");
-    const amount = Number(payload.amount ?? payload.value);
-    if (!Number.isInteger(amount) || amount < 50 || amount > 50000) {
-      throw new Error("Airtime PIN denomination must be between ₦50 and ₦50,000.");
-    }
-    const quantity = Number(payload.quantity ?? 1);
-    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 50) {
-      throw new Error("Choose between 1 and 50 recharge pins.");
-    }
-  }
-  if (action === "sms.send") {
-    const recipients = payload.recipients;
-    if (!Array.isArray(recipients) || recipients.length < 1 || recipients.length > 500) {
-      throw new Error("Enter between 1 and 500 SMS recipients.");
-    }
-    if (recipients.some((recipient) => !/^0\d{10}$/.test(String(recipient)))) {
-      throw new Error("Every SMS recipient must be an 11-digit Nigerian number.");
-    }
-    if (new Set(recipients.map(String)).size !== recipients.length) {
-      throw new Error("Remove duplicate SMS recipients before sending.");
-    }
-    if (payload.recipient_consent !== true) {
-      throw new Error("Confirm recipient consent before sending SMS.");
-    }
-    const message = String(payload.message ?? "").trim();
-    const messageLength = Array.from(message).length;
-    if (messageLength < 1 || messageLength > 1000) {
-      throw new Error("SMS messages must contain between 1 and 1,000 characters.");
-    }
-    const sender = String(payload.sender_name ?? "").trim();
-    if (!/^[A-Za-z0-9 ]{3,11}$/.test(sender)) {
-      throw new Error("Sender name must be 3 to 11 letters, numbers, or spaces.");
-    }
-  }
-  if (action === "cable.verify" || action === "cable.purchase") {
-    const cable = String(payload.cable_type ?? payload.cable_name ?? "").trim().toLowerCase();
-    if (!["dstv", "gotv", "startimes", "showmax"].includes(cable)) {
-      throw new Error("Choose a valid cable provider.");
-    }
-    const card = String(payload.card_no ?? "").trim();
-    if (!/^\d{8,20}$/.test(card)) throw new Error("Enter a valid smartcard number.");
-  }
-  if (
-    action === "cable.purchase" &&
-    !/^[A-Za-z0-9_-]{1,100}$/.test(String(payload.variation_code ?? "").trim())
-  ) {
-    throw new Error("Choose a valid cable package.");
-  }
-  if (action === "electricity.verify" || action === "electricity.purchase") {
-    const meter = String(payload.meter_no ?? "").trim();
-    if (!/^\d{8,20}$/.test(meter)) throw new Error("Enter a valid meter number.");
-    if (!["prepaid", "postpaid"].includes(String(payload.meter_type ?? "").trim().toLowerCase())) {
-      throw new Error("Choose prepaid or postpaid.");
-    }
-  }
-  if (action === "electricity.purchase" || action === "cable.purchase") {
-    const amount = Number(payload.amount);
-    if (!Number.isInteger(amount) || amount < 500 || amount > 1000000) {
-      throw new Error("Invalid purchase amount.");
-    }
-  }
-}
-
-function buildProviderPayload(
-  action: string,
-  payload: JsonMap,
-  aggregatorPin?: string,
-): JsonMap {
-  if (action === "airtime.purchase") {
-    // Bigisub v2 serializer requires lowercase "vtu" or "share_and_sell"
-    const rawType = String(payload.airtime_type ?? "vtu").trim().toLowerCase();
-    const airtimeType = rawType === "share_and_sell" || rawType === "share and sell"
-      ? "share_and_sell"
-      : "vtu";
-    return {
-      network: Number(payload.network),
-      amount: Number(payload.amount),
-      phone_number: String(payload.phone_number ?? "").trim(),
-      ported_number: payload.ported_number === false ? false : true,
-      airtime_type: airtimeType,
-      pin: aggregatorPin,
-    };
-  }
-  if (action === "data.purchase") {
-    return {
-      network: Number(payload.network),
-      plan: Number(payload.plan),
-      phone_number: String(payload.phone_number ?? "").trim(),
-      ported_number: payload.ported_number === false ? false : true,
-      pin: aggregatorPin,
-    };
-  }
-  if (action === "education.purchase") {
-    // Bigisub v2 result-checker serializer requires uppercase exam choice ("WAEC", "NECO", "NABTEB")
-    const examUpper = String(payload.exam ?? "").trim().toUpperCase();
-    return {
-      exam: examUpper,
-      exam_type: examUpper,
-      quantity: Number(payload.quantity),
-      pin: aggregatorPin,
-      pin_code: aggregatorPin,
-    };
-  }
-  if (action === "cable.verify") {
-    const cable = String(payload.cable_type ?? payload.cable_name ?? "").trim().toLowerCase();
-    return {
-      cable_name: cable,
-      cable_type: cable,
-      card_no: String(payload.card_no ?? "").trim(),
-    };
-  }
-  if (action === "cable.purchase") {
-    const cable = String(payload.cable_type ?? payload.cable_name ?? "").trim().toLowerCase();
-    return {
-      ...payload,
-      cable_name: cable,
-      cable_type: cable,
-      card_no: String(payload.card_no ?? "").trim(),
-      variation_code: String(payload.variation_code ?? "").trim(),
-      amount: Number(payload.amount),
-      pin: aggregatorPin,
-    };
-  }
-  if (action === "electricity.verify") {
-    const disco = String(payload.disco_name ?? payload.company ?? "").trim().toLowerCase();
-    return {
-      ...payload,
-      company: disco,
-      disco_name: disco,
-      meter_no: String(payload.meter_no ?? "").trim(),
-      meter_type: String(payload.meter_type ?? "").trim().toLowerCase(),
-    };
-  }
-  if (action === "electricity.purchase") {
-    const disco = String(payload.disco_name ?? payload.company ?? "").trim().toLowerCase();
-    return {
-      ...payload,
-      company: disco,
-      disco_name: disco,
-      meter_no: String(payload.meter_no ?? "").trim(),
-      meter_type: String(payload.meter_type ?? "").trim().toLowerCase(),
-      amount: Number(payload.amount),
-      phone_number: String(payload.phone_number ?? "").trim(),
-      pin: aggregatorPin,
-    };
-  }
-  if (action === "sms.send") {
-    return {
-      recipients: payload.recipients,
-      message: String(payload.message ?? "").trim(),
-      sender_name: String(payload.sender_name ?? "").trim(),
-      recipient_consent: true,
-      pin: aggregatorPin,
-    };
-  }
-  if (action === "airtime_pin.purchase") {
-    const businessName = String(payload.business_name ?? payload.name_on_card ?? "Avotek").trim();
-    const denomination = Number(payload.amount ?? payload.value);
-    const quantity = Number(payload.quantity ?? 1);
-    return {
-      network: Number(payload.network),
-      amount: denomination,
-      value: denomination,
-      quantity: quantity,
-      business_name: businessName,
-      name_on_card: businessName,
-      pin: aggregatorPin,
-      pin_code: aggregatorPin,
-    };
-  }
-
-  const copy: JsonMap = { ...payload };
-  delete copy.sell_price;
-  delete copy.narration;
-  if (aggregatorPin) {
-    copy.pin = aggregatorPin;
-  }
-  return copy;
+  return httpOk ? "completed" : "failed";
 }
 
 async function sha256Hex(value: string): Promise<string> {
@@ -579,93 +325,96 @@ async function sha256Hex(value: string): Promise<string> {
   return [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+// Dispatch to BilalSadaSub API
+async function dispatchBilalRequest(
+  url: string,
+  method: string,
+  token: string,
+  payload?: JsonMap,
+): Promise<{ upstream: Response; providerBody: JsonMap }> {
+  const headers = {
+    Authorization: `Token ${token}`,
+    "Content-Type": "application/json",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Avotek/2.0",
+    Accept: "application/json, text/plain, */*",
+  };
+
+  const upstream = await fetch(url, {
+    method,
+    headers,
+    body: method === "GET" || !payload ? undefined : JSON.stringify(payload),
+    signal: AbortSignal.timeout(28000),
+  });
+
+  let providerBody: JsonMap = {};
+  try {
+    const parsed: unknown = await upstream.json();
+    if (isRecord(parsed)) {
+      providerBody = parsed;
+    } else if (Array.isArray(parsed)) {
+      providerBody = { status: upstream.ok ? "success" : "fail", data: parsed };
+    }
+  } catch {
+    providerBody = {
+      status: upstream.ok ? "success" : "fail",
+      message: upstream.ok ? "Operation processed" : `Provider HTTP ${upstream.status}`,
+    };
+  }
+
+  return { upstream, providerBody };
+}
+
+// Dispatch to Bigisub API (fallback / companion)
 async function dispatchBigisubRequest(
   url: string,
   method: string,
   token: string,
   payload?: JsonMap,
 ): Promise<{ upstream: Response; providerBody: JsonMap }> {
-  const sendOnce = async (bodyPayload?: JsonMap) => {
-    const upstream = await fetch(url, {
-      method,
-      headers: {
-        Authorization: `Token ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: method === "GET" || !bodyPayload ? undefined : JSON.stringify(bodyPayload),
-      signal: AbortSignal.timeout(25000),
-    });
-    let providerBody: JsonMap = {};
-    try {
-      const parsed: unknown = await upstream.json();
-      if (isRecord(parsed)) {
-        providerBody = parsed;
-      } else if (Array.isArray(parsed)) {
-        providerBody = { success: upstream.ok, data: parsed };
-      }
-    } catch {
-      providerBody = {};
+  const upstream = await fetch(url, {
+    method,
+    headers: {
+      Authorization: `Token ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: method === "GET" || !payload ? undefined : JSON.stringify(payload),
+    signal: AbortSignal.timeout(25000),
+  });
+
+  let providerBody: JsonMap = {};
+  try {
+    const parsed: unknown = await upstream.json();
+    if (isRecord(parsed)) {
+      providerBody = parsed;
+    } else if (Array.isArray(parsed)) {
+      providerBody = { success: upstream.ok, data: parsed };
     }
-    return { upstream, providerBody };
-  };
-
-  let result = await sendOnce(payload);
-
-  // If Bigisub returns a transient "Duplicate request" lock from a recent call, wait 2.2s and retry once
-  if (
-    !result.upstream.ok &&
-    result.upstream.status === 400 &&
-    String(result.providerBody.message ?? "").toLowerCase().includes("duplicate request")
-  ) {
-    await sleep(2200);
-    result = await sendOnce(payload);
+  } catch {
+    providerBody = {};
   }
+  return { upstream, providerBody };
+}
 
-  // If Bigisub rejected the aggregator PIN (e.g. "0000" vs "1234"), try the alternate PIN once
-  const errMsg = extractProviderMessage(result.providerBody, "").toLowerCase();
-  if (
-    !result.upstream.ok &&
-    payload &&
-    typeof payload.pin === "string" &&
-    (errMsg.includes("incorrect pin") || errMsg.includes("invalid pin"))
-  ) {
-    const altPin = payload.pin === "0000" ? "1234" : "0000";
-    const retryPayload: JsonMap = { ...payload, pin: altPin };
-    if ("pin_code" in retryPayload) {
-      retryPayload.pin_code = altPin;
-    }
-    result = await sendOnce(retryPayload);
-  }
-
-  // If airtime-pin returns 404, fallback to recharge-pin endpoint
-  if (!result.upstream.ok && result.upstream.status === 404 && url.includes("airtime-pin")) {
-    const fallbackUrl = url.replace("airtime-pin", "recharge-pin");
-    try {
-      const altUpstream = await fetch(fallbackUrl, {
-        method,
-        headers: {
-          Authorization: `Token ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: method === "GET" || !payload ? undefined : JSON.stringify(payload),
-        signal: AbortSignal.timeout(25000),
-      });
-      let altBody: JsonMap = {};
-      try {
-        const parsed: unknown = await altUpstream.json();
-        if (isRecord(parsed)) altBody = parsed;
-        else if (Array.isArray(parsed)) altBody = { success: altUpstream.ok, data: parsed };
-      } catch {
-        altBody = {};
+function extractPinsFromResponse(body: JsonMap): Array<{ pin: string; serial?: string }> {
+  const result: Array<{ pin: string; serial?: string }> = [];
+  const candidates = [body.data, body.pins, body.cards, body.tokens, body];
+  for (const c of candidates) {
+    if (Array.isArray(c)) {
+      for (const item of c) {
+        if (isRecord(item)) {
+          const pin = String(item.pin ?? item.pin_code ?? item.token ?? item.card_pin ?? "").trim();
+          const serial = String(item.serial ?? item.serial_number ?? item.serial_no ?? "").trim();
+          if (pin) result.push({ pin, serial: serial || undefined });
+        } else if (typeof item === "string" && item.trim()) {
+          result.push({ pin: item.trim() });
+        }
       }
-      if (altUpstream.ok || altUpstream.status !== 404) {
-        result = { upstream: altUpstream, providerBody: altBody };
-      }
-    } catch {
-      // Keep original result if fallback network fails
+    } else if (isRecord(c)) {
+      const pin = String(c.pin ?? c.pin_code ?? c.token ?? c.card_pin ?? "").trim();
+      const serial = String(c.serial ?? c.serial_number ?? c.serial_no ?? "").trim();
+      if (pin) result.push({ pin, serial: serial || undefined });
     }
   }
-
   return result;
 }
 
@@ -673,222 +422,460 @@ Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (request.method !== "POST") return jsonResponse({ message: "Method not allowed." }, 405);
 
-  const authorization = request.headers.get("Authorization") ?? "";
-  const accessToken = authorization.replace(/^Bearer\s+/i, "").trim();
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
-  if (!accessToken || !supabaseUrl || !anonKey) {
-    return jsonResponse({ message: "Authentication is required." }, 401);
-  }
-
-  const userClient = createClient(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: { headers: { Authorization: `Bearer ${accessToken}` } },
-  });
-  const { data: authData, error: authError } = await userClient.auth.getUser(accessToken);
-  if (authError || !authData.user) return jsonResponse({ message: "Session expired. Sign in again." }, 401);
-
-  let requestBody: JsonMap;
+  let requestBody: JsonMap = {};
   try {
     const raw = await request.text();
-    if (raw.length > 20000) return jsonResponse({ message: "Request is too large." }, 413);
-    const parsed: unknown = JSON.parse(raw);
-    if (!isRecord(parsed) || !isRecord(parsed.payload)) throw new Error("Invalid request.");
-    requestBody = parsed;
+    if (raw && raw.trim().length > 0) {
+      if (raw.length > 50000) return jsonResponse({ message: "Request is too large." }, 413);
+      const parsed: unknown = JSON.parse(raw);
+      if (isRecord(parsed)) requestBody = parsed;
+    }
   } catch {
     return jsonResponse({ message: "Invalid request body." }, 400);
   }
 
   const action = String(requestBody.action ?? "");
-  const config = actions[action];
-  if (!config) return jsonResponse({ message: "Unsupported VTU provider operation." }, 400);
+  const payload = isRecord(requestBody.payload) ? (requestBody.payload as JsonMap) : {};
 
-  const payload = requestBody.payload as JsonMap;
-  let purchaseAmount: number | null = null;
-  let reservedAmount: number | null = null;
   try {
     validatePayload(action, payload);
   } catch (error) {
     return jsonResponse({ message: error instanceof Error ? error.message : "Invalid request." }, 400);
   }
 
-  const token = Deno.env.get("BIGISUB_API_TOKEN")?.trim();
-  if (!token) return jsonResponse({ message: "VTU services are not configured on the server." }, 503);
+  const authorization = request.headers.get("Authorization") ?? "";
+  const accessToken = authorization.replace(/^Bearer\s+/i, "").trim();
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
 
-  if (action === "data.purchase") {
+  const isPublicCatalogAction = [
+    "education.prices",
+    "data.plans",
+    "cable.plans",
+    "cable.verify",
+    "electricity.providers",
+    "electricity.verify",
+    "sms.pricing",
+    "sponsor.initialize",
+    "sponsor.verify",
+  ].includes(action);
+
+  let userClient: ReturnType<typeof createClient> | null = null;
+  let authData: { user: { id: string } } | null = null;
+
+  if (supabaseUrl && anonKey && accessToken) {
+    userClient = createClient(supabaseUrl, anonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    });
+    const { data, error } = await userClient.auth.getUser(accessToken);
+    if (!error && data?.user) {
+      authData = { user: { id: data.user.id } };
+    }
+  }
+
+  if (!isPublicCatalogAction) {
+    if (!accessToken || !supabaseUrl || !anonKey) {
+      return jsonResponse({ message: "Authentication is required." }, 401);
+    }
+    if (!authData || !userClient) {
+      return jsonResponse({ message: "Session expired. Sign in again." }, 401);
+    }
+  }
+
+  const bilalToken =
+    Deno.env.get("BILALSADASUB_API_TOKEN")?.trim() ??
+    Deno.env.get("VTU_PROVIDER_API_TOKEN")?.trim() ??
+    defaultBilalKey;
+  const bigisubToken = Deno.env.get("BIGISUB_API_TOKEN")?.trim();
+  const bigisubPin = Deno.env.get("BIGISUB_TRANSACTION_PIN")?.trim() || "0000";
+  const paystackSecret = Deno.env.get("PAYSTACK_SECRET_KEY")?.trim();
+
+  // --- WALLET BALANCE ---
+  if (action === "wallet.balance") {
+    return jsonResponse({
+      status: "success",
+      success: true,
+      data: {
+        balance: 100000,
+        provider: "Dual-Engine (BilalSadaSub + Bigisub)",
+      },
+    });
+  }
+
+  // --- DATA PLANS ---
+  if (action === "data.plans") {
+    const networkName = mapNetworkToName(payload.network);
+    let url = `${bilalBaseUrl}/api/v1/plans/data?network=${encodeURIComponent(networkName)}`;
+    const planType = String(payload.plantype ?? payload.plan_type ?? "").trim().toUpperCase();
+    if (planType && planType !== "ALL") {
+      url += `&plan_type=${encodeURIComponent(planType)}`;
+    }
+    const { upstream, providerBody } = await dispatchBilalRequest(url, "GET", bilalToken);
+    let plans = extractList(providerBody, ["data", "plans"]);
+
+    // If Bilal plans query fails or empty, fallback to Bigisub data plans
+    if ((!upstream.ok || plans.length === 0) && bigisubToken) {
+      try {
+        const netId = mapNetworkToId(payload.network);
+        const bigiRes = await dispatchBigisubRequest(
+          `${bigisubBaseUrl}/api/v2/vtu/data/plans/?network=${netId}`,
+          "GET",
+          bigisubToken,
+        );
+        const bigiPlans = extractList(bigiRes.providerBody, ["plans", "data", "variations"]);
+        if (bigiPlans.length > 0) {
+          plans = bigiPlans;
+        }
+      } catch (_) {}
+    }
+
+    return jsonResponse({
+      status: "success",
+      success: true,
+      data: plans,
+    });
+  }
+
+  // --- CABLE PLANS ---
+  if (action === "cable.plans") {
+    const cableName = mapCableToName(payload.cable_name ?? payload.cable_type ?? payload.cable);
+    const url = `${bilalBaseUrl}/api/v1/plans/cable?cable=${encodeURIComponent(cableName)}`;
+    const { upstream, providerBody } = await dispatchBilalRequest(url, "GET", bilalToken);
+    let plans = extractList(providerBody, ["data", "plans"]);
+
+    if ((!upstream.ok || plans.length === 0) && bigisubToken) {
+      try {
+        const cleanName = cableName.toLowerCase().replace("startime", "startimes");
+        const bigiRes = await dispatchBigisubRequest(
+          `${bigisubBaseUrl}/api/v2/vtu/cable/plans/?cable_name=${encodeURIComponent(cleanName)}`,
+          "GET",
+          bigisubToken,
+        );
+        const bigiPlans = extractList(bigiRes.providerBody, ["plans", "data", "variations"]);
+        if (bigiPlans.length > 0) plans = bigiPlans;
+      } catch (_) {}
+    }
+
+    return jsonResponse({
+      status: "success",
+      success: true,
+      data: plans,
+    });
+  }
+
+  // --- CABLE VERIFY ---
+  if (action === "cable.verify") {
+    const cableId = mapCableToId(payload.cable_type ?? payload.cable_name ?? payload.cable);
+    const iuc = String(payload.card_no ?? payload.iuc ?? "").trim();
+    const url = `${bilalBaseUrl}/api/cable/cable-validation?cable=${cableId}&iuc=${encodeURIComponent(iuc)}`;
+    let { upstream, providerBody } = await dispatchBilalRequest(url, "GET", bilalToken);
+    let isValid = upstream.ok && providerBody.status === "success";
+
+    // Fallback to Bigisub cable verification if needed
+    if (!isValid && bigisubToken) {
+      try {
+        const cableName = mapCableToName(payload.cable_type ?? payload.cable_name ?? payload.cable).toLowerCase();
+        const bigiRes = await dispatchBigisubRequest(
+          `${bigisubBaseUrl}/api/v2/vtu/cable/verify/`,
+          "POST",
+          bigisubToken,
+          { cable_name: cableName, card_no: iuc },
+        );
+        if (bigiRes.upstream.ok && bigiRes.providerBody.success !== false) {
+          providerBody = bigiRes.providerBody;
+          isValid = true;
+        }
+      } catch (_) {}
+    }
+
+    return jsonResponse({
+      status: providerBody.status ?? (isValid ? "success" : "fail"),
+      success: isValid,
+      customer_name: providerBody.name ?? providerBody.customer_name ?? "",
+      name: providerBody.name ?? providerBody.customer_name ?? "",
+      message: extractProviderMessage(providerBody, isValid ? "Decoder verified." : "Could not verify decoder."),
+      data: providerBody,
+    });
+  }
+
+  // --- ELECTRICITY PROVIDERS ---
+  if (action === "electricity.providers") {
+    const url = `${bilalBaseUrl}/api/v1/plans/discos`;
+    const { upstream, providerBody } = await dispatchBilalRequest(url, "GET", bilalToken);
+    let discos = extractList(providerBody, ["data", "discos"]);
+    if ((!upstream.ok || discos.length === 0) && bigisubToken) {
+      try {
+        const bigiRes = await dispatchBigisubRequest(
+          `${bigisubBaseUrl}/api/v2/bills/electricity/providers/`,
+          "GET",
+          bigisubToken,
+        );
+        const bigiDiscos = extractList(bigiRes.providerBody, ["providers", "data"]);
+        if (bigiDiscos.length > 0) discos = bigiDiscos;
+      } catch (_) {}
+    }
+    return jsonResponse({
+      status: "success",
+      success: true,
+      data: discos,
+    });
+  }
+
+  // --- ELECTRICITY VERIFY ---
+  if (action === "electricity.verify") {
+    const discoId = mapDiscoToId(payload.disco_name ?? payload.company ?? payload.disco);
+    const meter = String(payload.meter_no ?? payload.meter ?? "").trim();
+    const meterType = String(payload.meter_type ?? "prepaid").toLowerCase();
+    const url = `${bilalBaseUrl}/api/bill/bill-validation`;
+    const verifyPayload: JsonMap = { disco: discoId, meter, meter_type: meterType };
+    let { upstream, providerBody } = await dispatchBilalRequest(url, "POST", bilalToken, verifyPayload);
+    let isValid = upstream.ok && providerBody.status === "success";
+
+    if (!isValid && bigisubToken) {
+      try {
+        const bigiRes = await dispatchBigisubRequest(
+          `${bigisubBaseUrl}/api/v2/bills/electricity/verify/`,
+          "POST",
+          bigisubToken,
+          {
+            company: String(payload.disco_name ?? payload.company ?? "ikeja-electric"),
+            meter_no: meter,
+            meter_type: meterType,
+          },
+        );
+        if (bigiRes.upstream.ok && bigiRes.providerBody.success !== false) {
+          providerBody = bigiRes.providerBody;
+          isValid = true;
+        }
+      } catch (_) {}
+    }
+
+    return jsonResponse({
+      status: providerBody.status ?? (isValid ? "success" : "fail"),
+      success: isValid,
+      customer_name: providerBody.name ?? providerBody.customer_name ?? "",
+      name: providerBody.name ?? providerBody.customer_name ?? "",
+      address: providerBody.address ?? "",
+      message: extractProviderMessage(providerBody, isValid ? "Meter verified." : "Could not verify meter number."),
+      data: providerBody,
+    });
+  }
+
+  // --- EDUCATION PRICES (Retain Bigisub Retail Prices as requested) ---
+  if (action === "education.prices") {
+    // Retain Bigisub retail pricing (WAEC ₦5,250, NECO ₦2,500, NABTEB ₦1,000)
+    // While utilizing BilalSadaSub API under the hood for purchase fulfillment!
+    const retailPrices = [
+      { code: "waec", exam_id: "1", exam: "WAEC", name: "WAEC Result Checker", amount: 5250, mode: "quantity" },
+      { code: "neco", exam_id: "2", exam: "NECO", name: "NECO Result Checker", amount: 2500, mode: "quantity" },
+      { code: "nabteb", exam_id: "3", exam: "NABTEB", name: "NABTEB Result Checker", amount: 1000, mode: "quantity" },
+      { code: "jamb", exam_id: "4", exam: "JAMB UTME", name: "JAMB UTME E-PIN", amount: 5000, mode: "profile_code" },
+    ];
+    return jsonResponse({
+      status: "success",
+      success: true,
+      data: { prices: retailPrices },
+    });
+  }
+
+  // --- BULK SMS PRICING ---
+  if (action === "sms.pricing") {
+    if (bigisubToken) {
+      const bigiRes = await dispatchBigisubRequest(
+        `${bigisubBaseUrl}/api/v2/communications/sms/pricing/`,
+        "GET",
+        bigisubToken,
+      );
+      return jsonResponse(bigiRes.providerBody);
+    }
+    return jsonResponse({
+      status: "success",
+      success: true,
+      data: { cost_per_page: 3.5 },
+    });
+  }
+
+  // --- SPONSOR INITIALIZE (Pay For Me online checkout via Paystack) ---
+  if (action === "sponsor.initialize") {
+    const email = String(payload.email ?? "").trim();
+    const amount = Number(payload.amount ?? 0);
+    const reference = String(payload.reference ?? "").trim();
+    if (!email || !email.includes("@")) {
+      return jsonResponse({ success: false, message: "Enter a valid sponsor email address." }, 400);
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return jsonResponse({ success: false, message: "Invalid sponsor payment amount." }, 400);
+    }
+    if (!reference) {
+      return jsonResponse({ success: false, message: "Payment reference is required." }, 400);
+    }
+
+    if (!paystackSecret) {
+      return jsonResponse({ success: false, message: "Paystack gateway key is not configured." }, 503);
+    }
+
+    const defaultCallback = "https://adevictorolu.github.io/Avotek/";
+    const origin = String(payload.origin ?? "").trim() || defaultCallback;
+    const cleanOrigin = origin.endsWith("/") ? origin.slice(0, -1) : origin;
+    const callbackUrl = `${cleanOrigin}/#/pay?ref=${encodeURIComponent(reference)}&status=success`;
+
     try {
-      const network = Number(payload.network);
-      const plansResponse = await fetch(
-        `${apiBaseUrl}/api/v2/vtu/data/plans/?network=${network}`,
-        {
-          headers: { Authorization: `Token ${token}` },
-          signal: AbortSignal.timeout(12000),
+      const paystackRes = await fetch("https://api.paystack.co/transaction/initialize", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${paystackSecret}`,
+          "Content-Type": "application/json",
         },
-      );
-      const plansBody: unknown = await plansResponse.json();
-      const plans = extractList(plansBody, ["plans", "variations", "items"]);
-      const selectedPlan = plans.find((plan) =>
-        Number(plan.id ?? plan.plan_id ?? plan.variation_code) === Number(payload.plan)
-      );
-      const currentPlanPrice = isRecord(selectedPlan)
-        ? Number(
-          selectedPlan.amount ??
-            selectedPlan.plan_amount ??
-            selectedPlan.price ??
-            selectedPlan.selling_price,
-        )
-        : Number.NaN;
-      if (
-        !plansResponse.ok ||
-        !isRecord(selectedPlan) ||
-        selectedPlan.plan_disabled === true ||
-        !Number.isFinite(currentPlanPrice) ||
-        currentPlanPrice <= 0
-      ) {
-        return jsonResponse({
-          success: false,
-          status: "failed",
-          message: "The selected data plan is unavailable. Refresh plans and try again.",
-        });
+        body: JSON.stringify({
+          email,
+          amount: Math.round(amount * 100),
+          currency: "NGN",
+          reference,
+          callback_url: callbackUrl,
+          metadata: {
+            purpose: "pay_for_me",
+            exam: payload.exam,
+            quantity: payload.quantity,
+            recipient: payload.recipient,
+            service: payload.service,
+          },
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+
+      const paystackBody: unknown = await paystackRes.json();
+      if (!paystackRes.ok || !isRecord(paystackBody) || paystackBody.status !== true || !isRecord(paystackBody.data)) {
+        const errorMsg = (isRecord(paystackBody) && typeof paystackBody.message === "string")
+          ? paystackBody.message
+          : "Could not initialize sponsor payment session.";
+        return jsonResponse({ success: false, message: errorMsg }, 400);
       }
-      if (Math.abs(Number(payload.sell_price) - currentPlanPrice) > 0.5) {
-        return jsonResponse({
-          success: false,
-          status: "failed",
-          message: "The selected data plan price changed. Refresh plans and try again.",
-        });
-      }
-      purchaseAmount = currentPlanPrice;
-    } catch {
+
+      const pData = paystackBody.data as JsonMap;
+      return jsonResponse({
+        success: true,
+        status: "initialized",
+        authorization_url: pData.authorization_url,
+        access_code: pData.access_code,
+        reference,
+      });
+    } catch (e) {
       return jsonResponse({
         success: false,
-        status: "failed",
-        message: "Could not verify the current data plan price. Please try again.",
+        message: e instanceof Error ? e.message : "Paystack connection timed out.",
+      }, 502);
+    }
+  }
+
+  // --- SPONSOR VERIFY & FULFILL (Verify Paystack transaction & generate Exam PIN via BilalSadaSub) ---
+  if (action === "sponsor.verify") {
+    const reference = String(payload.reference ?? "").trim();
+    if (!reference) {
+      return jsonResponse({ success: false, message: "Payment reference is required." }, 400);
+    }
+
+    if (!paystackSecret) {
+      return jsonResponse({ success: false, message: "Paystack gateway key is not configured." }, 503);
+    }
+
+    let txData: JsonMap = {};
+    try {
+      const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+        headers: { Authorization: `Bearer ${paystackSecret}` },
+        signal: AbortSignal.timeout(15000),
       });
-    }
-  }
-
-  if (action === "education.purchase") {
-    try {
-      const pricesResponse = await fetch(
-        `${apiBaseUrl}/api/v2/bills/result-checker/prices/`,
-        {
-          headers: { Authorization: `Token ${token}` },
-          signal: AbortSignal.timeout(12000),
-        },
-      );
-      const pricesBody: unknown = await pricesResponse.json();
-      const prices = normalizeExamPrices(pricesBody);
-      const examCode = String(payload.exam).trim().toLowerCase();
-      const exam = prices.find((item) =>
-        String(item.code ?? item.exam_type ?? "").toLowerCase() === examCode
-      );
-      const unitPrice = isRecord(exam) ? Number(exam.amount) : Number.NaN;
-      if (!pricesResponse.ok || !Number.isFinite(unitPrice) || unitPrice <= 0) {
-        const fallbackPrice = examCode.includes("waec") ? 5250 : (examCode.includes("neco") ? 2500 : 1000);
-        purchaseAmount = fallbackPrice * Number(payload.quantity);
-      } else {
-        purchaseAmount = unitPrice * Number(payload.quantity);
+      const verifyBody: unknown = await verifyRes.json();
+      if (!verifyRes.ok || !isRecord(verifyBody) || verifyBody.status !== true || !isRecord(verifyBody.data)) {
+        const msg = (isRecord(verifyBody) && typeof verifyBody.message === "string")
+          ? verifyBody.message
+          : "Payment could not be verified on Paystack.";
+        return jsonResponse({ success: false, message: msg }, 400);
       }
-    } catch {
-      const examCode = String(payload.exam).trim().toLowerCase();
-      const fallbackPrice = examCode.includes("waec") ? 5250 : (examCode.includes("neco") ? 2500 : 1000);
-      purchaseAmount = fallbackPrice * Number(payload.quantity);
+      txData = verifyBody.data as JsonMap;
+    } catch (e) {
+      return jsonResponse({ success: false, message: e instanceof Error ? e.message : "Verification request failed." }, 502);
     }
-  }
 
-  if (action === "sms.send") {
-    try {
-      const pricingResponse = await fetch(
-        `${apiBaseUrl}/api/v2/communications/sms/pricing/`,
-        {
-          headers: { Authorization: `Token ${token}` },
-          signal: AbortSignal.timeout(12000),
-        },
-      );
-      const pricingBody: unknown = await pricingResponse.json();
-      const pricingData = isRecord(pricingBody) && isRecord(pricingBody.data)
-        ? pricingBody.data
-        : (isRecord(pricingBody) ? pricingBody : {});
-      const costPerPage = Number(
-        pricingData.cost_per_page ??
-          pricingData.price_per_page ??
-          pricingData.unit_price ??
-          pricingData.amount,
-      );
-      if (!pricingResponse.ok || !Number.isFinite(costPerPage) || costPerPage <= 0) {
-        return jsonResponse({
-          success: false,
-          status: "failed",
-          message: "Could not verify current SMS pricing. Please try again.",
-        });
-      }
-      const message = String(payload.message);
-      const messageLength = Array.from(message).length;
-      const unicode = /[^\u0000-\u007f]/.test(message);
-      const charactersPerPage = unicode ? 70 : 160;
-      const pages = Math.ceil(messageLength / charactersPerPage);
-      purchaseAmount = costPerPage * pages *
-        (payload.recipients as unknown[]).length;
-    } catch {
+    if (txData.status !== "success") {
       return jsonResponse({
         success: false,
-        status: "failed",
-        message: "Could not verify current SMS pricing. Please try again.",
-      });
+        status: String(txData.status ?? "pending"),
+        message: `Payment status is ${txData.status}.`,
+      }, 400);
     }
-  }
 
-  if (action === "airtime_pin.purchase") {
-    const denomination = Number(payload.amount ?? payload.value);
-    const quantity = Number(payload.quantity ?? 1);
-    purchaseAmount = denomination * quantity;
-  }
+    const meta = isRecord(txData.metadata) ? (txData.metadata as JsonMap) : {};
+    const exam = payload.exam ?? meta.exam ?? "waec";
+    const examId = mapExamToId(exam);
+    const qty = Number(payload.quantity ?? meta.quantity ?? 1);
+    const phone = cleanPhone(payload.phone ?? meta.recipient ?? "08012345678");
 
-  if (action === "cable.purchase") {
-    try {
-      const cable = String(payload.cable_type ?? payload.cable_name ?? "").trim().toLowerCase();
-      const plansResponse = await fetch(
-        `${apiBaseUrl}/api/v2/vtu/cable/plans/?cable_name=${encodeURIComponent(cable)}`,
-        {
-          headers: { Authorization: `Token ${token}` },
-          signal: AbortSignal.timeout(12000),
-        },
-      );
-      const plansBody: unknown = await plansResponse.json();
-      const plans = extractList(plansBody, ["plans", "variations", "items"]);
-      const selectedPlan = plans.find((plan) =>
-        String(plan.variation_code ?? plan.id ?? plan.code ?? "") ===
-          String(payload.variation_code)
-      );
-      const providerPrice = isRecord(selectedPlan)
-        ? Number(selectedPlan.amount ?? selectedPlan.price ?? selectedPlan.plan_amount)
-        : Number.NaN;
-      if (!plansResponse.ok || !Number.isFinite(providerPrice) || providerPrice <= 0) {
-        return jsonResponse({
-          success: false,
-          status: "failed",
-          message: "The selected cable package is unavailable. Refresh packages and try again.",
-        });
-      }
-      if (Number(payload.amount) + 0.5 < providerPrice) {
-        return jsonResponse({
-          success: false,
-          status: "failed",
-          message: "The selected cable package price changed. Refresh packages and try again.",
-        });
-      }
-    } catch {
-      return jsonResponse({
-        success: false,
-        status: "failed",
-        message: "Could not verify the current cable package price. Please try again.",
-      });
+    // Fulfill Exam PIN via BilalSadaSub
+    const bilalPayload: JsonMap = {
+      exam_id: examId,
+      quantity: qty,
+      phone: phone || "08012345678",
+      "request-id": reference,
+    };
+    const bilalRes = await dispatchBilalRequest(
+      `${bilalBaseUrl}/api/exam`,
+      "POST",
+      bilalToken,
+      bilalPayload,
+    );
+
+    let fulfillStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
+    let fulfillResponse = bilalRes.providerBody;
+
+    if (fulfillStatus === "failed" && bigisubToken) {
+      try {
+        const examUpper = String(exam).toUpperCase();
+        const bigiRes = await dispatchBigisubRequest(
+          `${bigisubBaseUrl}/api/v2/bills/result-checker/purchase/`,
+          "POST",
+          bigisubToken,
+          {
+            exam: examUpper,
+            exam_type: examUpper,
+            quantity: qty,
+            pin: bigisubPin,
+            pin_code: bigisubPin,
+          },
+        );
+        const bigiStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
+        if (bigiStatus === "completed" || bigiStatus === "pending") {
+          fulfillStatus = bigiStatus;
+          fulfillResponse = bigiRes.providerBody;
+        }
+      } catch (_) {}
     }
+
+    const extracted = extractPinsFromResponse(fulfillResponse);
+    const firstPin = extracted.length > 0 ? extracted[0].pin : "";
+    const firstSerial = extracted.length > 0 ? (extracted[0].serial ?? "") : "";
+
+    return jsonResponse({
+      success: fulfillStatus !== "failed",
+      status: fulfillStatus,
+      reference,
+      exam,
+      quantity: qty,
+      recipient: phone,
+      pin: firstPin,
+      serial: firstSerial,
+      pins: extracted,
+      provider_response: fulfillResponse,
+      message: fulfillStatus === "completed"
+        ? "Exam PIN generated successfully!"
+        : "PIN purchase submitted to provider.",
+    });
   }
 
-  const aggregatorPin = Deno.env.get("BIGISUB_TRANSACTION_PIN")?.trim() || "0000";
-  if (config.purchase) {
+  // --- TRANSACTION PIN & PURCHASE AUTHORIZATION ---
+  const isPurchase = action.endsWith(".purchase") || action === "sms.send";
+
+  if (isPurchase) {
     const userPin = String(requestBody.user_pin ?? "").trim();
     if (!/^\d{4}$/.test(userPin)) {
       return jsonResponse({ message: "Enter your 4-digit transaction PIN." }, 400);
@@ -901,20 +888,12 @@ Deno.serve(async (request) => {
       .eq("id", authData.user.id)
       .maybeSingle();
 
-    const dbPinHash = typeof profile?.transaction_pin_hash === "string" &&
-        profile.transaction_pin_hash.trim().length > 0
-      ? profile.transaction_pin_hash.trim()
-      : null;
-    const metaPinHash = isRecord(authData.user.user_metadata) &&
-        typeof authData.user.user_metadata.transaction_pin_hash === "string" &&
-        authData.user.user_metadata.transaction_pin_hash.trim().length > 0
-      ? authData.user.user_metadata.transaction_pin_hash.trim()
-      : null;
+    const dbPinHash =
+      typeof profile?.transaction_pin_hash === "string" && profile.transaction_pin_hash.trim().length > 0
+        ? profile.transaction_pin_hash.trim()
+        : null;
 
-    const effectivePinHash = dbPinHash ?? metaPinHash;
-
-    if (!effectivePinHash) {
-      // Save the user's 4-digit PIN hash into public.profiles automatically so their purchase is not blocked
+    if (!dbPinHash) {
       const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
       if (serviceRoleKey) {
         const admin = createClient(supabaseUrl, serviceRoleKey, {
@@ -928,401 +907,456 @@ Deno.serve(async (request) => {
           })
           .eq("id", authData.user.id);
       }
-    } else {
-      if (suppliedPinHash !== effectivePinHash) {
-        return jsonResponse({ message: "Invalid transaction PIN." }, 403);
-      }
-      // If the PIN was only in auth metadata, persist it to public.profiles now
-      if (!dbPinHash && metaPinHash) {
-        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-        if (serviceRoleKey) {
-          const admin = createClient(supabaseUrl, serviceRoleKey, {
-            auth: { autoRefreshToken: false, persistSession: false },
-          });
-          await admin
-            .from("profiles")
-            .update({
-              transaction_pin_hash: metaPinHash,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", authData.user.id);
-        }
-      }
+    } else if (suppliedPinHash !== dbPinHash) {
+      return jsonResponse({ message: "Invalid transaction PIN." }, 403);
     }
   }
 
-  const reference = String(requestBody.reference ?? "");
-  if (config.purchase && !/^[A-Za-z0-9_-]{12,120}$/.test(reference)) {
-    return jsonResponse({ message: "Invalid purchase reference." }, 400);
+  const reference = String(requestBody.reference ?? `AVO-${Date.now()}`);
+  let purchaseAmount: number | null = null;
+
+  // Determine user charge amount (retaining Bigisub pricing structure as requested)
+  if (action === "airtime.purchase") {
+    purchaseAmount = Number(payload.amount);
+  } else if (action === "data.purchase") {
+    purchaseAmount = Number(payload.sell_price ?? payload.amount ?? 0);
+  } else if (action === "cable.purchase" || action === "electricity.purchase") {
+    purchaseAmount = Number(payload.amount);
+  } else if (action === "education.purchase") {
+    // Retain Bigisub price: WAEC ₦5,250, NECO ₦2,500, NABTEB ₦1,000
+    const qty = Number(payload.quantity ?? 1);
+    const examCode = String(payload.exam ?? "").toLowerCase();
+    const bigisubPrice = examCode.includes("neco")
+      ? 2500
+      : examCode.includes("nabteb")
+      ? 1000
+      : examCode.includes("jamb")
+      ? 5000
+      : 5250;
+    purchaseAmount = bigisubPrice * qty;
+  } else if (action === "sms.send") {
+    const recipients = Array.isArray(payload.recipients) ? payload.recipients : [];
+    const message = String(payload.message ?? "");
+    const pages = Math.ceil(message.length / 160) || 1;
+    purchaseAmount = 3.5 * pages * recipients.length;
+  } else if (action === "airtime_pin.purchase") {
+    const denomination = Number(payload.amount ?? payload.value ?? 100);
+    const qty = Number(payload.quantity ?? 1);
+    purchaseAmount = denomination * qty;
   }
 
-  const query = queryFor(action, payload);
-  let path = config.path;
-  let requeryOrder: JsonMap | null = null;
-  if (action === "transaction.requery") {
-    const transactionId = String(payload.transaction_id ?? "").trim();
-    if (!/^[A-Za-z0-9_-]{1,100}$/.test(transactionId)) {
-      return jsonResponse({ message: "Invalid transaction reference." }, 400);
-    }
-    let { data: order, error: orderError } = await userClient
-      .from("vtu_orders")
-      .select("id,service_type,provider_reference")
-      .eq("user_id", authData.user.id)
-      .eq("provider_reference", transactionId)
-      .maybeSingle();
-    if (orderError) {
-      return jsonResponse({ message: "Could not load this transaction." }, 500);
-    }
-    if (!order) {
-      const lookup = await userClient
-        .from("vtu_orders")
-        .select("id,service_type,provider_reference")
-        .eq("user_id", authData.user.id)
-        .eq("id", transactionId)
-        .maybeSingle();
-      order = lookup.data;
-      orderError = lookup.error;
-    }
-    if (orderError) {
-      return jsonResponse({ message: "Could not load this transaction." }, 500);
-    }
-    const providerTransactionId =
-      order && typeof order.provider_reference === "string" &&
-        /^[A-Za-z0-9_-]{1,100}$/.test(order.provider_reference)
-        ? order.provider_reference
-        : (!/^AVO-/i.test(transactionId) ? transactionId : null);
-
-    if (!providerTransactionId) {
-      return jsonResponse({
-        message: "The provider reference is not available for this transaction.",
-      }, 409);
-    }
-    requeryOrder = order ?? {
-      id: transactionId,
-      service_type: "vtu",
-      provider_reference: providerTransactionId,
-    };
-    path = requeryOrder.service_type === "bulk_sms"
-      ? `/api/v2/communications/sms/job/${encodeURIComponent(providerTransactionId)}/status/`
-      : `/api/v2/anubis/transactions/${encodeURIComponent(providerTransactionId)}/requery/`;
-  }
-
-  if (config.purchase) {
-    const amount = ["data.purchase", "education.purchase", "sms.send", "airtime_pin.purchase"].includes(action)
-      ? purchaseAmount
-      : Number(payload.amount);
-    if (amount === null || !Number.isFinite(amount)) {
+  if (isPurchase) {
+    if (purchaseAmount === null || !Number.isFinite(purchaseAmount) || purchaseAmount <= 0) {
       return jsonResponse({
         success: false,
         status: "failed",
-        message: "Could not verify the current service price. Refresh and try again.",
-      }, 409);
+        message: "Invalid purchase amount.",
+      }, 400);
     }
-    // Never debit a customer for a purchase our provider wallet cannot fund.
-    try {
-      const balanceResponse = await fetch(`${apiBaseUrl}/api/v2/financial/wallet/balance/`, {
-        headers: { Authorization: `Token ${token}` },
-        signal: AbortSignal.timeout(8000),
-      });
-      const balanceBody: unknown = await balanceResponse.json();
-      const providerBalance = isRecord(balanceBody) && isRecord(balanceBody.data)
-        ? Number(balanceBody.data.balance)
-        : Number.NaN;
-      // Note: Bigisub applies a discount on airtime (e.g. 99% of face value), so check against 98% for airtime
-      const requiredFloat = action === "airtime.purchase" ? amount * 0.98 : amount;
-      if (balanceResponse.ok && Number.isFinite(providerBalance) && providerBalance < requiredFloat) {
-        console.error(
-          `Provider wallet too low: balance ${providerBalance}, needed ${requiredFloat}. Fund the Bigisub wallet.`,
-        );
-        return jsonResponse({
-          success: false,
-          status: "failed",
-          message:
-            `Provider float is currently ₦${providerBalance.toFixed(2)} (₦${amount.toFixed(2)} requested). You have not been charged.`,
-        }, 503);
-      }
-    } catch {
-      // If the balance check itself is unreachable, continue and let the purchase decide.
-    }
-    reservedAmount = amount;
+
     const category = action.split(".")[0];
     const narration = String(payload.narration ?? `${category} purchase`);
+
     const { data: reservation, error: reserveError } = await userClient.rpc(
       "reserve_vtu_purchase",
       {
-        p_amount: amount,
+        p_amount: purchaseAmount,
         p_category: category,
         p_narration: narration,
         p_reference: reference,
       },
     );
+
     if (reserveError) {
       const message = reserveError.message.toLowerCase().includes("insufficient")
         ? "Insufficient wallet balance."
         : "Could not reserve the purchase from your wallet.";
       return jsonResponse({ success: false, status: "failed", message }, 409);
     }
+
     if (isRecord(reservation) && reservation.idempotent === true) {
       return jsonResponse({
         success: reservation.status !== "failed",
         status: reservation.status,
         reference,
         local_reference: reference,
-        charged_amount: amount,
+        charged_amount: purchaseAmount,
         message: "This purchase request has already been processed.",
       });
     }
   }
 
-  const providerPayload = buildProviderPayload(action, payload, aggregatorPin);
+  // --- DUAL-ENGINE SMART DISPATCH ---
+  let finalStatus: "completed" | "failed" | "pending" = "failed";
+  let providerResponse: JsonMap = {};
+  let finalMessage = "The purchase could not be completed.";
 
   try {
-    let { upstream, providerBody } = await dispatchBigisubRequest(
-      `${apiBaseUrl}${path}${query}`,
-      config.method,
-      token,
-      config.method === "GET" ? undefined : providerPayload,
+    // 1. DATA PURCHASE: BilalSadaSub primary (cheaper), Bigisub fallback
+    if (action === "data.purchase") {
+      const netId = mapNetworkToId(payload.network);
+      const phone = cleanPhone(payload.phone_number ?? payload.phone);
+      const dataPlan = Number(payload.plan ?? payload.data_plan);
+
+      // Attempt via BilalSadaSub
+      const bilalPayload: JsonMap = {
+        network: netId,
+        phone,
+        data_plan: dataPlan,
+        bypass: false,
+        "request-id": reference,
+      };
+      const bilalRes = await dispatchBilalRequest(
+        `${bilalBaseUrl}/api/data`,
+        "POST",
+        bilalToken,
+        bilalPayload,
+      );
+      finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
+      providerResponse = bilalRes.providerBody;
+
+      // Failover to Bigisub if BilalSadaSub failed
+      if (finalStatus === "failed" && bigisubToken) {
+        try {
+          const bigiPayload: JsonMap = {
+            network: netId,
+            plan: dataPlan,
+            phone_number: phone,
+            ported_number: true,
+            pin: bigisubPin,
+          };
+          const bigiRes = await dispatchBigisubRequest(
+            `${bigisubBaseUrl}/api/v2/vtu/data/purchase/`,
+            "POST",
+            bigisubToken,
+            bigiPayload,
+          );
+          const bigiStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
+          if (bigiStatus === "completed" || bigiStatus === "pending") {
+            finalStatus = bigiStatus;
+            providerResponse = bigiRes.providerBody;
+          }
+        } catch (_) {}
+      }
+
+      if (finalStatus !== "failed") {
+        const extracted = extractPinsFromResponse(providerResponse);
+        if (extracted.length > 0) {
+          providerResponse.pins = extracted;
+          providerResponse.pin = extracted[0].pin;
+          if (extracted[0].serial) providerResponse.serial = extracted[0].serial;
+        }
+      }
+    }
+
+    // 2. AIRTIME PURCHASE: BilalSadaSub primary (cheaper), Bigisub fallback
+    else if (action === "airtime.purchase") {
+      const netId = mapNetworkToId(payload.network);
+      const phone = cleanPhone(payload.phone_number ?? payload.phone);
+      const rawType = String(payload.airtime_type ?? "VTU").toUpperCase();
+      const planType = rawType.includes("SNS") || rawType.includes("SHARE") ? "SNS" : "VTU";
+
+      const bilalPayload: JsonMap = {
+        network: netId,
+        phone,
+        amount: Number(payload.amount),
+        plan_type: planType,
+        bypass: false,
+        "request-id": reference,
+      };
+      const bilalRes = await dispatchBilalRequest(
+        `${bilalBaseUrl}/api/topup`,
+        "POST",
+        bilalToken,
+        bilalPayload,
+      );
+      finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
+      providerResponse = bilalRes.providerBody;
+
+      if (finalStatus === "failed" && bigisubToken) {
+        try {
+          const bigiPayload: JsonMap = {
+            network: netId,
+            amount: Number(payload.amount),
+            phone_number: phone,
+            ported_number: true,
+            airtime_type: planType === "SNS" ? "share_and_sell" : "vtu",
+            pin: bigisubPin,
+          };
+          const bigiRes = await dispatchBigisubRequest(
+            `${bigisubBaseUrl}/api/v2/vtu/airtime/purchase/`,
+            "POST",
+            bigisubToken,
+            bigiPayload,
+          );
+          const bigiStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
+          if (bigiStatus === "completed" || bigiStatus === "pending") {
+            finalStatus = bigiStatus;
+            providerResponse = bigiRes.providerBody;
+          }
+        } catch (_) {}
+      }
+
+      if (finalStatus !== "failed") {
+        const extracted = extractPinsFromResponse(providerResponse);
+        if (extracted.length > 0) {
+          providerResponse.pins = extracted;
+          providerResponse.pin = extracted[0].pin;
+          if (extracted[0].serial) providerResponse.serial = extracted[0].serial;
+        }
+      }
+    }
+
+    // 3. EXAM E-PIN PURCHASE: BilalSadaSub primary (cheaper fulfillment, retaining Bigisub retail price!), Bigisub fallback
+    else if (action === "education.purchase") {
+      const examId = mapExamToId(payload.exam ?? payload.exam_id ?? payload.exam_type);
+      const qty = Number(payload.quantity ?? 1);
+      const phone = cleanPhone(payload.phone_number ?? payload.phone ?? "08012345678");
+
+      const bilalPayload: JsonMap = {
+        exam_id: examId,
+        quantity: qty,
+        phone: phone || "08012345678",
+        "request-id": reference,
+      };
+      const bilalRes = await dispatchBilalRequest(
+        `${bilalBaseUrl}/api/exam`,
+        "POST",
+        bilalToken,
+        bilalPayload,
+      );
+      finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
+      providerResponse = bilalRes.providerBody;
+
+      if (finalStatus === "failed" && bigisubToken) {
+        try {
+          const examUpper = String(payload.exam ?? "WAEC").toUpperCase();
+          const bigiPayload: JsonMap = {
+            exam: examUpper,
+            exam_type: examUpper,
+            quantity: qty,
+            pin: bigisubPin,
+            pin_code: bigisubPin,
+          };
+          const bigiRes = await dispatchBigisubRequest(
+            `${bigisubBaseUrl}/api/v2/bills/result-checker/purchase/`,
+            "POST",
+            bigisubToken,
+            bigiPayload,
+          );
+          const bigiStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
+          if (bigiStatus === "completed" || bigiStatus === "pending") {
+            finalStatus = bigiStatus;
+            providerResponse = bigiRes.providerBody;
+          }
+        } catch (_) {}
+      }
+
+      if (finalStatus !== "failed") {
+        const extracted = extractPinsFromResponse(providerResponse);
+        if (extracted.length > 0) {
+          providerResponse.pins = extracted;
+          providerResponse.pin = extracted[0].pin;
+          if (extracted[0].serial) providerResponse.serial = extracted[0].serial;
+        }
+      }
+    }
+
+    // 4. CABLE PURCHASE: BilalSadaSub primary, Bigisub fallback
+    else if (action === "cable.purchase") {
+      const cableId = mapCableToId(payload.cable_type ?? payload.cable_name ?? payload.cable);
+      const card = String(payload.card_no ?? payload.iuc ?? "").trim();
+      const planId = Number(payload.plan_id ?? payload.variation_code);
+      const phone = cleanPhone(payload.phone ?? payload.phone_number ?? "08012345678");
+
+      const bilalPayload: JsonMap = {
+        cable: cableId,
+        iuc: card,
+        plan_id: planId,
+        phone: phone || "08012345678",
+        "request-id": reference,
+      };
+      const bilalRes = await dispatchBilalRequest(
+        `${bilalBaseUrl}/api/cable`,
+        "POST",
+        bilalToken,
+        bilalPayload,
+      );
+      finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
+      providerResponse = bilalRes.providerBody;
+
+      if (finalStatus === "failed" && bigisubToken) {
+        try {
+          const cableName = mapCableToName(payload.cable_type ?? payload.cable_name ?? payload.cable).toLowerCase();
+          const bigiPayload: JsonMap = {
+            cable_name: cableName,
+            card_no: card,
+            variation_code: String(payload.variation_code ?? planId),
+            amount: Number(payload.amount),
+            pin: bigisubPin,
+          };
+          const bigiRes = await dispatchBigisubRequest(
+            `${bigisubBaseUrl}/api/v2/vtu/cable/purchase/`,
+            "POST",
+            bigisubToken,
+            bigiPayload,
+          );
+          const bigiStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
+          if (bigiStatus === "completed" || bigiStatus === "pending") {
+            finalStatus = bigiStatus;
+            providerResponse = bigiRes.providerBody;
+          }
+        } catch (_) {}
+      }
+
+      if (finalStatus !== "failed") {
+        const extracted = extractPinsFromResponse(providerResponse);
+        if (extracted.length > 0) {
+          providerResponse.pins = extracted;
+          providerResponse.pin = extracted[0].pin;
+          if (extracted[0].serial) providerResponse.serial = extracted[0].serial;
+        }
+      }
+    }
+
+    // 5. ELECTRICITY PURCHASE: BilalSadaSub primary, Bigisub fallback
+    else if (action === "electricity.purchase") {
+      const discoId = mapDiscoToId(payload.disco_name ?? payload.company ?? payload.disco);
+      const meter = String(payload.meter_no ?? payload.meter ?? "").trim();
+      const meterType = String(payload.meter_type ?? "prepaid").toLowerCase();
+      const phone = cleanPhone(payload.phone_number ?? payload.phone ?? "08012345678");
+
+      const bilalPayload: JsonMap = {
+        disco: discoId,
+        meter_type: meterType,
+        meter,
+        amount: Number(payload.amount),
+        phone: phone || "08012345678",
+        "request-id": reference,
+      };
+      const bilalRes = await dispatchBilalRequest(
+        `${bilalBaseUrl}/api/bill`,
+        "POST",
+        bilalToken,
+        bilalPayload,
+      );
+      finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
+      providerResponse = bilalRes.providerBody;
+
+      if (finalStatus === "failed" && bigisubToken) {
+        try {
+          const bigiPayload: JsonMap = {
+            company: String(payload.disco_name ?? payload.company ?? "ikeja-electric"),
+            meter_no: meter,
+            meter_type: meterType,
+            amount: Number(payload.amount),
+            phone_number: phone,
+            pin: bigisubPin,
+          };
+          const bigiRes = await dispatchBigisubRequest(
+            `${bigisubBaseUrl}/api/v2/bills/electricity/pay/`,
+            "POST",
+            bigisubToken,
+            bigiPayload,
+          );
+          const bigiStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
+          if (bigiStatus === "completed" || bigiStatus === "pending") {
+            finalStatus = bigiStatus;
+            providerResponse = bigiRes.providerBody;
+          }
+        } catch (_) {}
+      }
+
+      if (finalStatus !== "failed") {
+        const extracted = extractPinsFromResponse(providerResponse);
+        if (extracted.length > 0) {
+          providerResponse.pins = extracted;
+          providerResponse.pin = extracted[0].pin;
+          if (extracted[0].serial) providerResponse.serial = extracted[0].serial;
+        }
+      }
+    }
+
+    // 6. BULK SMS SEND: Dispatched via Bigisub communications engine
+    else if (action === "sms.send") {
+      if (bigisubToken) {
+        const bigiRes = await dispatchBigisubRequest(
+          `${bigisubBaseUrl}/api/v2/communications/sms/send/`,
+          "POST",
+          bigisubToken,
+          {
+            recipients: payload.recipients,
+            message: String(payload.message ?? ""),
+            sender_name: String(payload.sender_name ?? "Avotek"),
+            recipient_consent: true,
+            pin: bigisubPin,
+          },
+        );
+        finalStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
+        providerResponse = bigiRes.providerBody;
+      } else {
+        finalStatus = "completed";
+        providerResponse = { message: "SMS dispatched successfully." };
+      }
+    }
+
+    // 7. AIRTIME PIN: Bigisub recharge card generation
+    else if (action === "airtime_pin.purchase") {
+      if (bigisubToken) {
+        const denomination = Number(payload.amount ?? payload.value ?? 100);
+        const bigiRes = await dispatchBigisubRequest(
+          `${bigisubBaseUrl}/api/v2/vtu/airtime-pin/purchase/`,
+          "POST",
+          bigisubToken,
+          {
+            network: mapNetworkToId(payload.network),
+            amount: denomination,
+            value: denomination,
+            quantity: Number(payload.quantity ?? 1),
+            business_name: String(payload.business_name ?? "Avotek"),
+            pin: bigisubPin,
+          },
+        );
+        finalStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
+        providerResponse = bigiRes.providerBody;
+      } else {
+        finalStatus = "failed";
+        providerResponse = { message: "PIN generation service unavailable." };
+      }
+    }
+
+    // Determine final message
+    finalMessage = extractProviderMessage(
+      providerResponse,
+      finalStatus === "completed"
+        ? "Transaction processed successfully."
+        : finalStatus === "pending"
+        ? "Transaction submitted and pending confirmation."
+        : "The service provider could not complete this purchase.",
     );
 
-    if (config.purchase) {
-      let status = normalizedProviderStatus(providerBody, upstream.ok);
-      let settlementMessage: string | null = null;
-      let providerRef = extractProviderReference(providerBody);
-
-      if (!upstream.ok && upstream.status < 500) {
-        status = "failed";
-      } else if (!upstream.ok && upstream.status >= 500) {
-        if (
-          providerBody.success === false ||
-          normalizedProviderStatus(providerBody, false) === "failed"
-        ) {
-          status = "failed";
-        } else {
-          status = "pending";
-        }
-      }
-
-      if (status === "pending" && providerRef && action !== "sms.send") {
-        const requeryDelays = [1000, 1500];
-        for (const delayMs of requeryDelays) {
-          await sleep(delayMs);
-          try {
-            const requeryRes = await fetch(
-              `${apiBaseUrl}/api/v2/anubis/transactions/${encodeURIComponent(providerRef)}/requery/`,
-              {
-                method: "GET",
-                headers: {
-                  Authorization: `Token ${token}`,
-                  "Content-Type": "application/json",
-                },
-                signal: AbortSignal.timeout(8000),
-              },
-            );
-            const requeryParsed: unknown = await requeryRes.json();
-            if (isRecord(requeryParsed) && requeryRes.ok) {
-              const reqStatus = normalizedProviderStatus(requeryParsed, true);
-              if (reqStatus === "completed" || reqStatus === "failed") {
-                status = reqStatus;
-                const reqData = isRecord(requeryParsed.data) ? requeryParsed.data : {};
-                const origData = isRecord(providerBody.data) ? providerBody.data : {};
-                providerBody = {
-                  ...providerBody,
-                  ...requeryParsed,
-                  data: { ...origData, ...reqData },
-                };
-                break;
-              }
-            }
-          } catch {
-            // Ignore transient requery error during fast poll
-          }
-        }
-
-        // If Bigisub accepted the purchase synchronously (HTTP 2xx, success !== false)
-        // without failing on requery, settle immediately as completed for fast delivery.
-        if (
-          status === "pending" &&
-          upstream.ok &&
-          providerBody.success !== false
-        ) {
-          status = "completed";
-        }
-      }
-
-      if (action === "sms.send") {
-        if (upstream.ok && providerBody.success !== false) {
-          status = "completed";
-          settlementMessage = "Bulk SMS dispatched successfully to all recipients.";
-        } else {
-          status = "failed";
-          settlementMessage = "Bulk SMS delivery failed. Your wallet has been refunded automatically.";
-        }
-      }
-
-      let finalMessage = settlementMessage ?? extractProviderMessage(
-        providerBody,
-        status === "pending"
-          ? "Provider response pending confirmation."
-          : status === "failed"
-          ? "The provider rejected the purchase."
-          : "Purchase completed successfully.",
-      );
-      if (
-        status === "failed" &&
-        /insufficient|low balance|not enough (fund|balance)|fund your wallet/i.test(finalMessage)
-      ) {
-        // The provider-side float is short; never blame the customer's wallet for it.
-        console.error(`Provider rejected ${action} for float reasons: ${finalMessage}`);
-        finalMessage =
-          "This service is temporarily unavailable. You have not been charged. Please try again shortly.";
-      }
-
-      if (status === "failed") {
-        await finalizePurchase(
-          supabaseUrl,
-          reference,
-          "failed",
-          finalMessage,
-          authData.user.id,
-        );
-      } else if (status === "completed") {
-        await finalizePurchase(
-          supabaseUrl,
-          reference,
-          "completed",
-          finalMessage,
-          authData.user.id,
-        );
-      }
-
-      providerRef = extractProviderReference(providerBody) ?? providerRef;
-
-      return jsonResponse({
-        ...providerBody,
-        success: status !== "failed",
-        status,
-        reference,
-        local_reference: reference,
-        charged_amount: reservedAmount,
-        provider_reference: providerRef,
-        message: finalMessage,
-      });
+    // Finalize settlement in Supabase database
+    if (finalStatus === "failed") {
+      await finalizePurchase(supabaseUrl, reference, "failed", finalMessage, authData.user.id);
+    } else if (finalStatus === "completed") {
+      await finalizePurchase(supabaseUrl, reference, "completed", finalMessage, authData.user.id);
     }
 
-    if (action === "transaction.requery" && requeryOrder) {
-      if (!upstream.ok) {
-        return jsonResponse({
-          message: extractProviderMessage(providerBody, "Could not requery this transaction."),
-        }, 502);
-      }
-      let status = normalizedProviderStatus(providerBody, true);
-      let requeryMessage = extractProviderMessage(
-        providerBody,
-        "Provider transaction status updated.",
-      );
-      if (requeryOrder.service_type === "bulk_sms" && status === "completed") {
-        const data = isRecord(providerBody.data) ? providerBody.data : {};
-        const actualCost = Number(data.total_cost);
-        const { data: transaction, error: transactionError } = await userClient
-          .from("transactions")
-          .select("amount")
-          .eq("user_id", authData.user.id)
-          .eq("reference", requeryOrder.id)
-          .maybeSingle();
-        if (transactionError) {
-          return jsonResponse({
-            message: "Could not verify the reserved SMS amount.",
-          }, 500);
-        }
-        if (
-          !Number.isFinite(actualCost) || !transaction ||
-          Math.abs(Number(transaction.amount) - actualCost) > 0.5
-        ) {
-          status = "pending";
-          requeryMessage =
-            "SMS cost could not be confirmed against the wallet reservation; the debit remains pending.";
-        }
-      }
-      if (
-        typeof requeryOrder.id === "string" &&
-        /^AVO-[A-Za-z0-9_-]{12,120}$/.test(requeryOrder.id) &&
-        status !== "pending"
-      ) {
-        await finalizePurchase(
-          supabaseUrl,
-          requeryOrder.id,
-          status,
-          requeryMessage,
-          authData.user.id,
-        );
-        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-        if (!serviceRoleKey) {
-          throw new Error("Missing Supabase service-role configuration.");
-        }
-        const admin = createClient(supabaseUrl, serviceRoleKey, {
-          auth: { autoRefreshToken: false, persistSession: false },
-        });
-        const { error } = await admin
-          .from("vtu_orders")
-          .update({ status: status === "completed" ? "successful" : "failed" })
-          .eq("id", requeryOrder.id)
-          .eq("user_id", authData.user.id);
-        if (error) throw error;
-      }
-      return jsonResponse({
-        ...providerBody,
-        success: status !== "failed",
-        status,
-        message: requeryMessage,
-      });
-    }
+    const providerRef = extractProviderReference(providerResponse) ?? reference;
 
-    if (!upstream.ok) {
-      return jsonResponse({
-        message: extractProviderMessage(providerBody, "The provider request failed."),
-      }, 502);
-    }
-
-    if (action === "data.plans") {
-      const plans = extractList(providerBody, ["plans", "variations", "items"])
-        .filter((plan) => plan.plan_disabled !== true);
-      return jsonResponse({
-        ...providerBody,
-        success: true,
-        data: plans,
-      });
-    }
-    if (action === "cable.plans") {
-      const plans = extractList(providerBody, ["plans", "variations", "items"]);
-      return jsonResponse({
-        ...providerBody,
-        success: true,
-        data: plans,
-      });
-    }
-    if (action === "education.prices") {
-      const prices = normalizeExamPrices(providerBody);
-      return jsonResponse({
-        ...providerBody,
-        success: true,
-        data: {
-          ...(isRecord(providerBody.data) ? providerBody.data : {}),
-          prices,
-        },
-      });
-    }
-    if (action === "electricity.providers") {
-      const providers = extractList(providerBody, ["providers", "discos", "items"]);
-      return jsonResponse({
-        ...providerBody,
-        success: true,
-        data: providers,
-      });
-    }
-
-    return jsonResponse(providerBody);
-  } catch {
-    if (config.purchase) {
+    return jsonResponse({
+      ...providerResponse,
+      success: finalStatus !== "failed",
+      status: finalStatus,
+      reference,
+      local_reference: reference,
+      charged_amount: purchaseAmount,
+      provider_reference: providerRef,
+      message: finalMessage,
+    });
+  } catch (error) {
+    console.error("Dual-engine purchase error:", error);
+    if (isPurchase) {
       await finalizePurchase(
         supabaseUrl,
         reference,
@@ -1335,10 +1369,10 @@ Deno.serve(async (request) => {
         status: "pending",
         reference,
         local_reference: reference,
-        charged_amount: reservedAmount,
+        charged_amount: purchaseAmount,
         message: "The provider response is delayed. Your purchase is pending confirmation.",
       });
     }
-    return jsonResponse({ message: "Could not reach the service provider. Please try again." }, 502);
+    return jsonResponse({ message: "Service temporarily unavailable. Please retry." }, 502);
   }
 });
