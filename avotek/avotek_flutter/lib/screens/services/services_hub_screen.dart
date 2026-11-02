@@ -25,33 +25,6 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
     super.dispose();
   }
 
-  void _showComingSoon(String serviceName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$serviceName is not enabled yet.',
-          style: GoogleFonts.figtree(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: AppColors.primaryBlue,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void _showAwaitingProviderContract(String serviceName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$serviceName is disabled until Bigisub request and response details '
-          'are verified.',
-          style: GoogleFonts.figtree(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: AppColors.primaryBlue,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -410,7 +383,6 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (item.isComingSoon) _comingSoonBadge(isDark),
                   const SizedBox(width: 8),
                   const Icon(Icons.chevron_right_rounded, size: 20),
                 ],
@@ -455,8 +427,6 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                         ),
                       ),
                     )
-                  else if (item.isComingSoon)
-                    _comingSoonBadge(isDark)
                   else
                     const SizedBox(height: 16),
                 ],
@@ -477,38 +447,18 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
       child: Icon(item.icon, color: AppColors.primaryBlue, size: 24),
     );
   }
-
-  Widget _comingSoonBadge(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white10 : Colors.black12,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        'COMING SOON',
-        style: GoogleFonts.figtree(
-          fontSize: 9,
-          fontWeight: FontWeight.w800,
-          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-        ),
-      ),
-    );
-  }
 }
 
 class _ServiceCardData {
   final String title;
   final IconData icon;
   final bool isPopular;
-  final bool isComingSoon;
   final VoidCallback onTap;
 
   _ServiceCardData({
     required this.title,
     required this.icon,
     this.isPopular = false,
-    this.isComingSoon = false,
     required this.onTap,
   });
 }

@@ -2059,7 +2059,7 @@ class _ExtraProviderServicesScreenState
                             ),
                           ],
                         ),
-                        const Divider(height: 24),
+                        const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [

@@ -24,7 +24,6 @@ class _InternetScreenState extends State<InternetScreen> {
   int _activeMode = 0; // 0: Buy Now, 1: Gift Voucher
   String _selectedProvider = 'smile';
   Map<String, dynamic>? _selectedPackage;
-  bool _autoRenew = false;
   bool _isPurchasing = false;
 
   final _accountController = TextEditingController();

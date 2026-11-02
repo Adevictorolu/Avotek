@@ -128,10 +128,18 @@ class _PricingScreenState extends State<PricingScreen> {
     {'item': 'DStv Yanga', 'cat': 'Cable TV', 'price': '₦6,000'},
     {'item': 'DStv Compact', 'cat': 'Cable TV', 'price': '₦19,000'},
     {'item': 'Startimes Nova', 'cat': 'Cable TV', 'price': '₦1,900'},
-    {'item': 'WAEC Result Checker Pin', 'cat': 'Exam E-Pin', 'price': '₦5,150'},
-    {'item': 'NECO Result Checker Pin', 'cat': 'Exam E-Pin', 'price': '₦2,120'},
-    {'item': 'NABTEB Result Checker Pin', 'cat': 'Exam E-Pin', 'price': '₦860'},
-    {'item': 'All Electricity Discos (Prepaid/Postpaid)', 'cat': 'Electricity', 'price': 'Face Value'},
+    {'item': 'NABTEB Result Checker Pin', 'cat': 'Exam E-Pin', 'price': '₦1,000'},
+    {'item': 'NECO Result Checker Pin', 'cat': 'Exam E-Pin', 'price': '₦2,500'},
+    {'item': 'WAEC Result Checker Pin', 'cat': 'Exam E-Pin', 'price': '₦5,250'},
+    {'item': 'JAMB UTME / DE E-Pin', 'cat': 'Exam E-Pin', 'price': '₦8,200'},
+    {'item': 'Ikeja Electric (IKEDC)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
+    {'item': 'Eko Electricity (EKEDC)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
+    {'item': 'Abuja Electricity (AEDC)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
+    {'item': 'Kano Electricity (KEDCO)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
+    {'item': 'Port Harcourt Electric (PHED)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
+    {'item': 'Kaduna Electric (KAEDCO)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
+    {'item': 'Benin Electricity (BEDC)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
+    {'item': 'Aba Power (APLE)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
   ];
 
   @override

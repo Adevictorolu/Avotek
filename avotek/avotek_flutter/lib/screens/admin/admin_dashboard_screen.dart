@@ -258,7 +258,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     deltaAmount: delta,
                     reason: reason.isNotEmpty ? reason : 'Admin adjustment',
                   );
-                  if (context.mounted) {
+                  if (mounted) {
                     TopNotification.showSuccess(
                       context,
                       'Wallet adjusted. New balance: ₦${newBal.toStringAsFixed(2)}',
@@ -266,7 +266,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     _loadAdminData();
                   }
                 } catch (e) {
-                  if (context.mounted) {
+                  if (mounted) {
                     TopNotification.showError(context, 'Adjustment failed: $e');
                   }
                 }

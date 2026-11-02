@@ -70,61 +70,6 @@ class TransactionSuccessDialog extends StatelessWidget {
     );
   }
 
-  String _formatReceiptText() {
-    final now = DateFormat('MMM dd, yyyy • hh:mm a').format(DateTime.now());
-    final buffer = StringBuffer();
-    buffer.writeln('====================================');
-    buffer.writeln('          AVOTEK RECEIPT            ');
-    buffer.writeln('    Instant VTU & Bill Payments     ');
-    buffer.writeln('====================================');
-    buffer.writeln('Date: $now');
-    buffer.writeln('Status: SUCCESSFUL / DELIVERED');
-    buffer.writeln('Service: ${serviceType.toUpperCase()}');
-    buffer.writeln('Recipient: $recipient');
-    buffer.writeln('Amount: ₦${NumberFormat('#,##0.00').format(amount)}');
-    if (reference != null && reference!.isNotEmpty) {
-      buffer.writeln('Avotek Ref: $reference');
-    }
-    if (providerReference != null && providerReference!.isNotEmpty) {
-      buffer.writeln('Provider Ref: $providerReference');
-    }
-    if (token != null && token!.isNotEmpty) {
-      buffer.writeln('Token / Code: $token');
-    }
-    if (units != null && units!.isNotEmpty) {
-      buffer.writeln('Units: $units');
-    }
-    if (issuedPins.isNotEmpty) {
-      buffer.writeln('--- ISSUED PIN(S) ---');
-      for (final pin in issuedPins) {
-        buffer.writeln(pin);
-      }
-    }
-    buffer.writeln('====================================');
-    buffer.writeln('Support WhatsApp: +2348167002789');
-    buffer.writeln('Thank you for choosing Avotek!');
-    buffer.writeln('====================================');
-    return buffer.toString();
-  }
-
-  void _copyReceipt(BuildContext context) {
-    final text = _formatReceiptText();
-    Clipboard.setData(ClipboardData(text: text));
-    TopNotification.showSuccess(
-      context,
-      'Full transaction receipt copied to clipboard!',
-      title: 'Receipt Copied',
-    );
-  }
-
-  void _sendReceiptEmail(BuildContext context) {
-    TopNotification.showSuccess(
-      context,
-      'Receipt queued for email dispatch to your account address.',
-      title: 'Receipt Emailed',
-    );
-  }
-
   pw.TableRow _buildPdfTableRow(String label, String value) {
     return pw.TableRow(
       children: [
@@ -178,22 +123,22 @@ class TransactionSuccessDialog extends StatelessWidget {
                 if (logoImage != null)
                   pw.Positioned.fill(
                     child: pw.Opacity(
-                      opacity: 0.05,
+                      opacity: 0.045,
                       child: pw.Column(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-                        children: List.generate(4, (rowIdx) {
+                        children: List.generate(6, (rowIdx) {
                           return pw.Row(
                             mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-                            children: List.generate(3, (colIdx) {
+                            children: List.generate(4, (colIdx) {
                               return pw.Transform.rotate(
                                 angle: -0.785398,
                                 child: pw.ClipRRect(
-                                  horizontalRadius: 16,
-                                  verticalRadius: 16,
+                                  horizontalRadius: 10,
+                                  verticalRadius: 10,
                                   child: pw.Image(
                                     logoImage!,
-                                    width: 85,
-                                    height: 85,
+                                    width: 52,
+                                    height: 52,
                                     fit: pw.BoxFit.contain,
                                   ),
                                 ),
@@ -210,35 +155,54 @@ class TransactionSuccessDialog extends StatelessWidget {
                     // Header with Branding
                     pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      crossAxisAlignment: pw.CrossAxisAlignment.center,
                       children: [
-                        pw.Column(
-                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        pw.Row(
+                          crossAxisAlignment: pw.CrossAxisAlignment.center,
                           children: [
-                            pw.Text(
-                              'AVOTEK',
-                              style: pw.TextStyle(
-                                fontSize: 24,
-                                fontWeight: pw.FontWeight.bold,
-                                color: const PdfColor.fromInt(0xFF0052FF),
+                            if (logoImage != null)
+                              pw.Container(
+                                width: 44,
+                                height: 44,
+                                padding: const pw.EdgeInsets.all(5),
+                                decoration: pw.BoxDecoration(
+                                  color: PdfColors.white,
+                                  borderRadius: pw.BorderRadius.circular(10),
+                                  border: pw.Border.all(
+                                    color: const PdfColor.fromInt(0xFFE2E8F0),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: pw.ClipRRect(
+                                  horizontalRadius: 6,
+                                  verticalRadius: 6,
+                                  child: pw.Image(
+                                    logoImage,
+                                    fit: pw.BoxFit.contain,
+                                  ),
+                                ),
                               ),
-                            ),
-                            pw.Text(
-                              'FINANCIAL TECHNOLOGIES',
-                              style: pw.TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: pw.FontWeight.bold,
-                                letterSpacing: 1.5,
-                                color: const PdfColor.fromInt(0xFF475569),
-                              ),
-                            ),
-                            pw.SizedBox(height: 3),
-                            pw.Text(
-                              'support@avotek.ng • WhatsApp: +234 816 700 2789',
-                              style: const pw.TextStyle(
-                                fontSize: 8.5,
-                                color: PdfColor.fromInt(0xFF64748B),
-                              ),
+                            pw.SizedBox(width: 10),
+                            pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.Text(
+                                  'AVOTEK',
+                                  style: pw.TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: const PdfColor.fromInt(0xFF0052FF),
+                                  ),
+                                ),
+                                pw.SizedBox(height: 2),
+                                pw.Text(
+                                  'support@avotek.com.ng • WhatsApp: +234 816 700 2789',
+                                  style: const pw.TextStyle(
+                                    fontSize: 8.5,
+                                    color: PdfColor.fromInt(0xFF64748B),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -498,20 +462,28 @@ class TransactionSuccessDialog extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
                     child: Opacity(
-                      opacity: isDark ? 0.03 : 0.04,
-                      child: Center(
-                        child: Transform.rotate(
-                          angle: -0.785398,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(24),
-                            child: Image.asset(
-                              'assets/images/logo.png',
-                              width: 170,
-                              height: 170,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
+                      opacity: isDark ? 0.025 : 0.035,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: List.generate(3, (r) {
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(2, (c) {
+                              return Transform.rotate(
+                                angle: -0.785398,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.asset(
+                                    'assets/images/logo.png',
+                                    width: 58,
+                                    height: 58,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              );
+                            }),
+                          );
+                        }),
                       ),
                     ),
                   ),
@@ -680,6 +652,16 @@ class TransactionSuccessDialog extends StatelessWidget {
                         _buildReceiptRow(
                           'Reference',
                           reference!,
+                          isDark,
+                          isCopyable: true,
+                          context: context,
+                        ),
+                      ],
+                      if (providerReference != null && providerReference!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        _buildReceiptRow(
+                          'Aggregator Ref',
+                          providerReference!,
                           isDark,
                           isCopyable: true,
                           context: context,

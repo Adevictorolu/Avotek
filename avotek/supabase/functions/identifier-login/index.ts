@@ -13,6 +13,17 @@ function response(status: number, body: Record<string, unknown>) {
   });
 }
 
+function avotekIdFor(userId: string): string {
+  const clean = userId.trim();
+  if (!clean) return "AVO10001";
+  let hash = 0;
+  for (let i = 0; i < clean.length; i++) {
+    hash = (31 * hash + clean.charCodeAt(i)) & 0x7fffffff;
+  }
+  const number = 10000 + (hash % 90000);
+  return `AVO${number}`;
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -56,26 +67,39 @@ Deno.serve(async (request) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  let lookup = admin.from("profiles").select("email");
+  let lookup = admin.from("profiles").select("id, email");
   if (/^AVO-?[A-Z0-9]{4,16}$/i.test(identifier)) {
     const rawClean = identifier.toUpperCase().replace(/[^A-Z0-9]/g, "");
     const rawDigits = rawClean.replace(/^AVO/, "");
     const candidate1 = `AVO${rawDigits}`;
     const candidate2 = `AVO-${rawDigits}`;
-    lookup = lookup.or(`avo_id.eq.${identifier.toUpperCase()},avo_id.eq.${candidate1},avo_id.eq.${candidate2}`);
+    lookup = lookup.or(`avo_id.eq.${identifier.toUpperCase()},avo_id.eq.${candidate1},avo_id.eq.${candidate2},referral_code.eq.${identifier.toUpperCase()},referral_code.eq.${candidate1},referral_code.eq.${candidate2}`);
   } else if (/^[0-9+() -]{7,20}$/.test(identifier)) {
     lookup = lookup.eq("phone", identifier);
   } else if (/^[a-zA-Z0-9._-]{3,32}$/.test(identifier)) {
-    lookup = lookup.eq("username", identifier.toLowerCase());
+    lookup = lookup.or(`username.eq.${identifier.toLowerCase()},avo_id.eq.${identifier.toUpperCase()},referral_code.eq.${identifier.toUpperCase()}`);
   } else {
     return response(401, { error: "Invalid credentials." });
   }
 
-  const { data: profile, error: lookupError } = await lookup.maybeSingle();
+  let { data: profile, error: lookupError } = await lookup.maybeSingle();
   if (lookupError) {
     console.error("Identifier lookup failed:", lookupError.message);
     return response(500, { error: "Sign-in is temporarily unavailable." });
   }
+
+  // If not found yet and input is an Avotek ID format, resolve deterministically across registered accounts
+  if (!profile?.email && /^AVO-?[0-9]{5}$/i.test(identifier)) {
+    const targetId = `AVO${identifier.toUpperCase().replace(/[^0-9]/g, "")}`;
+    const { data: allProfiles } = await admin.from("profiles").select("id, email").limit(500);
+    if (allProfiles) {
+      const match = allProfiles.find((p) => avotekIdFor(p.id) === targetId);
+      if (match?.email) {
+        profile = match;
+      }
+    }
+  }
+
   if (!profile?.email) {
     return response(401, { error: "Invalid credentials." });
   }

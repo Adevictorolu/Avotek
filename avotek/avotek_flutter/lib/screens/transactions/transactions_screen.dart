@@ -8,7 +8,6 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:provider/provider.dart';
 import 'package:printing/printing.dart';
-import '../../core/utils/text_file_download.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
@@ -103,34 +102,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   void _showAuditModal(List<TransactionModel> transactions) {
     TransactionAuditDialog.show(context, transactions);
-  }
-
-  String _statementCsv(List<TransactionModel> transactions) {
-    String escape(String value) => '"${value.replaceAll('"', '""')}"';
-
-    final rows = <List<String>>[
-      [
-        'Date',
-        'Reference',
-        'Type',
-        'Category',
-        'Amount (NGN)',
-        'Status',
-        'Narration',
-      ],
-      ...transactions.map(
-        (tx) => [
-          tx.createdAt.toIso8601String(),
-          tx.reference,
-          tx.type,
-          tx.category,
-          tx.amount.toStringAsFixed(2),
-          tx.status,
-          tx.narration ?? '',
-        ],
-      ),
-    ];
-    return rows.map((row) => row.map(escape).join(',')).join('\r\n');
   }
 
   @override
@@ -805,22 +776,22 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             children: [
               pw.Positioned.fill(
                 child: pw.Opacity(
-                  opacity: 0.05,
+                  opacity: 0.045,
                   child: pw.Column(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-                    children: List.generate(4, (rowIdx) {
+                    children: List.generate(6, (rowIdx) {
                       return pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-                        children: List.generate(3, (colIdx) {
+                        children: List.generate(4, (colIdx) {
                           return pw.Transform.rotate(
                             angle: -0.785398,
                             child: pw.ClipRRect(
-                              horizontalRadius: 16,
-                              verticalRadius: 16,
+                              horizontalRadius: 10,
+                              verticalRadius: 10,
                               child: pw.Image(
                                 logo,
-                                width: 85,
-                                height: 85,
+                                width: 52,
+                                height: 52,
                                 fit: pw.BoxFit.contain,
                               ),
                             ),
@@ -837,11 +808,47 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
-                  pw.Image(
-                    logo,
-                    width: 132,
-                    height: 48,
-                    fit: pw.BoxFit.contain,
+                  pw.Container(
+                    width: 44,
+                    height: 44,
+                    padding: const pw.EdgeInsets.all(5),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.white,
+                      borderRadius: pw.BorderRadius.circular(10),
+                      border: pw.Border.all(
+                        color: const PdfColor.fromInt(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                    ),
+                    child: pw.ClipRRect(
+                      horizontalRadius: 6,
+                      verticalRadius: 6,
+                      child: pw.Image(
+                        logo,
+                        fit: pw.BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(width: 10),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'AVOTEK',
+                        style: pw.TextStyle(
+                          color: blue,
+                          fontSize: 18,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        'support@avotek.com.ng',
+                        style: pw.TextStyle(
+                          color: slate,
+                          fontSize: 9,
+                        ),
+                      ),
+                    ],
                   ),
                   pw.Spacer(),
                   pw.Container(

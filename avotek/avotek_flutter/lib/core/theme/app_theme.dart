@@ -281,7 +281,7 @@ class AppTheme {
         elevation: 4,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.lightBorder, width: 1),
+          side: BorderSide.none,
         ),
         titleTextStyle: GoogleFonts.figtree(
           fontSize: 18,
@@ -422,7 +422,7 @@ class AppTheme {
         elevation: 4,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.darkBorder, width: 1),
+          side: BorderSide.none,
         ),
         titleTextStyle: GoogleFonts.figtree(
           fontSize: 18,

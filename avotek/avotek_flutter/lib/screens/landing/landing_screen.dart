@@ -1236,7 +1236,7 @@ class _LandingScreenState extends State<LandingScreen>
                               width: 28,
                               height: 28,
                               fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) =>
+                              errorBuilder: (context, error, stackTrace) =>
                                   ServiceBrandLogo(provider: p.$1, size: 28),
                             ),
                           ),

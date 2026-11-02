@@ -114,28 +114,66 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
 
   void _showMoreShareOptions(String link) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const platforms = [
-      ('Telegram', 'telegram', Icons.send_rounded),
-      ('Reddit', 'reddit', Icons.forum_outlined),
-      ('Pinterest', 'pinterest', Icons.push_pin_outlined),
+    final platforms = [
+      ('WhatsApp', 'whatsapp', Icons.chat_rounded, const Color(0xFF25D366)),
+      ('Twitter / X', 'twitter', Icons.alternate_email_rounded, const Color(0xFF1DA1F2)),
+      ('Facebook', 'facebook', Icons.facebook_rounded, const Color(0xFF1877F2)),
+      ('Telegram', 'telegram', Icons.send_rounded, const Color(0xFF0088CC)),
+      ('Copy Link', 'copy', Icons.copy_rounded, AppColors.primaryBlue),
     ];
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+      backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final platform in platforms)
-              ListTile(
-                leading: Icon(platform.$3),
-                title: Text(platform.$1),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  _shareOnPlatform(platform.$2, link);
-                },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Share Your Avotek Referral Link',
+                style: GoogleFonts.figtree(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
               ),
-          ],
+              const SizedBox(height: 14),
+              for (final platform in platforms)
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: platform.$4.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(platform.$3, color: platform.$4, size: 20),
+                  ),
+                  title: Text(
+                    platform.$1,
+                    style: GoogleFonts.figtree(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    if (platform.$2 == 'copy') {
+                      _copyToClipboard(link);
+                    } else {
+                      _shareOnPlatform(platform.$2, link);
+                    }
+                  },
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -242,36 +280,32 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                         setDialogState(() => isRedeeming = true);
                         try {
                           final res = await SupabaseService.instance.redeemAvoPoints(_userAvoPoints);
-                          if (!ctx.mounted) return;
-                          Navigator.pop(ctx);
+                          if (ctx.mounted) Navigator.pop(ctx);
+                          if (!mounted) return;
                           if (res['success'] == true) {
-                            if (context.mounted) {
-                              await context.read<AuthProvider>().refreshWallet();
-                              await _loadReferralData();
-                              TopNotification.showSuccess(
-                                context,
-                                'Redeemed ${res['points_redeemed']} AVO points! ₦${(res['credited_naira'] as num).toStringAsFixed(0)} credited to your wallet.',
-                                title: 'Points Redeemed',
-                              );
-                            }
+                            await context.read<AuthProvider>().refreshWallet();
+                            await _loadReferralData();
+                            if (!mounted) return;
+                            TopNotification.showSuccess(
+                              context,
+                              'Redeemed ${res['points_redeemed']} AVO points! ₦${(res['credited_naira'] as num).toStringAsFixed(0)} credited to your wallet.',
+                              title: 'Points Redeemed',
+                            );
                           } else {
-                            if (context.mounted) {
-                              TopNotification.showError(
-                                context,
-                                res['error']?.toString() ?? 'Redemption failed.',
-                                title: 'Redemption Error',
-                              );
-                            }
+                            TopNotification.showError(
+                              context,
+                              res['error']?.toString() ?? 'Redemption failed.',
+                              title: 'Redemption Error',
+                            );
                           }
                         } catch (e) {
                           if (ctx.mounted) Navigator.pop(ctx);
-                          if (context.mounted) {
-                            TopNotification.showError(
-                              context,
-                              'Redemption error: $e',
-                              title: 'Redemption Failed',
-                            );
-                          }
+                          if (!mounted) return;
+                          TopNotification.showError(
+                            context,
+                            'Redemption error: $e',
+                            title: 'Redemption Failed',
+                          );
                         }
                       }
                     : () {
@@ -895,8 +929,8 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             ),
           ),
           ElevatedButton.icon(
-            onPressed: () => _copyToClipboard(referralLink),
-            icon: const Icon(Icons.send_rounded, size: 14),
+            onPressed: () => _showMoreShareOptions(referralLink),
+            icon: const Icon(Icons.share_rounded, size: 14),
             label: const Text('Invite Now'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
