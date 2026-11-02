@@ -217,6 +217,8 @@ class _ExtraProviderServicesScreenState
                 amt is num &&
                 amt > 0;
           }).toList();
+          // Rank from lowest pricing to higher pricing
+          valid.sort((a, b) => ((a['amount'] ?? 0) as num).compareTo((b['amount'] ?? 0) as num));
           if (valid.isNotEmpty) {
             _examPrices = valid.map((p) {
               final code = (p['code'] ?? p['exam_type'] ?? '').toString();

@@ -575,6 +575,13 @@ Deno.serve(async (request) => {
       return p;
     });
 
+    // Rank from lowest pricing to highest pricing as requested
+    finalizedPlans.sort((a, b) => {
+      const priceA = Number(a.amount ?? a.price ?? a.plan_amount ?? 0);
+      const priceB = Number(b.amount ?? b.price ?? b.plan_amount ?? 0);
+      return priceA - priceB;
+    });
+
     return jsonResponse({
       status: "success",
       success: true,
@@ -601,6 +608,13 @@ Deno.serve(async (request) => {
         if (bigiPlans.length > 0) plans = bigiPlans;
       } catch (_) {}
     }
+
+    // Rank cable plans from lowest to highest price
+    plans.sort((a, b) => {
+      const priceA = Number(a.package_amount ?? a.amount ?? a.price ?? 0);
+      const priceB = Number(b.package_amount ?? b.amount ?? b.price ?? 0);
+      return priceA - priceB;
+    });
 
     return jsonResponse({
       status: "success",
@@ -744,6 +758,8 @@ Deno.serve(async (request) => {
       { code: "nabteb", exam_id: "3", exam: "NABTEB", name: "NABTEB Result Checker", amount: nabtebAmt, mode: "quantity" },
       { code: "jamb", exam_id: "4", exam: "JAMB UTME", name: "JAMB UTME / Direct Entry", amount: jambAmt, mode: "profile_code" },
     ];
+    // Rank exam prices from lowest to highest
+    retailPrices.sort((a, b) => a.amount - b.amount);
     return jsonResponse({
       status: "success",
       success: true,
@@ -995,17 +1011,21 @@ Deno.serve(async (request) => {
   } else if (action === "cable.purchase" || action === "electricity.purchase") {
     purchaseAmount = Number(payload.amount);
   } else if (action === "education.purchase") {
-    // Retain Bigisub price: WAEC ₦5,250, NECO ₦2,500, NABTEB ₦1,000
     const qty = Number(payload.quantity ?? 1);
-    const examCode = String(payload.exam ?? "").toLowerCase();
-    const bigisubPrice = examCode.includes("neco")
-      ? 2500
-      : examCode.includes("nabteb")
-      ? 1000
-      : examCode.includes("jamb")
-      ? 5000
-      : 5250;
-    purchaseAmount = bigisubPrice * qty;
+    const passedUnit = Number(payload.unit_price ?? payload.price ?? 0);
+    if (passedUnit > 0) {
+      purchaseAmount = passedUnit * qty;
+    } else {
+      const examCode = String(payload.exam ?? "").toLowerCase();
+      const defaultPrice = examCode.includes("neco")
+        ? 2500
+        : examCode.includes("nabteb")
+        ? 1000
+        : examCode.includes("jamb")
+        ? 8200
+        : 5250;
+      purchaseAmount = defaultPrice * qty;
+    }
   } else if (action === "sms.send") {
     const recipients = Array.isArray(payload.recipients) ? payload.recipients : [];
     const message = String(payload.message ?? "");
@@ -1073,7 +1093,7 @@ Deno.serve(async (request) => {
       const isBigisubSelected = variationCode.startsWith("BIGI-") || String(payload.provider ?? "").toLowerCase() === "bigisub";
 
       if (isBigisubSelected && bigisubToken) {
-        // Dispatch to Bigisub primary
+        // Direct dispatch to Bigisub API (one direct API per selected plan)
         try {
           const bigiPayload: JsonMap = {
             network: netId,
@@ -1090,15 +1110,18 @@ Deno.serve(async (request) => {
           );
           finalStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
           providerResponse = bigiRes.providerBody;
-        } catch (_) {}
-
-        // Fallback to BilalSadaSub if Bigisub fails
-        if (finalStatus === "failed") {
+        } catch (err) {
+          finalStatus = "failed";
+          providerResponse = { message: `Bigisub error: ${err}` };
+        }
+      } else {
+        // Direct dispatch to BilalSadaSub API (bypass: true ensures valid delivery across all numbers/prefixes)
+        try {
           const bilalPayload: JsonMap = {
             network: netId,
             phone,
             data_plan: dataPlan,
-            bypass: false,
+            bypass: true,
             "request-id": reference,
           };
           const bilalRes = await dispatchBilalRequest(
@@ -1107,52 +1130,11 @@ Deno.serve(async (request) => {
             bilalToken,
             bilalPayload,
           );
-          const bilalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
-          if (bilalStatus === "completed" || bilalStatus === "pending") {
-            finalStatus = bilalStatus;
-            providerResponse = bilalRes.providerBody;
-          }
-        }
-      } else {
-        // Attempt via BilalSadaSub primary
-        const bilalPayload: JsonMap = {
-          network: netId,
-          phone,
-          data_plan: dataPlan,
-          bypass: false,
-          "request-id": reference,
-        };
-        const bilalRes = await dispatchBilalRequest(
-          `${bilalBaseUrl}/api/data`,
-          "POST",
-          bilalToken,
-          bilalPayload,
-        );
-        finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
-        providerResponse = bilalRes.providerBody;
-
-        // Failover to Bigisub if BilalSadaSub failed
-        if (finalStatus === "failed" && bigisubToken) {
-          try {
-            const bigiPayload: JsonMap = {
-              network: netId,
-              plan: dataPlan,
-              phone_number: phone,
-              ported_number: true,
-              pin: bigisubPin,
-            };
-            const bigiRes = await dispatchBigisubRequest(
-              `${bigisubBaseUrl}/api/v2/vtu/data/purchase/`,
-              "POST",
-              bigisubToken,
-              bigiPayload,
-            );
-            const bigiStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
-            if (bigiStatus === "completed" || bigiStatus === "pending") {
-              finalStatus = bigiStatus;
-              providerResponse = bigiRes.providerBody;
-            }
-          } catch (_) {}
+          finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
+          providerResponse = bilalRes.providerBody;
+        } catch (err) {
+          finalStatus = "failed";
+          providerResponse = { message: `BilalSadaSub error: ${err}` };
         }
       }
 
@@ -1178,7 +1160,7 @@ Deno.serve(async (request) => {
         phone,
         amount: Number(payload.amount),
         plan_type: planType,
-        bypass: false,
+        bypass: true,
         "request-id": reference,
       };
       const bilalRes = await dispatchBilalRequest(

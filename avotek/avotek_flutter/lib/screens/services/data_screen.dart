@@ -160,6 +160,9 @@ class _DataScreenState extends State<DataScreen> {
           .where((p) => (p['id'] as int) > 0 && (p['price'] as double) > 0)
           .toList();
 
+      // Rank from lowest pricing to highest pricing
+      formatted.sort((a, b) => (a['price'] as double).compareTo(b['price'] as double));
+
       setState(() {
         _livePlans = formatted;
         _isLoadingPlans = false;
@@ -321,6 +324,7 @@ class _DataScreenState extends State<DataScreen> {
           sellPrice: planPrice,
           planId: planId,
           userPin: transactionPin,
+          provider: plan['provider']?.toString(),
         );
 
         await auth.refreshWallet();

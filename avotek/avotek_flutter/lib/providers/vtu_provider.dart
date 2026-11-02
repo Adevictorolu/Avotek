@@ -503,6 +503,7 @@ class VtuProvider extends ChangeNotifier {
     required double sellPrice,
     int? planId,
     String? userPin,
+    String? provider,
   }) async {
     // Resolve plan ID
     var resolvedPlanId = planId;
@@ -539,6 +540,8 @@ class VtuProvider extends ChangeNotifier {
         phone: phone,
         sellPrice: sellPrice,
         pin: userPin,
+        variationCode: variationCode,
+        provider: provider,
       ),
     );
   }

@@ -156,10 +156,10 @@ class VtuApiService {
     required double sellPrice,
     String? pin,
     bool portedNumber = true,
-  }) => _invoke(
-    'data.purchase',
-    userPin: pin,
-    payload: {
+    String? variationCode,
+    String? provider,
+  }) {
+    final body = <String, dynamic>{
       'network': network is int
           ? network
           : mapNetworkNameToId(network.toString()),
@@ -167,8 +167,15 @@ class VtuApiService {
       'phone_number': _cleanPhoneNumber(phone),
       'ported_number': portedNumber,
       'sell_price': sellPrice,
-    },
-  );
+    };
+    if (variationCode != null) body['variation_code'] = variationCode;
+    if (provider != null) body['provider'] = provider;
+    return _invoke(
+      'data.purchase',
+      userPin: pin,
+      payload: body,
+    );
+  }
 
   Future<List<Map<String, dynamic>>> getCablePlans({
     required String cableName,

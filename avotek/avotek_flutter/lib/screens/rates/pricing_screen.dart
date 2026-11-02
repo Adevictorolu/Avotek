@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../providers/vtu_provider.dart';
 import '../../widgets/avotek_logo.dart';
 import '../../widgets/service_brand_logo.dart';
 import '../../widgets/top_notification.dart';
@@ -18,6 +19,61 @@ class PricingScreen extends StatefulWidget {
 
 class _PricingScreenState extends State<PricingScreen> {
   String _selectedNetwork = 'MTN';
+  final Map<String, List<Map<String, dynamic>>> _liveNetworkPlans = {};
+  bool _isLoadingLive = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchLiveRatesFor(_selectedNetwork);
+    });
+  }
+
+  Future<void> _fetchLiveRatesFor(String network) async {
+    if (_liveNetworkPlans.containsKey(network)) return;
+    setState(() => _isLoadingLive = true);
+    try {
+      final vtu = context.read<VtuProvider>();
+      final raw = await vtu.fetchLiveDataPlans(network);
+      if (raw.isNotEmpty && mounted) {
+        final parsed = raw.map((p) {
+          final size = (p['size'] ?? '').toString().trim();
+          final vol = (p['plan_volume'] ?? p['volume'] ?? '').toString().trim();
+          final type = (p['plantype'] ?? p['plan_type'] ?? p['type'] ?? 'SME').toString().trim().toUpperCase();
+          final val = (p['validity'] ?? p['month_validate'] ?? p['plan_day'] ?? '30 Days').toString().trim();
+          final fallbackName = (p['plan_name'] ?? p['name'] ?? p['plan'] ?? '').toString().trim();
+          final rawAmt = p['amount'] ?? p['plan_amount'] ?? p['price'];
+          final price = rawAmt is num ? rawAmt.toDouble() : double.tryParse(rawAmt?.toString() ?? '') ?? 0.0;
+          final displayVol = ('$size$vol').trim().isNotEmpty
+              ? '$size$vol'
+              : (fallbackName.isNotEmpty ? fallbackName : '$type Data');
+          final wasPrice = (price * 1.35).roundToDouble();
+
+          return {
+            'plan': '$displayVol $type',
+            'validity': val,
+            'was': wasPrice,
+            'price': price,
+          };
+        }).where((p) => (p['price'] as double) > 0).toList();
+
+        // Rank from lowest pricing to highest pricing
+        parsed.sort((a, b) => (a['price'] as double).compareTo(b['price'] as double));
+
+        if (mounted) {
+          setState(() {
+            _liveNetworkPlans[network] = parsed;
+            _isLoadingLive = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoadingLive = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingLive = false);
+    }
+  }
 
   final Map<String, List<Map<String, dynamic>>> _dataPlans = {
     'MTN': [
@@ -239,7 +295,8 @@ class _PricingScreenState extends State<PricingScreen> {
   }
 
   Widget _buildDataRatesSection(bool isDark) {
-    final plans = _dataPlans[_selectedNetwork] ?? [];
+    final live = _liveNetworkPlans[_selectedNetwork];
+    final plans = (live != null && live.isNotEmpty) ? live : (_dataPlans[_selectedNetwork] ?? []);
 
     return Container(
       decoration: BoxDecoration(
@@ -258,7 +315,15 @@ class _PricingScreenState extends State<PricingScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Data Bundles', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Row(
+                      children: [
+                        const Text('Data Bundles', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        if (_isLoadingLive) ...[
+                          const SizedBox(width: 8),
+                          const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+                        ],
+                      ],
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       'Crossed-out figure represents network telecom sticker price',
@@ -288,7 +353,10 @@ class _PricingScreenState extends State<PricingScreen> {
                     selected: isSel,
                     selectedColor: AppColors.primaryCyan,
                     backgroundColor: isDark ? AppColors.darkCardVariant : const Color(0xFFF1F5F9),
-                    onSelected: (_) => setState(() => _selectedNetwork = net),
+                    onSelected: (_) {
+                      setState(() => _selectedNetwork = net);
+                      _fetchLiveRatesFor(net);
+                    },
                   ),
                 );
               }).toList(),

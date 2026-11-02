@@ -121,6 +121,9 @@ class _CableScreenState extends State<CableScreen> {
           )
           .toList();
 
+      // Rank cable packages from lowest price to highest price
+      formatted.sort((a, b) => (a['price'] as double).compareTo(b['price'] as double));
+
       setState(() {
         _livePackages = formatted;
         _isLoadingPackages = false;
