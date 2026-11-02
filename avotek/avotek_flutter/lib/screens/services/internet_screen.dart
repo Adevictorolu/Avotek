@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/supabase/supabase_service.dart';
+import '../../core/utils/user_facing_error.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/pin_modal.dart';
@@ -337,7 +338,10 @@ class _InternetScreenState extends State<InternetScreen> {
         if (mounted) {
           TopNotification.showError(
             context,
-            'Could not create the gift voucher: $error',
+            userFacingError(
+              error,
+              fallback: 'Could not create the gift voucher. Please try again.',
+            ),
           );
         }
       } finally {

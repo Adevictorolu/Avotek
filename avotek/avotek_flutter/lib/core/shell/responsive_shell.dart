@@ -332,7 +332,10 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   itemBuilder: (ctx, i) {
                     final faq = faqs[i];
                     return ExpansionTile(
+                      shape: const Border(),
+                      collapsedShape: const Border(),
                       tilePadding: EdgeInsets.zero,
+                      dense: true,
                       childrenPadding: const EdgeInsets.only(bottom: 12),
                       title: Text(
                         faq.$1,

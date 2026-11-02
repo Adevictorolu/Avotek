@@ -11,7 +11,11 @@ String userFacingError(
     'pgrst',
     'sqlstate',
     'sql error',
+    'syntax error',
     'database error',
+    'databaseexception',
+    'internal server error',
+    'server error',
     'duplicate key',
     'constraint',
     'violates',
@@ -25,16 +29,28 @@ String userFacingError(
     '42703',
     'relation ',
     'column ',
+    'functionexception',
     'schema cache',
     'function public.',
     'stack trace',
+    'format exception',
+    'typeerror',
+    'nosuchmethoderror',
+    'null check operator',
+    'unexpected null value',
   ];
   if (technicalMarkers.any(normalized.contains)) return fallback;
 
   if (normalized.contains('socketexception') ||
       normalized.contains('failed host lookup') ||
+      normalized.contains('failed to fetch') ||
       normalized.contains('connection timed out') ||
+      normalized.contains('connection refused') ||
       normalized.contains('network is unreachable') ||
+      normalized.contains('handshakeexception') ||
+      normalized.contains('httpexception') ||
+      normalized.contains('timeoutexception') ||
+      normalized.contains('timed out') ||
       normalized.contains('clientexception')) {
     return 'Connection problem. Check your internet and try again.';
   }

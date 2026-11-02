@@ -19,6 +19,23 @@ void main() {
       );
     });
 
+    test('replaces server implementation details with a custom fallback', () {
+      expect(
+        userFacingError(
+          'FormatException: unexpected null value from PostgrestException',
+          fallback: 'This action is temporarily unavailable.',
+        ),
+        'This action is temporarily unavailable.',
+      );
+    });
+
+    test('replaces fetch and timeout details with a connectivity message', () {
+      expect(
+        userFacingError('ClientException: Failed to fetch (TimeoutException)'),
+        'Connection problem. Check your internet and try again.',
+      );
+    });
+
     test('preserves ordinary user-facing errors', () {
       expect(
         userFacingError('Your transaction could not be completed.'),

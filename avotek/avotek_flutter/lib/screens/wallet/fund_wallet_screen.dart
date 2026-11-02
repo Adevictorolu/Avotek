@@ -9,6 +9,7 @@ import '../../core/responsive/responsive_layout.dart';
 import '../../core/services/paystack_payment_service.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/user_facing_error.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/top_notification.dart';
@@ -325,7 +326,10 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
         }
         TopNotification.showError(
           context,
-          error.toString(),
+          userFacingError(
+            error,
+            fallback: 'We could not start wallet funding. Please try again.',
+          ),
           title: 'Could not start payment',
         );
       }
@@ -357,7 +361,10 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
       if (mounted) {
         TopNotification.showError(
           context,
-          'Could not open Paystack checkout: $error',
+          userFacingError(
+            error,
+            fallback: 'Could not open Paystack checkout. Please try again.',
+          ),
           title: 'Checkout unavailable',
         );
       }

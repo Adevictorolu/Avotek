@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/services/vtu_api_service.dart';
+import '../core/utils/user_facing_error.dart';
 import '../core/supabase/supabase_service.dart';
 import '../core/utils/nigerian_network_detector.dart';
 import '../models/vtu_models.dart';
@@ -280,7 +281,8 @@ class VtuProvider extends ChangeNotifier {
         _ => response['success'] == true ? 'successful' : 'failed',
       };
       if (response['success'] == false) status = 'failed';
-      final providerAmount = response['charged_amount'] ??
+      final providerAmount =
+          response['charged_amount'] ??
           data['total_amount'] ??
           data['total_cost'];
       if (providerAmount is num && providerAmount > 0) {
@@ -310,7 +312,8 @@ class VtuProvider extends ChangeNotifier {
       message = response['message']?.toString() ?? message;
 
       // If still pending and we have a reference, try an immediate requery
-      final lookupRef = (providerReference != null && providerReference.isNotEmpty)
+      final lookupRef =
+          (providerReference != null && providerReference.isNotEmpty)
           ? providerReference
           : localReference;
       if (status == 'pending' &&
@@ -352,10 +355,18 @@ class VtuProvider extends ChangeNotifier {
       // only statusCode == 0 (connection dropped mid-flight) is ambiguous.
       status = error.statusCode == 0 ? 'pending' : 'failed';
       message = error.message != null && error.message!.trim().isNotEmpty
-          ? error.message!.trim()
+          ? userFacingError(
+              error.message!.trim(),
+              fallback:
+                  'The purchase could not be completed. Please try again.',
+            )
           : (status == 'pending'
                 ? 'The purchase status could not be confirmed. Check your order history before retrying.'
-                : error.toString());
+                : userFacingError(
+                    error,
+                    fallback:
+                        'The purchase could not be completed. Please try again.',
+                  ));
       _lastError = message;
     } on TimeoutException {
       status = 'pending';
@@ -364,10 +375,10 @@ class VtuProvider extends ChangeNotifier {
       _lastError = message;
     } catch (error) {
       status = 'failed';
-      message = error.toString().replaceFirst('Exception: ', '').trim();
-      if (message.isEmpty) {
-        message = 'The purchase could not be completed.';
-      }
+      message = userFacingError(
+        error,
+        fallback: 'The purchase could not be completed. Please try again.',
+      );
       _lastError = message;
       debugPrint('VTU provider purchase error: $error');
     }
@@ -613,9 +624,7 @@ class VtuProvider extends ChangeNotifier {
           ? Map<String, dynamic>.from(res['data'] as Map)
           : res;
       final name =
-          data['customer_name']?.toString() ??
-          data['name']?.toString() ??
-          '';
+          data['customer_name']?.toString() ?? data['name']?.toString() ?? '';
       final bouquet = data['current_bouquet']?.toString() ?? provider;
 
       return VerificationResponse(
@@ -688,9 +697,7 @@ class VtuProvider extends ChangeNotifier {
           ? Map<String, dynamic>.from(res['data'] as Map)
           : res;
       final name =
-          data['customer_name']?.toString() ??
-          data['name']?.toString() ??
-          '';
+          data['customer_name']?.toString() ?? data['name']?.toString() ?? '';
       final address =
           data['customer_address']?.toString() ??
           data['address']?.toString() ??

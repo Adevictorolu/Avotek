@@ -2339,51 +2339,54 @@ class _LandingScreenState extends State<LandingScreen>
                 isDark: isDark,
               ),
               const SizedBox(height: 38),
-              ...faqs.map(
-                (f) => Container(
-                  margin: const EdgeInsets.only(bottom: 14),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF101420) : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF222C42)
-                          : const Color(0xFFE2E8F0),
-                    ),
-                  ),
-                  child: ExpansionTile(
-                    shape: const Border(),
-                    tilePadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 6,
-                    ),
-                    childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
-                    title: Text(
-                      f.$1,
-                      style: GoogleFonts.figtree(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ...List.generate(faqs.length, (index) {
+                final faq = faqs[index];
+                return Column(
+                  children: [
+                    ExpansionTile(
+                      shape: const Border(),
+                      collapsedShape: const Border(),
+                      tilePadding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
                       ),
-                    ),
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          f.$2,
-                          style: GoogleFonts.figtree(
-                            fontSize: 13,
-                            height: 1.55,
-                            color: isDark
-                                ? const Color(0xFF94A3B8)
-                                : const Color(0xFF475569),
-                          ),
+                      childrenPadding: const EdgeInsets.fromLTRB(4, 0, 36, 16),
+                      title: Text(
+                        faq.$1,
+                        style: GoogleFonts.figtree(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            faq.$2,
+                            style: GoogleFonts.figtree(
+                              fontSize: 13,
+                              height: 1.55,
+                              color: isDark
+                                  ? const Color(0xFF94A3B8)
+                                  : const Color(0xFF475569),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (index < faqs.length - 1)
+                      Divider(
+                        height: 1,
+                        color: isDark
+                            ? const Color(0xFF273244)
+                            : const Color(0xFFE2E8F0),
+                      ),
+                  ],
+                );
+              }),
             ],
           ),
         ),
