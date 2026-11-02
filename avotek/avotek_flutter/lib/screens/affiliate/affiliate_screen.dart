@@ -990,7 +990,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     _buildStepItem(
                       2,
                       'Friend signs up',
-                      'They register on Avotek.ng using your link',
+                      'They register on avotek.com.ng using your link',
                       isDark,
                     ),
                     const SizedBox(height: 14),
@@ -1024,7 +1024,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     child: _buildStepItem(
                       2,
                       'Friend signs up',
-                      'They register on Avotek.ng using your link',
+                      'They register on avotek.com.ng using your link',
                       isDark,
                     ),
                   ),

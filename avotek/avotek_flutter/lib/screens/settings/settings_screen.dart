@@ -10,6 +10,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/notification_preferences.dart';
 import '../../widgets/logout_dialog.dart';
 import '../../widgets/top_notification.dart';
+import '../../core/utils/legal_content.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 
@@ -26,6 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   static const _whatsAppSupportNumber = '2348167002789';
   late NotificationPreferences _notificationPreferences;
   bool _savingNotificationPreferences = false;
+  bool _biometricEnabled = true;
 
   @override
   void initState() {
@@ -72,140 +74,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _showLegalDocument(
-    String title,
-    List<(String, String)> sections,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        scrollable: true,
-        insetPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 24,
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.figtree(fontWeight: FontWeight.w800),
-        ),
-        content: SizedBox(
-          width: 620,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final section in sections) ...[
-                Text(
-                  section.$1,
-                  style: GoogleFonts.figtree(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  section.$2,
-                  style: GoogleFonts.figtree(
-                    fontSize: 13,
-                    height: 1.5,
-                    color: isDark
-                        ? AppColors.metallicLight
-                        : AppColors.slateGrey,
-                  ),
-                ),
-                const SizedBox(height: 14),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+  void _showTermsOfService() {
+    AvotekLegalContent.showLegalDialog(
+      context,
+      title: 'Terms of Service',
+      sections: AvotekLegalContent.termsOfService,
     );
   }
 
-  void _showTermsOfService() {
-    _showLegalDocument('Terms of Service', const [
-      (
-        'Using Avotek',
-        'Avotek provides access to airtime, data, cable, electricity, and '
-            'other services only where the relevant provider integration is '
-            'available. Some items may be marked coming soon and cannot be '
-            'purchased yet.',
-      ),
-      (
-        'Your account',
-        'Provide accurate account details and keep your password and '
-            'transaction PIN private. You are responsible for activity '
-            'authorized through your account. Contact support promptly if '
-            'you suspect unauthorized access.',
-      ),
-      (
-        'Orders and provider status',
-        'Check the recipient number, plan, smartcard, or meter details before '
-            'confirming an order. Provider processing may be delayed. Do not '
-            'submit a second purchase for an order that is still pending; '
-            'check its transaction status first.',
-      ),
-      (
-        'Wallet and refunds',
-        'A wallet balance is changed only by a confirmed, authorized '
-            'transaction. A receipt, screenshot, or button press is not proof '
-            'of payment. Refunds depend on the verified provider and ledger '
-            'outcome; contact support with the transaction reference for '
-            'unresolved cases.',
-      ),
-      (
-        'Availability and support',
-        'Third-party providers may change prices, plans, availability, or '
-            'processing times. Avotek may pause a service while a provider '
-            'issue is investigated. Contact support@avotek.ng for assistance.',
-      ),
-    ]);
-  }
-
   void _showPrivacyPolicy() {
-    _showLegalDocument('Privacy Policy', const [
-      (
-        'Information used',
-        'Avotek uses account details such as your name, email, phone number, '
-            'username and Avotek ID, together with account security, wallet, '
-            'and transaction records. Service requests may include the '
-            'recipient phone number, meter number, or smartcard number you '
-            'submit.',
-      ),
-      (
-        'Why it is used',
-        'Information is used to create and secure your account, process and '
-            'reconcile requested services, maintain transaction records, '
-            'prevent abuse, and respond to support requests.',
-      ),
-      (
-        'Service providers',
-        'Information needed to fulfill an order is sent to the relevant '
-            'service provider. Account and application data are processed by '
-            'the configured Supabase project. Do not enter information that '
-            'is not required for the service you selected.',
-      ),
-      (
-        'Security and retention',
-        'Passwords and provider API tokens must not be shared in support '
-            'requests. We retain account and transaction information for as '
-            'long as needed to operate the service, resolve disputes, and '
-            'meet applicable legal obligations.',
-      ),
-      (
-        'Your choices',
-        'For access, correction, or deletion requests, contact '
-            'support@avotek.ng from your account email. Some transaction '
-            'records may need to be retained where required for security, '
-            'accounting, or legal reasons.',
-      ),
-    ]);
+    AvotekLegalContent.showLegalDialog(
+      context,
+      title: 'Privacy Policy',
+      sections: AvotekLegalContent.privacyPolicy,
+    );
   }
 
   // --- MODAL: CHANGE / RESET TRANSACTION PIN (Matches Screenshots 1, 2, 5) ---
@@ -871,456 +753,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // --- MODAL: API DOCUMENTATION & TOKEN (Matches Screenshot 3 & 4) ---
-  void _openApiDocumentationModal() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Container(
-          width: 580,
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkCard : Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 36,
-                offset: const Offset(0, 14),
-              ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with title and close button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'API Document',
-                      style: GoogleFonts.figtree(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      color: isDark ? Colors.white70 : Colors.black54,
-                      onPressed: () => Navigator.pop(ctx),
-                      style: IconButton.styleFrom(
-                        backgroundColor: isDark
-                            ? AppColors.darkCardVariant
-                            : AppColors.lightCardVariant,
-                        padding: const EdgeInsets.all(6),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 22),
-
-                // 2 Action Cards: Quickstart & Authenticate
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkCardVariant
-                              : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.darkBorder
-                                : AppColors.lightBorder,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.arrow_outward_rounded,
-                                  size: 16,
-                                  color: AppColors.electricCyan,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Quickstart',
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF0F172A),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Quick guide to start using the Avotek API.',
-                              style: GoogleFonts.figtree(
-                                fontSize: 11.5,
-                                color: isDark
-                                    ? AppColors.metallicLight
-                                    : AppColors.slateGrey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkCardVariant
-                              : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.darkBorder
-                                : AppColors.lightBorder,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.lock_outline_rounded,
-                                  size: 16,
-                                  color: AppColors.primaryCyan,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Authenticate',
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF0F172A),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Authenticate before making API requests.',
-                              style: GoogleFonts.figtree(
-                                fontSize: 11.5,
-                                color: isDark
-                                    ? AppColors.metallicLight
-                                    : AppColors.slateGrey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Avotek Developer API Routes',
-                  style: GoogleFonts.figtree(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Use the Avotek REST API for airtime, data, utilities, and exam e-PINs. Send JSON requests with your API key in the Authorization header.',
-                  style: GoogleFonts.figtree(
-                    fontSize: 12,
-                    height: 1.45,
-                    color: isDark
-                        ? AppColors.metallicLight
-                        : AppColors.slateGrey,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // API Key & Base URL Card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkCardVariant
-                        : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkBorder
-                          : AppColors.lightBorder,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'BASE ENDPOINT',
-                            style: GoogleFonts.figtree(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                              color: AppColors.electricCyan,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.success.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              'v1.0 ACTIVE',
-                              style: GoogleFonts.figtree(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.success,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      SelectableText(
-                        'https://gcixbqrridzgobkqnlfz.supabase.co/functions/v1/vtu-provider',
-                        style: GoogleFonts.figtree(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? Colors.white70
-                              : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Authorization Header:',
-                        style: GoogleFonts.figtree(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? AppColors.metallicLight
-                              : AppColors.slateGrey,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      SelectableText(
-                        'Authorization: Bearer <YOUR_AVOTEK_API_KEY>',
-                        style: GoogleFonts.figtree(
-                          fontSize: 11,
-                          color: AppColors.primaryBlue,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Available API Endpoints List
-                Text(
-                  'Supported Endpoints',
-                  style: GoogleFonts.figtree(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                _buildEndpointRow(
-                  'POST',
-                  '/airtime',
-                  'Buy Airtime (MTN, AIRTEL, GLO, 9MOBILE)',
-                  isDark,
-                ),
-                _buildEndpointRow(
-                  'POST',
-                  '/data',
-                  'Buy SME & Direct Data Bundles',
-                  isDark,
-                ),
-                _buildEndpointRow(
-                  'POST',
-                  '/cable',
-                  'Recharge DSTV, GOTV & Startimes',
-                  isDark,
-                ),
-                _buildEndpointRow(
-                  'POST',
-                  '/electricity',
-                  'Pay Electricity Bills & Get Instant Token',
-                  isDark,
-                ),
-                _buildEndpointRow(
-                  'POST',
-                  '/exam-pins',
-                  'Buy WAEC, NECO & NABTEB Result Checkers',
-                  isDark,
-                ),
-                _buildEndpointRow(
-                  'GET',
-                  '/wallet/balance',
-                  'Query Live Avotek Wallet Balance',
-                  isDark,
-                ),
-                const SizedBox(height: 20),
-
-                // Developer Support Card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF132035)
-                        : const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: AppColors.primaryCyan.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.api_rounded,
-                        color: AppColors.electricCyan,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Need Production API Whitelisting?',
-                              style: GoogleFonts.figtree(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF0F172A),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Request production API access and pricing from the Avotek Developer Desk.',
-                              style: GoogleFonts.figtree(
-                                fontSize: 11.5,
-                                color: isDark
-                                    ? AppColors.metallicLight
-                                    : AppColors.slateGrey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: _openWhatsAppSupport,
-                        icon: const Icon(
-                          Icons.chat_rounded,
-                          color: AppColors.success,
-                        ),
-                        tooltip: 'Message on WhatsApp',
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEndpointRow(
-    String method,
-    String path,
-    String description,
-    bool isDark,
-  ) {
-    final isPost = method == 'POST';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCardVariant : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-            decoration: BoxDecoration(
-              color: isPost
-                  ? AppColors.primaryBlue.withValues(alpha: 0.15)
-                  : AppColors.success.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              method,
-              style: GoogleFonts.figtree(
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: isPost ? AppColors.primaryBlue : AppColors.success,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            path,
-            style: GoogleFonts.figtree(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              description,
-              style: GoogleFonts.figtree(
-                fontSize: 11,
-                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _openChangePasswordDialog() {
     final newPassCtrl = TextEditingController();
     final confirmPassCtrl = TextEditingController();
@@ -1876,20 +1308,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onTap: () => context.go('/affiliate'),
                         isDark: isDark,
                       ),
-                      _buildDivider(isDark),
-                      _buildSettingTile(
-                        icon: Icons.code_rounded,
-                        iconColor: AppColors.primaryBlue,
-                        iconBg: AppColors.primaryBlue.withValues(alpha: 0.15),
-                        title: 'API Documentation',
-                        subtitle: null,
-                        trailing: const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Colors.grey,
-                        ),
-                        onTap: _openApiDocumentationModal,
-                        isDark: isDark,
-                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -1927,6 +1345,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onTap: _openChangePasswordDialog,
                         isDark: isDark,
                       ),
+                      _buildDivider(isDark),
+                      _buildToggleTile(
+                        icon: Icons.fingerprint_rounded,
+                        title: 'Biometric Sign-In & Security',
+                        badge: 'BIOMETRIC',
+                        value: _biometricEnabled,
+                        onChanged: (val) {
+                          setState(() => _biometricEnabled = val);
+                          TopNotification.showSuccess(
+                            context,
+                            val
+                                ? 'Biometric authentication activated.'
+                                : 'Biometric authentication disabled.',
+                          );
+                        },
+                        isDark: isDark,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -1953,45 +1388,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // --- SECTION 4: NOTIFICATIONS (Matches Screenshot 1) ---
+                  // --- SECTION 4: NOTIFICATIONS ---
                   _buildSectionContainer(
                     isDark: isDark,
                     icon: Icons.notifications_none_rounded,
                     title: 'Notifications',
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
-                        child: Text(
-                          'Choose which transaction updates to receive.',
-                          style: GoogleFonts.figtree(
-                            fontSize: 12,
-                            height: 1.45,
-                            color: isDark
-                                ? AppColors.metallicLight
-                                : AppColors.slateGrey,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                        child: Text(
-                          'TRANSACTION UPDATES',
-                          style: GoogleFonts.figtree(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.0,
-                            color: isDark
-                                ? AppColors.metallicLight
-                                : AppColors.slateGrey,
-                          ),
-                        ),
-                      ),
                       _buildToggleTile(
                         icon: Icons.phone_android_rounded,
                         title: 'In-app transaction alerts',
                         badge: 'IN APP',
-                        warningNote:
-                            'Show transaction success and error alerts.',
                         value: _notificationPreferences.pushNotifications,
                         enabled: !_savingNotificationPreferences,
                         onChanged: (value) => _saveNotificationPreferences(
@@ -2006,8 +1412,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         icon: Icons.mail_outline_rounded,
                         title: 'Email receipts',
                         badge: 'EMAIL',
-                        warningNote:
-                            'Email receipts for completed transactions.',
                         value: _notificationPreferences.emailReceipts,
                         enabled: !_savingNotificationPreferences,
                         onChanged: (value) => _saveNotificationPreferences(
@@ -2095,7 +1499,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            'v1.0.0',
+                            'v2.00',
                             style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
@@ -2177,10 +1581,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 36),
 
-                  // Footer Copyright (Matches Screenshot 1)
+                  // Footer Copyright (Dynamic Year)
                   Center(
                     child: Text(
-                      'Avotek.ng © 2022-2026 By Avotek Technologies',
+                      'avotek.com.ng Copyright 2023 - ${DateTime.now().year} By Avotek Technologies',
                       style: GoogleFonts.figtree(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,

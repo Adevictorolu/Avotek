@@ -65,6 +65,172 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     }
   }
 
+  void _showNotificationSheet(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final wallet = context.read<WalletProvider>();
+    final txs = wallet.recentTransactions;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF23304B) : const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.notifications_active_rounded, size: 20, color: AppColors.electricCyan),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Transaction Alerts',
+                        style: GoogleFonts.figtree(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.push('/transactions');
+                    },
+                    child: Text(
+                      'View All',
+                      style: GoogleFonts.figtree(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryBlue,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (txs.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text(
+                      'No recent transaction alerts yet.',
+                      style: GoogleFonts.figtree(
+                        fontSize: 13,
+                        color: AppColors.slateGrey,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: txs.take(6).length,
+                    separatorBuilder: (context, index) => Divider(
+                      height: 1,
+                      color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+                    ),
+                    itemBuilder: (ctx, idx) {
+                      final tx = txs[idx];
+                      final isSuccess = tx.status.toLowerCase() == 'completed' ||
+                          tx.status.toLowerCase() == 'successful';
+                      final isFailed = tx.status.toLowerCase() == 'failed';
+                      final statusColor = isSuccess
+                          ? AppColors.success
+                          : (isFailed ? AppColors.error : AppColors.warning);
+
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                        leading: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: statusColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: statusColor.withValues(alpha: 0.4),
+                                blurRadius: 6,
+                              ),
+                            ],
+                          ),
+                        ),
+                        title: Text(
+                          tx.category.toUpperCase(),
+                          style: GoogleFonts.figtree(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                        subtitle: Text(
+                          tx.narration ?? (isSuccess ? 'Transaction delivered' : 'Transaction failed'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.figtree(
+                            fontSize: 11.5,
+                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          ),
+                        ),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '₦${tx.amount.toStringAsFixed(2)}',
+                              style: GoogleFonts.figtree(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: isSuccess
+                                    ? AppColors.success
+                                    : (isFailed ? AppColors.error : AppColors.primaryBlue),
+                              ),
+                            ),
+                            Text(
+                              isSuccess ? 'Delivered' : (isFailed ? 'Failed' : 'Processing'),
+                              style: GoogleFonts.figtree(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          context.push('/transactions');
+                        },
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
@@ -116,6 +282,34 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     size: 20,
                   ),
                   onPressed: _handleThemeToggle,
+                ),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 21,
+                      ),
+                      tooltip: 'Transaction Alerts',
+                      onPressed: () => _showNotificationSheet(context),
+                    ),
+                    if (wallet.recentTransactions.isNotEmpty)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: wallet.recentTransactions.any((t) => t.status.toLowerCase() == 'failed')
+                                ? AppColors.error
+                                : AppColors.success,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 IconButton(
                   icon: const Icon(
@@ -752,6 +946,15 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'avotek.com.ng Copyright 2023 - ${DateTime.now().year} By Avotek Technologies',
+                  style: GoogleFonts.figtree(
+                    fontSize: 9.0,
+                    color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),

@@ -22,6 +22,172 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  Widget _buildAvatarWidget(String? avatarUrl, String initials, {double radius = 36}) {
+    if (avatarUrl != null && avatarUrl.startsWith('avatar:')) {
+      final code = avatarUrl.replaceFirst('avatar:', '');
+      final (icon, color) = switch (code) {
+        'male_1' => (Icons.face_rounded, const Color(0xFF0052FF)),
+        'female_1' => (Icons.face_3_rounded, const Color(0xFF7C3AED)),
+        'male_2' => (Icons.face_6_rounded, const Color(0xFF059669)),
+        'female_2' => (Icons.face_4_rounded, const Color(0xFFDB2777)),
+        'male_3' => (Icons.person_rounded, const Color(0xFFD97706)),
+        'female_3' => (Icons.person_2_rounded, const Color(0xFF0D9488)),
+        'cyber' => (Icons.smart_toy_rounded, const Color(0xFF2563EB)),
+        _ => (Icons.account_circle_rounded, AppColors.primaryBlue),
+      };
+      if (code != 'initials') {
+        return CircleAvatar(
+          radius: radius,
+          backgroundColor: color,
+          child: Icon(icon, size: radius * 1.15, color: Colors.white),
+        );
+      }
+    }
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: AppColors.primaryBlue,
+      child: Text(
+        initials,
+        style: GoogleFonts.figtree(
+          fontSize: radius * 0.67,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  void _openAvatarPickerModal(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final auth = context.read<AuthProvider>();
+    final currentAvatar = auth.user?.avatarUrl ?? 'avatar:initials';
+
+    final avatars = [
+      ('avatar:male_1', 'Male Tech', Icons.face_rounded, const Color(0xFF0052FF)),
+      ('avatar:female_1', 'Female Exec', Icons.face_3_rounded, const Color(0xFF7C3AED)),
+      ('avatar:male_2', 'Male Dev', Icons.face_6_rounded, const Color(0xFF059669)),
+      ('avatar:female_2', 'Female Dev', Icons.face_4_rounded, const Color(0xFFDB2777)),
+      ('avatar:male_3', 'Male Merchant', Icons.person_rounded, const Color(0xFFD97706)),
+      ('avatar:female_3', 'Female Leader', Icons.person_2_rounded, const Color(0xFF0D9488)),
+      ('avatar:cyber', 'Cyber Hero', Icons.smart_toy_rounded, const Color(0xFF2563EB)),
+      ('avatar:initials', 'Initials Badge', Icons.badge_rounded, AppColors.primaryBlue),
+    ];
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF131722) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryBlue.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.account_circle_rounded,
+                          color: AppColors.primaryBlue,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Choose Profile Avatar',
+                        style: GoogleFonts.figtree(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    onPressed: () => Navigator.pop(sheetCtx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 14,
+                  childAspectRatio: 0.85,
+                ),
+                itemCount: avatars.length,
+                itemBuilder: (ctx, idx) {
+                  final a = avatars[idx];
+                  final isSelected = currentAvatar == a.$1;
+                  return InkWell(
+                    onTap: () async {
+                      Navigator.pop(sheetCtx);
+                      await auth.updateProfile(avatarUrl: a.$1);
+                      if (context.mounted) {
+                        TopNotification.showSuccess(
+                          context,
+                          'Profile avatar updated!',
+                          title: 'Avatar Changed',
+                        );
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1A2234) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.electricCyan
+                              : (isDark ? const Color(0xFF28344D) : const Color(0xFFE2E8F0)),
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: a.$4,
+                            child: Icon(a.$3, color: Colors.white, size: 26),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            a.$2,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.figtree(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
   void _openEditProfileModal(
     BuildContext context,
     String currentName,
@@ -825,6 +991,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     bool isKycVerified,
     bool hasPhone,
   ) {
+    final user = context.read<AuthProvider>().user;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(26),
@@ -840,22 +1007,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           // Circle avatar with edit tap
           InkWell(
-            onTap: () => _openEditProfileModal(context, fullName, phone),
+            onTap: () => _openAvatarPickerModal(context),
             borderRadius: BorderRadius.circular(40),
             child: Stack(
               children: [
-                CircleAvatar(
-                  radius: 36,
-                  backgroundColor: AppColors.primaryBlue,
-                  child: Text(
-                    initials,
-                    style: GoogleFonts.figtree(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+                _buildAvatarWidget(user?.avatarUrl, initials, radius: 36),
                 Positioned(
                   bottom: 0,
                   right: 0,
@@ -1141,24 +1297,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
-              ElevatedButton.icon(
-                onPressed: () =>
-                    _openEditProfileModal(context, fullName, phone),
-                icon: const Icon(Icons.edit_rounded, size: 15),
-                label: Text(hasPhone ? 'Update phone' : 'Add phone'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryBlue,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              if (!hasPhone)
+                ElevatedButton.icon(
+                  onPressed: () => _openEditProfileModal(context, fullName, phone),
+                  icon: const Icon(Icons.add_call, size: 15),
+                  label: const Text('Add phone'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ),
               OutlinedButton.icon(
                 onPressed: () => _openViewProfileModal(
                   context,

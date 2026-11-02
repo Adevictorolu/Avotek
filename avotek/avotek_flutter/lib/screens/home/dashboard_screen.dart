@@ -76,59 +76,160 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _showUpgradeDialog() {
+  void _showNotificationSheet(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    showDialog(
+    final wallet = context.read<WalletProvider>();
+    final txs = wallet.recentTransactions;
+
+    showModalBottomSheet<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF141722) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.star_rounded, color: AppColors.electricCyan),
-            const SizedBox(width: 8),
-            Text(
-              'Upgrade to VIP Agent',
-              style: GoogleFonts.figtree(
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'Upgrade to VIP Agent tier to get higher commissions, discounted data bundles, and zero funding fees.',
-          style: GoogleFonts.figtree(fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Maybe Later',
-              style: GoogleFonts.figtree(fontWeight: FontWeight.w600),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Agent upgrade request submitted!'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            },
-            child: Text(
-              'Upgrade Now',
-              style: GoogleFonts.figtree(fontWeight: FontWeight.w800),
-            ),
-          ),
-        ],
+      backgroundColor: isDark ? const Color(0xFF131722) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryBlue.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.notifications_active_rounded,
+                            color: AppColors.primaryBlue,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Transaction Alerts',
+                          style: GoogleFonts.figtree(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (txs.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text(
+                        'No recent transaction alerts yet.',
+                        style: GoogleFonts.figtree(
+                          fontSize: 13,
+                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 340),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: txs.take(6).length,
+                      separatorBuilder: (context, index) => Divider(
+                        height: 1,
+                        color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+                      ),
+                      itemBuilder: (ctx, idx) {
+                        final tx = txs[idx];
+                        final isSuccess = tx.status.toLowerCase() == 'completed' ||
+                            tx.status.toLowerCase() == 'successful';
+                        final isFailed = tx.status.toLowerCase() == 'failed';
+                        final statusColor = isSuccess
+                            ? AppColors.success
+                            : (isFailed ? AppColors.error : AppColors.warning);
+
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                          leading: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: statusColor,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: statusColor.withValues(alpha: 0.4),
+                                  blurRadius: 6,
+                                ),
+                              ],
+                            ),
+                          ),
+                          title: Text(
+                            tx.category.toUpperCase(),
+                            style: GoogleFonts.figtree(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          subtitle: Text(
+                            tx.narration ?? (isSuccess ? 'Transaction delivered' : 'Transaction failed'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.figtree(
+                              fontSize: 11.5,
+                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            ),
+                          ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '₦${tx.amount.toStringAsFixed(2)}',
+                                style: GoogleFonts.figtree(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: isSuccess ? AppColors.success : (isFailed ? AppColors.error : AppColors.primaryBlue),
+                                ),
+                              ),
+                              Text(
+                                isSuccess ? 'Delivered' : (isFailed ? 'Failed' : 'Processing'),
+                                style: GoogleFonts.figtree(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: statusColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            context.push('/transactions');
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -265,52 +366,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     Row(
                       children: [
-                        // Upgrade Pill Button
-                        InkWell(
-                          onTap: _showUpgradeDialog,
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF1A1F2C)
-                                  : const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isDark
-                                    ? const Color(0xFF2E384D)
-                                    : const Color(0xFFBFDBFE),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.star_border_rounded,
-                                  size: 14,
-                                  color: AppColors.electricCyan,
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  'Upgrade',
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? Colors.white
-                                        : AppColors.primaryBlue,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-
-                        // Role Badge Pill
+                        // Role Badge Pill (Regular / Admin)
                         if (auth.user?.isAdmin ?? false)
                           InkWell(
                             onTap: () => context.go('/admin'),
@@ -365,8 +421,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: isDark
-                                    ? const Color(0xFF23304B)
-                                    : const Color(0xFFE2E8F0),
+                                  ? const Color(0xFF23304B)
+                                  : const Color(0xFFE2E8F0),
                                 width: 1,
                               ),
                             ),
@@ -406,6 +462,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 : AppColors.slateGrey,
                           ),
                           onPressed: widget.onToggleTheme,
+                        ),
+
+                        // Notification Icon (Close to Dark Theme Toggle)
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            IconButton(
+                              tooltip: 'Transaction Alerts',
+                              icon: Icon(
+                                Icons.notifications_none_rounded,
+                                size: 21,
+                                color: isDark
+                                    ? AppColors.metallicLight
+                                    : AppColors.slateGrey,
+                              ),
+                              onPressed: () => _showNotificationSheet(context),
+                            ),
+                            if (wallet.recentTransactions.isNotEmpty)
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: wallet.recentTransactions.any((t) => t.status.toLowerCase() == 'failed')
+                                        ? AppColors.error
+                                        : AppColors.success,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ],
                     ),

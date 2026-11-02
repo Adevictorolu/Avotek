@@ -36,7 +36,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final _apkUrlController = TextEditingController(
     text: 'https://github.com/adevictorolu/Avotek/releases/latest/download/avotek.apk',
   );
-  final _apkVersionController = TextEditingController(text: 'v1.2.0');
+  final _apkVersionController = TextEditingController(text: 'v2.00');
   bool _isSavingApkSettings = false;
 
   List<String> _coAdmins = [];
@@ -1669,7 +1669,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       await SupabaseService.instance.setAppSetting('apk_download_url', url);
       await SupabaseService.instance.setAppSetting(
         'apk_version',
-        ver.isNotEmpty ? ver : 'v1.2.0',
+        ver.isNotEmpty ? ver : 'v2.00',
       );
       if (mounted) {
         TopNotification.showSuccess(
@@ -1764,7 +1764,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             decoration: InputDecoration(
               labelText: 'Release Version',
               labelStyle: GoogleFonts.figtree(fontSize: 13),
-              hintText: 'v1.2.0',
+              hintText: 'v2.00',
               hintStyle: GoogleFonts.figtree(fontSize: 13, color: Colors.grey),
               prefixIcon: const Icon(Icons.tag_rounded, size: 18),
               border: OutlineInputBorder(

@@ -9,6 +9,7 @@ import '../../providers/wallet_provider.dart';
 import '../../widgets/avotek_logo.dart';
 import '../../widgets/onboarding_pin_dialog.dart';
 import '../../widgets/top_notification.dart';
+import '../../core/utils/legal_content.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool initialSignUp;
@@ -32,6 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscureConfirmPassword = true;
   bool _rememberMe = true;
   bool _isProcessing = false;
+  bool _agreeToTerms = false;
 
   // Controllers
   final _identifierController = TextEditingController();
@@ -233,6 +235,14 @@ class _LoginScreenState extends State<LoginScreen> {
       _showSnackBar(
         'Passwords do not match. Please re-enter.',
         AppColors.error,
+      );
+      return;
+    }
+
+    if (!_agreeToTerms) {
+      _showSnackBar(
+        'Please review and agree to the Terms of Service and Privacy Policy to proceed.',
+        AppColors.warning,
       );
       return;
     }
@@ -1219,7 +1229,91 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
           ],
-          const SizedBox(height: 22),
+          if (_isSignUp) ...[
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: Checkbox(
+                    value: _agreeToTerms,
+                    activeColor: AppColors.primaryBlue,
+                    checkColor: Colors.white,
+                    side: const BorderSide(color: Color(0xFF64748B), width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    onChanged: (val) {
+                      setState(() => _agreeToTerms = val ?? false);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'I have read and agree to the ',
+                        style: GoogleFonts.figtree(
+                          fontSize: 12,
+                          color: const Color(0xFF94A3B8),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () {
+                          AvotekLegalContent.showLegalDialog(
+                            context,
+                            title: 'Terms of Service',
+                            sections: AvotekLegalContent.termsOfService,
+                          );
+                        },
+                        child: Text(
+                          'Terms of Service',
+                          style: GoogleFonts.figtree(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryCyan,
+                            decoration: TextDecoration.underline,
+                            decorationColor: AppColors.primaryCyan,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        ' and ',
+                        style: GoogleFonts.figtree(
+                          fontSize: 12,
+                          color: const Color(0xFF94A3B8),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () {
+                          AvotekLegalContent.showLegalDialog(
+                            context,
+                            title: 'Privacy Policy',
+                            sections: AvotekLegalContent.privacyPolicy,
+                          );
+                        },
+                        child: Text(
+                          'Privacy Policy',
+                          style: GoogleFonts.figtree(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryCyan,
+                            decoration: TextDecoration.underline,
+                            decorationColor: AppColors.primaryCyan,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 20),
 
           // Primary Blue Login / Register Button
           SizedBox(

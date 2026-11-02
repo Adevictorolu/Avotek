@@ -2457,13 +2457,13 @@ class _LandingScreenState extends State<LandingScreen>
               const Divider(height: 1),
               const SizedBox(height: 20),
 
-              // Bottom Bar: Copyright 2022 to 2026 (Per User Instruction)
+              // Bottom Bar: Dynamic Copyright
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Flexible(
                     child: Text(
-                      'Avotek copyright 2022 to 2026. All rights reserved.',
+                      'avotek.com.ng Copyright 2023 - ${DateTime.now().year} By Avotek Technologies',
                       style: GoogleFonts.figtree(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

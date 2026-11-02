@@ -460,7 +460,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Update User Profile details
-  Future<void> updateProfile({String? name, String? phone}) async {
+  Future<void> updateProfile({String? name, String? phone, String? avatarUrl}) async {
     if (_user == null) return;
     final hasValidPhone =
         phone != null &&
@@ -469,6 +469,7 @@ class AuthProvider extends ChangeNotifier {
     _user = _user!.copyWith(
       name: name ?? _user!.name,
       phone: phone ?? _user!.phone,
+      avatarUrl: avatarUrl ?? _user!.avatarUrl,
       kycStatus: hasValidPhone
           ? (_user!.isTier2Verified ? 'verified' : 'tier1')
           : _user!.kycStatus,
@@ -482,6 +483,7 @@ class AuthProvider extends ChangeNotifier {
         userId: _user!.id,
         name: name,
         phone: phone,
+        avatarUrl: avatarUrl,
       );
     } catch (_) {}
     notifyListeners();

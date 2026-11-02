@@ -24,6 +24,7 @@ class WalletProvider extends ChangeNotifier {
   double get balance => _walletSummary?.balance ?? 0.0;
   String get currency => _walletSummary?.currency ?? 'NGN';
   List<TransactionModel> get transactions => _transactions;
+  List<TransactionModel> get recentTransactions => _transactions;
   bool get isLoading => _isLoading;
   bool get isProvisioningDedicatedAccount => _isProvisioningDedicatedAccount;
   bool get dedicatedAccountNeedsProfile => _dedicatedAccountNeedsProfile;
