@@ -124,8 +124,21 @@ void main() {
 
     final dialog = tester.widget<Dialog>(find.byType(Dialog));
     final shape = dialog.shape! as RoundedRectangleBorder;
+    final dialogContainer = tester.widget<Container>(
+      find
+          .descendant(
+            of: find.byType(Dialog),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
     expect(dialog.elevation, 0);
     expect(shape.side.style, BorderStyle.none);
+    expect(dialogContainer.decoration, isA<BoxDecoration>());
+    expect(
+      (dialogContainer.decoration! as BoxDecoration).boxShadow ?? [],
+      isEmpty,
+    );
   });
 
   testWidgets('receipt has no outer dialog border or elevation', (
@@ -154,8 +167,21 @@ void main() {
 
     final dialog = tester.widget<Dialog>(find.byType(Dialog));
     final shape = dialog.shape! as RoundedRectangleBorder;
+    final dialogContainer = tester.widget<Container>(
+      find
+          .descendant(
+            of: find.byType(Dialog),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
     expect(dialog.elevation, 0);
     expect(shape.side.style, BorderStyle.none);
+    expect(dialogContainer.decoration, isA<BoxDecoration>());
+    expect(
+      (dialogContainer.decoration! as BoxDecoration).boxShadow ?? [],
+      isEmpty,
+    );
   });
 
   testWidgets('desktop service list uses full-width rows without overflow', (

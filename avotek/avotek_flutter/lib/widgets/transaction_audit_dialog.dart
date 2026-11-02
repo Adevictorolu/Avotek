@@ -169,13 +169,6 @@ class _TransactionAuditDialogState extends State<TransactionAuditDialog> {
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF0F131D) : Colors.white,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.6 : 0.2),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10),
-                ),
-              ],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),

@@ -45,7 +45,8 @@ class _AvotekLoadingIndicatorState extends State<AvotekLoadingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    final ringRadius = widget.logoSize * 0.95;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ringRadius = widget.logoSize * 1.1;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -76,15 +77,37 @@ class _AvotekLoadingIndicatorState extends State<AvotekLoadingIndicator>
                 ),
               ),
 
-              // Framed Avotek Logo in the exact center
-              SizedBox.square(
-                dimension: widget.logoSize * 1.6,
+              Container(
+                key: const ValueKey('loading-logo-badge'),
+                width: widget.logoSize * 1.1,
+                height: widget.logoSize * 1.1,
+                padding: EdgeInsets.all(widget.logoSize * 0.1),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF131B2E) : Colors.white,
+                  borderRadius: BorderRadius.circular(widget.logoSize * 0.32),
+                  border: Border.all(
+                    color:
+                        (isDark
+                                ? AppColors.electricCyan
+                                : AppColors.primaryBlue)
+                            .withValues(alpha: 0.45),
+                    width: 1.6,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color:
+                          (isDark
+                                  ? AppColors.electricCyan
+                                  : AppColors.primaryBlue)
+                              .withValues(alpha: 0.18),
+                      blurRadius: 12,
+                    ),
+                  ],
+                ),
                 child: Center(
                   child: AvotekLogo(
-                    size: widget.logoSize,
-                    hasFrame: true,
+                    size: widget.logoSize * 0.65,
                     showText: false,
-                    borderRadius: widget.logoSize * 0.35,
                   ),
                 ),
               ),
@@ -175,7 +198,9 @@ class AvotekPageLoadingOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: (isDark ? AppColors.darkBg : Colors.black).withOpacity(isDark ? 0.85 : 0.45),
+      color: (isDark ? AppColors.darkBg : Colors.black).withOpacity(
+        isDark ? 0.85 : 0.45,
+      ),
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),

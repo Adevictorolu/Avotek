@@ -468,15 +468,6 @@ class TransactionSuccessDialog extends StatelessWidget {
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF131722) : Colors.white,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(
-                    0xFF0052FF,
-                  ).withOpacity(isDark ? 0.25 : 0.12),
-                  blurRadius: 32,
-                  offset: const Offset(0, 12),
-                ),
-              ],
             ),
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),

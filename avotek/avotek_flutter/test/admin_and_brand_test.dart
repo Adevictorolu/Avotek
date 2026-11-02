@@ -69,7 +69,14 @@ void main() {
 
       final logoCenter = tester.getCenter(find.byType(AvotekLogo));
       final ringCenter = tester.getCenter(find.byType(Stack).first);
+      final badgeFinder = find.byKey(const ValueKey('loading-logo-badge'));
+      final badgeCenter = tester.getCenter(badgeFinder);
       expect((logoCenter - ringCenter).distance, lessThan(0.01));
+      expect((badgeCenter - ringCenter).distance, lessThan(0.01));
+      expect(
+        tester.getSize(badgeFinder).width,
+        lessThan(tester.getSize(find.byType(Stack).first).width * 0.6),
+      );
     });
   });
 }
