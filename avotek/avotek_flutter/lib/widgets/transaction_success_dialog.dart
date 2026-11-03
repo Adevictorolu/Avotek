@@ -380,7 +380,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                               ),
                             ),
                             pw.Text(
-                              'avotek.com.ng Copyright 2023 - ${DateTime.now().year}',
+                              'Avotek © 2023 - ${DateTime.now().year} • Developed by Adevictorolu',
                               style: const pw.TextStyle(
                                 fontSize: 8,
                                 color: PdfColor.fromInt(0xFF64748B),

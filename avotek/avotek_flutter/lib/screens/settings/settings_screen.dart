@@ -74,6 +74,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _openDeveloperInstagram() async {
+    final uri = Uri.parse('http://instagram.com/adevictorolu');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      try {
+        await launchUrl(uri);
+      } catch (_) {}
+    }
+  }
+
   void _showTermsOfService() {
     AvotekLegalContent.showLegalDialog(
       context,
@@ -1888,15 +1899,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 36),
 
-                  // Footer Copyright (Dynamic Year)
+                  // Footer Copyright & Developer Attribution (Dynamic Year)
                   Center(
-                    child: Text(
-                      'avotek.com.ng Copyright 2023 - ${DateTime.now().year}',
-                      style: GoogleFonts.figtree(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white38 : Colors.black38,
-                      ),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          'Avotek © 2023 - ${DateTime.now().year}  •  Developed by ',
+                          style: GoogleFonts.figtree(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? Colors.white38 : Colors.black38,
+                          ),
+                        ),
+                        InkWell(
+                          onTap: _openDeveloperInstagram,
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                            child: Text(
+                              'Adevictorolu',
+                              style: GoogleFonts.figtree(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? const Color(0xFF60A5FA)
+                                    : const Color(0xFF0038B8),
+                                decoration: TextDecoration.underline,
+                                decorationColor: isDark
+                                    ? const Color(0xFF60A5FA)
+                                    : const Color(0xFF0038B8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 48),

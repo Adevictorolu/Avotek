@@ -947,15 +947,6 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'avotek.com.ng Copyright 2023 - ${DateTime.now().year}',
-                  style: GoogleFonts.figtree(
-                    fontSize: 9.0,
-                    color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
               ],
             ),
           ),
