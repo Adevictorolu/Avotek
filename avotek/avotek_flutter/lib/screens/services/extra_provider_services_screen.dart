@@ -479,7 +479,7 @@ class _ExtraProviderServicesScreenState
       return;
     }
 
-    if (wallet.balance < amount) {
+    if (!_isAirtimeToCash && wallet.balance < amount) {
       TopNotification.showError(
         context,
         'Insufficient wallet balance. Available: ₦${wallet.balance.toStringAsFixed(2)}.',
@@ -493,15 +493,23 @@ class _ExtraProviderServicesScreenState
       (n) => n['id'] == _selectedNetworkId,
       orElse: () => _airtimePinNetworks.first,
     );
+    final airtimeAmt = double.tryParse(_airtimeToCashAmountCtrl.text.trim()) ?? 1000.0;
+    final rate = _selectedNetworkId == 1 ? 0.85 : (_selectedNetworkId == 2 ? 0.82 : (_selectedNetworkId == 3 ? 0.78 : 0.75));
+    final payoutVal = airtimeAmt * rate;
+
     final confirmed = await PinModal.show(
       context,
       title: 'Confirm $_title',
-      amount: amount,
+      amount: _isAirtimeToCash ? 0.0 : amount,
       description: _isExam
           ? '${_selectedExam?['name'] ?? 'Exam PIN'} × ${_quantityController.text}'
           : (_isAirtimePins
                 ? '${networkObj['code']} ₦$_selectedDenomination PIN × ${_quantityController.text}'
-                : '${_recipients().length} recipients • ${_senderController.text.trim()}'),
+                : (_isDataCard
+                      ? '${networkObj['code']} $_selectedDataCardName × ${_quantityController.text}'
+                      : (_isAirtimeToCash
+                            ? 'Convert ₦${airtimeAmt.toInt()} airtime to ₦${payoutVal.toInt()} cash'
+                            : '${_recipients().length} recipients • ${_senderController.text.trim()}'))),
       onPinSubmit: (pin) async {
         transactionPin = pin;
         return auth.verifyPin(pin);

@@ -88,8 +88,8 @@ class TopNotification {
       builder: (ctx) => _TopNotificationWidget(
         message: type == TopNotificationType.error
             ? userFacingError(message)
-            : message,
-        title: title,
+            : sanitizeDisplayMessage(message),
+        title: title != null ? sanitizeDisplayMessage(title) : null,
         type: type,
         duration: duration,
         onDismiss: dismiss,

@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../core/theme/app_theme.dart';
 import '../widgets/top_notification.dart';
+import '../core/utils/user_facing_error.dart';
 
 class TransactionSuccessDialog extends StatelessWidget {
   final String title;
@@ -531,7 +532,7 @@ class TransactionSuccessDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    message ?? 'Transaction delivered successfully.',
+                    sanitizeDisplayMessage(message ?? 'Transaction delivered successfully.'),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.figtree(
                       fontSize: 12.5,

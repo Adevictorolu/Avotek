@@ -48,7 +48,11 @@ class TransactionModel {
       if (narr.toLowerCase().startsWith('paystack wallet funding')) {
         return 'Paystack Wallet Funding';
       }
-      return narr;
+      return narr
+          .replaceAll(RegExp(r'bigisub(\.ng)?', caseSensitive: false), 'Avotek Gateway')
+          .replaceAll(RegExp(r'bilalsadasub(\.com)?', caseSensitive: false), 'Avotek Gateway')
+          .replaceAll(RegExp(r'bilal\s*sada\s*sub', caseSensitive: false), 'Avotek Gateway')
+          .replaceAll(RegExp(r'bilal', caseSensitive: false), 'Avotek');
     }
     if (category.toLowerCase() == 'wallet_fund') return 'Wallet Funding';
     return category.toUpperCase();

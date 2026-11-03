@@ -42,6 +42,15 @@ function extractNestedErrorDetail(errorsObj: unknown): string | null {
   return null;
 }
 
+function sanitizeProviderText(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/bigisub(\.ng)?/gi, "Avotek Gateway")
+    .replace(/bilalsadasub(\.com)?/gi, "Avotek Gateway")
+    .replace(/bilal\s*sada\s*sub/gi, "Avotek Gateway")
+    .replace(/bilal/gi, "Avotek");
+}
+
 function extractProviderMessage(body: JsonMap, fallback: string): string {
   const data = isRecord(body.data) ? body.data : {};
   const nestedError = extractNestedErrorDetail(body.errors) ?? extractNestedErrorDetail(data.errors);
@@ -60,20 +69,20 @@ function extractProviderMessage(body: JsonMap, fallback: string): string {
   ];
   for (const candidate of candidates) {
     if (typeof candidate === "string" && candidate.trim().length > 0) {
-      return candidate.trim();
+      return sanitizeProviderText(candidate.trim());
     }
     if (Array.isArray(candidate) && candidate.length > 0) {
       const first = String(candidate[0] ?? "").trim();
-      if (first.length > 0) return first;
+      if (first.length > 0) return sanitizeProviderText(first);
     }
   }
   for (const [key, value] of Object.entries(body)) {
     if (["success", "status", "data", "code", "status_code", "errors"].includes(key)) continue;
     if (Array.isArray(value) && value.length > 0 && typeof value[0] === "string") {
-      return `${key}: ${value[0]}`;
+      return sanitizeProviderText(`${key}: ${value[0]}`);
     }
   }
-  return fallback;
+  return sanitizeProviderText(fallback);
 }
 
 function extractProviderReference(body: JsonMap): string | null {
@@ -498,7 +507,7 @@ Deno.serve(async (request) => {
       success: true,
       data: {
         balance: 100000,
-        provider: "Dual-Engine (BilalSadaSub + Bigisub)",
+        provider: "Avotek Core Telecom Engine",
       },
     });
   }
@@ -1116,7 +1125,7 @@ Deno.serve(async (request) => {
           providerResponse = bigiRes.providerBody;
         } catch (err) {
           finalStatus = "failed";
-          providerResponse = { message: `Bigisub error: ${err}` };
+          providerResponse = { message: "Telecom network service temporarily unavailable. Please retry shortly." };
         }
       } else {
         // Direct dispatch to BilalSadaSub API (bypass: true ensures valid delivery across all numbers/prefixes)
@@ -1138,7 +1147,7 @@ Deno.serve(async (request) => {
           providerResponse = bilalRes.providerBody;
         } catch (err) {
           finalStatus = "failed";
-          providerResponse = { message: `BilalSadaSub error: ${err}` };
+          providerResponse = { message: "Telecom network service temporarily unavailable. Please retry shortly." };
         }
       }
 
@@ -1525,13 +1534,7 @@ Deno.serve(async (request) => {
       const rate = rateMap[netId] || 0.80;
       const payoutAmount = Math.round(airtimeAmount * rate);
 
-      const merchantPhoneMap: Record<number, string> = {
-        1: "08167002789", // MTN Share & Sell
-        2: "08023456789", // Airtel Me2U
-        3: "08051234567", // Glo EasyShare
-        4: "08091234567", // 9mobile Transfer
-      };
-      const merchantPhone = merchantPhoneMap[netId] || "08167002789";
+      const merchantPhone = "08167002789";
 
       finalStatus = "completed";
       providerResponse = {

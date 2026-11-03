@@ -504,6 +504,7 @@ class VtuProvider extends ChangeNotifier {
     int? planId,
     String? userPin,
     String? provider,
+    String? planName,
   }) async {
     // Resolve plan ID
     var resolvedPlanId = planId;
@@ -527,12 +528,19 @@ class VtuProvider extends ChangeNotifier {
     if (resolvedPlanId == null) {
       throw Exception('Refresh plans and select an available data plan.');
     }
+    String displayPlan = (planName != null && planName.trim().isNotEmpty)
+        ? planName.trim()
+        : '${network.toUpperCase()} Data Plan';
+    if (displayPlan.toUpperCase().startsWith('BIGI-') || displayPlan.toUpperCase().startsWith('BILAL-')) {
+      displayPlan = '${network.toUpperCase()} Data Plan';
+    }
+
     return _purchase(
       userId: userId,
       serviceType: 'data',
       network: network,
       recipient: phone,
-      plan: variationCode,
+      plan: displayPlan,
       amount: sellPrice,
       dispatch: () => VtuApiService.instance.purchaseData(
         network: network,

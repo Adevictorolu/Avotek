@@ -320,6 +320,7 @@ class _DataScreenState extends State<DataScreen> {
           network: _selectedNetwork,
           phone: phone,
           variationCode: plan['code'] as String,
+          planName: '${_selectedNetwork.toUpperCase()} ${plan['volume'] ?? 'Data'} (${plan['type'] ?? 'Bundle'})',
           amount: planPrice,
           sellPrice: planPrice,
           planId: planId,
