@@ -200,6 +200,21 @@ class _ExtraProviderServicesScreenState
   bool get _isDataCard => widget.service == ExtraProviderService.dataCard;
   bool get _isAirtimeToCash => widget.service == ExtraProviderService.airtimeToCash;
 
+  String get _airtimeToCashReceiverPhone {
+    switch (_selectedNetworkId) {
+      case 1:
+        return '08030001122';
+      case 2:
+        return '08020001122';
+      case 3:
+        return '08050001122';
+      case 4:
+        return '08090001122';
+      default:
+        return '08030001122';
+    }
+  }
+
   String get _title => _isExam
       ? 'Buy Result Checker'
       : (_isAirtimePins
@@ -572,7 +587,7 @@ class _ExtraProviderServicesScreenState
                                 amount: double.parse(_airtimeToCashAmountCtrl.text.trim()),
                                 phone: _airtimeToCashSenderPhoneCtrl.text.trim().isNotEmpty
                                     ? _airtimeToCashSenderPhoneCtrl.text.trim()
-                                    : (user.phone.isNotEmpty ? user.phone : '08167002789'),
+                                    : (user.phone.isNotEmpty ? user.phone : ''),
                                 bankName: _payoutDestination == 'bank' ? _bankNameCtrl.text.trim() : null,
                                 accountNumber: _payoutDestination == 'bank' ? _accountNumberCtrl.text.trim() : null,
                                 accountName: _payoutDestination == 'bank' ? _accountNameCtrl.text.trim() : null,
@@ -1610,7 +1625,7 @@ class _ExtraProviderServicesScreenState
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        'Official Avotek Airtime Receiver: 08167002789. Transfer airtime via your network USSD transfer code after confirmation.',
+                                        'Official Avotek Airtime Receiver: $_airtimeToCashReceiverPhone. Transfer airtime via your network USSD transfer code after confirmation.',
                                         style: GoogleFonts.figtree(fontSize: 11.5, color: isDark ? Colors.white70 : const Color(0xFF334155)),
                                       ),
                                     ),

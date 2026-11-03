@@ -1534,13 +1534,19 @@ Deno.serve(async (request) => {
       const rate = rateMap[netId] || 0.80;
       const payoutAmount = Math.round(airtimeAmount * rate);
 
-      const merchantPhone = "08167002789";
+      const merchantPhoneMap: Record<number, string> = {
+        1: Deno.env.get("AIRTIME_CASH_MTN_RECEIVER")?.trim() || "08030001122", // MTN Share & Sell
+        2: Deno.env.get("AIRTIME_CASH_AIRTEL_RECEIVER")?.trim() || "08020001122", // Airtel Me2U
+        3: Deno.env.get("AIRTIME_CASH_GLO_RECEIVER")?.trim() || "08050001122", // Glo EasyShare
+        4: Deno.env.get("AIRTIME_CASH_9MOBILE_RECEIVER")?.trim() || "08090001122", // 9mobile Transfer
+      };
+      const merchantPhone = merchantPhoneMap[netId] || "08030001122";
 
       finalStatus = "completed";
       providerResponse = {
         success: true,
         status: "successful",
-        message: `Airtime-to-cash request registered. Transfer ₦${airtimeAmount} airtime to ${merchantPhone}. Payout of ₦${payoutAmount} will be credited to your account.`,
+        message: `Airtime-to-cash conversion request registered. Transfer ₦${airtimeAmount} airtime to official receiver line ${merchantPhone}. Payout of ₦${payoutAmount} will be credited to your account.`,
         payout_amount: payoutAmount,
         airtime_amount: airtimeAmount,
         rate_percentage: Math.round(rate * 100),
