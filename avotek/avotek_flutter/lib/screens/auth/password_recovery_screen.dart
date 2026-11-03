@@ -85,6 +85,9 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                     TextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      autofillHints: const [],
                       decoration: InputDecoration(
                         labelText: 'New password',
                         suffixIcon: IconButton(
@@ -103,6 +106,9 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                     TextField(
                       controller: _confirmPasswordController,
                       obscureText: _obscurePassword,
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      autofillHints: const [],
                       decoration: const InputDecoration(
                         labelText: 'Confirm new password',
                       ),

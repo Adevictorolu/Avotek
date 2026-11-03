@@ -122,6 +122,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     bool obscureResetNew = true;
     bool obscureResetConfirm = true;
 
+    currentPinCtrl.clear();
+    newPinCtrl.clear();
+    confirmPinCtrl.clear();
+    resetOtpCtrl.clear();
+    resetNewPinCtrl.clear();
+    resetConfirmPinCtrl.clear();
+
     showDialog(
       context: context,
       builder: (ctx) {
@@ -951,6 +958,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: TextField(
                   controller: controller,
                   obscureText: obscure,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  autofillHints: const [],
                   keyboardType: TextInputType.number,
                   maxLength: 4,
                   style: GoogleFonts.figtree(
@@ -1044,6 +1054,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 TextField(
                   controller: newPassCtrl,
                   obscureText: true,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  autofillHints: const [],
                   decoration: const InputDecoration(
                     labelText: 'New Password',
                     hintText: 'Minimum 6 characters',
@@ -1053,6 +1066,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 TextField(
                   controller: confirmPassCtrl,
                   obscureText: true,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  autofillHints: const [],
                   decoration: const InputDecoration(
                     labelText: 'Confirm New Password',
                     hintText: 'Re-enter new password',

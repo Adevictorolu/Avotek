@@ -67,7 +67,9 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
-                  autofillHints: const [AutofillHints.newPassword],
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  autofillHints: const [],
                   decoration: const InputDecoration(
                     labelText: 'New password',
                     prefixIcon: Icon(Icons.lock_outline),
@@ -77,7 +79,9 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                 TextField(
                   controller: _confirmPasswordController,
                   obscureText: true,
-                  autofillHints: const [AutofillHints.newPassword],
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  autofillHints: const [],
                   decoration: const InputDecoration(
                     labelText: 'Confirm new password',
                     prefixIcon: Icon(Icons.lock_reset_outlined),

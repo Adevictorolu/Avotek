@@ -1145,6 +1145,9 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: _identifierController,
               hint: 'Avotek ID (e.g. AVO-28491), Username, or Email',
               icon: Icons.person_outline_rounded,
+              enableSuggestions: false,
+              autocorrect: false,
+              autofillHints: const [],
             ),
             const SizedBox(height: 14),
             _buildInputField(
@@ -1152,6 +1155,9 @@ class _LoginScreenState extends State<LoginScreen> {
               hint: 'Password',
               icon: Icons.lock_outline_rounded,
               obscureText: _obscurePassword,
+              enableSuggestions: false,
+              autocorrect: false,
+              autofillHints: const [],
               textInputAction: TextInputAction.done,
               onSubmitted: (_) {
                 if (!_isProcessing) _handleSignIn();
@@ -1417,7 +1423,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               InkWell(
-                onTap: () => setState(() => _isSignUp = !_isSignUp),
+                onTap: () => setState(() {
+                  _isSignUp = !_isSignUp;
+                  _passwordController.clear();
+                  _confirmPasswordController.clear();
+                }),
                 child: Text(
                   _isSignUp ? 'Sign in' : 'Create one',
                   style: GoogleFonts.figtree(
@@ -1460,9 +1470,9 @@ class _LoginScreenState extends State<LoginScreen> {
       child: TextField(
         controller: controller,
         obscureText: obscureText,
-        enableSuggestions: enableSuggestions ?? (obscureText ? false : true),
-        autocorrect: autocorrect ?? (obscureText ? false : true),
-        autofillHints: autofillHints,
+        enableSuggestions: enableSuggestions ?? false,
+        autocorrect: autocorrect ?? false,
+        autofillHints: autofillHints ?? const [],
         keyboardType: keyboardType,
         textInputAction: textInputAction,
         onSubmitted: onSubmitted,
