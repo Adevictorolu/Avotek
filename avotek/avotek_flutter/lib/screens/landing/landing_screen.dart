@@ -173,33 +173,72 @@ class _LandingScreenState extends State<LandingScreen>
       elevation: 0,
       backgroundColor: (isDark ? const Color(0xFF07090E) : Colors.white)
           .withValues(alpha: 0.94),
-      titleSpacing: isDesktop ? 48 : 20,
+      titleSpacing: isDesktop ? 24 : 20,
       title: Row(
-        mainAxisAlignment: isDesktop
-            ? MainAxisAlignment.start
-            : MainAxisAlignment.spaceBetween,
         children: [
           InkWell(
             onTap: () => context.go('/'),
             borderRadius: BorderRadius.circular(8),
             child: const AvotekLogo(size: 28, showText: true),
           ),
-          if (isDesktop) ...[
-            const SizedBox(width: 48),
-            _buildNavLink('Services', () => _scrollToKey(_servicesKey), isDark),
-            _buildNavLink('Features', () => _scrollToKey(_featuresKey), isDark),
-            _buildNavLink(
-              'How It Works',
-              () => _scrollToKey(_howItWorksKey),
-              isDark,
+          if (isDesktop)
+            Expanded(
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF151B29)
+                        : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFF283247)
+                          : const Color(0xFFE2E8F0),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.16 : 0.04,
+                        ),
+                        blurRadius: 16,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildNavLink(
+                        'Services',
+                        () => _scrollToKey(_servicesKey),
+                        isDark,
+                      ),
+                      _buildNavLink(
+                        'Features',
+                        () => _scrollToKey(_featuresKey),
+                        isDark,
+                      ),
+                      _buildNavLink(
+                        'How It Works',
+                        () => _scrollToKey(_howItWorksKey),
+                        isDark,
+                      ),
+                      _buildNavLink(
+                        'Testimonials',
+                        () => _scrollToKey(_testimonialsKey),
+                        isDark,
+                      ),
+                      _buildNavLink(
+                        'FAQs',
+                        () => _scrollToKey(_faqKey),
+                        isDark,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            _buildNavLink(
-              'Testimonials',
-              () => _scrollToKey(_testimonialsKey),
-              isDark,
-            ),
-            _buildNavLink('FAQs', () => _scrollToKey(_faqKey), isDark),
-          ],
         ],
       ),
       actions: [
@@ -297,20 +336,17 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   Widget _buildNavLink(String label, VoidCallback onTap, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-          child: Text(
-            label,
-            style: GoogleFonts.figtree(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w600,
-              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
-            ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        child: Text(
+          label,
+          style: GoogleFonts.figtree(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
           ),
         ),
       ),
@@ -502,8 +538,6 @@ class _LandingScreenState extends State<LandingScreen>
           ? CrossAxisAlignment.start
           : CrossAxisAlignment.center,
       children: [
-
-
         // Main Title
         RichText(
           textAlign: isDesktop ? TextAlign.start : TextAlign.center,
@@ -2477,9 +2511,14 @@ class _LandingScreenState extends State<LandingScreen>
                         ),
                         InkWell(
                           onTap: () async {
-                            final uri = Uri.parse('http://instagram.com/adevictorolu');
+                            final uri = Uri.parse(
+                              'http://instagram.com/adevictorolu',
+                            );
                             try {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
                             } catch (_) {
                               try {
                                 await launchUrl(uri);
@@ -2488,7 +2527,10 @@ class _LandingScreenState extends State<LandingScreen>
                           },
                           borderRadius: BorderRadius.circular(4),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 2,
+                              vertical: 2,
+                            ),
                             child: Text(
                               'Adevictorolu',
                               style: GoogleFonts.figtree(

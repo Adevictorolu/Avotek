@@ -90,76 +90,36 @@ class _WalletScreenState extends State<WalletScreen> {
             children: [
               // Top Bar: Title & Action Buttons
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Wallet Summary',
-                    style: GoogleFonts.figtree(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  Expanded(
+                    child: Text(
+                      'Wallet Summary',
+                      style: GoogleFonts.figtree(
+                        fontSize: isDesktop ? 26 : 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
                     ),
                   ),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () => context.push('/wallet/fund'),
-                        icon: const Icon(
-                          Icons.add_rounded,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                        label: Text(
-                          'Fund Wallet',
-                          style: GoogleFonts.figtree(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
+                  IconButton(
+                    tooltip: 'Refresh wallet',
+                    onPressed: _refresh,
+                    icon: Icon(
+                      Icons.refresh_rounded,
+                      color: isDark ? Colors.white70 : AppColors.primaryBlue,
+                    ),
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      side: BorderSide(
+                        color: isDark
+                            ? Colors.white24
+                            : AppColors.primaryBlue.withValues(alpha: 0.3),
                       ),
-                      OutlinedButton.icon(
-                        onPressed: _refresh,
-                        icon: Icon(
-                          Icons.refresh_rounded,
-                          size: 16,
-                          color: isDark ? Colors.white70 : AppColors.primaryBlue,
-                        ),
-                        label: Text(
-                          'Refresh',
-                          style: GoogleFonts.figtree(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white70 : AppColors.primaryBlue,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          side: BorderSide(
-                            color: isDark ? Colors.white24 : AppColors.primaryBlue.withValues(alpha: 0.3),
-                          ),
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),

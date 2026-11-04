@@ -41,7 +41,8 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
     setState(() => _isLoadingReferralData = true);
     try {
       final summary = await SupabaseService.instance.getReferralSummary();
-      final leaderboard = await SupabaseService.instance.getReferralLeaderboard();
+      final leaderboard = await SupabaseService.instance
+          .getReferralLeaderboard();
       if (mounted) {
         setState(() {
           _referralCount = (summary['referral_count'] as num?)?.toInt() ?? 0;
@@ -116,7 +117,12 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final platforms = [
       ('WhatsApp', 'whatsapp', Icons.chat_rounded, const Color(0xFF25D366)),
-      ('Twitter / X', 'twitter', Icons.alternate_email_rounded, const Color(0xFF1DA1F2)),
+      (
+        'Twitter / X',
+        'twitter',
+        Icons.alternate_email_rounded,
+        const Color(0xFF1DA1F2),
+      ),
       ('Facebook', 'facebook', Icons.facebook_rounded, const Color(0xFF1877F2)),
       ('Telegram', 'telegram', Icons.send_rounded, const Color(0xFF0088CC)),
       ('Copy Link', 'copy', Icons.copy_rounded, AppColors.primaryBlue),
@@ -145,7 +151,10 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               const SizedBox(height: 14),
               for (final platform in platforms)
                 ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -162,7 +171,10 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
                   ),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                  ),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     if (platform.$2 == 'copy') {
@@ -213,7 +225,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   'Redeem your verified referral reward points directly into your Avotek main wallet (1 AVO Point = ₦1).',
                   style: GoogleFonts.figtree(
                     fontSize: 13,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -279,7 +293,8 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     ? () async {
                         setDialogState(() => isRedeeming = true);
                         try {
-                          final res = await SupabaseService.instance.redeemAvoPoints(_userAvoPoints);
+                          final res = await SupabaseService.instance
+                              .redeemAvoPoints(_userAvoPoints);
                           if (ctx.mounted) Navigator.pop(ctx);
                           if (!mounted) return;
                           if (res['success'] == true) {
@@ -326,7 +341,10 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : Text(
                         'Redeem All',
@@ -445,31 +463,37 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
   // 1. TOP TABS: Referral Hub | AVO Token | Leaderboard
   Widget _buildTopTabs(bool isDark) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF131826) : const Color(0xFFE2E8F0),
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(4),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildTabButton(
-            0,
-            'Referral Hub',
-            Icons.people_outline_rounded,
-            isDark,
+          Expanded(
+            child: _buildTabButton(
+              0,
+              'Referral Hub',
+              Icons.people_outline_rounded,
+              isDark,
+            ),
           ),
-          _buildTabButton(
-            1,
-            'AVO Token',
-            Icons.bookmark_outline_rounded,
-            isDark,
+          Expanded(
+            child: _buildTabButton(
+              1,
+              'AVO Token',
+              Icons.bookmark_outline_rounded,
+              isDark,
+            ),
           ),
-          _buildTabButton(
-            2,
-            'Leaderboard',
-            Icons.emoji_events_outlined,
-            isDark,
+          Expanded(
+            child: _buildTabButton(
+              2,
+              'Leaderboard',
+              Icons.emoji_events_outlined,
+              isDark,
+            ),
           ),
         ],
       ),
@@ -483,7 +507,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
       borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primaryBlue : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
@@ -501,20 +525,26 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           children: [
             Icon(
               icon,
-              size: 16,
+              size: 15,
               color: isSelected
                   ? Colors.white
                   : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
             ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: GoogleFonts.figtree(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                color: isSelected
-                    ? Colors.white
-                    : (isDark ? AppColors.metallicLight : AppColors.slateGrey),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.figtree(
+                  fontSize: 11.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey),
+                ),
               ),
             ),
           ],
@@ -1852,9 +1882,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           'badge': points >= 1000
               ? 'Chairman'
               : (points >= 200 ? 'Berekete' : 'Jolly'),
-          'badgeColor': points >= 1000
-              ? const Color(0xFF78350F)
-              : Colors.white,
+          'badgeColor': points >= 1000 ? const Color(0xFF78350F) : Colors.white,
           'badgeBg': points >= 1000
               ? const Color(0xFFFDE68A)
               : const Color(0xFF10B981),

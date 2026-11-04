@@ -258,10 +258,16 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
         authorizationUri,
         mode: kIsWeb
             ? LaunchMode.platformDefault
-            : LaunchMode.externalApplication,
+            : LaunchMode.inAppWebView,
         webOnlyWindowName: kIsWeb ? '_self' : null,
       );
-      if (!opened && mounted) {
+      final checkoutOpened = opened ||
+          (!kIsWeb &&
+              await launchUrl(
+                authorizationUri,
+                mode: LaunchMode.externalApplication,
+              ));
+      if (!checkoutOpened && mounted) {
         TopNotification.showError(
           context,
           'Could not open Paystack checkout. Use the Open secure checkout button to try again.',

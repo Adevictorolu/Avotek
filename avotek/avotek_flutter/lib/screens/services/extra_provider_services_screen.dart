@@ -1962,8 +1962,11 @@ class _ExtraProviderServicesScreenState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
                                 'SUPPORTED NETWORKS (100% ROUTING)',
@@ -1976,7 +1979,19 @@ class _ExtraProviderServicesScreenState
                                       : const Color(0xFF475569),
                                 ),
                               ),
-                              Row(
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 9,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF10B981,
+                                  ).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Container(
                                     width: 7,
@@ -1996,6 +2011,7 @@ class _ExtraProviderServicesScreenState
                                     ),
                                   ),
                                 ],
+                                ),
                               ),
                             ],
                           ),

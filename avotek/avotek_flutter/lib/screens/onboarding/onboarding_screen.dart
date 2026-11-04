@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/database/app_database.dart';
+import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/avotek_illustrations.dart';
 import '../../widgets/avotek_logo.dart';
@@ -71,7 +72,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _finishOnboarding() {
     AppDatabaseService.instance.markOnboardingSeen();
-    context.go('/login');
+    final currentUser = SupabaseService.instance.currentAuthUser;
+    if (!kIsWeb && currentUser != null) {
+      context.go(
+        Uri(
+          path: '/app-lock',
+          queryParameters: {'returnTo': '/dashboard'},
+        ).toString(),
+      );
+    } else {
+      context.go('/login');
+    }
   }
 
   @override
@@ -95,11 +106,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     TextButton(
                       onPressed: _finishOnboarding,
                       style: TextButton.styleFrom(
-                        foregroundColor: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        foregroundColor: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                       child: const Text(
                         'Skip',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
                     )
                   else
@@ -133,12 +149,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                         // Badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryCyan.withValues(alpha: 0.12),
+                            color: AppColors.primaryCyan.withValues(
+                              alpha: 0.12,
+                            ),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: AppColors.primaryCyan.withValues(alpha: 0.3),
+                              color: AppColors.primaryCyan.withValues(
+                                alpha: 0.3,
+                              ),
                               width: 1,
                             ),
                           ),
@@ -162,7 +185,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             fontSize: 24,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.5,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -174,7 +199,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             height: 1.5,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            color: isDark
+                                ? AppColors.metallicLight
+                                : AppColors.slateGrey,
                           ),
                         ),
                       ],
@@ -202,7 +229,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           color: isActive
                               ? AppColors.primaryCyan
-                              : (isDark ? const Color(0xFF26334D) : const Color(0xFFCBD5E1)),
+                              : (isDark
+                                    ? const Color(0xFF26334D)
+                                    : const Color(0xFFCBD5E1)),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       );
@@ -228,7 +257,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            _currentPage == _slides.length - 1 ? 'Get Started' : 'Next',
+                            _currentPage == _slides.length - 1
+                                ? 'Get Started'
+                                : 'Next',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

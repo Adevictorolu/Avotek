@@ -449,22 +449,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         const SizedBox(width: 8),
 
-                        // Theme Toggle Icon
-                        IconButton(
-                          tooltip: 'Toggle Theme',
-                          icon: Icon(
-                            isDark
-                                ? Icons.light_mode_outlined
-                                : Icons.dark_mode_outlined,
-                            size: 20,
-                            color: isDark
-                                ? AppColors.metallicLight
-                                : AppColors.slateGrey,
-                          ),
-                          onPressed: widget.onToggleTheme,
-                        ),
-
-                        // Notification Icon (Close to Dark Theme Toggle)
+                        // Notification Icon
                         Stack(
                           clipBehavior: Clip.none,
                           children: [
@@ -1042,48 +1027,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .where((t) => t.status == 'failed')
         .length;
 
-    return Row(
-      children: [
-        Expanded(
-          child: _buildMetricTile(
-            title: "TODAY'S SPEND",
-            value: '₦${todaySpend.toStringAsFixed(0)}',
-            icon: Icons.account_balance_wallet_rounded,
-            iconColor: AppColors.primaryBlue,
-            isDark: isDark,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildMetricTile(
-            title: 'TRANSACTIONS',
-            value: '$totalCount',
-            icon: Icons.payments_rounded,
-            iconColor: AppColors.electricCyan,
-            isDark: isDark,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildMetricTile(
-            title: 'SUCCESSFUL',
-            value: '$successCount',
-            icon: Icons.check_circle_rounded,
-            iconColor: AppColors.success,
-            isDark: isDark,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildMetricTile(
-            title: 'FAILED',
-            value: '$failedCount',
-            icon: Icons.cancel_rounded,
-            iconColor: AppColors.error,
-            isDark: isDark,
-          ),
-        ),
-      ],
+    final metrics = [
+      (
+        title: "TODAY'S SPEND",
+        value: '₦${todaySpend.toStringAsFixed(0)}',
+        icon: Icons.account_balance_wallet_rounded,
+        color: AppColors.primaryBlue,
+      ),
+      (
+        title: 'TRANSACTIONS',
+        value: '$totalCount',
+        icon: Icons.payments_rounded,
+        color: AppColors.electricCyan,
+      ),
+      (
+        title: 'SUCCESSFUL',
+        value: '$successCount',
+        icon: Icons.check_circle_rounded,
+        color: AppColors.success,
+      ),
+      (
+        title: 'FAILED',
+        value: '$failedCount',
+        icon: Icons.cancel_rounded,
+        color: AppColors.error,
+      ),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: metrics.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isDesktop ? 4 : 2,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        mainAxisExtent: isDesktop ? 84 : 102,
+      ),
+      itemBuilder: (context, index) {
+        final metric = metrics[index];
+        return _buildMetricTile(
+          title: metric.title,
+          value: metric.value,
+          icon: metric.icon,
+          iconColor: metric.color,
+          isDark: isDark,
+          isDesktop: isDesktop,
+        );
+      },
     );
   }
 
@@ -1093,9 +1084,99 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required IconData icon,
     required Color iconColor,
     required bool isDark,
+    required bool isDesktop,
   }) {
+    final content = isDesktop
+        ? Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 17),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.figtree(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      style: GoogleFonts.figtree(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          )
+        : Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 17),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.figtree(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                  color: isDark
+                      ? AppColors.metallicLight
+                      : AppColors.slateGrey,
+                ),
+              ),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.figtree(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          );
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 12 : 8,
+        vertical: isDesktop ? 10 : 8,
+      ),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF131722) : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -1104,51 +1185,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           width: 1,
         ),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.figtree(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
-                    color: isDark
-                        ? AppColors.metallicLight
-                        : AppColors.slateGrey,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: GoogleFonts.figtree(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      child: content,
     );
   }
 
@@ -1156,92 +1193,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildQuickActionsGrid(bool isDark, bool isDesktop) {
     final actions = [
       {
+        'title': 'Exam PINs',
+        'icon': Icons.school_rounded,
+        'route': '/services/exam-pins',
+      },
+      {
         'title': 'Airtime',
         'icon': Icons.phone_android_rounded,
         'route': '/services/airtime',
       },
       {'title': 'Data', 'icon': Icons.wifi_rounded, 'route': '/services/data'},
-      {'title': 'Cable TV', 'icon': Icons.tv_rounded, 'route': '/services/tv'},
-      {
-        'title': 'Electricity',
-        'icon': Icons.flash_on_rounded,
-        'route': '/services/electricity',
-      },
-      {
-        'title': 'Exam PINs',
-        'icon': Icons.school_rounded,
-        'route': '/services/exam-pins',
-      },
+      {'title': 'Cable', 'icon': Icons.tv_rounded, 'route': '/services/tv'},
     ];
 
-    return Row(
-      children: actions.map((item) {
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5),
-            child: InkWell(
-              onTap: () => context.push(item['route'] as String),
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: actions.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isDesktop ? 4 : 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        mainAxisExtent: isDesktop ? 142 : 126,
+      ),
+      itemBuilder: (context, index) {
+        final item = actions[index];
+        return InkWell(
+          onTap: () => context.push(item['route'] as String),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF131722) : Colors.white,
               borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 20,
-                  horizontal: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF131722) : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark
-                        ? const Color(0xFF23304B)
-                        : const Color(0xFFE2E8F0),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.2 : 0.03,
-                      ),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryBlue.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.electricCyan.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Icon(
-                        item['icon'] as IconData,
-                        color: AppColors.electricCyan,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      item['title'] as String,
-                      style: GoogleFonts.figtree(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF23304B)
+                    : const Color(0xFFE2E8F0),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryBlue.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.electricCyan.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Icon(
+                    item['icon'] as IconData,
+                    color: AppColors.electricCyan,
+                    size: 25,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  item['title'] as String,
+                  style: GoogleFonts.figtree(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
         );
-      }).toList(),
+      },
     );
   }
 

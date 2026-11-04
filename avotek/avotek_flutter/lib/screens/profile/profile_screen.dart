@@ -22,7 +22,22 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  Widget _buildAvatarWidget(String? avatarUrl, String initials, {double radius = 36}) {
+  Future<void> _openDeveloperInstagram() async {
+    final uri = Uri.https('www.instagram.com', '/adevictorolu');
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      TopNotification.showError(
+        context,
+        'Could not open the developer profile.',
+      );
+    }
+  }
+
+  Widget _buildAvatarWidget(
+    String? avatarUrl,
+    String initials, {
+    double radius = 36,
+  }) {
     if (avatarUrl != null && avatarUrl.startsWith('avatar:')) {
       final code = avatarUrl.replaceFirst('avatar:', '');
       final (icon, color) = switch (code) {
@@ -63,14 +78,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final currentAvatar = auth.user?.avatarUrl ?? 'avatar:initials';
 
     final avatars = [
-      ('avatar:male_1', 'Male Tech', Icons.face_rounded, const Color(0xFF0052FF)),
-      ('avatar:female_1', 'Female Exec', Icons.face_3_rounded, const Color(0xFF7C3AED)),
-      ('avatar:male_2', 'Male Dev', Icons.face_6_rounded, const Color(0xFF059669)),
-      ('avatar:female_2', 'Female Dev', Icons.face_4_rounded, const Color(0xFFDB2777)),
-      ('avatar:male_3', 'Male Merchant', Icons.person_rounded, const Color(0xFFD97706)),
-      ('avatar:female_3', 'Female Leader', Icons.person_2_rounded, const Color(0xFF0D9488)),
-      ('avatar:cyber', 'Cyber Hero', Icons.smart_toy_rounded, const Color(0xFF2563EB)),
-      ('avatar:initials', 'Initials Badge', Icons.badge_rounded, AppColors.primaryBlue),
+      (
+        'avatar:male_1',
+        'Male Tech',
+        Icons.face_rounded,
+        const Color(0xFF0052FF),
+      ),
+      (
+        'avatar:female_1',
+        'Female Exec',
+        Icons.face_3_rounded,
+        const Color(0xFF7C3AED),
+      ),
+      (
+        'avatar:male_2',
+        'Male Dev',
+        Icons.face_6_rounded,
+        const Color(0xFF059669),
+      ),
+      (
+        'avatar:female_2',
+        'Female Dev',
+        Icons.face_4_rounded,
+        const Color(0xFFDB2777),
+      ),
+      (
+        'avatar:male_3',
+        'Male Merchant',
+        Icons.person_rounded,
+        const Color(0xFFD97706),
+      ),
+      (
+        'avatar:female_3',
+        'Female Leader',
+        Icons.person_2_rounded,
+        const Color(0xFF0D9488),
+      ),
+      (
+        'avatar:cyber',
+        'Cyber Hero',
+        Icons.smart_toy_rounded,
+        const Color(0xFF2563EB),
+      ),
+      (
+        'avatar:initials',
+        'Initials Badge',
+        Icons.badge_rounded,
+        AppColors.primaryBlue,
+      ),
     ];
 
     showModalBottomSheet<void>(
@@ -109,7 +164,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: GoogleFonts.figtree(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                     ],
@@ -149,12 +206,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(14),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1A2234) : const Color(0xFFF8FAFC),
+                        color: isDark
+                            ? const Color(0xFF1A2234)
+                            : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: isSelected
                               ? AppColors.electricCyan
-                              : (isDark ? const Color(0xFF28344D) : const Color(0xFFE2E8F0)),
+                              : (isDark
+                                    ? const Color(0xFF28344D)
+                                    : const Color(0xFFE2E8F0)),
                           width: isSelected ? 2 : 1,
                         ),
                       ),
@@ -173,7 +234,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: GoogleFonts.figtree(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
                             ),
                           ),
                         ],
@@ -188,6 +251,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
   void _openEditProfileModal(
     BuildContext context,
     String currentName,
@@ -972,6 +1036,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 48),
+                  Center(
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          'Avotek © 2023 - ${DateTime.now().year}  •  Developed by ',
+                          style: GoogleFonts.figtree(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? Colors.white38 : Colors.black38,
+                          ),
+                        ),
+                        InkWell(
+                          onTap: _openDeveloperInstagram,
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 2,
+                              vertical: 2,
+                            ),
+                            child: Text(
+                              'Adevictorolu',
+                              style: GoogleFonts.figtree(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? const Color(0xFF60A5FA)
+                                    : const Color(0xFF0038B8),
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -1299,7 +1401,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               if (!hasPhone)
                 ElevatedButton.icon(
-                  onPressed: () => _openEditProfileModal(context, fullName, phone),
+                  onPressed: () =>
+                      _openEditProfileModal(context, fullName, phone),
                   icon: const Icon(Icons.add_call, size: 15),
                   label: const Text('Add phone'),
                   style: ElevatedButton.styleFrom(
@@ -1424,20 +1527,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-            child: ElevatedButton.icon(
-              icon: const Icon(
-                Icons.chat_bubble_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              label: Text(
-                'Chat on WhatsApp Support (+234 816 700 2789)',
-                style: GoogleFonts.figtree(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
+            child: ElevatedButton(
               onPressed: () async {
                 final uri = Uri.parse(
                   'https://wa.me/2348167002789?text=${Uri.encodeComponent("Hello Avotek Support, I need help with my account/transaction.")}',
@@ -1464,6 +1554,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.chat_bubble_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Chat on WhatsApp Support (+234 816 700 2789)',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.figtree(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

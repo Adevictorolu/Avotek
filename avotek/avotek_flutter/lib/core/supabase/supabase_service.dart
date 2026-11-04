@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/user_model.dart';
 import '../../models/wallet_model.dart';
@@ -223,6 +224,53 @@ class SupabaseService {
   /// Google OAuth Sign In
   Future<bool> signInWithGoogle() async {
     try {
+      final isMobile =
+          !kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS);
+      if (isMobile) {
+        const serverClientId = String.fromEnvironment(
+          'GOOGLE_SERVER_CLIENT_ID',
+        );
+        const iosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
+        if (defaultTargetPlatform == TargetPlatform.android &&
+            serverClientId.isEmpty) {
+          throw StateError(
+            'Native Google sign-in is not configured. Set '
+            'GOOGLE_SERVER_CLIENT_ID to your Google Web OAuth client ID.',
+          );
+        }
+        if (defaultTargetPlatform == TargetPlatform.iOS &&
+            iosClientId.isEmpty) {
+          throw StateError(
+            'Native Google sign-in is not configured. Set '
+            'GOOGLE_IOS_CLIENT_ID to your Google iOS OAuth client ID and '
+            'register its reversed client ID as an iOS URL scheme.',
+          );
+        }
+
+        final googleSignIn = GoogleSignIn(
+          serverClientId: serverClientId.isEmpty ? null : serverClientId,
+          clientId: iosClientId.isEmpty ? null : iosClientId,
+        );
+        final googleUser = await googleSignIn.signIn();
+        if (googleUser == null) return false;
+        final googleAuth = await googleUser.authentication;
+        final idToken = googleAuth.idToken;
+        if (idToken == null || idToken.isEmpty) {
+          throw StateError(
+            'Google did not return an ID token. Check the configured OAuth '
+            'client IDs and Google provider settings.',
+          );
+        }
+        await client.auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: idToken,
+          accessToken: googleAuth.accessToken,
+        );
+        return true;
+      }
+
       return await client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: _authRedirectUrl('/login-callback'),

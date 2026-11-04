@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/responsive/responsive_layout.dart';
+import '../../core/security/device_security_service.dart';
 import '../../core/shell/responsive_shell.dart';
 import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -27,13 +28,73 @@ class _SettingsScreenState extends State<SettingsScreen> {
   static const _whatsAppSupportNumber = '2348167002789';
   late NotificationPreferences _notificationPreferences;
   bool _savingNotificationPreferences = false;
-  bool _biometricEnabled = true;
+  bool _biometricEnabled = false;
+  bool _biometricAvailable = false;
 
   @override
   void initState() {
     super.initState();
     _notificationPreferences = SupabaseService.instance
         .getNotificationPreferences();
+    _loadBiometricSettings();
+  }
+
+  Future<void> _loadBiometricSettings() async {
+    try {
+      final available = await DeviceSecurityService.isBiometricAvailable();
+      final enabled = await DeviceSecurityService.isBiometricEnabled();
+      if (!mounted) return;
+      setState(() {
+        _biometricAvailable = available;
+        _biometricEnabled = available && enabled;
+      });
+    } catch (error) {
+      debugPrint('Loading biometric settings failed: $error');
+      if (mounted) setState(() => _biometricAvailable = false);
+    }
+  }
+
+  Future<void> _setBiometricEnabled(bool enabled) async {
+    if (enabled) {
+      if (!_biometricAvailable) {
+        TopNotification.showError(
+          context,
+          'Set up fingerprint or Face ID on this mobile device first.',
+        );
+        return;
+      }
+      try {
+        final authenticated = await DeviceSecurityService.authenticate();
+        if (!authenticated || !mounted) return;
+      } catch (error) {
+        debugPrint('Enabling biometric unlock failed: $error');
+        if (mounted) {
+          TopNotification.showError(
+            context,
+            'Could not verify biometrics. Please try again.',
+          );
+        }
+        return;
+      }
+    }
+
+    try {
+      await DeviceSecurityService.setBiometricEnabled(enabled);
+      if (!mounted) return;
+      setState(() => _biometricEnabled = enabled);
+      TopNotification.showSuccess(
+        context,
+        enabled ? 'Biometric unlock activated.' : 'Biometric unlock disabled.',
+      );
+    } catch (error) {
+      debugPrint('Saving biometric preference failed: $error');
+      if (mounted) {
+        TopNotification.showError(
+          context,
+          'Could not update biometric settings. Please try again.',
+        );
+      }
+    }
   }
 
   Future<void> _saveNotificationPreferences(
@@ -666,21 +727,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       setDialogState(() => isSendingOtp = true);
 
                                       // Generate 6-digit OTP
-                                      final generated = ((DateTime.now().microsecondsSinceEpoch % 900000) + 100000).toString();
+                                      final generated =
+                                          ((DateTime.now().microsecondsSinceEpoch %
+                                                      900000) +
+                                                  100000)
+                                              .toString();
                                       sentOtpCode = generated;
 
                                       // Log notification & dispatch reset email
-                                      await SupabaseService.instance.recordSecurityNotification(
-                                        user.id,
-                                        'security',
-                                        'Transaction PIN Reset OTP Code',
-                                        'Your one-time verification OTP to reset your transaction PIN is: $generated. Do not share this code with anyone.',
-                                        {'otp': generated, 'timestamp': DateTime.now().toIso8601String()},
-                                      );
+                                      await SupabaseService.instance
+                                          .recordSecurityNotification(
+                                            user.id,
+                                            'security',
+                                            'Transaction PIN Reset OTP Code',
+                                            'Your one-time verification OTP to reset your transaction PIN is: $generated. Do not share this code with anyone.',
+                                            {
+                                              'otp': generated,
+                                              'timestamp': DateTime.now()
+                                                  .toIso8601String(),
+                                            },
+                                          );
 
                                       if (user.email.isNotEmpty) {
                                         try {
-                                          await auth.sendPasswordResetEmail(user.email);
+                                          await auth.sendPasswordResetEmail(
+                                            user.email,
+                                          );
                                         } catch (_) {}
                                       }
 
@@ -699,7 +771,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 backgroundColor: AppColors.primaryBlue,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -771,7 +845,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               TextButton(
-                                onPressed: () => setDialogState(() => resetStep = 0),
+                                onPressed: () =>
+                                    setDialogState(() => resetStep = 0),
                                 child: Text(
                                   '← Back to Request',
                                   style: GoogleFonts.figtree(
@@ -786,15 +861,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   final auth = context.read<AuthProvider>();
                                   final user = auth.user;
                                   if (user == null) return;
-                                  final generated = ((DateTime.now().microsecondsSinceEpoch % 900000) + 100000).toString();
+                                  final generated =
+                                      ((DateTime.now().microsecondsSinceEpoch %
+                                                  900000) +
+                                              100000)
+                                          .toString();
                                   sentOtpCode = generated;
-                                  await SupabaseService.instance.recordSecurityNotification(
-                                    user.id,
-                                    'security',
-                                    'New PIN Reset OTP Code',
-                                    'Your new one-time verification OTP to reset your transaction PIN is: $generated.',
-                                    {'otp': generated},
-                                  );
+                                  await SupabaseService.instance
+                                      .recordSecurityNotification(
+                                        user.id,
+                                        'security',
+                                        'New PIN Reset OTP Code',
+                                        'Your new one-time verification OTP to reset your transaction PIN is: $generated.',
+                                        {'otp': generated},
+                                      );
                                   if (!mounted || !ctx.mounted) return;
                                   TopNotification.showSuccess(
                                     context,
@@ -831,7 +911,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               onPressed: () async {
                                 final otp = resetOtpCtrl.text.trim();
                                 final newPin = resetNewPinCtrl.text.trim();
-                                final confirmPin = resetConfirmPinCtrl.text.trim();
+                                final confirmPin = resetConfirmPinCtrl.text
+                                    .trim();
 
                                 if (otp.isEmpty) {
                                   TopNotification.showError(
@@ -880,7 +961,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 } else {
                                   TopNotification.showError(
                                     context,
-                                    auth.errorMessage ?? 'Could not reset transaction PIN.',
+                                    auth.errorMessage ??
+                                        'Could not reset transaction PIN.',
                                   );
                                 }
                               },
@@ -888,7 +970,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 backgroundColor: AppColors.primaryBlue,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -904,7 +988,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  const Icon(Icons.check_circle_rounded, size: 18),
+                                  const Icon(
+                                    Icons.check_circle_rounded,
+                                    size: 18,
+                                  ),
                                 ],
                               ),
                             ),
@@ -1079,22 +1166,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkCardVariant : const Color(0xFFEFF6FF),
+                    color: isDark
+                        ? AppColors.darkCardVariant
+                        : const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: isDark ? AppColors.darkBorder : const Color(0xFFBFDBFE),
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : const Color(0xFFBFDBFE),
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.mail_outline_rounded, size: 18, color: AppColors.primaryCyan),
+                      const Icon(
+                        Icons.mail_outline_rounded,
+                        size: 18,
+                        color: AppColors.primaryCyan,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Forgot current password? You can also receive a direct recovery link via email.',
                           style: GoogleFonts.figtree(
                             fontSize: 12,
-                            color: isDark ? AppColors.metallicLight : const Color(0xFF0369A1),
+                            color: isDark
+                                ? AppColors.metallicLight
+                                : const Color(0xFF0369A1),
                           ),
                         ),
                       ),
@@ -1120,12 +1217,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         } else {
                           TopNotification.showError(
                             context,
-                            auth.errorMessage ?? 'Could not dispatch password reset link.',
+                            auth.errorMessage ??
+                                'Could not dispatch password reset link.',
                           );
                         }
                       }
                     },
-                    icon: const Icon(Icons.send_rounded, size: 14, color: AppColors.primaryCyan),
+                    icon: const Icon(
+                      Icons.send_rounded,
+                      size: 14,
+                      color: AppColors.primaryCyan,
+                    ),
                     label: Text(
                       'Email Reset Link',
                       style: GoogleFonts.figtree(
@@ -1682,18 +1784,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildDivider(isDark),
                       _buildToggleTile(
                         icon: Icons.fingerprint_rounded,
-                        title: 'Biometric Sign-In & Security',
-                        badge: 'BIOMETRIC',
+                        title: 'Biometric App Unlock',
+                        badge: 'MOBILE ONLY',
                         value: _biometricEnabled,
-                        onChanged: (val) {
-                          setState(() => _biometricEnabled = val);
-                          TopNotification.showSuccess(
-                            context,
-                            val
-                                ? 'Biometric authentication activated.'
-                                : 'Biometric authentication disabled.',
-                          );
-                        },
+                        onChanged: _setBiometricEnabled,
+                        enabled: _biometricAvailable,
+                        warningNote: _biometricAvailable
+                            ? 'Use fingerprint or Face ID to unlock the mobile app.'
+                            : 'Biometrics are unavailable on this device.',
                         isDark: isDark,
                       ),
                     ],
@@ -1933,7 +2031,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           onTap: _openDeveloperInstagram,
                           borderRadius: BorderRadius.circular(4),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 2,
+                              vertical: 2,
+                            ),
                             child: Text(
                               'Adevictorolu',
                               style: GoogleFonts.figtree(
@@ -2100,37 +2201,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: isDark ? Colors.white70 : Colors.black87,
               ),
               const SizedBox(width: 10),
-              Text(
-                title,
-                style: GoogleFonts.figtree(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.figtree(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: badge == 'ACTIVE'
+                            ? AppColors.success.withValues(alpha: 0.15)
+                            : (isDark
+                                  ? AppColors.darkCardVariant
+                                  : AppColors.lightCardVariant),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        badge,
+                        style: GoogleFonts.figtree(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          color: badge == 'ACTIVE'
+                              ? AppColors.success
+                              : (isDark
+                                    ? Colors.white70
+                                    : const Color(0xFF475569)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: badge == 'ACTIVE'
-                      ? AppColors.success.withValues(alpha: 0.15)
-                      : (isDark
-                            ? AppColors.darkCardVariant
-                            : AppColors.lightCardVariant),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  badge,
-                  style: GoogleFonts.figtree(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w800,
-                    color: badge == 'ACTIVE'
-                        ? AppColors.success
-                        : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                  ),
-                ),
-              ),
-              const Spacer(),
               Switch(
                 value: value,
                 onChanged: enabled ? onChanged : null,

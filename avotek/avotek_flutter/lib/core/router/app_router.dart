@@ -10,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
 import '../../screens/affiliate/affiliate_screen.dart';
 import '../../screens/auth/auth_callback_screen.dart';
+import '../../screens/auth/app_lock_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/coupons/coupons_screen.dart';
 import '../../screens/gifts/gifts_screen.dart';
@@ -45,11 +46,8 @@ class AppRouter {
     _authRefreshNotifier?.dispose();
     final authRefreshNotifier = _AuthStateRefreshNotifier();
     _authRefreshNotifier = authRefreshNotifier;
-    final bool hasSeenOnboarding = AppDatabaseService.instance
-        .hasSeenOnboarding();
-
     return GoRouter(
-      initialLocation: (kIsWeb || hasSeenOnboarding) ? '/' : '/onboarding',
+      initialLocation: kIsWeb ? '/' : '/onboarding',
       refreshListenable: authRefreshNotifier,
       redirect: (context, state) {
         final path = state.matchedLocation;
@@ -76,6 +74,7 @@ class AppRouter {
           '/gifts',
           '/affiliate',
           '/stats',
+          '/app-lock',
         ];
 
         final isProtected = protectedRoutes.any(
@@ -166,8 +165,11 @@ class AppRouter {
               reference: state.uri.queryParameters['ref'],
               serviceName: state.uri.queryParameters['service'],
               examCode: state.uri.queryParameters['exam'],
-              quantity: int.tryParse(state.uri.queryParameters['qty'] ?? '1') ?? 1,
-              amount: double.tryParse(state.uri.queryParameters['amt'] ?? '5250') ?? 5250.0,
+              quantity:
+                  int.tryParse(state.uri.queryParameters['qty'] ?? '1') ?? 1,
+              amount:
+                  double.tryParse(state.uri.queryParameters['amt'] ?? '5250') ??
+                  5250.0,
               recipient: state.uri.queryParameters['to'],
               note: state.uri.queryParameters['note'],
               status: state.uri.queryParameters['status'],
@@ -202,7 +204,7 @@ class AppRouter {
         GoRoute(
           path: '/onboarding',
           redirect: (context, state) {
-            if (AppDatabaseService.instance.hasSeenOnboarding()) {
+            if (kIsWeb) {
               return '/';
             }
             return null;
@@ -220,6 +222,16 @@ class AppRouter {
             state,
             LoginScreen(
               initialSignUp: false,
+              returnTo: state.uri.queryParameters['returnTo'],
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/app-lock',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            AppLockScreen(
               returnTo: state.uri.queryParameters['returnTo'],
             ),
           ),

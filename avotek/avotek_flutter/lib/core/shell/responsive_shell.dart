@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../responsive/responsive_layout.dart';
+import '../security/device_security_service.dart';
 import '../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
@@ -28,8 +29,41 @@ class ResponsiveShell extends StatefulWidget {
   State<ResponsiveShell> createState() => _ResponsiveShellState();
 }
 
-class _ResponsiveShellState extends State<ResponsiveShell> {
+class _ResponsiveShellState extends State<ResponsiveShell>
+    with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _lockOnResume = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!DeviceSecurityService.isMobilePlatform) return;
+    if (state == AppLifecycleState.paused) {
+      _lockOnResume = context.read<AuthProvider>().isAuthenticated;
+    } else if (state == AppLifecycleState.resumed && _lockOnResume) {
+      _lockOnResume = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !context.read<AuthProvider>().isAuthenticated) return;
+        context.push(
+          Uri(
+            path: '/app-lock',
+            queryParameters: {'returnTo': widget.currentRoute},
+          ).toString(),
+        );
+      });
+    }
+  }
 
   void _handleThemeToggle() {
     final onToggleTheme = widget.onToggleTheme;
@@ -88,7 +122,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF23304B) : const Color(0xFFCBD5E1),
+                    color: isDark
+                        ? const Color(0xFF23304B)
+                        : const Color(0xFFCBD5E1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -99,14 +135,20 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.notifications_active_rounded, size: 20, color: AppColors.electricCyan),
+                      const Icon(
+                        Icons.notifications_active_rounded,
+                        size: 20,
+                        color: AppColors.electricCyan,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Transaction Alerts',
                         style: GoogleFonts.figtree(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                     ],
@@ -148,11 +190,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                     itemCount: txs.take(6).length,
                     separatorBuilder: (context, index) => Divider(
                       height: 1,
-                      color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+                      color: isDark
+                          ? const Color(0xFF23304B)
+                          : const Color(0xFFE2E8F0),
                     ),
                     itemBuilder: (ctx, idx) {
                       final tx = txs[idx];
-                      final isSuccess = tx.status.toLowerCase() == 'completed' ||
+                      final isSuccess =
+                          tx.status.toLowerCase() == 'completed' ||
                           tx.status.toLowerCase() == 'successful';
                       final isFailed = tx.status.toLowerCase() == 'failed';
                       final statusColor = isSuccess
@@ -180,16 +225,23 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                           style: GoogleFonts.figtree(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                         subtitle: Text(
-                          tx.narration ?? (isSuccess ? 'Transaction delivered' : 'Transaction failed'),
+                          tx.narration ??
+                              (isSuccess
+                                  ? 'Transaction delivered'
+                                  : 'Transaction failed'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.figtree(
                             fontSize: 11.5,
-                            color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                            color: isDark
+                                ? AppColors.metallicLight
+                                : AppColors.slateGrey,
                           ),
                         ),
                         trailing: Column(
@@ -203,11 +255,15 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                                 fontWeight: FontWeight.w800,
                                 color: isSuccess
                                     ? AppColors.success
-                                    : (isFailed ? AppColors.error : AppColors.primaryBlue),
+                                    : (isFailed
+                                          ? AppColors.error
+                                          : AppColors.primaryBlue),
                               ),
                             ),
                             Text(
-                              isSuccess ? 'Delivered' : (isFailed ? 'Failed' : 'Processing'),
+                              isSuccess
+                                  ? 'Delivered'
+                                  : (isFailed ? 'Failed' : 'Processing'),
                               style: GoogleFonts.figtree(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -302,7 +358,10 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: wallet.recentTransactions.any((t) => t.status.toLowerCase() == 'failed')
+                            color:
+                                wallet.recentTransactions.any(
+                                  (t) => t.status.toLowerCase() == 'failed',
+                                )
                                 ? AppColors.error
                                 : AppColors.success,
                             shape: BoxShape.circle,
