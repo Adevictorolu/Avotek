@@ -247,19 +247,47 @@ async function finalizePurchase(
   status: "completed" | "pending" | "failed",
   narration: string,
   userId: string,
-): Promise<void> {
+  cashbackAmount = 0,
+): Promise<number> {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!serviceRoleKey) throw new Error("Missing Supabase service-role configuration.");
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  const { error } = await admin.rpc("finalize_vtu_purchase", {
+  const { data, error } = await admin.rpc("finalize_vtu_purchase_with_cashback", {
     p_narration: narration,
     p_reference: reference,
     p_status: status,
     p_user_id: userId,
+    p_cashback_amount: cashbackAmount,
   });
   if (error) throw error;
+  return Number(isRecord(data) ? data.cashback_amount ?? 0 : 0);
+}
+
+async function getPricingOverrides(
+  supabaseUrl: string,
+): Promise<JsonMap> {
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!serviceRoleKey) {
+    throw new Error("Missing Supabase service-role configuration.");
+  }
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { data, error } = await admin
+    .from("app_settings")
+    .select("value")
+    .eq("key", "pricing_overrides")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data || typeof data.value !== "string") return {};
+  try {
+    const parsed: unknown = JSON.parse(data.value);
+    return isRecord(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 function normalizedProviderStatus(
@@ -551,7 +579,7 @@ Deno.serve(async (request) => {
     const mergedPlans = [...bilalPlans, ...bigiPlans];
 
     // Apply custom margin if configured by admin in app_settings
-    let dataMarginPct = 0;
+    let dataMarginPct = 5;
     try {
       const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
       if (supabaseUrl && serviceRoleKey) {
@@ -617,6 +645,27 @@ Deno.serve(async (request) => {
         if (bigiPlans.length > 0) plans = bigiPlans;
       } catch (_) {}
     }
+
+    const pricingOverrides = await getPricingOverrides(supabaseUrl);
+    const configuredFee = Number(pricingOverrides.cable_fee ?? 50);
+    const cableFee = Number.isFinite(configuredFee)
+      ? Math.max(0, configuredFee)
+      : 0;
+    plans = plans.map((plan) => {
+      const basePrice = Number(
+        plan.plan_price ?? plan.package_amount ?? plan.amount ?? plan.price ?? 0,
+      );
+      if (!Number.isFinite(basePrice) || basePrice <= 0) return plan;
+      const totalPrice = Math.round((basePrice + cableFee) * 100) / 100;
+      return {
+        ...plan,
+        base_price: basePrice,
+        amount: totalPrice,
+        price: totalPrice,
+        package_amount: totalPrice,
+        plan_price: totalPrice,
+      };
+    });
 
     // Rank cable plans from lowest to highest price
     plans.sort((a, b) => {
@@ -925,29 +974,6 @@ Deno.serve(async (request) => {
     let fulfillStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
     let fulfillResponse = bilalRes.providerBody;
 
-    if (fulfillStatus === "failed" && bigisubToken) {
-      try {
-        const examUpper = String(exam).toUpperCase();
-        const bigiRes = await dispatchBigisubRequest(
-          `${bigisubBaseUrl}/api/v2/bills/result-checker/purchase/`,
-          "POST",
-          bigisubToken,
-          {
-            exam: examUpper,
-            exam_type: examUpper,
-            quantity: qty,
-            pin: bigisubPin,
-            pin_code: bigisubPin,
-          },
-        );
-        const bigiStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
-        if (bigiStatus === "completed" || bigiStatus === "pending") {
-          fulfillStatus = bigiStatus;
-          fulfillResponse = bigiRes.providerBody;
-        }
-      } catch (_) {}
-    }
-
     const extracted = extractPinsFromResponse(fulfillResponse);
     const firstPin = extracted.length > 0 ? extracted[0].pin : "";
     const firstSerial = extracted.length > 0 ? (extracted[0].serial ?? "") : "";
@@ -971,6 +997,13 @@ Deno.serve(async (request) => {
 
   // --- TRANSACTION PIN & PURCHASE AUTHORIZATION ---
   const isPurchase = action.endsWith(".purchase") || action === "sms.send";
+  const purchasePricingOverrides = [
+    "airtime.purchase",
+    "cable.purchase",
+    "electricity.purchase",
+  ].includes(action)
+    ? await getPricingOverrides(supabaseUrl)
+    : {};
 
   if (isPurchase) {
     const userPin = String(requestBody.user_pin ?? "").trim();
@@ -1018,7 +1051,14 @@ Deno.serve(async (request) => {
   } else if (action === "data.purchase") {
     purchaseAmount = Number(payload.sell_price ?? payload.amount ?? 0);
   } else if (action === "cable.purchase" || action === "electricity.purchase") {
-    purchaseAmount = Number(payload.amount);
+    const principal = Number(payload.amount);
+    const configuredFee = Number(
+      action === "cable.purchase"
+        ? purchasePricingOverrides.cable_fee ?? 50
+        : purchasePricingOverrides.electricity_fee ?? 100,
+    );
+    const fee = Number.isFinite(configuredFee) ? Math.max(0, configuredFee) : 0;
+    purchaseAmount = Math.round((principal + fee) * 100) / 100;
   } else if (action === "education.purchase") {
     const qty = Number(payload.quantity ?? 1);
     const passedUnit = Number(payload.unit_price ?? payload.price ?? 0);
@@ -1219,7 +1259,7 @@ Deno.serve(async (request) => {
       }
     }
 
-    // 3. EXAM E-PIN PURCHASE: BilalSadaSub primary (cheaper fulfillment, retaining Bigisub retail price!), Bigisub fallback
+    // 3. EXAM E-PIN PURCHASE: BilalSadaSub only; preserve configured customer prices.
     else if (action === "education.purchase") {
       const examId = mapExamToId(payload.exam ?? payload.exam_id ?? payload.exam_type);
       const qty = Number(payload.quantity ?? 1);
@@ -1239,30 +1279,6 @@ Deno.serve(async (request) => {
       );
       finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
       providerResponse = bilalRes.providerBody;
-
-      if (finalStatus === "failed" && bigisubToken) {
-        try {
-          const examUpper = String(payload.exam ?? "WAEC").toUpperCase();
-          const bigiPayload: JsonMap = {
-            exam: examUpper,
-            exam_type: examUpper,
-            quantity: qty,
-            pin: bigisubPin,
-            pin_code: bigisubPin,
-          };
-          const bigiRes = await dispatchBigisubRequest(
-            `${bigisubBaseUrl}/api/v2/bills/result-checker/purchase/`,
-            "POST",
-            bigisubToken,
-            bigiPayload,
-          );
-          const bigiStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
-          if (bigiStatus === "completed" || bigiStatus === "pending") {
-            finalStatus = bigiStatus;
-            providerResponse = bigiRes.providerBody;
-          }
-        } catch (_) {}
-      }
 
       if (finalStatus !== "failed") {
         const extracted = extractPinsFromResponse(providerResponse);
@@ -1565,11 +1581,34 @@ Deno.serve(async (request) => {
         : "The service provider could not complete this purchase.",
     );
 
-    // Finalize settlement in Supabase database
+    let cashbackAmount = 0;
+    if (
+      action === "airtime.purchase" &&
+      finalStatus === "completed" &&
+      purchaseAmount !== null &&
+      purchaseAmount >= 50
+    ) {
+      const configuredPercent = Number(
+        purchasePricingOverrides.airtime_cashback ?? 2,
+      );
+      const cashbackPercent = Number.isFinite(configuredPercent)
+        ? Math.min(100, Math.max(0, configuredPercent))
+        : 0;
+      cashbackAmount = Math.round(purchaseAmount * cashbackPercent) / 100;
+    }
+
+    // Finalize settlement and credit any eligible cashback atomically.
     if (finalStatus === "failed") {
       await finalizePurchase(supabaseUrl, reference, "failed", finalMessage, authData.user.id);
     } else if (finalStatus === "completed") {
-      await finalizePurchase(supabaseUrl, reference, "completed", finalMessage, authData.user.id);
+      cashbackAmount = await finalizePurchase(
+        supabaseUrl,
+        reference,
+        "completed",
+        finalMessage,
+        authData.user.id,
+        cashbackAmount,
+      );
     }
 
     const providerRef = extractProviderReference(providerResponse) ?? reference;
@@ -1581,6 +1620,7 @@ Deno.serve(async (request) => {
       reference,
       local_reference: reference,
       charged_amount: purchaseAmount,
+      ...(cashbackAmount > 0 ? { cashback_amount: cashbackAmount } : {}),
       provider_reference: providerRef,
       message: finalMessage,
     });

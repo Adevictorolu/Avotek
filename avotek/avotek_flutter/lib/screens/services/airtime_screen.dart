@@ -35,9 +35,9 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
   double _amount = 0.0;
   bool _isProcessing = false;
   double _cashbackPercent = 2.0; // 2% default instant cashback
-  double get _cashbackAmount => (_amount * _cashbackPercent / 100);
-  double get _netCharge =>
-      (_amount - _cashbackAmount).clamp(0.0, double.infinity);
+  double get _cashbackAmount =>
+      (_amount * _cashbackPercent).roundToDouble() / 100;
+  double get _netCharge => _amount;
 
   final List<Map<String, String>> _networks = [
     {
@@ -227,7 +227,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
       title: 'Confirm Airtime Purchase',
       amount: charge,
       description:
-          '$_selectedNetwork • $phone\nValue: ₦${_amount.toStringAsFixed(0)} (Cashback Discount: ₦${_cashbackAmount.toStringAsFixed(2)})',
+          '$_selectedNetwork • $phone\n${_amount >= 50 && _cashbackPercent > 0 ? '₦${_cashbackAmount.toStringAsFixed(2)} cashback will be credited to your wallet after successful delivery.' : 'Your wallet will be charged ₦${charge.toStringAsFixed(2)}.'}',
       onPinSubmit: (pin) async {
         transactionPin = pin;
         return auth.verifyPin(pin);
@@ -242,7 +242,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           userId: user.id,
           network: _selectedNetwork,
           phone: phone,
-          amount: charge,
+          amount: _amount,
           userPin: transactionPin,
           airtimeType: 'vtu',
         );
@@ -271,7 +271,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           reference: result.order.id,
           providerReference: result.order.providerReference,
           message:
-              '₦${NumberFormat('#,##0.00').format(_amount)} $_selectedNetwork airtime sent to $phone.',
+              '₦${NumberFormat('#,##0.00').format(_amount)} $_selectedNetwork airtime sent to $phone.${_amount >= 50 && _cashbackPercent > 0 ? ' ₦${_cashbackAmount.toStringAsFixed(2)} cashback has been credited to your wallet.' : ''}',
         );
       } catch (e) {
         if (!mounted) return;
@@ -1013,7 +1013,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                   const SizedBox(height: 2),
                                   Text(
                                     _amount >= 50 && _cashbackPercent > 0
-                                        ? 'Save ₦${_cashbackAmount.toStringAsFixed(2)} (${_cashbackPercent.toStringAsFixed(1)}% Cashback)'
+                                        ? 'Get ₦${_cashbackAmount.toStringAsFixed(2)} (${_cashbackPercent.toStringAsFixed(1)}%) wallet cashback after success'
                                         : 'Select or enter amount below',
                                     style: GoogleFonts.figtree(
                                       fontSize: 13,
@@ -1132,7 +1132,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
                                         _activeMode == 1
                                             ? 'Create Gift Voucher'
                                             : (_amount >= 50
-                                                  ? 'Buy Airtime Now • ₦${_netCharge.toStringAsFixed(0)}'
+                                                  ? 'Buy Airtime Now • ₦${_amount.toStringAsFixed(0)}'
                                                   : 'Buy Airtime Now'),
                                         style: GoogleFonts.figtree(
                                           fontSize: 14.5,

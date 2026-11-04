@@ -219,6 +219,7 @@ class VtuApiService {
     required String variationCode,
     required String phone,
     required double amount,
+    double? chargeAmount,
     required String customerName,
     String? pin,
   }) => _invoke(
@@ -230,6 +231,7 @@ class VtuApiService {
       'card_no': smartcardNumber.trim(),
       'phone_number': _cleanPhoneNumber(phone),
       'amount': amount.toInt(),
+      if (chargeAmount != null) 'charge_amount': chargeAmount.toInt(),
       'Customer': customerName.trim(),
     },
   );
@@ -272,6 +274,7 @@ class VtuApiService {
     required String meterType,
     required String phone,
     required double amount,
+    double? chargeAmount,
     required String customerName,
     String? customerAddress,
     String? pin,
@@ -285,6 +288,7 @@ class VtuApiService {
       'meter_type': meterType.toLowerCase(),
       'phone_number': _cleanPhoneNumber(phone),
       'amount': amount.toInt(),
+      if (chargeAmount != null) 'charge_amount': chargeAmount.toInt(),
       'Customer_name': customerName.trim(),
       if (customerAddress != null && customerAddress.isNotEmpty)
         'Customer_address': customerAddress.trim(),
@@ -395,36 +399,34 @@ class VtuApiService {
     required String exam,
     required int quantity,
     String? origin,
-  }) =>
-      _invoke(
-        'sponsor.initialize',
-        payload: {
-          'email': email.trim(),
-          'amount': amount,
-          'reference': reference,
-          'service': service,
-          'recipient': recipient,
-          'exam': exam,
-          'quantity': quantity,
-          if (origin != null && origin.isNotEmpty) 'origin': origin,
-        },
-      );
+  }) => _invoke(
+    'sponsor.initialize',
+    payload: {
+      'email': email.trim(),
+      'amount': amount,
+      'reference': reference,
+      'service': service,
+      'recipient': recipient,
+      'exam': exam,
+      'quantity': quantity,
+      if (origin != null && origin.isNotEmpty) 'origin': origin,
+    },
+  );
 
   Future<Map<String, dynamic>> verifySponsorPayment({
     required String reference,
     required String exam,
     required int quantity,
     required String phone,
-  }) =>
-      _invoke(
-        'sponsor.verify',
-        payload: {
-          'reference': reference,
-          'exam': exam,
-          'quantity': quantity,
-          'phone': phone,
-        },
-      );
+  }) => _invoke(
+    'sponsor.verify',
+    payload: {
+      'reference': reference,
+      'exam': exam,
+      'quantity': quantity,
+      'phone': phone,
+    },
+  );
 
   Future<Map<String, dynamic>> sendBulkSms({
     required List<String> recipients,

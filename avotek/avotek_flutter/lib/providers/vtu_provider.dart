@@ -531,7 +531,8 @@ class VtuProvider extends ChangeNotifier {
     String displayPlan = (planName != null && planName.trim().isNotEmpty)
         ? planName.trim()
         : '${network.toUpperCase()} Data Plan';
-    if (displayPlan.toUpperCase().startsWith('BIGI-') || displayPlan.toUpperCase().startsWith('BILAL-')) {
+    if (displayPlan.toUpperCase().startsWith('BIGI-') ||
+        displayPlan.toUpperCase().startsWith('BILAL-')) {
       displayPlan = '${network.toUpperCase()} Data Plan';
     }
 
@@ -753,6 +754,7 @@ class VtuProvider extends ChangeNotifier {
     String? packageCode,
     String? variationCode,
     required double amount,
+    double? providerAmount,
     String? customerName,
     String? userPin,
     String? phone,
@@ -770,7 +772,8 @@ class VtuProvider extends ChangeNotifier {
         smartcardNumber: smartcardNumber,
         variationCode: planCode,
         phone: (phone != null && phone.isNotEmpty) ? phone : '08000000000',
-        amount: amount,
+        amount: providerAmount ?? amount,
+        chargeAmount: amount,
         customerName: customerName ?? 'Avotek Subscriber',
         pin: userPin,
       ),
@@ -828,6 +831,7 @@ class VtuProvider extends ChangeNotifier {
     required String meterNumber,
     required String meterType,
     required double amount,
+    double? chargeAmount,
     String? customerName,
     String? customerAddress,
     String? phone,
@@ -839,13 +843,14 @@ class VtuProvider extends ChangeNotifier {
       network: disco,
       recipient: meterNumber,
       plan: '$disco $meterType',
-      amount: amount,
+      amount: chargeAmount ?? amount,
       dispatch: () => VtuApiService.instance.purchaseElectricity(
         company: disco,
         meterNumber: meterNumber,
         meterType: meterType,
         phone: (phone != null && phone.isNotEmpty) ? phone : '08000000000',
         amount: amount,
+        chargeAmount: chargeAmount,
         customerName: customerName ?? 'Avotek Customer',
         customerAddress: customerAddress,
         pin: userPin,

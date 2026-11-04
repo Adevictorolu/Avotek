@@ -33,11 +33,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   double? _providerBalance;
   String _userSearchQuery = '';
   String _selectedProfitPeriod = 'day'; // 'day', 'week', 'month', 'all'
-  String _userSortOrder = 'balance_desc'; // 'balance_desc', 'balance_asc', 'name'
+  String _userSortOrder =
+      'balance_desc'; // 'balance_desc', 'balance_asc', 'name'
   List<Map<String, dynamic>> _adminTransactions = [];
 
   final _apkUrlController = TextEditingController(
-    text: 'https://github.com/adevictorolu/Avotek/releases/latest/download/avotek.apk',
+    text:
+        'https://github.com/adevictorolu/Avotek/releases/latest/download/avotek.apk',
   );
   final _apkVersionController = TextEditingController(text: 'v2.00');
   bool _isSavingApkSettings = false;
@@ -115,35 +117,67 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
       // Load mobile APK settings
       try {
-        final apkUrl = await SupabaseService.instance.getAppSetting('apk_download_url');
+        final apkUrl = await SupabaseService.instance.getAppSetting(
+          'apk_download_url',
+        );
         if (apkUrl != null && apkUrl.isNotEmpty) {
           _apkUrlController.text = apkUrl;
         }
-        final apkVer = await SupabaseService.instance.getAppSetting('apk_version');
+        final apkVer = await SupabaseService.instance.getAppSetting(
+          'apk_version',
+        );
         if (apkVer != null && apkVer.isNotEmpty) {
           _apkVersionController.text = apkVer;
         }
 
         // Load co-admins and pricing overrides
-        final coAdminsStr = await SupabaseService.instance.getAppSetting('admin_emails');
+        final coAdminsStr = await SupabaseService.instance.getAppSetting(
+          'admin_emails',
+        );
         if (coAdminsStr != null && coAdminsStr.isNotEmpty && mounted) {
           setState(() {
-            _coAdmins = coAdminsStr.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+            _coAdmins = coAdminsStr
+                .split(',')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .toList();
           });
         }
-        final pricingStr = await SupabaseService.instance.getAppSetting('pricing_overrides');
+        final pricingStr = await SupabaseService.instance.getAppSetting(
+          'pricing_overrides',
+        );
         if (pricingStr != null && pricingStr.isNotEmpty) {
           final decoded = jsonDecode(pricingStr);
           if (decoded is Map) {
-            if (decoded['waec'] != null) _pricingWaecController.text = decoded['waec'].toString();
-            if (decoded['neco'] != null) _pricingNecoController.text = decoded['neco'].toString();
-            if (decoded['nabteb'] != null) _pricingNabtebController.text = decoded['nabteb'].toString();
-            if (decoded['jamb'] != null) _pricingJambController.text = decoded['jamb'].toString();
-            if (decoded['data_margin'] != null) _dataMarginController.text = decoded['data_margin'].toString();
-            if (decoded['airtime_cashback'] != null) _airtimeCashbackController.text = decoded['airtime_cashback'].toString();
-            if (decoded['cable_fee'] != null) _cableFeeController.text = decoded['cable_fee'].toString();
-            if (decoded['electricity_fee'] != null) _electricityFeeController.text = decoded['electricity_fee'].toString();
-            if (decoded['sms_cost'] != null) _smsCostController.text = decoded['sms_cost'].toString();
+            if (decoded['waec'] != null) {
+              _pricingWaecController.text = decoded['waec'].toString();
+            }
+            if (decoded['neco'] != null) {
+              _pricingNecoController.text = decoded['neco'].toString();
+            }
+            if (decoded['nabteb'] != null) {
+              _pricingNabtebController.text = decoded['nabteb'].toString();
+            }
+            if (decoded['jamb'] != null) {
+              _pricingJambController.text = decoded['jamb'].toString();
+            }
+            if (decoded['data_margin'] != null) {
+              _dataMarginController.text = decoded['data_margin'].toString();
+            }
+            if (decoded['airtime_cashback'] != null) {
+              _airtimeCashbackController.text = decoded['airtime_cashback']
+                  .toString();
+            }
+            if (decoded['cable_fee'] != null) {
+              _cableFeeController.text = decoded['cable_fee'].toString();
+            }
+            if (decoded['electricity_fee'] != null) {
+              _electricityFeeController.text = decoded['electricity_fee']
+                  .toString();
+            }
+            if (decoded['sms_cost'] != null) {
+              _smsCostController.text = decoded['sms_cost'].toString();
+            }
           }
         }
       } catch (_) {}
@@ -157,7 +191,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Future<void> _toggleUserKyc(String userId, String currentStatus) async {
-    final newStatus = currentStatus.toLowerCase() == 'verified' ? 'unverified' : 'verified';
+    final newStatus = currentStatus.toLowerCase() == 'verified'
+        ? 'unverified'
+        : 'verified';
     final success = await SupabaseService.instance.adminSetUserKyc(
       targetUserId: userId,
       newStatus: newStatus,
@@ -173,7 +209,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
-  void _openAdjustWalletDialog(String userId, String userEmail, double currentBalance) {
+  void _openAdjustWalletDialog(
+    String userId,
+    String userEmail,
+    double currentBalance,
+  ) {
     final amountCtrl = TextEditingController();
     final reasonCtrl = TextEditingController(text: 'Admin manual adjustment');
     bool isCredit = true;
@@ -184,10 +224,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       builder: (dialogCtx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Text(
             'Adjust User Wallet',
-            style: GoogleFonts.figtree(fontWeight: FontWeight.w800, fontSize: 18),
+            style: GoogleFonts.figtree(
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -216,7 +261,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: ChoiceChip(
                       label: const Text('Credit (+)'),
                       selected: isCredit,
-                      onSelected: (val) => setDialogState(() => isCredit = true),
+                      onSelected: (val) =>
+                          setDialogState(() => isCredit = true),
                       selectedColor: AppColors.success.withValues(alpha: 0.25),
                     ),
                   ),
@@ -225,7 +271,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: ChoiceChip(
                       label: const Text('Debit (-)'),
                       selected: !isCredit,
-                      onSelected: (val) => setDialogState(() => isCredit = false),
+                      onSelected: (val) =>
+                          setDialogState(() => isCredit = false),
                       selectedColor: AppColors.error.withValues(alpha: 0.25),
                     ),
                   ),
@@ -234,11 +281,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               const SizedBox(height: 14),
               TextField(
                 controller: amountCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Amount (₦)',
                   prefixText: '₦ ',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -246,7 +297,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 controller: reasonCtrl,
                 decoration: InputDecoration(
                   labelText: 'Audit Reason',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
@@ -260,18 +313,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onPressed: () async {
                 final amt = double.tryParse(amountCtrl.text.trim());
                 if (amt == null || amt <= 0) {
-                  TopNotification.showWarning(context, 'Enter a valid positive amount.');
+                  TopNotification.showWarning(
+                    context,
+                    'Enter a valid positive amount.',
+                  );
                   return;
                 }
                 final delta = isCredit ? amt : -amt;
                 final reason = reasonCtrl.text.trim();
                 Navigator.pop(dialogCtx);
                 try {
-                  final newBal = await SupabaseService.instance.adminAdjustUserWallet(
-                    targetUserId: userId,
-                    deltaAmount: delta,
-                    reason: reason.isNotEmpty ? reason : 'Admin adjustment',
-                  );
+                  final newBal = await SupabaseService.instance
+                      .adminAdjustUserWallet(
+                        targetUserId: userId,
+                        deltaAmount: delta,
+                        reason: reason.isNotEmpty ? reason : 'Admin adjustment',
+                      );
                   if (mounted) {
                     TopNotification.showSuccess(
                       context,
@@ -349,7 +406,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.figtree(
                     fontSize: 13,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -373,8 +432,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }).toList();
 
     filteredUsers.sort((a, b) {
-      final balA = ((a['wallet_balance'] ?? a['balance']) as num?)?.toDouble() ?? 0.0;
-      final balB = ((b['wallet_balance'] ?? b['balance']) as num?)?.toDouble() ?? 0.0;
+      final balA =
+          ((a['wallet_balance'] ?? a['balance']) as num?)?.toDouble() ?? 0.0;
+      final balB =
+          ((b['wallet_balance'] ?? b['balance']) as num?)?.toDouble() ?? 0.0;
       if (_userSortOrder == 'balance_desc') {
         return balB.compareTo(balA);
       } else if (_userSortOrder == 'balance_asc') {
@@ -478,11 +539,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 const SizedBox(width: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryBlue.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.primaryBlue.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: AppColors.primaryBlue.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Text(
                     'SUPER ADMIN',
@@ -519,7 +585,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   : const Icon(Icons.refresh_rounded),
             ),
             IconButton(
-              tooltip: isDark ? 'Switch to light theme' : 'Switch to dark theme',
+              tooltip: isDark
+                  ? 'Switch to light theme'
+                  : 'Switch to dark theme',
               onPressed: () => context.read<ThemeProvider>().toggleTheme(),
               icon: Icon(
                 isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
@@ -572,8 +640,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final type = (t['type'] ?? '').toString().toLowerCase();
       final cat = (t['category'] ?? '').toString().toLowerCase();
       final status = (t['status'] ?? '').toString().toLowerCase();
-      final isSuccess = status == 'completed' || status == 'successful' || status == 'success';
-      return (type == 'debit' || cat != 'wallet_fund') && isSuccess && cat != 'credit';
+      final isSuccess =
+          status == 'completed' ||
+          status == 'successful' ||
+          status == 'success';
+      return (type == 'debit' || cat != 'wallet_fund') &&
+          isSuccess &&
+          cat != 'credit';
     }).toList();
 
     double grossSales = 0.0;
@@ -601,7 +674,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
 
     if (grossSales == 0.0 && _systemStats != null) {
-      final totalSpent = ((_systemStats?['total_spent'] as num?)?.toDouble() ?? 0.0);
+      final totalSpent =
+          ((_systemStats?['total_spent'] as num?)?.toDouble() ?? 0.0);
       double factor = 1.0;
       if (_selectedProfitPeriod == 'day') {
         factor = 0.05;
@@ -682,7 +756,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         style: GoogleFonts.figtree(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                     ],
@@ -692,7 +768,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     'Subtracts upstream API wholesale costs from customer retail sales to yield net take-home profit.',
                     style: GoogleFonts.figtree(
                       fontSize: 12,
-                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                      color: isDark
+                          ? AppColors.metallicLight
+                          : AppColors.slateGrey,
                     ),
                   ),
                 ],
@@ -701,10 +779,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF131722) : const Color(0xFFF1F5F9),
+                  color: isDark
+                      ? const Color(0xFF131722)
+                      : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+                    color: isDark
+                        ? const Color(0xFF23304B)
+                        : const Color(0xFFE2E8F0),
                   ),
                 ),
                 child: Row(
@@ -724,7 +806,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           // 4 Grid KPI Cards for Sales & Profit
           LayoutBuilder(
             builder: (context, constraints) {
-              final count = constraints.maxWidth >= 850 ? 4 : (constraints.maxWidth >= 500 ? 2 : 1);
+              final count = constraints.maxWidth >= 850
+                  ? 4
+                  : (constraints.maxWidth >= 500 ? 2 : 1);
               return GridView.count(
                 crossAxisCount: count,
                 shrinkWrap: true,
@@ -782,9 +866,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primaryBlue
-              : Colors.transparent,
+          color: isSelected ? AppColors.primaryBlue : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -881,7 +963,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.verified_user_rounded, color: AppColors.primaryBlue, size: 24),
+          const Icon(
+            Icons.verified_user_rounded,
+            color: AppColors.primaryBlue,
+            size: 24,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -901,7 +987,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   style: GoogleFonts.figtree(
                     fontSize: 12.5,
                     height: 1.45,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                 ),
               ],
@@ -913,13 +1001,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildKpiGrid(bool isDark) {
-    final totalUsers = (_systemStats?['total_users'] as num?)?.toInt() ?? _users.length;
-    final totalSpent = ((_systemStats?['total_spent'] as num?)?.toDouble() ??
-        _users.fold<double>(0.0, (acc, u) => acc + ((u['total_spent'] as num?)?.toDouble() ?? 0.0)));
-    final totalBalance = ((_systemStats?['total_balance'] as num?)?.toDouble() ??
-        _users.fold<double>(0.0, (acc, u) => acc + ((u['balance'] as num?)?.toDouble() ?? (u['wallet_balance'] as num?)?.toDouble() ?? 0.0)));
-    final totalOrders = (_systemStats?['total_orders'] as num?)?.toInt() ?? (_systemStats?['total_vtu_orders'] as num?)?.toInt() ?? 0;
-    final successfulOrders = (_systemStats?['successful_orders'] as num?)?.toInt() ?? 0;
+    final totalUsers =
+        (_systemStats?['total_users'] as num?)?.toInt() ?? _users.length;
+    final totalSpent =
+        ((_systemStats?['total_spent'] as num?)?.toDouble() ??
+        _users.fold<double>(
+          0.0,
+          (acc, u) => acc + ((u['total_spent'] as num?)?.toDouble() ?? 0.0),
+        ));
+    final totalBalance =
+        ((_systemStats?['total_balance'] as num?)?.toDouble() ??
+        _users.fold<double>(
+          0.0,
+          (acc, u) =>
+              acc +
+              ((u['balance'] as num?)?.toDouble() ??
+                  (u['wallet_balance'] as num?)?.toDouble() ??
+                  0.0),
+        ));
+    final totalOrders =
+        (_systemStats?['total_orders'] as num?)?.toInt() ??
+        (_systemStats?['total_vtu_orders'] as num?)?.toInt() ??
+        0;
+    final successfulOrders =
+        (_systemStats?['successful_orders'] as num?)?.toInt() ?? 0;
     final bal = _providerBalance ?? -1.0;
 
     final cards = [
@@ -969,7 +1074,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final count = constraints.maxWidth >= 900 ? 3 : (constraints.maxWidth >= 550 ? 2 : 1);
+        final count = constraints.maxWidth >= 900
+            ? 3
+            : (constraints.maxWidth >= 550 ? 2 : 1);
         return GridView.count(
           crossAxisCount: count,
           shrinkWrap: true,
@@ -1043,7 +1150,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         color: isDark ? AppColors.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isLow ? AppColors.warning : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+          color: isLow
+              ? AppColors.warning
+              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
         ),
       ),
       child: Row(
@@ -1052,7 +1161,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: (isLow ? AppColors.warning : AppColors.success).withValues(alpha: 0.15),
+              color: (isLow ? AppColors.warning : AppColors.success).withValues(
+                alpha: 0.15,
+              ),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
@@ -1079,7 +1190,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     const SizedBox(width: 8),
                     if (isLow)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.warning.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6),
@@ -1120,7 +1234,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               backgroundColor: AppColors.primaryBlue,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
@@ -1128,7 +1244,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildUsersManagementSection(List<Map<String, dynamic>> users, bool isDark) {
+  Widget _buildUsersManagementSection(
+    List<Map<String, dynamic>> users,
+    bool isDark,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
@@ -1161,7 +1280,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     'Manage users, verify KYC credentials, and oversee wallet balances.',
                     style: GoogleFonts.figtree(
                       fontSize: 12.5,
-                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                      color: isDark
+                          ? AppColors.metallicLight
+                          : AppColors.slateGrey,
                     ),
                   ),
                 ],
@@ -1175,8 +1296,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1190,7 +1316,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         value: 'balance_desc',
                         child: Row(
                           children: [
-                            Icon(Icons.arrow_downward_rounded, size: 16, color: AppColors.success),
+                            Icon(
+                              Icons.arrow_downward_rounded,
+                              size: 16,
+                              color: AppColors.success,
+                            ),
                             SizedBox(width: 8),
                             Text('Balance: Highest to Lowest'),
                           ],
@@ -1200,7 +1330,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         value: 'balance_asc',
                         child: Row(
                           children: [
-                            Icon(Icons.arrow_upward_rounded, size: 16, color: AppColors.primaryBlue),
+                            Icon(
+                              Icons.arrow_upward_rounded,
+                              size: 16,
+                              color: AppColors.primaryBlue,
+                            ),
                             SizedBox(width: 8),
                             Text('Balance: Lowest to Highest'),
                           ],
@@ -1218,12 +1352,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                     ],
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E2638) : const Color(0xFFF1F5F9),
+                        color: isDark
+                            ? const Color(0xFF1E2638)
+                            : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF2C3142) : const Color(0xFFCBD5E1),
+                          color: isDark
+                              ? const Color(0xFF2C3142)
+                              : const Color(0xFFCBD5E1),
                         ),
                       ),
                       child: Row(
@@ -1247,7 +1388,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             style: GoogleFonts.figtree(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
                             ),
                           ),
                         ],
@@ -1258,14 +1401,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   SizedBox(
                     width: 200,
                     child: TextField(
-                      onChanged: (val) => setState(() => _userSearchQuery = val),
+                      onChanged: (val) =>
+                          setState(() => _userSearchQuery = val),
                       style: GoogleFonts.figtree(fontSize: 12),
                       decoration: InputDecoration(
                         hintText: 'Search users...',
-                        hintStyle: GoogleFonts.figtree(fontSize: 12, color: Colors.grey),
+                        hintStyle: GoogleFonts.figtree(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                         prefixIcon: const Icon(Icons.search_rounded, size: 16),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ),
@@ -1282,7 +1434,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               color: isDark ? const Color(0xFF131722) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+                color: isDark
+                    ? const Color(0xFF23304B)
+                    : const Color(0xFFE2E8F0),
               ),
             ),
             child: Row(
@@ -1290,14 +1444,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.account_balance_wallet_rounded, size: 18, color: AppColors.success),
+                    const Icon(
+                      Icons.account_balance_wallet_rounded,
+                      size: 18,
+                      color: AppColors.success,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Total Monitored Float in User Wallets:',
                       style: GoogleFonts.figtree(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                        color: isDark
+                            ? Colors.white70
+                            : const Color(0xFF475569),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -1316,7 +1476,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   style: GoogleFonts.figtree(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                 ),
               ],
@@ -1329,10 +1491,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
                 child: Text(
-                  _userSearchQuery.isEmpty ? 'No users loaded yet.' : 'No users match your query.',
+                  _userSearchQuery.isEmpty
+                      ? 'No users loaded yet.'
+                      : 'No users match your query.',
                   style: GoogleFonts.figtree(
                     fontSize: 13,
-                    color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
                   ),
                 ),
               ),
@@ -1356,15 +1522,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 final phone = (u['phone']?.toString() ?? '').isNotEmpty
                     ? u['phone'].toString()
                     : 'No Phone';
-                final kycStatus = (u['kyc_status']?.toString() ?? 'unverified').toLowerCase();
+                final kycStatus = (u['kyc_status']?.toString() ?? 'unverified')
+                    .toLowerCase();
                 final isVerified = kycStatus == 'verified';
-                final walletBal = ((u['wallet_balance'] as num?)?.toDouble() ?? 0.0);
+                final walletBal =
+                    ((u['wallet_balance'] as num?)?.toDouble() ?? 0.0);
 
                 return Row(
                   children: [
                     CircleAvatar(
                       radius: 18,
-                      backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.15),
+                      backgroundColor: AppColors.primaryBlue.withValues(
+                        alpha: 0.15,
+                      ),
                       child: Text(
                         name.isNotEmpty ? name[0].toUpperCase() : 'U',
                         style: GoogleFonts.figtree(
@@ -1384,14 +1554,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             style: GoogleFonts.figtree(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
                             ),
                           ),
                           Text(
                             email,
                             style: GoogleFonts.figtree(
                               fontSize: 11.5,
-                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                              color: isDark
+                                  ? AppColors.metallicLight
+                                  : AppColors.slateGrey,
                             ),
                           ),
                         ],
@@ -1403,7 +1577,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         phone,
                         style: GoogleFonts.figtree(
                           fontSize: 12,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF334155),
                         ),
                       ),
                     ),
@@ -1435,23 +1611,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       onTap: () => _toggleUserKyc(id, kycStatus),
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
-                          color: (isVerified ? AppColors.success : AppColors.warning)
-                              .withValues(alpha: 0.15),
+                          color:
+                              (isVerified
+                                      ? AppColors.success
+                                      : AppColors.warning)
+                                  .withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: (isVerified ? AppColors.success : AppColors.warning)
-                                .withValues(alpha: 0.3),
+                            color:
+                                (isVerified
+                                        ? AppColors.success
+                                        : AppColors.warning)
+                                    .withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              isVerified ? Icons.check_circle_rounded : Icons.pending_rounded,
+                              isVerified
+                                  ? Icons.check_circle_rounded
+                                  : Icons.pending_rounded,
                               size: 13,
-                              color: isVerified ? AppColors.success : AppColors.warning,
+                              color: isVerified
+                                  ? AppColors.success
+                                  : AppColors.warning,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -1459,7 +1648,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               style: GoogleFonts.figtree(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
-                                color: isVerified ? AppColors.success : AppColors.warning,
+                                color: isVerified
+                                    ? AppColors.success
+                                    : AppColors.warning,
                               ),
                             ),
                           ],
@@ -1469,12 +1660,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     const SizedBox(width: 10),
                     IconButton(
                       tooltip: 'Adjust Wallet Balance',
-                      icon: const Icon(Icons.account_balance_wallet_outlined, size: 18),
-                      onPressed: () => _openAdjustWalletDialog(id, email, walletBal),
+                      icon: const Icon(
+                        Icons.account_balance_wallet_outlined,
+                        size: 18,
+                      ),
+                      onPressed: () =>
+                          _openAdjustWalletDialog(id, email, walletBal),
                     ),
                     IconButton(
                       tooltip: 'Suspend / Delete User',
-                      icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
+                      icon: const Icon(
+                        Icons.delete_outline_rounded,
+                        size: 18,
+                        color: Colors.redAccent,
+                      ),
                       onPressed: () => _confirmDeleteUser(id, email),
                     ),
                   ],
@@ -1499,10 +1698,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       builder: (dialogCtx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Text(
             'Provision New User Account',
-            style: GoogleFonts.figtree(fontWeight: FontWeight.w800, fontSize: 18),
+            style: GoogleFonts.figtree(
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+            ),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -1514,7 +1718,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   decoration: InputDecoration(
                     labelText: 'User Email Address',
                     prefixIcon: const Icon(Icons.email_outlined, size: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1523,7 +1729,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   decoration: InputDecoration(
                     labelText: 'Full Name',
                     prefixIcon: const Icon(Icons.person_outline, size: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1533,17 +1741,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   decoration: InputDecoration(
                     labelText: 'Phone Number (11 digits)',
                     prefixIcon: const Icon(Icons.phone_outlined, size: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: balanceCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Initial Wallet Balance (₦)',
-                    prefixIcon: const Icon(Icons.account_balance_wallet_outlined, size: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(
+                      Icons.account_balance_wallet_outlined,
+                      size: 18,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1552,12 +1769,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   decoration: InputDecoration(
                     labelText: 'Account Role',
                     prefixIcon: const Icon(Icons.badge_outlined, size: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'user', child: Text('Regular User')),
-                    DropdownMenuItem(value: 'agent', child: Text('Reseller / Agent')),
-                    DropdownMenuItem(value: 'admin', child: Text('Administrator')),
+                    DropdownMenuItem(
+                      value: 'user',
+                      child: Text('Regular User'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'agent',
+                      child: Text('Reseller / Agent'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'admin',
+                      child: Text('Administrator'),
+                    ),
                   ],
                   onChanged: (val) {
                     if (val != null) {
@@ -1580,45 +1808,65 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 final phone = phoneCtrl.text.trim();
                 final initBal = double.tryParse(balanceCtrl.text.trim()) ?? 0.0;
                 if (email.isEmpty || !email.contains('@')) {
-                  TopNotification.showWarning(context, 'Please enter a valid email address.');
+                  TopNotification.showWarning(
+                    context,
+                    'Please enter a valid email address.',
+                  );
                   return;
                 }
                 Navigator.pop(dialogCtx);
                 try {
-                  final insertRes = await SupabaseService.instance.client.from('profiles').insert({
-                    'email': email,
-                    'full_name': name.isNotEmpty ? name : 'Avotek User',
-                    'phone': phone,
-                    'kyc_status': 'verified',
-                    'role': selectedRole,
-                    'created_at': DateTime.now().toIso8601String(),
-                  }).select('id').maybeSingle();
+                  final insertRes = await SupabaseService.instance.client
+                      .from('profiles')
+                      .insert({
+                        'email': email,
+                        'full_name': name.isNotEmpty ? name : 'Avotek User',
+                        'phone': phone,
+                        'kyc_status': 'verified',
+                        'role': selectedRole,
+                        'created_at': DateTime.now().toIso8601String(),
+                      })
+                      .select('id')
+                      .maybeSingle();
 
                   if (insertRes != null && insertRes['id'] != null) {
                     final newUserId = insertRes['id'].toString();
-                    await SupabaseService.instance.client.from('wallets').upsert({
-                      'user_id': newUserId,
-                      'balance': initBal,
-                      'total_spent': 0.0,
-                      'updated_at': DateTime.now().toIso8601String(),
-                    });
+                    await SupabaseService.instance.client
+                        .from('wallets')
+                        .upsert({
+                          'user_id': newUserId,
+                          'balance': initBal,
+                          'total_spent': 0.0,
+                          'updated_at': DateTime.now().toIso8601String(),
+                        });
                   }
 
                   if (mounted) {
-                    TopNotification.showSuccess(context, 'User $email provisioned successfully!');
+                    TopNotification.showSuccess(
+                      context,
+                      'User $email provisioned successfully!',
+                    );
                     _loadAdminData();
                   }
                 } catch (e) {
                   if (mounted) {
-                    TopNotification.showError(context, 'Failed to provision user: $e');
+                    TopNotification.showError(
+                      context,
+                      'Failed to provision user: $e',
+                    );
                   }
                 }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBlue,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: const Text('Provision User'),
             ),
@@ -1657,12 +1905,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   newStatus: 'suspended',
                 );
                 if (mounted) {
-                  TopNotification.showSuccess(context, 'User $userEmail suspended successfully.');
+                  TopNotification.showSuccess(
+                    context,
+                    'User $userEmail suspended successfully.',
+                  );
                   _loadAdminData();
                 }
               } catch (e) {
                 if (mounted) {
-                  TopNotification.showError(context, 'Could not suspend user: $e');
+                  TopNotification.showError(
+                    context,
+                    'Could not suspend user: $e',
+                  );
                 }
               }
             },
@@ -1684,7 +1938,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       await SupabaseService.instance.setAppSetting('admin_emails', joined);
       UserModel.setAdminEmails(_coAdmins);
       if (mounted) {
-        TopNotification.showSuccess(context, 'Co-Administrator list updated successfully.');
+        TopNotification.showSuccess(
+          context,
+          'Co-Administrator list updated successfully.',
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -1742,7 +1999,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       'Super admin (ademolavictor869@gmail.com) can authorize other email addresses to access this admin oversight console.',
                       style: GoogleFonts.figtree(
                         fontSize: 12.5,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
                   ],
@@ -1761,9 +2020,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     labelText: 'Add Co-Admin Email Address',
                     labelStyle: GoogleFonts.figtree(fontSize: 13),
                     hintText: 'admin@avotek.com',
-                    hintStyle: GoogleFonts.figtree(fontSize: 13, color: Colors.grey),
+                    hintStyle: GoogleFonts.figtree(
+                      fontSize: 13,
+                      color: Colors.grey,
+                    ),
                     prefixIcon: const Icon(Icons.email_outlined, size: 18),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -1772,13 +2036,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 onPressed: _isSavingCoAdmins
                     ? null
                     : () {
-                        final email = _newCoAdminController.text.trim().toLowerCase();
+                        final email = _newCoAdminController.text
+                            .trim()
+                            .toLowerCase();
                         if (email.isEmpty || !email.contains('@')) {
-                          TopNotification.showWarning(context, 'Please enter a valid email.');
+                          TopNotification.showWarning(
+                            context,
+                            'Please enter a valid email.',
+                          );
                           return;
                         }
                         if (_coAdmins.contains(email)) {
-                          TopNotification.showWarning(context, 'This email is already a co-admin.');
+                          TopNotification.showWarning(
+                            context,
+                            'This email is already a co-admin.',
+                          );
                           return;
                         }
                         setState(() {
@@ -1791,15 +2063,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Icon(Icons.person_add_rounded, size: 16),
                 label: const Text('Add Co-Admin'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBlue,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 15,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
@@ -1819,8 +2099,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               runSpacing: 8,
               children: _coAdmins.map((admin) {
                 return Chip(
-                  avatar: const Icon(Icons.security_rounded, size: 16, color: AppColors.primaryBlue),
-                  label: Text(admin, style: GoogleFonts.figtree(fontSize: 12, fontWeight: FontWeight.w600)),
+                  avatar: const Icon(
+                    Icons.security_rounded,
+                    size: 16,
+                    color: AppColors.primaryBlue,
+                  ),
+                  label: Text(
+                    admin,
+                    style: GoogleFonts.figtree(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   deleteIcon: const Icon(Icons.close_rounded, size: 14),
                   onDeleted: () {
                     setState(() => _coAdmins.remove(admin));
@@ -1835,29 +2125,74 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Future<void> _savePricingOverrides() async {
+    final cashback = double.tryParse(_airtimeCashbackController.text.trim());
+    final dataMargin = double.tryParse(_dataMarginController.text.trim());
+    final cableFee = double.tryParse(_cableFeeController.text.trim());
+    final electricityFee = double.tryParse(
+      _electricityFeeController.text.trim(),
+    );
+    if (cashback == null ||
+        cashback < 0 ||
+        cashback > 100 ||
+        dataMargin == null ||
+        dataMargin < 0 ||
+        dataMargin > 100 ||
+        cableFee == null ||
+        cableFee < 0 ||
+        electricityFee == null ||
+        electricityFee < 0) {
+      TopNotification.showError(
+        context,
+        'Enter valid percentages from 0 to 100 and non-negative service fees.',
+      );
+      return;
+    }
+
     setState(() => _isSavingPricing = true);
     try {
       final pricingMap = {
         'waec': double.tryParse(_pricingWaecController.text.trim()) ?? 5250.0,
         'neco': double.tryParse(_pricingNecoController.text.trim()) ?? 2500.0,
-        'nabteb': double.tryParse(_pricingNabtebController.text.trim()) ?? 1000.0,
+        'nabteb':
+            double.tryParse(_pricingNabtebController.text.trim()) ?? 1000.0,
         'jamb': double.tryParse(_pricingJambController.text.trim()) ?? 8200.0,
-        'data_margin': double.tryParse(_dataMarginController.text.trim()) ?? 5.0,
-        'airtime_cashback': double.tryParse(_airtimeCashbackController.text.trim()) ?? 2.0,
-        'cable_fee': double.tryParse(_cableFeeController.text.trim()) ?? 50.0,
-        'electricity_fee': double.tryParse(_electricityFeeController.text.trim()) ?? 100.0,
+        'data_margin': dataMargin,
+        'airtime_cashback': cashback,
+        'cable_fee': cableFee,
+        'electricity_fee': electricityFee,
         'sms_cost': double.tryParse(_smsCostController.text.trim()) ?? 4.50,
       };
       await Future.wait([
-        SupabaseService.instance.setAppSetting('pricing_overrides', jsonEncode(pricingMap)),
-        SupabaseService.instance.setAppSetting('pricing_waec', _pricingWaecController.text.trim()),
-        SupabaseService.instance.setAppSetting('pricing_neco', _pricingNecoController.text.trim()),
-        SupabaseService.instance.setAppSetting('pricing_nabteb', _pricingNabtebController.text.trim()),
-        SupabaseService.instance.setAppSetting('pricing_jamb', _pricingJambController.text.trim()),
-        SupabaseService.instance.setAppSetting('data_margin_percentage', _dataMarginController.text.trim()),
+        SupabaseService.instance.setAppSetting(
+          'pricing_overrides',
+          jsonEncode(pricingMap),
+        ),
+        SupabaseService.instance.setAppSetting(
+          'pricing_waec',
+          _pricingWaecController.text.trim(),
+        ),
+        SupabaseService.instance.setAppSetting(
+          'pricing_neco',
+          _pricingNecoController.text.trim(),
+        ),
+        SupabaseService.instance.setAppSetting(
+          'pricing_nabteb',
+          _pricingNabtebController.text.trim(),
+        ),
+        SupabaseService.instance.setAppSetting(
+          'pricing_jamb',
+          _pricingJambController.text.trim(),
+        ),
+        SupabaseService.instance.setAppSetting(
+          'data_margin_percentage',
+          _dataMarginController.text.trim(),
+        ),
       ]);
       if (mounted) {
-        TopNotification.showSuccess(context, 'Service pricing, JAMB ePIN, and data margins saved successfully.');
+        TopNotification.showSuccess(
+          context,
+          'Service pricing, JAMB ePIN, and data margins saved successfully.',
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -1917,7 +2252,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       'Manage customer-facing prices, airtime cashback discounts, data profit margins, and utility service fees in real-time.',
                       style: GoogleFonts.figtree(
                         fontSize: 12.5,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
                   ],
@@ -1943,12 +2280,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(
                 child: TextField(
                   controller: _airtimeCashbackController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Airtime Cashback (%)',
                     helperText: 'Discount given to user on recharge',
                     suffixText: '%',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -1956,12 +2297,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(
                 child: TextField(
                   controller: _dataMarginController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Data Bundle Margin (%)',
                     helperText: 'Profit added on provider cost',
                     suffixText: '%',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -1969,12 +2314,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(
                 child: TextField(
                   controller: _smsCostController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Bulk SMS (₦/page)',
                     helperText: 'Price per 160-char SMS page',
                     prefixText: '₦ ',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -1995,8 +2344,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 spacing: 6,
                 children: ['3.0', '5.0', '8.0', '10.0'].map((p) {
                   return ActionChip(
-                    label: Text('+$p%', style: GoogleFonts.figtree(fontSize: 11, fontWeight: FontWeight.w700)),
-                    onPressed: () => setState(() => _dataMarginController.text = p),
+                    label: Text(
+                      '+$p%',
+                      style: GoogleFonts.figtree(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    onPressed: () =>
+                        setState(() => _dataMarginController.text = p),
                   );
                 }).toList(),
               ),
@@ -2022,10 +2378,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   controller: _cableFeeController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Cable TV Fee (₦)',
-                    helperText: 'Convenience charge per renewal',
+                    labelText: 'Cable Fee (₦)',
+                    helperText: 'Included in the displayed subscription total',
                     prefixText: '₦ ',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -2036,9 +2394,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Electricity Fee (₦)',
-                    helperText: 'Token generation processing fee',
+                    helperText:
+                        'Included in total; token amount stays unchanged',
                     prefixText: '₦ ',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -2067,7 +2428,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     labelText: 'WAEC PIN (₦)',
                     helperText: 'Default: ₦5,250',
                     prefixText: '₦ ',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -2080,7 +2443,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     labelText: 'NECO PIN (₦)',
                     helperText: 'Default: ₦2,500',
                     prefixText: '₦ ',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -2093,7 +2458,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     labelText: 'NABTEB PIN (₦)',
                     helperText: 'Default: ₦1,000',
                     prefixText: '₦ ',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -2106,7 +2473,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     labelText: 'JAMB e-PIN (₦)',
                     helperText: 'UTME / Direct Entry',
                     prefixText: '₦ ',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -2118,17 +2487,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ElevatedButton.icon(
             onPressed: _isSavingPricing ? null : _savePricingOverrides,
             icon: _isSavingPricing
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : const Icon(Icons.save_rounded, size: 18),
             label: Text(
-              _isSavingPricing ? 'Saving Changes...' : 'Save All Pricing & Margins Overrides',
-              style: GoogleFonts.figtree(fontWeight: FontWeight.w800, fontSize: 14),
+              _isSavingPricing
+                  ? 'Saving Changes...'
+                  : 'Save All Pricing & Margins Overrides',
+              style: GoogleFonts.figtree(
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+              ),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0052FF),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               elevation: 0,
             ),
           ),
@@ -2141,7 +2524,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final url = _apkUrlController.text.trim();
     final ver = _apkVersionController.text.trim();
     if (url.isEmpty) {
-      TopNotification.showWarning(context, 'Please enter a valid APK download URL.');
+      TopNotification.showWarning(
+        context,
+        'Please enter a valid APK download URL.',
+      );
       return;
     }
     setState(() => _isSavingApkSettings = true);
@@ -2214,7 +2600,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       'Set the Android APK download link and version string distributed to users from the sidebar and download modal.',
                       style: GoogleFonts.figtree(
                         fontSize: 12.5,
-                        color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
                   ],
@@ -2268,7 +2656,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       )
                     : const Icon(Icons.save_rounded, size: 18),
                 label: Text(
-                  _isSavingApkSettings ? 'Saving...' : 'Save APK Release Settings',
+                  _isSavingApkSettings
+                      ? 'Saving...'
+                      : 'Save APK Release Settings',
                   style: GoogleFonts.figtree(fontWeight: FontWeight.w800),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -2288,7 +2678,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 onPressed: () {
                   final url = _apkUrlController.text.trim();
                   if (url.isNotEmpty) {
-                    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                    launchUrl(
+                      Uri.parse(url),
+                      mode: LaunchMode.externalApplication,
+                    );
                   }
                 },
                 icon: const Icon(Icons.open_in_new_rounded, size: 16),
@@ -2318,32 +2711,45 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       _AdminTool(
         icon: Icons.storage_rounded,
         title: 'Supabase Database Editor',
-        description: 'View tables, edit schemas, inspect rows and RLS policies.',
+        description:
+            'View tables, edit schemas, inspect rows and RLS policies.',
         onTap: () => _openExternal(context, Uri.parse('$_projectUrl/editor')),
       ),
       _AdminTool(
         icon: Icons.functions_rounded,
         title: 'Edge Functions Logs',
-        description: 'Check real-time execution logs for vtu-provider and paystack-payments.',
-        onTap: () => _openExternal(context, Uri.parse('$_projectUrl/functions')),
+        description:
+            'Check real-time execution logs for vtu-provider and paystack-payments.',
+        onTap: () =>
+            _openExternal(context, Uri.parse('$_projectUrl/functions')),
       ),
       _AdminTool(
         icon: Icons.payments_outlined,
         title: 'Paystack Merchant Dashboard',
-        description: 'Monitor transactions, webhook events, and settlement payouts.',
-        onTap: () => _openExternal(context, Uri.parse('https://dashboard.paystack.com/')),
+        description:
+            'Monitor transactions, webhook events, and settlement payouts.',
+        onTap: () => _openExternal(
+          context,
+          Uri.parse('https://dashboard.paystack.com/'),
+        ),
       ),
       _AdminTool(
         icon: Icons.menu_book_rounded,
         title: 'GitHub Repository',
-        description: 'Review commit history, CI/CD automated deployments, and documentation.',
-        onTap: () => _openExternal(context, Uri.parse('https://github.com/Adevictorolu/Avotek')),
+        description:
+            'Review commit history, CI/CD automated deployments, and documentation.',
+        onTap: () => _openExternal(
+          context,
+          Uri.parse('https://github.com/Adevictorolu/Avotek'),
+        ),
       ),
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final count = constraints.maxWidth >= 900 ? 4 : (constraints.maxWidth >= 550 ? 2 : 1);
+        final count = constraints.maxWidth >= 900
+            ? 4
+            : (constraints.maxWidth >= 550 ? 2 : 1);
         return GridView.builder(
           itemCount: tools.length,
           shrinkWrap: true,
@@ -2406,7 +2812,11 @@ class _AdminToolCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Icon(tool.icon, color: AppColors.primaryBlue, size: 22),
-                  const Icon(Icons.arrow_forward_rounded, size: 16, color: AppColors.primaryBlue),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 16,
+                    color: AppColors.primaryBlue,
+                  ),
                 ],
               ),
               const SizedBox(height: 10),

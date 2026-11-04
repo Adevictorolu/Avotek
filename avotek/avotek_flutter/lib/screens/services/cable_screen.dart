@@ -32,6 +32,7 @@ class _CableScreenState extends State<CableScreen> {
   String _selectedProvider = 'GOTV';
   String? _selectedPackage;
   double _packageAmount = 0.0;
+  double _providerPackageAmount = 0.0;
   String _selectedPackageName = '';
 
   bool _isVerifying = false;
@@ -100,6 +101,10 @@ class _CableScreenState extends State<CableScreen> {
             final amt = rawAmt is num
                 ? rawAmt.toDouble()
                 : double.tryParse(rawAmt?.toString() ?? '') ?? 0.0;
+            final rawBaseAmt = p['base_price'];
+            final baseAmt = rawBaseAmt is num
+                ? rawBaseAmt.toDouble()
+                : double.tryParse(rawBaseAmt?.toString() ?? '') ?? amt;
             final code =
                 p['plan_id']?.toString() ??
                 p['variation_code']?.toString() ??
@@ -113,6 +118,7 @@ class _CableScreenState extends State<CableScreen> {
               'code': code,
               'name': name,
               'price': amt,
+              'base_price': baseAmt,
             };
           })
           .where(
@@ -122,7 +128,9 @@ class _CableScreenState extends State<CableScreen> {
           .toList();
 
       // Rank cable packages from lowest price to highest price
-      formatted.sort((a, b) => (a['price'] as double).compareTo(b['price'] as double));
+      formatted.sort(
+        (a, b) => (a['price'] as double).compareTo(b['price'] as double),
+      );
 
       setState(() {
         _livePackages = formatted;
@@ -133,6 +141,7 @@ class _CableScreenState extends State<CableScreen> {
         } else {
           _selectedPackage = formatted.first['code'] as String;
           _packageAmount = formatted.first['price'] as double;
+          _providerPackageAmount = formatted.first['base_price'] as double;
           _selectedPackageName = formatted.first['name'] as String;
         }
       });
@@ -310,6 +319,7 @@ class _CableScreenState extends State<CableScreen> {
           smartcardNumber: card,
           variationCode: _selectedPackage!,
           amount: _packageAmount,
+          providerAmount: _providerPackageAmount,
           customerName: _verifiedCustomerName,
           phone: _phoneController.text.trim().isNotEmpty
               ? _phoneController.text.trim()
@@ -1164,6 +1174,8 @@ class _CableScreenState extends State<CableScreen> {
                                       setState(() {
                                         _selectedPackage = code;
                                         _packageAmount = price;
+                                        _providerPackageAmount =
+                                            pkg['base_price'] as double;
                                         _selectedPackageName = name;
                                       });
                                     },

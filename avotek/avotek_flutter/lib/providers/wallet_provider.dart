@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../core/services/paystack_payment_service.dart';
 import '../core/supabase/supabase_service.dart';
@@ -17,6 +19,10 @@ class WalletProvider extends ChangeNotifier {
   bool _isBalanceVisible = true;
   String _selectedFilter = 'all';
   String? _errorMessage;
+  String? _realtimeUserId;
+  StreamSubscription<List<Map<String, dynamic>>>? _walletUpdates;
+  StreamSubscription<List<Map<String, dynamic>>>? _transactionUpdates;
+  Timer? _realtimeRefreshTimer;
 
   WalletProvider();
 
@@ -63,6 +69,7 @@ class WalletProvider extends ChangeNotifier {
       }
       await fetchTransactions(uid);
       _errorMessage = null;
+      _subscribeToRealtime(uid);
     } catch (_) {
       _walletSummary = null;
       _transactions = [];
@@ -72,6 +79,64 @@ class WalletProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void _subscribeToRealtime(String userId) {
+    if (_realtimeUserId == userId) return;
+    _realtimeRefreshTimer?.cancel();
+    _cancelRealtimeSubscriptions();
+    _realtimeUserId = userId;
+
+    var skipWalletSnapshot = true;
+    _walletUpdates = SupabaseService.instance.client
+        .from('wallets')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .listen(
+          (_) {
+            if (skipWalletSnapshot) {
+              skipWalletSnapshot = false;
+              return;
+            }
+            _scheduleRealtimeRefresh();
+          },
+          onError: (Object error, StackTrace stackTrace) {
+            debugPrint('Wallet realtime subscription failed: $error');
+          },
+        );
+
+    var skipTransactionSnapshot = true;
+    _transactionUpdates = SupabaseService.instance.client
+        .from('transactions')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .listen(
+          (_) {
+            if (skipTransactionSnapshot) {
+              skipTransactionSnapshot = false;
+              return;
+            }
+            _scheduleRealtimeRefresh();
+          },
+          onError: (Object error, StackTrace stackTrace) {
+            debugPrint('Transaction realtime subscription failed: $error');
+          },
+        );
+  }
+
+  void _scheduleRealtimeRefresh() {
+    _realtimeRefreshTimer?.cancel();
+    _realtimeRefreshTimer = Timer(const Duration(milliseconds: 300), () {
+      final userId = _realtimeUserId;
+      if (userId != null) fetchWallet(userId);
+    });
+  }
+
+  void _cancelRealtimeSubscriptions() {
+    _walletUpdates?.cancel();
+    _transactionUpdates?.cancel();
+    _walletUpdates = null;
+    _transactionUpdates = null;
   }
 
   Future<PaystackDedicatedAccountResult?> ensureDedicatedAccount(
@@ -198,5 +263,12 @@ class WalletProvider extends ChangeNotifier {
       debugPrint('Wallet transaction history fetch failed: $error');
       rethrow;
     }
+  }
+
+  @override
+  void dispose() {
+    _realtimeRefreshTimer?.cancel();
+    _cancelRealtimeSubscriptions();
+    super.dispose();
   }
 }

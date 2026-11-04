@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,7 +34,13 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
   String _selectedMeterType = 'prepaid';
   bool _isVerifying = false;
   bool _isProcessing = false;
+  double _electricityFee = 100;
   String? _verifiedCustomerName;
+
+  double get _enteredAmount =>
+      double.tryParse(_amountController.text.trim()) ?? 0;
+  double get _totalCharge =>
+      _enteredAmount + (_activeMode == 0 ? _electricityFee : 0);
 
   final List<Map<String, String>> _discoList = [
     {
@@ -114,9 +122,28 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
   @override
   void initState() {
     super.initState();
+    _loadElectricityFee();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<VtuProvider>().fetchElectricityProviders();
     });
+  }
+
+  Future<void> _loadElectricityFee() async {
+    try {
+      final settings = await SupabaseService.instance.getAppSetting(
+        'pricing_overrides',
+      );
+      if (settings == null || settings.isEmpty) return;
+      final decoded = jsonDecode(settings);
+      if (decoded is Map && decoded['electricity_fee'] != null) {
+        final fee = double.tryParse(decoded['electricity_fee'].toString());
+        if (fee != null && fee >= 0 && mounted) {
+          setState(() => _electricityFee = fee);
+        }
+      }
+    } catch (error) {
+      debugPrint('Loading electricity service fee failed: $error');
+    }
   }
 
   @override
@@ -205,6 +232,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     }
 
     final amount = double.parse(_amountController.text.trim());
+    final totalCharge = amount + (_activeMode == 0 ? _electricityFee : 0);
     final discoName = _discoList.firstWhere(
       (d) => d['id'] == _selectedDisco,
       orElse: () => {'name': _selectedDisco},
@@ -218,10 +246,10 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
       return;
     }
 
-    if (wallet.balance < amount) {
+    if (wallet.balance < totalCharge) {
       TopNotification.showError(
         context,
-        'Insufficient balance (₦${wallet.balance.toStringAsFixed(2)} available). Please fund your wallet.',
+        'Insufficient balance (₦${wallet.balance.toStringAsFixed(2)} available, ₦${totalCharge.toStringAsFixed(2)} needed). Please fund your wallet.',
       );
       return;
     }
@@ -288,7 +316,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
     final confirmed = await PinModal.show(
       context,
       title: 'Confirm Electricity Purchase',
-      amount: amount,
+      amount: totalCharge,
       description:
           '$discoName • $meter\nCustomer: ${_verifiedCustomerName ?? "Customer"}',
       onPinSubmit: (pin) async {
@@ -307,6 +335,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
           meterNumber: meter,
           meterType: _selectedMeterType,
           amount: amount,
+          chargeAmount: totalCharge,
           customerName: _verifiedCustomerName,
           phone: phone,
           userPin: transactionPin,
@@ -332,7 +361,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
           title: 'Electricity Token Generated!',
           serviceType: '$discoName ($_selectedMeterType.toUpperCase())',
           recipient: 'Meter: $meter ($_verifiedCustomerName)',
-          amount: amount,
+          amount: totalCharge,
           reference: result.order.id,
           providerReference: result.order.providerReference,
           token: result.token,
@@ -1259,7 +1288,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                 final disco = _discoList[index];
                                 final id = disco['id']!;
                                 final name = disco['name']!;
-                                final logo = disco['logo'] ?? 'assets/images/brands/ikedc.png';
+                                final logo =
+                                    disco['logo'] ??
+                                    'assets/images/brands/ikedc.png';
                                 final isSelected = _selectedDisco == id;
 
                                 return InkWell(
@@ -1290,30 +1321,41 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                       boxShadow: [
                                         if (isSelected)
                                           BoxShadow(
-                                            color: const Color(0xFF0038B8).withValues(alpha: 0.18),
+                                            color: const Color(
+                                              0xFF0038B8,
+                                            ).withValues(alpha: 0.18),
                                             blurRadius: 8,
                                             offset: const Offset(0, 2),
                                           )
                                         else
                                           BoxShadow(
-                                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                                            color: Colors.black.withValues(
+                                              alpha: isDark ? 0.2 : 0.03,
+                                            ),
                                             blurRadius: 4,
                                             offset: const Offset(0, 1),
                                           ),
                                       ],
                                     ),
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
                                       children: [
                                         // Official Company Logo Badge
                                         Container(
                                           height: 48,
                                           width: double.infinity,
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 4,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: Colors.white,
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                             border: Border.all(
                                               color: isSelected
                                                   ? const Color(0xFF93C5FD)
@@ -1324,17 +1366,20 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                           child: Image.asset(
                                             logo,
                                             fit: BoxFit.contain,
-                                            errorBuilder: (context, error, stackTrace) => const Icon(
-                                              Icons.flash_on_rounded,
-                                              size: 26,
-                                              color: Color(0xFF0038B8),
-                                            ),
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    const Icon(
+                                                      Icons.flash_on_rounded,
+                                                      size: 26,
+                                                      color: Color(0xFF0038B8),
+                                                    ),
                                           ),
                                         ),
                                         const SizedBox(height: 8),
                                         // Company Name & Selection Checkmark
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             if (isSelected) ...[
                                               const Icon(
@@ -1359,7 +1404,9 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                                       ? Colors.white
                                                       : (isDark
                                                             ? Colors.white
-                                                            : const Color(0xFF0F172A)),
+                                                            : const Color(
+                                                                0xFF0F172A,
+                                                              )),
                                                 ),
                                               ),
                                             ),
@@ -1459,7 +1506,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                               ),
                               child: Text(
                                 _amountController.text.trim().isNotEmpty
-                                    ? '₦${_amountController.text.trim()}'
+                                    ? '₦${_totalCharge.toStringAsFixed(0)}'
                                     : '₦0',
                                 style: GoogleFonts.figtree(
                                   fontSize: 18,
@@ -1546,7 +1593,7 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
                                             : (_amountController.text
                                                       .trim()
                                                       .isNotEmpty
-                                                  ? 'Pay Electricity Bill • ₦${_amountController.text.trim()}'
+                                                  ? 'Pay Electricity Bill • ₦${_totalCharge.toStringAsFixed(0)}'
                                                   : 'Pay Electricity Bill'),
                                         style: GoogleFonts.figtree(
                                           fontSize: 14.5,
