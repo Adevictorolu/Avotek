@@ -34,6 +34,7 @@ class _LandingScreenState extends State<LandingScreen>
 
   static const String _facebookUrl =
       'https://www.facebook.com/profile.php?id=61552094371264';
+  static const String _websiteUrl = 'https://avotek.com.ng';
 
   @override
   void initState() {
@@ -72,6 +73,91 @@ class _LandingScreenState extends State<LandingScreen>
         TopNotification.showError(context, 'Could not open link: $url');
       }
     }
+  }
+
+  Future<void> _shareAvotek(String platform) async {
+    const shareText = 'Discover Avotek for airtime, data, and bill payments.';
+    final Uri uri;
+    switch (platform) {
+      case 'whatsapp':
+        uri = Uri.https('api.whatsapp.com', '/send', {
+          'text': '$shareText $_websiteUrl',
+        });
+        break;
+      case 'x':
+        uri = Uri.https('x.com', '/intent/post', {
+          'text': shareText,
+          'url': _websiteUrl,
+        });
+        break;
+      case 'telegram':
+        uri = Uri.https('t.me', '/share/url', {
+          'url': _websiteUrl,
+          'text': 'Discover Avotek for airtime, data, and bill payments.',
+        });
+        break;
+      default:
+        throw ArgumentError.value(
+          platform,
+          'platform',
+          'Unsupported social link',
+        );
+    }
+
+    await _openExternalUrl(uri.toString());
+  }
+
+  Widget _buildSocialLinks(bool isDark) {
+    final links = <(String, IconData?, String, Color)>[
+      (
+        'Facebook',
+        Icons.facebook_rounded,
+        _facebookUrl,
+        const Color(0xFF1877F2),
+      ),
+      ('WhatsApp', Icons.chat_rounded, 'whatsapp', const Color(0xFF25D366)),
+      ('X', null, 'x', isDark ? Colors.white : const Color(0xFF111827)),
+      ('Telegram', Icons.send_rounded, 'telegram', const Color(0xFF229ED9)),
+    ];
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        for (final (label, icon, destination, color) in links)
+          Tooltip(
+            message: label == 'Facebook'
+                ? 'Follow Avotek on Facebook'
+                : 'Share Avotek on $label',
+            child: InkWell(
+              onTap: () => label == 'Facebook'
+                  ? _openExternalUrl(destination)
+                  : _shareAvotek(destination),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: color.withValues(alpha: 0.45)),
+                ),
+                alignment: Alignment.center,
+                child: icon == null
+                    ? Text(
+                        'X',
+                        style: GoogleFonts.figtree(
+                          color: color,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      )
+                    : Icon(icon, color: color, size: 21),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   Future<void> _showDownloadApkModal() async {
@@ -2271,45 +2357,18 @@ class _LandingScreenState extends State<LandingScreen>
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              // Facebook Social Link (Only Facebook per user request)
-                              InkWell(
-                                onTap: () => _openExternalUrl(_facebookUrl),
-                                borderRadius: BorderRadius.circular(10),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF1877F2,
-                                    ).withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: const Color(0xFF1877F2),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.facebook_rounded,
-                                        color: Color(0xFF1877F2),
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Follow Avotek on Facebook',
-                                        style: GoogleFonts.figtree(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: const Color(0xFF1877F2),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                              Text(
+                                'Follow & share Avotek',
+                                style: GoogleFonts.figtree(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? const Color(0xFFCBD5E1)
+                                      : const Color(0xFF475569),
                                 ),
                               ),
+                              const SizedBox(height: 10),
+                              _buildSocialLinks(isDark),
                             ],
                           ),
                         ),
@@ -2421,43 +2480,18 @@ class _LandingScreenState extends State<LandingScreen>
                           ),
                         ),
                         const SizedBox(height: 16),
-                        InkWell(
-                          onTap: () => _openExternalUrl(_facebookUrl),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF1877F2,
-                              ).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFF1877F2),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.facebook_rounded,
-                                  color: Color(0xFF1877F2),
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Follow Avotek on Facebook',
-                                  style: GoogleFonts.figtree(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF1877F2),
-                                  ),
-                                ),
-                              ],
-                            ),
+                        Text(
+                          'Follow & share Avotek',
+                          style: GoogleFonts.figtree(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isDark
+                                ? const Color(0xFFCBD5E1)
+                                : const Color(0xFF475569),
                           ),
                         ),
+                        const SizedBox(height: 10),
+                        _buildSocialLinks(isDark),
                         const SizedBox(height: 24),
                         Wrap(
                           spacing: 16,

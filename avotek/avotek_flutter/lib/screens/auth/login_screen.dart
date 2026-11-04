@@ -702,13 +702,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: isDark ? AppColors.primaryCyan : AppColors.primaryBlue,
                   shadows: [
                     Shadow(
-                      color: (isDark ? AppColors.primaryCyan : AppColors.primaryBlue)
-                          .withValues(alpha: 0.8),
+                      color:
+                          (isDark
+                                  ? AppColors.primaryCyan
+                                  : AppColors.primaryBlue)
+                              .withValues(alpha: 0.8),
                       blurRadius: 24,
                     ),
                     Shadow(
-                      color: (isDark ? AppColors.primaryCyan : AppColors.primaryBlue)
-                          .withValues(alpha: 0.4),
+                      color:
+                          (isDark
+                                  ? AppColors.primaryCyan
+                                  : AppColors.primaryBlue)
+                              .withValues(alpha: 0.4),
                       blurRadius: 36,
                     ),
                   ],
@@ -1247,7 +1253,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     value: _agreeToTerms,
                     activeColor: AppColors.primaryBlue,
                     checkColor: Colors.white,
-                    side: const BorderSide(color: Color(0xFF64748B), width: 1.5),
+                    side: const BorderSide(
+                      color: Color(0xFF64748B),
+                      width: 1.5,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
@@ -1503,46 +1512,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildGoogleIcon({double size = 20}) {
-    return SizedBox(
+    return Image.asset(
+      'assets/images/google_g_logo.png',
       width: size,
       height: size,
-      child: CustomPaint(
-        painter: _GoogleIconPainter(),
-      ),
+      fit: BoxFit.contain,
     );
   }
-}
-
-class _GoogleIconPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    final redPaint = Paint()..color = const Color(0xFFEA4335);
-    final bluePaint = Paint()..color = const Color(0xFF4285F4);
-    final yellowPaint = Paint()..color = const Color(0xFFFBBC05);
-    final greenPaint = Paint()..color = const Color(0xFF34A853);
-
-    final center = Offset(w / 2, h / 2);
-    final radius = w / 2;
-
-    // Draw Google 4-color Arc
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    canvas.drawArc(rect, -0.78, 1.57, true, bluePaint);
-    canvas.drawArc(rect, 0.79, 1.57, true, greenPaint);
-    canvas.drawArc(rect, 2.36, 1.57, true, yellowPaint);
-    canvas.drawArc(rect, 3.93, 1.57, true, redPaint);
-
-    // Inner Cutout
-    final innerPaint = Paint()..color = Colors.white;
-    canvas.drawCircle(center, radius * 0.55, innerPaint);
-
-    // Right horizontal bar
-    final barRect = Rect.fromLTRB(w * 0.45, h * 0.4, w * 0.95, h * 0.6);
-    canvas.drawRect(barRect, bluePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
