@@ -121,8 +121,6 @@ class _ExtraProviderServicesScreenState
     },
   ];
 
-  static const List<int> _airtimePinDenominations = [100, 200, 500, 1000];
-
   static final List<Map<String, dynamic>> _dataCardPlans = [
     {'name': '1.5GB (30 Days)', 'price': 480.0, 'code': '1.5GB'},
     {'name': '2.0GB (30 Days)', 'price': 620.0, 'code': '2.0GB'},
@@ -147,7 +145,11 @@ class _ExtraProviderServicesScreenState
   final _businessNameController = TextEditingController(text: 'Avotek');
 
   int _selectedNetworkId = 1;
-  int _selectedDenomination = 100;
+  List<Map<String, dynamic>> _rechargeCardPlans = [];
+  Map<String, dynamic>? _selectedRechargeCardPlan;
+  bool _isLoadingRechargeCardPlans = false;
+  String? _rechargeCardPlansError;
+  int _rechargeCardRequestId = 0;
   int _activeMode = 0; // 0: Buy/Send Now, 1: Gift Voucher
 
   late List<Map<String, dynamic>> _examPrices = List.from(_defaultExamPrices);
@@ -218,7 +220,7 @@ class _ExtraProviderServicesScreenState
   String get _title => _isExam
       ? 'Buy Result Checker'
       : (_isAirtimePins
-            ? 'Airtime PIN Generation'
+            ? 'Recharge Card'
             : (_isDataCard
                   ? 'Data Card Printing'
                   : (_isAirtimeToCash ? 'Airtime to Cash' : 'Bulk SMS')));
@@ -260,6 +262,10 @@ class _ExtraProviderServicesScreenState
   }
 
   Future<void> _loadPricingSilently() async {
+    if (_isAirtimePins) {
+      await _loadRechargeCardPlans();
+      return;
+    }
     try {
       final vtu = context.read<VtuProvider>();
       if (_isExam) {
@@ -321,6 +327,59 @@ class _ExtraProviderServicesScreenState
     }
   }
 
+  Future<void> _loadRechargeCardPlans() async {
+    final requestId = ++_rechargeCardRequestId;
+    final networkId = _selectedNetworkId;
+    setState(() {
+      _isLoadingRechargeCardPlans = true;
+      _rechargeCardPlansError = null;
+      _rechargeCardPlans = [];
+      _selectedRechargeCardPlan = null;
+    });
+    try {
+      final plans = await context.read<VtuProvider>().fetchRechargeCardPlans(
+        networkId: networkId,
+      );
+      final validPlans = plans.where((plan) {
+        final planType = plan['plan_type']?.toString().trim() ?? '';
+        final amount = plan['amount'];
+        return planType.isNotEmpty && amount is num && amount > 0;
+      }).toList()
+        ..sort(
+          (a, b) => (a['amount'] as num).compareTo(b['amount'] as num),
+        );
+      if (!mounted || requestId != _rechargeCardRequestId) return;
+      setState(() {
+        _rechargeCardPlans = validPlans;
+        _selectedRechargeCardPlan =
+            validPlans.isEmpty ? null : validPlans.first;
+        if (validPlans.isEmpty) {
+          _rechargeCardPlansError =
+              'No recharge-card denominations are available for this network.';
+        }
+      });
+    } catch (_) {
+      if (!mounted || requestId != _rechargeCardRequestId) return;
+      setState(() {
+        _rechargeCardPlansError =
+            'Recharge-card denominations could not be loaded. Please try again.';
+      });
+    } finally {
+      if (mounted && requestId == _rechargeCardRequestId) {
+        setState(() => _isLoadingRechargeCardPlans = false);
+      }
+    }
+  }
+
+  double get _selectedRechargeCardPrice =>
+      (_selectedRechargeCardPlan?['amount'] as num?)?.toDouble() ?? 0;
+
+  String get _selectedRechargeCardName =>
+      (_selectedRechargeCardPlan?['name'] ??
+              _selectedRechargeCardPlan?['card_name'] ??
+              'Recharge Card')
+          .toString();
+
   List<String> _recipients() {
     final values = _recipientController.text
         .split(RegExp(r'[\s,;]+'))
@@ -345,7 +404,7 @@ class _ExtraProviderServicesScreenState
     if (_isAirtimePins) {
       final quantity = int.tryParse(_quantityController.text.trim()) ?? 1;
       return quantity > 0
-          ? (_selectedDenomination * quantity).toDouble()
+          ? _selectedRechargeCardPrice * quantity
           : null;
     }
     if (_isDataCard) {
@@ -531,7 +590,7 @@ class _ExtraProviderServicesScreenState
       description: _isExam
           ? '${_selectedExam?['name'] ?? 'Exam PIN'} × ${_quantityController.text}'
           : (_isAirtimePins
-                ? '${networkObj['code']} ₦$_selectedDenomination PIN × ${_quantityController.text}'
+                ? '${networkObj['code']} $_selectedRechargeCardName × ${_quantityController.text}'
                 : (_isDataCard
                       ? '${networkObj['code']} $_selectedDataCardName × ${_quantityController.text}'
                       : (_isAirtimeToCash
@@ -571,13 +630,14 @@ class _ExtraProviderServicesScreenState
                     userId: user.id,
                     networkId: _selectedNetworkId,
                     networkName: networkObj['code'] as String,
-                    denomination: _selectedDenomination.toDouble(),
-                    quantity: int.parse(_quantityController.text.trim()),
-                    businessName: _businessNameController.text.trim().isNotEmpty
-                        ? _businessNameController.text.trim()
-                        : 'Avotek',
-                    userPin: transactionPin,
-                  )
+                      planType: _selectedRechargeCardPlan!['plan_type'].toString(),
+                      cardName: _businessNameController.text.trim().isNotEmpty
+                          ? _businessNameController.text.trim()
+                          : 'Avotek',
+                      unitPrice: _selectedRechargeCardPrice,
+                      quantity: int.parse(_quantityController.text.trim()),
+                      userPin: transactionPin,
+                    )
                 : (_isDataCard
                       ? await vtu.buyDataCardPins(
                           userId: user.id,
@@ -630,7 +690,7 @@ class _ExtraProviderServicesScreenState
           title: _isExam
               ? 'Exam PIN(s) Ready!'
               : (_isAirtimePins
-                    ? 'Airtime PIN(s) Ready!'
+                    ? 'Recharge Card(s) Ready!'
                     : (_isDataCard
                           ? 'Data Card PIN(s) Ready!'
                           : (_isAirtimeToCash
@@ -639,7 +699,7 @@ class _ExtraProviderServicesScreenState
           serviceType: _isExam
               ? '${_selectedExam?['name'] ?? 'Result Checker'} × ${_quantityController.text}'
               : (_isAirtimePins
-                    ? '${networkObj['code']} ₦$_selectedDenomination PIN × ${_quantityController.text}'
+                    ? '${networkObj['code']} $_selectedRechargeCardName × ${_quantityController.text}'
                     : (_isDataCard
                           ? '${networkObj['code']} $_selectedDataCardName × ${_quantityController.text}'
                           : (_isAirtimeToCash
@@ -662,7 +722,7 @@ class _ExtraProviderServicesScreenState
           message: _isExam
               ? 'Your examination PIN(s) have been generated successfully.'
               : (_isAirtimePins
-                    ? 'Your recharge PINs are generated and ready to print or load.'
+                    ? 'Your recharge cards are generated and ready to print or load.'
                     : (_isDataCard
                           ? 'Your data recharge PINs are generated and ready to print or load.'
                           : (_isAirtimeToCash
@@ -1001,10 +1061,18 @@ class _ExtraProviderServicesScreenState
                                     horizontal: 4,
                                   ),
                                   child: InkWell(
-                                    onTap: () => setState(
-                                      () =>
-                                          _selectedNetworkId = net['id'] as int,
-                                    ),
+                                    onTap: () {
+                                      final networkId = net['id'] as int;
+                                      if (_selectedNetworkId == networkId) {
+                                        return;
+                                      }
+                                      setState(
+                                        () => _selectedNetworkId = networkId,
+                                      );
+                                      if (_isAirtimePins) {
+                                        _loadRechargeCardPlans();
+                                      }
+                                    },
                                     borderRadius: BorderRadius.circular(12),
                                     child: Container(
                                       height: 82,
@@ -1127,7 +1195,7 @@ class _ExtraProviderServicesScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'CHOOSE AIRTIME DENOMINATION',
+                            'CHOOSE RECHARGE CARD DENOMINATION',
                             style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -1138,52 +1206,91 @@ class _ExtraProviderServicesScreenState
                             ),
                           ),
                           const SizedBox(height: 14),
-                          Row(
-                            children: _airtimePinDenominations.map((denom) {
-                              final isSelected = _selectedDenomination == denom;
-                              return Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
+                          if (_isLoadingRechargeCardPlans)
+                            const Center(child: CircularProgressIndicator())
+                          else if (_rechargeCardPlansError != null)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _rechargeCardPlansError!,
+                                  style: GoogleFonts.figtree(
+                                    color: const Color(0xFFDC2626),
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                  child: InkWell(
-                                    onTap: () => setState(
-                                      () => _selectedDenomination = denom,
+                                ),
+                                TextButton.icon(
+                                  onPressed: _loadRechargeCardPlans,
+                                  icon: const Icon(Icons.refresh_rounded),
+                                  label: const Text('Try again'),
+                                ),
+                              ],
+                            )
+                          else
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _rechargeCardPlans.map((plan) {
+                                final isSelected =
+                                    _selectedRechargeCardPlan?['plan_type'] ==
+                                    plan['plan_type'];
+                                final amount = (plan['amount'] as num).toDouble();
+                                final name = (plan['name'] ??
+                                        plan['card_name'] ??
+                                        'Recharge Card')
+                                    .toString();
+                                return InkWell(
+                                  onTap: () => setState(
+                                    () => _selectedRechargeCardPlan = plan,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    width: 132,
+                                    constraints: const BoxConstraints(
+                                      minHeight: 68,
                                     ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 14,
-                                      ),
-                                      decoration: BoxDecoration(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                      horizontal: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? const Color(0xFF0038B8)
+                                          : (isDark
+                                                ? const Color(0xFF1C202C)
+                                                : const Color(0xFFF1F5F9)),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
                                         color: isSelected
                                             ? const Color(0xFF0038B8)
                                             : (isDark
-                                                  ? const Color(0xFF1C202C)
-                                                  : const Color(0xFFF1F5F9)),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? const Color(0xFF0038B8)
-                                              : (isDark
-                                                    ? const Color(0xFF2C3142)
-                                                    : const Color(0xFFCBD5E1)),
-                                          width: isSelected ? 2 : 1,
-                                        ),
-                                        boxShadow: isSelected
-                                            ? [
-                                                BoxShadow(
-                                                  color: const Color(
-                                                    0xFF0038B8,
-                                                  ).withOpacity(0.3),
-                                                  blurRadius: 8,
-                                                ),
-                                              ]
-                                            : null,
+                                                  ? const Color(0xFF2C3142)
+                                                  : const Color(0xFFCBD5E1)),
+                                        width: isSelected ? 2 : 1,
                                       ),
-                                      child: Center(
-                                        child: Text(
-                                          '₦$denom',
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.figtree(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: isSelected
+                                                ? Colors.white
+                                                : (isDark
+                                                      ? Colors.white70
+                                                      : const Color(0xFF475569)),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          '₦${amount.toStringAsFixed(0)}',
                                           style: GoogleFonts.figtree(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w800,
@@ -1191,18 +1298,15 @@ class _ExtraProviderServicesScreenState
                                                 ? Colors.white
                                                 : (isDark
                                                       ? Colors.white
-                                                      : const Color(
-                                                          0xFF0F172A,
-                                                        )),
+                                                      : const Color(0xFF0F172A)),
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
+                                );
+                              }).toList(),
+                            ),
                         ],
                       ),
                     ),
@@ -2540,7 +2644,7 @@ class _ExtraProviderServicesScreenState
                               _isExam
                                   ? 'Pay for Exam PIN (${_quantityController.text})'
                                   : (_isAirtimePins
-                                        ? 'Generate Airtime PIN (${_quantityController.text})'
+                                        ? 'Generate Recharge Cards (${_quantityController.text})'
                                         : 'Send Bulk SMS'),
                               style: GoogleFonts.figtree(
                                 fontSize: 16,

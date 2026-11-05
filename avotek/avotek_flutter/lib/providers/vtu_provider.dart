@@ -15,6 +15,8 @@ class VtuProvider extends ChangeNotifier {
   // Cached live plans from the configured provider.
   final Map<int, List<Map<String, dynamic>>> _liveDataPlansCache = {};
   final Map<String, List<Map<String, dynamic>>> _cablePlansCache = {};
+  final Map<int, DateTime> _liveDataPlansFetchedAt = {};
+  final Map<String, DateTime> _cablePlansFetchedAt = {};
   List<Map<String, dynamic>> _electricityProviders = [];
 
   VtuProvider() {
@@ -131,6 +133,10 @@ class VtuProvider extends ChangeNotifier {
 
     // Check in-memory cache
     if (_liveDataPlansCache.containsKey(networkId) &&
+        DateTime.now().difference(
+              _liveDataPlansFetchedAt[networkId] ?? DateTime(2000),
+            ) <
+            const Duration(seconds: 30) &&
         (planType == null || planType.isEmpty || planType == 'ALL')) {
       return _liveDataPlansCache[networkId]!;
     }
@@ -142,6 +148,7 @@ class VtuProvider extends ChangeNotifier {
       );
       if (plans.isNotEmpty) {
         _liveDataPlansCache[networkId] = plans;
+        _liveDataPlansFetchedAt[networkId] = DateTime.now();
       }
       return plans;
     } catch (e) {
@@ -153,7 +160,11 @@ class VtuProvider extends ChangeNotifier {
   /// Fetch Live Cable Packages
   Future<List<Map<String, dynamic>>> fetchCablePackages(String provider) async {
     final key = provider.toLowerCase();
-    if (_cablePlansCache.containsKey(key)) {
+    if (_cablePlansCache.containsKey(key) &&
+        DateTime.now().difference(
+              _cablePlansFetchedAt[key] ?? DateTime(2000),
+            ) <
+            const Duration(seconds: 30)) {
       return _cablePlansCache[key]!;
     }
 
@@ -163,6 +174,7 @@ class VtuProvider extends ChangeNotifier {
       );
       if (packages.isNotEmpty) {
         _cablePlansCache[key] = packages;
+        _cablePlansFetchedAt[key] = DateTime.now();
       }
       return packages;
     } catch (e) {
@@ -558,6 +570,10 @@ class VtuProvider extends ChangeNotifier {
   Future<List<Map<String, dynamic>>> fetchExamPinPrices() =>
       VtuApiService.instance.getExamPinPrices();
 
+  Future<List<Map<String, dynamic>>> fetchRechargeCardPlans({
+    required int networkId,
+  }) => VtuApiService.instance.getRechargeCardPlans(networkId: networkId);
+
   Future<OrderResult> buyExamPins({
     required dynamic userId,
     required String examCode,
@@ -588,24 +604,26 @@ class VtuProvider extends ChangeNotifier {
     required dynamic userId,
     required int networkId,
     required String networkName,
-    required double denomination,
+    required String planType,
+    required String cardName,
+    required double unitPrice,
     required int quantity,
-    String? businessName,
     String? userPin,
   }) {
-    final amount = denomination * quantity;
+    final amount = unitPrice * quantity;
     return _purchase(
       userId: userId,
       serviceType: 'airtime_pin',
       network: networkName.toUpperCase(),
-      recipient: '${quantity}x ₦${denomination.toInt()} PINs',
-      plan: businessName ?? 'Avotek',
+      recipient: '${quantity}x $cardName',
+      plan: cardName,
       amount: amount,
       dispatch: () => VtuApiService.instance.purchaseAirtimePins(
         networkId: networkId,
-        amount: denomination,
+        planType: planType,
+        chargeAmount: amount,
         quantity: quantity,
-        businessName: businessName,
+        cardName: cardName,
         pin: userPin,
       ),
     );
@@ -753,6 +771,7 @@ class VtuProvider extends ChangeNotifier {
     required String smartcardNumber,
     String? packageCode,
     String? variationCode,
+    String? planProvider,
     required double amount,
     double? providerAmount,
     String? customerName,
@@ -771,6 +790,7 @@ class VtuProvider extends ChangeNotifier {
         cableType: provider,
         smartcardNumber: smartcardNumber,
         variationCode: planCode,
+        provider: planProvider,
         phone: (phone != null && phone.isNotEmpty) ? phone : '08000000000',
         amount: providerAmount ?? amount,
         chargeAmount: amount,

@@ -1860,7 +1860,7 @@ class _LandingScreenState extends State<LandingScreen>
         '/services/internet',
       ),
       (
-        'Bulk SMS & Airtime PINs',
+        'Bulk SMS & Recharge Cards',
         'Generate recharge scratch card PINs and send corporate bulk SMS with custom sender IDs.',
         Icons.print_rounded,
         'High Delivery',

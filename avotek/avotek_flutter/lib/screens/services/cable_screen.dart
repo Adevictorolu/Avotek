@@ -33,6 +33,7 @@ class _CableScreenState extends State<CableScreen> {
   String? _selectedPackage;
   double _packageAmount = 0.0;
   double _providerPackageAmount = 0.0;
+  String _selectedPackageProvider = 'bilalsadasub';
   String _selectedPackageName = '';
 
   bool _isVerifying = false;
@@ -106,6 +107,7 @@ class _CableScreenState extends State<CableScreen> {
                 ? rawBaseAmt.toDouble()
                 : double.tryParse(rawBaseAmt?.toString() ?? '') ?? amt;
             final code =
+                p['code']?.toString() ??
                 p['plan_id']?.toString() ??
                 p['variation_code']?.toString() ??
                 p['id']?.toString() ??
@@ -116,6 +118,7 @@ class _CableScreenState extends State<CableScreen> {
                 code;
             return {
               'code': code,
+              'provider': p['provider']?.toString() ?? 'bilalsadasub',
               'name': name,
               'price': amt,
               'base_price': baseAmt,
@@ -142,6 +145,7 @@ class _CableScreenState extends State<CableScreen> {
           _selectedPackage = formatted.first['code'] as String;
           _packageAmount = formatted.first['price'] as double;
           _providerPackageAmount = formatted.first['base_price'] as double;
+          _selectedPackageProvider = formatted.first['provider'] as String;
           _selectedPackageName = formatted.first['name'] as String;
         }
       });
@@ -318,6 +322,7 @@ class _CableScreenState extends State<CableScreen> {
           provider: _selectedProvider,
           smartcardNumber: card,
           variationCode: _selectedPackage!,
+          planProvider: _selectedPackageProvider,
           amount: _packageAmount,
           providerAmount: _providerPackageAmount,
           customerName: _verifiedCustomerName,
@@ -1176,6 +1181,8 @@ class _CableScreenState extends State<CableScreen> {
                                         _packageAmount = price;
                                         _providerPackageAmount =
                                             pkg['base_price'] as double;
+                                        _selectedPackageProvider =
+                                            pkg['provider'] as String;
                                         _selectedPackageName = name;
                                       });
                                     },

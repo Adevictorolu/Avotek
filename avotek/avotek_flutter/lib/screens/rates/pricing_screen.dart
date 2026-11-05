@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,17 +22,60 @@ class _PricingScreenState extends State<PricingScreen> {
   String _selectedNetwork = 'MTN';
   final Map<String, List<Map<String, dynamic>>> _liveNetworkPlans = {};
   bool _isLoadingLive = false;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchLiveRatesFor(_selectedNetwork);
+      _fetchLiveExamPrices();
+    });
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _fetchLiveRatesFor(_selectedNetwork);
+      _fetchLiveExamPrices();
     });
   }
 
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchLiveExamPrices() async {
+    try {
+      final prices = await context.read<VtuProvider>().fetchExamPinPrices();
+      if (!mounted || prices.isEmpty) return;
+      final amounts = <String, double>{};
+      for (final item in prices) {
+        final code = (item['code'] ?? item['exam_type'] ?? '')
+            .toString()
+            .toLowerCase();
+        final amount = item['amount'];
+        if (amount is num && amount > 0) amounts[code] = amount.toDouble();
+      }
+      if (amounts.isEmpty) return;
+      setState(() {
+        for (final item in _cableAndUtility) {
+          if (item['cat'] != 'Exam E-Pin') continue;
+          final label = (item['item'] as String).toLowerCase();
+          final code = amounts.keys.firstWhere(
+            label.contains,
+            orElse: () => '',
+          );
+          if (code.isEmpty) continue;
+          final amount = amounts[code]!;
+          item['price'] =
+              '₦${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2)}';
+        }
+      });
+    } catch (error) {
+      debugPrint('Could not load live exam PIN prices: $error');
+    }
+  }
+
   Future<void> _fetchLiveRatesFor(String network) async {
-    if (_liveNetworkPlans.containsKey(network)) return;
     setState(() => _isLoadingLive = true);
     try {
       final vtu = context.read<VtuProvider>();
@@ -48,12 +92,9 @@ class _PricingScreenState extends State<PricingScreen> {
           final displayVol = ('$size$vol').trim().isNotEmpty
               ? '$size$vol'
               : (fallbackName.isNotEmpty ? fallbackName : '$type Data');
-          final wasPrice = (price * 1.35).roundToDouble();
-
           return {
             'plan': '$displayVol $type',
             'validity': val,
-            'was': wasPrice,
             'price': price,
           };
         }).where((p) => (p['price'] as double) > 0).toList();
@@ -75,71 +116,35 @@ class _PricingScreenState extends State<PricingScreen> {
     }
   }
 
-  final Map<String, List<Map<String, dynamic>>> _dataPlans = {
-    'MTN': [
-      {'plan': '500MB SME', 'validity': '30 days', 'was': 400, 'price': 290},
-      {'plan': '1GB SME', 'validity': '30 days', 'was': 700, 'price': 450},
-      {'plan': '2GB SME', 'validity': '30 days', 'was': 1400, 'price': 850},
-      {'plan': '3GB SME', 'validity': '30 days', 'was': 2100, 'price': 1250},
-      {'plan': '5GB SME', 'validity': '30 days', 'was': 3500, 'price': 1850},
-      {'plan': '10GB SME', 'validity': '30 days', 'was': 5000, 'price': 3650},
-      {'plan': '15GB SME', 'validity': '30 days', 'was': 7500, 'price': 5400},
-      {'plan': '20GB SME', 'validity': '30 days', 'was': 10000, 'price': 7200},
-    ],
-    'Glo': [
-      {'plan': '1.5GB Gifting', 'validity': '30 days', 'was': 600, 'price': 500},
-      {'plan': '2.9GB Gifting', 'validity': '30 days', 'was': 1300, 'price': 1050},
-      {'plan': '4.1GB Gifting', 'validity': '30 days', 'was': 1800, 'price': 1450},
-      {'plan': '5.8GB Gifting', 'validity': '30 days', 'was': 2500, 'price': 2050},
-      {'plan': '7.7GB Gifting', 'validity': '30 days', 'was': 3200, 'price': 2550},
-      {'plan': '10GB Gifting', 'validity': '30 days', 'was': 4000, 'price': 3100},
-    ],
-    'Airtel': [
-      {'plan': '500MB SME', 'validity': '7 days', 'was': 700, 'price': 550},
-      {'plan': '1GB SME', 'validity': '7 days', 'was': 1100, 'price': 850},
-      {'plan': '2GB SME', 'validity': '30 days', 'was': 2200, 'price': 1650},
-      {'plan': '5GB SME', 'validity': '30 days', 'was': 5500, 'price': 4100},
-      {'plan': '10GB SME', 'validity': '30 days', 'was': 10500, 'price': 8000},
-    ],
-    '9mobile': [
-      {'plan': '500MB Corporate', 'validity': '30 days', 'was': 400, 'price': 290},
-      {'plan': '1GB Corporate', 'validity': '30 days', 'was': 800, 'price': 580},
-      {'plan': '2GB Corporate', 'validity': '30 days', 'was': 1500, 'price': 1150},
-      {'plan': '3GB Corporate', 'validity': '30 days', 'was': 2200, 'price': 1700},
-      {'plan': '5GB Corporate', 'validity': '30 days', 'was': 3600, 'price': 2800},
-      {'plan': '10GB Corporate', 'validity': '30 days', 'was': 7000, 'price': 5500},
-    ],
-  };
-
   final List<Map<String, dynamic>> _airtimeRates = [
-    {'network': 'MTN airtime', 'type': 'Instant VTU & SNS top-up', 'discount': '2.5% off'},
-    {'network': 'Glo airtime', 'type': 'Instant VTU top-up', 'discount': '4.0% off'},
-    {'network': 'Airtel airtime', 'type': 'Instant VTU top-up', 'discount': '3.0% off'},
-    {'network': '9mobile / T2 airtime', 'type': 'Instant VTU top-up', 'discount': '4.5% off'},
+    {'network': 'MTN airtime', 'type': 'Instant VTU & SNS top-up', 'price': 'Face value'},
+    {'network': 'Glo airtime', 'type': 'Instant VTU top-up', 'price': 'Face value'},
+    {'network': 'Airtel airtime', 'type': 'Instant VTU top-up', 'price': 'Face value'},
+    {'network': '9mobile / T2 airtime', 'type': 'Instant VTU top-up', 'price': 'Face value'},
   ];
 
   final List<Map<String, dynamic>> _cableAndUtility = [
-    {'item': 'GOtv Smallie', 'cat': 'Cable TV', 'price': '₦1,900'},
-    {'item': 'GOtv Jinja', 'cat': 'Cable TV', 'price': '₦3,900'},
-    {'item': 'GOtv Jolli', 'cat': 'Cable TV', 'price': '₦5,800'},
-    {'item': 'GOtv Max', 'cat': 'Cable TV', 'price': '₦8,500'},
-    {'item': 'GOtv Supa', 'cat': 'Cable TV', 'price': '₦16,800'},
-    {'item': 'DStv Padi', 'cat': 'Cable TV', 'price': '₦4,400'},
-    {'item': 'DStv Yanga', 'cat': 'Cable TV', 'price': '₦6,000'},
-    {'item': 'DStv Compact', 'cat': 'Cable TV', 'price': '₦19,000'},
-    {'item': 'Startimes Nova', 'cat': 'Cable TV', 'price': '₦1,900'},
+    {'item': 'GOtv Smallie', 'cat': 'Cable TV', 'price': 'Live provider price'},
+    {'item': 'GOtv Jinja', 'cat': 'Cable TV', 'price': 'Live provider price'},
+    {'item': 'GOtv Jolli', 'cat': 'Cable TV', 'price': 'Live provider price'},
+    {'item': 'GOtv Max', 'cat': 'Cable TV', 'price': 'Live provider price'},
+    {'item': 'GOtv Supa', 'cat': 'Cable TV', 'price': 'Live provider price'},
+    {'item': 'DStv Padi', 'cat': 'Cable TV', 'price': 'Live provider price'},
+    {'item': 'DStv Yanga', 'cat': 'Cable TV', 'price': 'Live provider price'},
+    {'item': 'DStv Compact', 'cat': 'Cable TV', 'price': 'Live provider price'},
+    {'item': 'Startimes Nova', 'cat': 'Cable TV', 'price': 'Live provider price'},
     {'item': 'NABTEB Result Checker Pin', 'cat': 'Exam E-Pin', 'price': '₦1,000'},
     {'item': 'NECO Result Checker Pin', 'cat': 'Exam E-Pin', 'price': '₦2,500'},
     {'item': 'WAEC Result Checker Pin', 'cat': 'Exam E-Pin', 'price': '₦5,250'},
     {'item': 'JAMB UTME / DE E-Pin', 'cat': 'Exam E-Pin', 'price': '₦8,200'},
-    {'item': 'Ikeja Electric (IKEDC)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
-    {'item': 'Eko Electricity (EKEDC)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
-    {'item': 'Abuja Electricity (AEDC)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
-    {'item': 'Kano Electricity (KEDCO)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
-    {'item': 'Port Harcourt Electric (PHED)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
-    {'item': 'Kaduna Electric (KAEDCO)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
-    {'item': 'Benin Electricity (BEDC)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
-    {'item': 'Aba Power (APLE)', 'cat': 'Electricity', 'price': 'Face Value + ₦100'},
+    {'item': 'Ikeja Electric (IKEDC)', 'cat': 'Electricity', 'price': 'Face value + applicable fee'},
+    {'item': 'Eko Electricity (EKEDC)', 'cat': 'Electricity', 'price': 'Face value + applicable fee'},
+    {'item': 'Abuja Electricity (AEDC)', 'cat': 'Electricity', 'price': 'Face value + applicable fee'},
+    {'item': 'Kano Electricity (KEDCO)', 'cat': 'Electricity', 'price': 'Face value + applicable fee'},
+    {'item': 'Port Harcourt Electric (PHED)', 'cat': 'Electricity', 'price': 'Face value + applicable fee'},
+    {'item': 'Kaduna Electric (KAEDCO)', 'cat': 'Electricity', 'price': 'Face value + applicable fee'},
+    {'item': 'Benin Electricity (BEDC)', 'cat': 'Electricity', 'price': 'Face value + applicable fee'},
+    {'item': 'Aba Power (APLE)', 'cat': 'Electricity', 'price': 'Face value + applicable fee'},
   ];
 
   @override
@@ -304,7 +309,7 @@ class _PricingScreenState extends State<PricingScreen> {
 
   Widget _buildDataRatesSection(bool isDark) {
     final live = _liveNetworkPlans[_selectedNetwork];
-    final plans = (live != null && live.isNotEmpty) ? live : (_dataPlans[_selectedNetwork] ?? []);
+    final plans = live ?? const <Map<String, dynamic>>[];
 
     return Container(
       decoration: BoxDecoration(
@@ -334,7 +339,7 @@ class _PricingScreenState extends State<PricingScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Crossed-out figure represents network telecom sticker price',
+                      'Prices use the provider\'s standard catalog rate',
                       style: TextStyle(fontSize: 12, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
                     ),
                   ],
@@ -380,7 +385,7 @@ class _PricingScreenState extends State<PricingScreen> {
               children: [
                 Expanded(flex: 4, child: Text('BUNDLE PLAN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
                 Expanded(flex: 3, child: Text('VALIDITY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
-                Expanded(flex: 3, child: Text('DISCOUNT PRICE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
+                Expanded(flex: 3, child: Text('AVOTEK PRICE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
                 Expanded(flex: 2, child: Align(alignment: Alignment.centerRight, child: Text('ACTION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)))),
               ],
             ),
@@ -415,15 +420,9 @@ class _PricingScreenState extends State<PricingScreen> {
                   ),
                   Expanded(
                     flex: 3,
-                    child: Row(
-                      children: [
-                        Text('₦${p['was']}', style: const TextStyle(fontSize: 12, color: Colors.grey, decoration: TextDecoration.lineThrough)),
-                        const SizedBox(width: 8),
-                        Text(
-                          '₦${p['price']}',
-                          style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primaryCyan, fontSize: 15),
-                        ),
-                      ],
+                    child: Text(
+                      '₦${p['price']}',
+                      style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primaryCyan, fontSize: 15),
                     ),
                   ),
                   Expanded(
@@ -460,6 +459,11 @@ class _PricingScreenState extends State<PricingScreen> {
               ),
             );
           }),
+          if (plans.isEmpty && !_isLoadingLive)
+            const Padding(
+              padding: EdgeInsets.all(20),
+              child: Text('Live data prices are temporarily unavailable. Please try again.'),
+            ),
         ],
       ),
     );
@@ -480,10 +484,10 @@ class _PricingScreenState extends State<PricingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Airtime discounts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('Airtime top-ups', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 Text(
-                  'Buy ₦1,000 of airtime and discount leaves your wallet directly.',
+                  'Airtime is charged at face value. Provider discounts are retained by Avotek.',
                   style: TextStyle(fontSize: 12, color: isDark ? AppColors.metallicLight : AppColors.slateGrey),
                 ),
               ],
@@ -497,7 +501,7 @@ class _PricingScreenState extends State<PricingScreen> {
               children: [
                 Expanded(flex: 4, child: Text('NETWORK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
                 Expanded(flex: 4, child: Text('TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))),
-                Expanded(flex: 3, child: Align(alignment: Alignment.centerRight, child: Text('DISCOUNT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)))),
+                Expanded(flex: 3, child: Align(alignment: Alignment.centerRight, child: Text('PRICE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)))),
               ],
             ),
           ),
@@ -536,7 +540,7 @@ class _PricingScreenState extends State<PricingScreen> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          r['discount'] as String,
+                          r['price'] as String,
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.success),
                         ),
                       ),

@@ -54,10 +54,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final _pricingNecoController = TextEditingController(text: '2500');
   final _pricingNabtebController = TextEditingController(text: '1000');
   final _pricingJambController = TextEditingController(text: '8200');
-  final _serviceMarkupController = TextEditingController(text: '1.3');
-  double _priceRoundingIncrement = 5;
-  final _cableFeeController = TextEditingController(text: '50');
-  final _electricityFeeController = TextEditingController(text: '100');
+  final _serviceMarkupController = TextEditingController(text: '0');
+  double _priceRoundingIncrement = 1;
+  final _cableFeeController = TextEditingController(text: '0');
+  final _electricityFeeController = TextEditingController(text: '0');
   final _smsCostController = TextEditingController(text: '4.50');
   bool _isSavingPricing = false;
   List<Map<String, dynamic>> _carouselSlides = [];
@@ -166,20 +166,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               _pricingJambController.text = decoded['jamb'].toString();
             }
             if (decoded['service_markup_multiplier'] != null) {
-              _serviceMarkupController.text =
-                  decoded['service_markup_multiplier'].toString();
+              final multiplier =
+                  double.tryParse(
+                    decoded['service_markup_multiplier'].toString(),
+                  ) ??
+                  1;
+              _serviceMarkupController.text = ((multiplier - 1) * 100)
+                  .clamp(0, 15)
+                  .toStringAsFixed(0);
             } else if (decoded['data_margin'] != null) {
               final legacyMargin =
-                  double.tryParse(decoded['data_margin'].toString()) ?? 30;
-              _serviceMarkupController.text = (1 + legacyMargin / 100)
-                  .clamp(1.3, 1.6)
-                  .toStringAsFixed(2);
+                  double.tryParse(decoded['data_margin'].toString()) ?? 0;
+              _serviceMarkupController.text = legacyMargin
+                  .clamp(0, 15)
+                  .toStringAsFixed(0);
             }
             if (decoded['price_rounding_increment'] != null) {
               final increment = double.tryParse(
                 decoded['price_rounding_increment'].toString(),
               );
-              if (increment != null && [2.5, 5, 10].contains(increment)) {
+              if (increment != null && [1, 2.5, 5, 10].contains(increment)) {
                 _priceRoundingIncrement = increment;
               }
             }
@@ -2461,15 +2467,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       _electricityFeeController.text.trim(),
     );
     if (multiplier == null ||
-        multiplier < 1.3 ||
-        multiplier > 1.6 ||
+        multiplier < 0 ||
+        multiplier > 15 ||
         cableFee == null ||
         cableFee < 0 ||
         electricityFee == null ||
         electricityFee < 0) {
       TopNotification.showError(
         context,
-        'Use a service markup from 1.3× to 1.6× and non-negative service fees.',
+        'Use a service markup percentage from 0% to 15% and non-negative service fees.',
       );
       return;
     }
@@ -2482,7 +2488,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         'nabteb':
             double.tryParse(_pricingNabtebController.text.trim()) ?? 1000.0,
         'jamb': double.tryParse(_pricingJambController.text.trim()) ?? 8200.0,
-        'service_markup_multiplier': multiplier,
+        'service_markup_multiplier': 1 + multiplier / 100,
         'price_rounding_increment': _priceRoundingIncrement,
         'cable_fee': cableFee,
         'electricity_fee': electricityFee,
@@ -2606,9 +2612,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     decimal: true,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'Service price multiplier',
-                    helperText: 'Allowed range: 1.30× to 1.60×',
-                    suffixText: '×',
+                    labelText: 'Service markup percentage',
+                    helperText:
+                        'Allowed range: 0% to 15%; updates data and cable prices',
+                    suffixText: '%',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -2625,7 +2632,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  items: const [2.5, 5.0, 10.0]
+                  items: const [1.0, 2.5, 5.0, 10.0]
                       .map(
                         (amount) => DropdownMenuItem(
                           value: amount,

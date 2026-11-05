@@ -217,6 +217,7 @@ class VtuApiService {
     required String cableType,
     required String smartcardNumber,
     required String variationCode,
+    String? provider,
     required String phone,
     required double amount,
     double? chargeAmount,
@@ -228,6 +229,7 @@ class VtuApiService {
     payload: {
       'cable_type': mapCableProviderToCode(cableType),
       'variation_code': variationCode,
+      'provider': ?provider,
       'card_no': smartcardNumber.trim(),
       'phone_number': _cleanPhoneNumber(phone),
       'amount': amount.toInt(),
@@ -333,20 +335,39 @@ class VtuApiService {
 
   Future<Map<String, dynamic>> purchaseAirtimePins({
     required int networkId,
-    required double amount,
+    required String planType,
+    required double chargeAmount,
     required int quantity,
-    String? businessName,
+    String? cardName,
     String? pin,
   }) => _invoke(
     'airtime_pin.purchase',
     userPin: pin,
     payload: {
       'network': networkId,
-      'amount': amount.toInt(),
+      'plan_type': planType,
+      'charge_amount': chargeAmount,
       'quantity': quantity,
-      'business_name': businessName ?? 'Avotek',
+      'card_name': cardName ?? 'Avotek',
     },
   );
+
+  Future<List<Map<String, dynamic>>> getRechargeCardPlans({
+    required int networkId,
+  }) async {
+    final response = await _invoke(
+      'airtime_pin.plans',
+      payload: {'network': networkId},
+    );
+    final data = response['data'];
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    return const [];
+  }
 
   Future<Map<String, dynamic>> purchaseDataCardPins({
     required int networkId,

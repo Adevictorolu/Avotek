@@ -181,7 +181,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                     onTap: () => context.push('/services/bulk-sms'),
                   ),
                   _ServiceCardData(
-                    title: 'Airtime PIN Generation',
+                    title: 'Recharge Card',
                     icon: Icons.print_rounded,
                     onTap: () => context.push('/services/airtime-pins'),
                   ),
