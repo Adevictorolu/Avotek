@@ -12,6 +12,7 @@ import '../../providers/vtu_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../widgets/pin_modal.dart';
 import '../../widgets/top_notification.dart';
+import 'paystack_checkout_sheet.dart';
 
 class PayForMeScreen extends StatefulWidget {
   final String? reference;
@@ -47,35 +48,31 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
   bool _isVerifying = false;
   bool _isPurchasingWithWallet = false;
   bool _paymentCompleted = false;
+  bool _checkoutSheetOpen = false;
 
   String? _generatedPin;
   String? _generatedSerial;
   String? _completionMessage;
+  String? _paymentReference;
   Timer? _pollingTimer;
 
-  String get _ref =>
-      widget.reference?.trim().isNotEmpty == true
-          ? widget.reference!.trim()
-          : 'PFM${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}';
+  String get _ref => _paymentReference ?? widget.reference?.trim() ?? '';
 
-  String get _service =>
-      widget.serviceName?.trim().isNotEmpty == true
-          ? widget.serviceName!.trim()
-          : 'WAEC Result Checker PIN';
+  String get _service => widget.serviceName?.trim().isNotEmpty == true
+      ? widget.serviceName!.trim()
+      : 'WAEC Result Checker PIN';
 
-  String get _exam =>
-      widget.examCode?.trim().isNotEmpty == true
-          ? widget.examCode!.trim().toLowerCase()
-          : 'waec';
+  String get _exam => widget.examCode?.trim().isNotEmpty == true
+      ? widget.examCode!.trim().toLowerCase()
+      : 'waec';
 
   int get _qty => widget.quantity > 0 ? widget.quantity : 1;
 
   double get _amt => widget.amount > 0 ? widget.amount : 5250.0;
 
-  String get _phone =>
-      widget.recipient?.trim().isNotEmpty == true
-          ? widget.recipient!.trim()
-          : 'Candidate';
+  String get _phone => widget.recipient?.trim().isNotEmpty == true
+      ? widget.recipient!.trim()
+      : 'Candidate';
 
   @override
   void initState() {
@@ -100,56 +97,56 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
   Future<void> _initializePaystack() async {
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      TopNotification.showError(context, 'Please enter a valid email address for receipt delivery.');
+      TopNotification.showError(
+        context,
+        'Please enter a valid email address for receipt delivery.',
+      );
       return;
     }
 
     setState(() => _isInitializing = true);
     try {
-      final origin = kIsWeb ? '${Uri.base.origin}${Uri.base.path}' : 'https://adevictorolu.github.io/Avotek/';
       final res = await VtuApiService.instance.initializeSponsorPayment(
         email: email,
         amount: _amt,
-        reference: _ref,
-        service: _service,
         recipient: _phone,
         exam: _exam,
         quantity: _qty,
-        origin: origin,
       );
 
+      final reference = res['reference']?.toString();
       final authUrl = res['authorization_url']?.toString();
-      if (authUrl == null || !authUrl.startsWith('https://')) {
-        throw StateError(res['message']?.toString() ?? 'Could not initialize payment gateway.');
+      if (reference == null ||
+          reference.isEmpty ||
+          authUrl == null ||
+          !authUrl.startsWith('https://')) {
+        throw StateError(
+          res['message']?.toString() ?? 'Could not initialize payment gateway.',
+        );
       }
 
       final uri = Uri.parse(authUrl);
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!launched && mounted) {
-        TopNotification.showError(context, 'Could not open checkout page. Please disable pop-up blocker.');
+      if (uri.host != 'checkout.paystack.com') {
+        throw StateError('Paystack returned an unexpected checkout address.');
       }
 
-      // Start automatic polling every 5 seconds to catch completed payment
-      _pollingTimer?.cancel();
-      _pollingTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-        if (!mounted || _paymentCompleted) {
-          timer.cancel();
-          return;
-        }
-        _verifyPayment(silent: true);
-      });
-
+      _paymentReference = reference;
+      _startPaymentPolling();
       if (mounted) {
+        setState(() => _isInitializing = false);
         TopNotification.showSuccess(
           context,
-          'Checkout opened. Complete your payment and click "I Have Paid" below.',
+          'Secure Paystack checkout opened. Avotek will check payment status automatically.',
         );
       }
+      await _openCheckout(uri);
     } catch (e) {
       if (mounted) {
         TopNotification.showError(
           context,
-          e is StateError ? e.message : 'Payment initialization failed. Please try again.',
+          e is StateError
+              ? e.message
+              : 'Payment initialization failed. Please try again.',
         );
       }
     } finally {
@@ -157,8 +154,61 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
     }
   }
 
+  void _startPaymentPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (!mounted || _paymentCompleted) {
+        timer.cancel();
+        return;
+      }
+      _verifyPayment(silent: true);
+    });
+  }
+
+  Future<void> _openCheckout(Uri uri) async {
+    final isMobile =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
+    if (!isMobile) {
+      final opened = await launchUrl(uri, mode: LaunchMode.platformDefault);
+      if (!opened) {
+        throw StateError('Could not open the Paystack checkout page.');
+      }
+      return;
+    }
+
+    _checkoutSheetOpen = true;
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        useRootNavigator: true,
+        useSafeArea: true,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        barrierColor: Colors.black.withValues(alpha: 0.32),
+        builder: (sheetContext) => PaystackCheckoutSheet(
+          checkoutUri: uri,
+          isDark: Theme.of(context).brightness == Brightness.dark,
+          onClose: () => Navigator.of(sheetContext).pop(),
+        ),
+      );
+    } finally {
+      _checkoutSheetOpen = false;
+    }
+  }
+
   Future<void> _verifyPayment({bool silent = false}) async {
     if (_isVerifying || _paymentCompleted) return;
+    if (_ref.isEmpty) {
+      if (!silent) {
+        TopNotification.showError(
+          context,
+          'Start a sponsor checkout before verifying payment.',
+        );
+      }
+      return;
+    }
     if (!silent) setState(() => _isVerifying = true);
 
     try {
@@ -177,14 +227,33 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
           _paymentCompleted = true;
           _generatedPin = res['pin']?.toString();
           _generatedSerial = res['serial']?.toString();
-          _completionMessage = res['message']?.toString() ?? 'Exam PIN successfully generated!';
+          _completionMessage =
+              res['message']?.toString() ?? 'Exam PIN successfully generated!';
         });
 
-        TopNotification.showSuccess(context, 'Payment verified! Exam PIN generated.');
+        TopNotification.showSuccess(
+          context,
+          'Payment verified! Exam PIN generated.',
+        );
+        if (_checkoutSheetOpen) {
+          Navigator.of(context, rootNavigator: true).maybePop();
+        }
+      } else if (res['payment_verified'] == true && mounted) {
+        final checkoutWasOpen = _checkoutSheetOpen;
+        if (checkoutWasOpen) {
+          Navigator.of(context, rootNavigator: true).maybePop();
+        }
+        if (!silent || checkoutWasOpen) {
+          TopNotification.showSuccess(
+            context,
+            'Payment confirmed. Your PIN is being processed; Avotek will keep checking.',
+          );
+        }
       } else if (!silent && mounted) {
         TopNotification.showError(
           context,
-          res['message']?.toString() ?? 'Payment is not yet confirmed by the bank.',
+          res['message']?.toString() ??
+              'Payment is not yet confirmed by the bank.',
         );
       }
     } catch (e) {
@@ -206,7 +275,10 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
     final user = auth.user;
 
     if (user == null) {
-      TopNotification.showError(context, 'Please log in to pay with your Avotek wallet.');
+      TopNotification.showError(
+        context,
+        'Please log in to pay with your Avotek wallet.',
+      );
       return;
     }
 
@@ -245,17 +317,23 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
       if (mounted) {
         setState(() {
           _paymentCompleted = true;
-          _generatedPin = result.token ??
+          _generatedPin =
+              result.token ??
               (result.issuedPins.isNotEmpty
                   ? result.issuedPins.first
-                  : (result.order.providerReference ?? result.order.id.toString()));
-          _completionMessage = 'Exam PIN purchase successful! Deducted from wallet.';
+                  : (result.order.providerReference ??
+                        result.order.id.toString()));
+          _completionMessage =
+              'Exam PIN purchase successful! Deducted from wallet.';
         });
         TopNotification.showSuccess(context, 'PIN issued successfully!');
       }
     } catch (e) {
       if (mounted) {
-        TopNotification.showError(context, 'Wallet purchase failed. Please check balance and try again.');
+        TopNotification.showError(
+          context,
+          'Wallet purchase failed. Please check balance and try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isPurchasingWithWallet = false);
@@ -264,7 +342,9 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
 
   void _sharePinToCandidate() {
     final pin = _generatedPin ?? 'N/A';
-    final serial = _generatedSerial != null ? ' (Serial: $_generatedSerial)' : '';
+    final serial = _generatedSerial != null
+        ? ' (Serial: $_generatedSerial)'
+        : '';
     final text =
         'Hello! Here is your $_service paid via Avotek:\n\n'
         'PIN: $pin$serial\n'
@@ -272,7 +352,9 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
         'Check your result on the official portal:\n'
         '${_portalUrlForExam(_exam)}';
 
-    final url = Uri.parse('https://api.whatsapp.com/send?text=${Uri.encodeComponent(text)}');
+    final url = Uri.parse(
+      'https://api.whatsapp.com/send?text=${Uri.encodeComponent(text)}',
+    );
     launchUrl(url, mode: LaunchMode.externalApplication);
   }
 
@@ -295,7 +377,9 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
     final isLoggedIn = auth.user != null;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0A0E17) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? const Color(0xFF0A0E17)
+          : const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: isDark ? const Color(0xFF111726) : Colors.white,
         elevation: 0,
@@ -415,7 +499,10 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF00D2FF).withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
@@ -470,13 +557,26 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildSummaryRow('Requested Item', _service, foreground, isBold: true),
+              _buildSummaryRow(
+                'Requested Item',
+                _service,
+                foreground,
+                isBold: true,
+              ),
               const SizedBox(height: 10),
               _buildSummaryRow('Candidate / Phone', _phone, foreground),
               const SizedBox(height: 10),
-              _buildSummaryRow('Quantity', '$_qty PIN${_qty > 1 ? 's' : ''}', foreground),
+              _buildSummaryRow(
+                'Quantity',
+                '$_qty PIN${_qty > 1 ? 's' : ''}',
+                foreground,
+              ),
               const SizedBox(height: 10),
-              _buildSummaryRow('Reference', _ref, isDark ? Colors.white60 : const Color(0xFF64748B)),
+              _buildSummaryRow(
+                'Reference',
+                _ref,
+                isDark ? Colors.white60 : const Color(0xFF64748B),
+              ),
               const Divider(height: 28),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -519,7 +619,11 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.credit_card_rounded, color: Color(0xFF00D2FF), size: 22),
+                  const Icon(
+                    Icons.credit_card_rounded,
+                    color: Color(0xFF00D2FF),
+                    size: 22,
+                  ),
                   const SizedBox(width: 10),
                   Text(
                     'Pay with Card, Bank Transfer or USSD',
@@ -549,11 +653,15 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
                   labelText: 'Your Email Address (for receipt)',
                   hintText: 'e.g. sponsor@gmail.com',
                   filled: true,
-                  fillColor: isDark ? const Color(0xFF1A2234) : const Color(0xFFF8FAFC),
+                  fillColor: isDark
+                      ? const Color(0xFF1A2234)
+                      : const Color(0xFFF8FAFC),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: isDark ? const Color(0xFF2B3652) : const Color(0xFFCBD5E1),
+                      color: isDark
+                          ? const Color(0xFF2B3652)
+                          : const Color(0xFFCBD5E1),
                     ),
                   ),
                 ),
@@ -567,17 +675,25 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0052FF),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   child: _isInitializing
                       ? const SizedBox(
                           width: 22,
                           height: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : Text(
                           'Pay ₦${_amt.toStringAsFixed(0)} via Paystack',
-                          style: GoogleFonts.figtree(fontSize: 15, fontWeight: FontWeight.w800),
+                          style: GoogleFonts.figtree(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                 ),
               ),
@@ -593,11 +709,16 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
                     : const Icon(Icons.refresh_rounded, size: 18),
                 label: Text(
                   'I Have Completed Payment (Check Status)',
-                  style: GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w700),
+                  style: GoogleFonts.figtree(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 44),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
@@ -613,7 +734,9 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
               color: isDark ? const Color(0xFF131826) : Colors.white,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isDark ? const Color(0xFF222B42) : const Color(0xFFE2E8F0),
+                color: isDark
+                    ? const Color(0xFF222B42)
+                    : const Color(0xFFE2E8F0),
               ),
             ),
             child: Column(
@@ -624,7 +747,11 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.account_balance_wallet_outlined, color: Color(0xFF00D2FF), size: 22),
+                        const Icon(
+                          Icons.account_balance_wallet_outlined,
+                          color: Color(0xFF00D2FF),
+                          size: 22,
+                        ),
                         const SizedBox(width: 10),
                         Text(
                           'Pay with Avotek Wallet',
@@ -655,17 +782,25 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF00D2FF),
                       foregroundColor: const Color(0xFF0A0E17),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: _isPurchasingWithWallet
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black,
+                            ),
                           )
                         : Text(
                             'Pay ₦${_amt.toStringAsFixed(0)} from Wallet Balance',
-                            style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w800),
+                            style: GoogleFonts.figtree(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                   ),
                 ),
@@ -709,7 +844,11 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
                   color: Color(0xFF22C55E),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_rounded, color: Colors.white, size: 36),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: 36,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
@@ -722,7 +861,8 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                _completionMessage ?? 'Your examination PIN has been issued and is ready for use.',
+                _completionMessage ??
+                    'Your examination PIN has been issued and is ready for use.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.figtree(
                   fontSize: 13,
@@ -736,10 +876,14 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1B2236) : const Color(0xFFF1F5F9),
+                  color: isDark
+                      ? const Color(0xFF1B2236)
+                      : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF2E3956) : const Color(0xFFCBD5E1),
+                    color: isDark
+                        ? const Color(0xFF2E3956)
+                        : const Color(0xFFCBD5E1),
                   ),
                 ),
                 child: Column(
@@ -771,21 +915,31 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
                         style: GoogleFonts.spaceMono(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white70 : const Color(0xFF475569),
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF475569),
                         ),
                       ),
                     ],
                     const SizedBox(height: 14),
                     OutlinedButton.icon(
                       onPressed: () {
-                        final textToCopy = serial != null ? 'PIN: $pin\nSerial: $serial' : pin;
+                        final textToCopy = serial != null
+                            ? 'PIN: $pin\nSerial: $serial'
+                            : pin;
                         Clipboard.setData(ClipboardData(text: textToCopy));
-                        TopNotification.showSuccess(context, 'PIN copied to clipboard!');
+                        TopNotification.showSuccess(
+                          context,
+                          'PIN copied to clipboard!',
+                        );
                       },
                       icon: const Icon(Icons.copy_rounded, size: 16),
                       label: Text(
                         'Copy PIN',
-                        style: GoogleFonts.figtree(fontWeight: FontWeight.w700, fontSize: 13),
+                        style: GoogleFonts.figtree(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
@@ -802,12 +956,17 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
                   icon: const Icon(Icons.send_rounded, size: 18),
                   label: Text(
                     'Share PIN to Candidate via WhatsApp',
-                    style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w800),
+                    style: GoogleFonts.figtree(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF25D366),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -817,7 +976,9 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF161C2C) : const Color(0xFFF8FAFC),
+                  color: isDark
+                      ? const Color(0xFF161C2C)
+                      : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Column(
@@ -841,7 +1002,9 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
                       style: GoogleFonts.figtree(
                         fontSize: 12,
                         height: 1.5,
-                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                        color: isDark
+                            ? Colors.white70
+                            : const Color(0xFF475569),
                       ),
                     ),
                   ],
@@ -854,7 +1017,12 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, Color color, {bool isBold = false}) {
+  Widget _buildSummaryRow(
+    String label,
+    String value,
+    Color color, {
+    bool isBold = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [

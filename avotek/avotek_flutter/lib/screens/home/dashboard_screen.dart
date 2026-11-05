@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -31,11 +32,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isLoadingInitial = true;
   String? _loadError;
   int _activePromoPage = 0;
+  Timer? _promoTimer;
   List<Map<String, dynamic>> _customPromoSlides = [];
 
   @override
   void initState() {
     super.initState();
+    _promoTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (!mounted || !_promoPageController.hasClients) return;
+      final pageCount = 4 + _customPromoSlides.length;
+      if (pageCount < 2) return;
+      _promoPageController.animateToPage(
+        (_activePromoPage + 1) % pageCount,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeInOut,
+      );
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeDashboard();
     });
@@ -181,7 +193,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'We are on a mission to leverage technology across Africa—helping Nigerian students and business owners build, scale, and process information with confidence.',
+                  'We are on a mission to leverage technology across Africa, helping Nigerian students and business owners build, scale, and process information with confidence.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.figtree(
                     fontSize: 13,
@@ -193,7 +205,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'Buy airtime, data, and exam e-PINs—or share a sponsor link when you need help paying for an exam PIN. Students are welcome here.',
+                  'Buy airtime, data, and exam PINs, or share a sponsor link when you need help paying for an exam PIN.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.figtree(
                     fontSize: 12.5,
@@ -280,6 +292,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
+    _promoTimer?.cancel();
     _promoPageController.dispose();
     super.dispose();
   }

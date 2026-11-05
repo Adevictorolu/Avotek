@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/user_model.dart';
 
 /// Clean local preferences and caching service
@@ -25,10 +26,19 @@ class AppDatabaseService {
 
   Future<void> init() async {
     if (_initialized) return;
+    if (kIsWeb) {
+      _loadSettings();
+    } else {
+      final preferences = await SharedPreferences.getInstance();
+      _hasSeenOnboarding = preferences.getBool(_onboardingSeenKey) ?? false;
+      _savedTheme = preferences.getString(_themeModeKey) ?? _savedTheme;
+      final fundingJson = preferences.getString(_fundingAccountKey);
+      if (fundingJson != null && fundingJson.isNotEmpty) {
+        final decoded = jsonDecode(fundingJson) as Map<String, dynamic>;
+        _fundingAccount = decoded.map((k, v) => MapEntry(k, v.toString()));
+      }
+    }
     _initialized = true;
-
-    // Load onboarding, funding settings, and theme
-    _loadSettings();
     // Zero existing fake users: we start with empty cached users.
     // Users are authenticated dynamically via Supabase!
   }
@@ -66,13 +76,16 @@ class AppDatabaseService {
     } catch (_) {}
   }
 
-  void markOnboardingSeen() {
+  Future<void> markOnboardingSeen() async {
     _hasSeenOnboarding = true;
-    try {
-      if (kIsWeb) {
-        _setWebLocalStorage(_onboardingSeenKey, 'true');
-      }
-    } catch (_) {}
+    if (kIsWeb) {
+      _setWebLocalStorage(_onboardingSeenKey, 'true');
+      return;
+    }
+    final preferences = await SharedPreferences.getInstance();
+    if (!await preferences.setBool(_onboardingSeenKey, true)) {
+      throw StateError('Could not save onboarding completion on this device.');
+    }
   }
 
   Map<String, String> getFundingAccount() => Map.unmodifiable(_fundingAccount);

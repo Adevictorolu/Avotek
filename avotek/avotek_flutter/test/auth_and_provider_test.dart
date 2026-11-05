@@ -88,6 +88,17 @@ void main() {
     );
   });
 
+  test('uses the registered deep link scheme for mobile OAuth callbacks', () {
+    expect(
+      buildMobileAuthRedirectUrl('/login-callback'),
+      'io.supabase.avotek://login-callback',
+    );
+    expect(
+      buildMobileAuthRedirectUrl('/reset-password'),
+      'io.supabase.avotek://reset-password',
+    );
+  });
+
   test(
     'treats virtual account numbers as active only when Paystack status is assigned',
     () {

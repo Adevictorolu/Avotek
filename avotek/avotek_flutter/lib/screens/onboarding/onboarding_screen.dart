@@ -70,8 +70,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  void _finishOnboarding() {
-    AppDatabaseService.instance.markOnboardingSeen();
+  Future<void> _finishOnboarding() async {
+    try {
+      await AppDatabaseService.instance.markOnboardingSeen();
+    } catch (error) {
+      debugPrint('Saving onboarding completion failed: $error');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not save onboarding on this device. Try again.',
+          ),
+        ),
+      );
+      return;
+    }
+    if (!mounted) return;
     final currentUser = SupabaseService.instance.currentAuthUser;
     if (!kIsWeb && currentUser != null) {
       context.go(

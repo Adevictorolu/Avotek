@@ -6,12 +6,16 @@ class DeviceSecurityService {
   DeviceSecurityService._();
 
   static const _biometricEnabledKey = 'avotek_biometric_unlock_enabled';
+  static const appUnlockGracePeriod = Duration(minutes: 30);
   static final LocalAuthentication _localAuth = LocalAuthentication();
 
   static bool get isMobilePlatform =>
       !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS);
+
+  static bool shouldLockAfterBackground(Duration duration) =>
+      duration >= appUnlockGracePeriod;
 
   static Future<bool> isBiometricAvailable() async {
     if (!isMobilePlatform) return false;

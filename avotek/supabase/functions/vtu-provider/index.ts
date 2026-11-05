@@ -9,7 +9,6 @@ const corsHeaders = {
 
 const bilalBaseUrl = "https://bilalsadasub.com";
 const bigisubBaseUrl = "https://api.bigisub.ng";
-const defaultBilalKey = "79b8d730c62c3545892766a7d8d703377b035c82135c97b8b161015e585d";
 
 type JsonMap = Record<string, unknown>;
 
@@ -512,9 +511,7 @@ Deno.serve(async (request) => {
     "education.prices",
     "data.plans",
     "cable.plans",
-    "cable.verify",
     "electricity.providers",
-    "electricity.verify",
     "sms.pricing",
     "sponsor.initialize",
     "sponsor.verify",
@@ -546,10 +543,22 @@ Deno.serve(async (request) => {
   const bilalToken =
     Deno.env.get("BILALSADASUB_API_TOKEN")?.trim() ??
     Deno.env.get("VTU_PROVIDER_API_TOKEN")?.trim() ??
-    defaultBilalKey;
+    "";
   const bigisubToken = Deno.env.get("BIGISUB_API_TOKEN")?.trim();
-  const bigisubPin = Deno.env.get("BIGISUB_TRANSACTION_PIN")?.trim() || "0000";
+  const bigisubPin = Deno.env.get("BIGISUB_TRANSACTION_PIN")?.trim() ?? "";
   const paystackSecret = Deno.env.get("PAYSTACK_SECRET_KEY")?.trim();
+
+  if (
+    !bilalToken &&
+    ![
+      "education.prices",
+      "sms.pricing",
+      "sponsor.initialize",
+      "wallet.balance",
+    ].includes(action)
+  ) {
+    return jsonResponse({ message: "VTU provider credentials are not configured." }, 503);
+  }
 
   // --- WALLET BALANCE ---
   if (action === "wallet.balance") {
@@ -725,7 +734,6 @@ Deno.serve(async (request) => {
       customer_name: providerBody.name ?? providerBody.customer_name ?? "",
       name: providerBody.name ?? providerBody.customer_name ?? "",
       message: extractProviderMessage(providerBody, isValid ? "Decoder verified." : "Could not verify decoder."),
-      data: providerBody,
     });
   }
 
@@ -786,9 +794,7 @@ Deno.serve(async (request) => {
       success: isValid,
       customer_name: providerBody.name ?? providerBody.customer_name ?? "",
       name: providerBody.name ?? providerBody.customer_name ?? "",
-      address: providerBody.address ?? "",
       message: extractProviderMessage(providerBody, isValid ? "Meter verified." : "Could not verify meter number."),
-      data: providerBody,
     });
   }
 
@@ -859,25 +865,77 @@ Deno.serve(async (request) => {
   if (action === "sponsor.initialize") {
     const email = String(payload.email ?? "").trim();
     const amount = Number(payload.amount ?? 0);
-    const reference = String(payload.reference ?? "").trim();
     if (!email || !email.includes("@")) {
       return jsonResponse({ success: false, message: "Enter a valid sponsor email address." }, 400);
     }
-    if (!Number.isFinite(amount) || amount <= 0) {
+    if (!Number.isFinite(amount) || amount <= 0 || !Number.isSafeInteger(Math.round(amount * 100))) {
       return jsonResponse({ success: false, message: "Invalid sponsor payment amount." }, 400);
-    }
-    if (!reference) {
-      return jsonResponse({ success: false, message: "Payment reference is required." }, 400);
     }
 
     if (!paystackSecret) {
       return jsonResponse({ success: false, message: "Paystack gateway key is not configured." }, 503);
     }
 
-    const defaultCallback = "https://adevictorolu.github.io/Avotek/";
-    const origin = String(payload.origin ?? "").trim() || defaultCallback;
-    const cleanOrigin = origin.endsWith("/") ? origin.slice(0, -1) : origin;
-    const callbackUrl = `${cleanOrigin}/#/pay?ref=${encodeURIComponent(reference)}&status=success`;
+    const exam = String(payload.exam ?? "").trim().toLowerCase();
+    const examSettings: Record<string, { settingKey: string; defaultPrice: number }> = {
+      waec: { settingKey: "pricing_waec", defaultPrice: 5250 },
+      neco: { settingKey: "pricing_neco", defaultPrice: 2500 },
+      nabteb: { settingKey: "pricing_nabteb", defaultPrice: 1000 },
+      jamb: { settingKey: "pricing_jamb", defaultPrice: 8200 },
+    };
+    const examPricing = examSettings[exam];
+    const quantity = Number(payload.quantity ?? 1);
+    const recipient = String(payload.recipient ?? "").trim();
+    if (!examPricing || !Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
+      return jsonResponse({ success: false, message: "Invalid exam PIN selection." }, 400);
+    }
+    if (!recipient || recipient.length > 100) {
+      return jsonResponse({ success: false, message: "Invalid exam PIN recipient." }, 400);
+    }
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
+    if (!serviceRoleKey || !supabaseUrl) {
+      return jsonResponse({ success: false, message: "Sponsor payments are not configured." }, 503);
+    }
+    const admin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { data: priceRow, error: priceError } = await admin
+      .from("app_settings")
+      .select("value")
+      .eq("key", examPricing.settingKey)
+      .maybeSingle();
+    if (priceError) {
+      console.error("Could not load sponsor exam price:", priceError);
+      return jsonResponse({ success: false, message: "Could not verify the exam PIN price." }, 503);
+    }
+    const configuredPrice = Number(priceRow?.value ?? examPricing.defaultPrice);
+    const expectedAmountKobo = Math.round(configuredPrice * quantity * 100);
+    const requestedAmountKobo = Math.round(amount * 100);
+    if (
+      !Number.isSafeInteger(expectedAmountKobo) ||
+      expectedAmountKobo <= 0 ||
+      requestedAmountKobo !== expectedAmountKobo
+    ) {
+      return jsonResponse({ success: false, message: "The sponsor amount does not match the current exam PIN price." }, 400);
+    }
+    const reference = `AVO${crypto.randomUUID().replaceAll("-", "")}`;
+    const service = `${exam.toUpperCase()} ${exam === "jamb" ? "e-PIN" : "result checker PIN"}`;
+    const { error: orderError } = await admin.from("sponsor_payments").insert({
+      reference,
+      email,
+      amount_kobo: requestedAmountKobo,
+      service,
+      exam,
+      quantity,
+      recipient,
+    });
+    if (orderError) {
+      if (orderError.code === "23505") {
+        return jsonResponse({ success: false, message: "This sponsor payment reference has already been used." }, 409);
+      }
+      console.error("Could not create sponsor payment order:", orderError);
+      return jsonResponse({ success: false, message: "Could not create sponsor payment." }, 503);
+    }
 
     try {
       const paystackRes = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -891,13 +949,13 @@ Deno.serve(async (request) => {
           amount: Math.round(amount * 100),
           currency: "NGN",
           reference,
-          callback_url: callbackUrl,
+          callback_url: `https://adevictorolu.github.io/Avotek/#/pay?ref=${encodeURIComponent(reference)}&status=success`,
           metadata: {
             purpose: "pay_for_me",
-            exam: payload.exam,
-            quantity: payload.quantity,
-            recipient: payload.recipient,
-            service: payload.service,
+            exam,
+            quantity,
+            recipient,
+            service,
           },
         }),
         signal: AbortSignal.timeout(15000),
@@ -905,6 +963,7 @@ Deno.serve(async (request) => {
 
       const paystackBody: unknown = await paystackRes.json();
       if (!paystackRes.ok || !isRecord(paystackBody) || paystackBody.status !== true || !isRecord(paystackBody.data)) {
+        await admin.from("sponsor_payments").delete().eq("reference", reference);
         const errorMsg = (isRecord(paystackBody) && typeof paystackBody.message === "string")
           ? paystackBody.message
           : "Could not initialize sponsor payment session.";
@@ -920,6 +979,7 @@ Deno.serve(async (request) => {
         reference,
       });
     } catch (e) {
+      await admin.from("sponsor_payments").delete().eq("reference", reference);
       return jsonResponse({
         success: false,
         message: e instanceof Error ? e.message : "Paystack connection timed out.",
@@ -930,12 +990,34 @@ Deno.serve(async (request) => {
   // --- SPONSOR VERIFY & FULFILL (Verify Paystack transaction & generate Exam PIN via BilalSadaSub) ---
   if (action === "sponsor.verify") {
     const reference = String(payload.reference ?? "").trim();
-    if (!reference) {
-      return jsonResponse({ success: false, message: "Payment reference is required." }, 400);
+    if (!/^[A-Za-z0-9_-]{8,100}$/.test(reference)) {
+      return jsonResponse({ success: false, message: "Invalid payment reference." }, 400);
     }
 
     if (!paystackSecret) {
       return jsonResponse({ success: false, message: "Paystack gateway key is not configured." }, 503);
+    }
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
+    if (!serviceRoleKey || !supabaseUrl) {
+      return jsonResponse({ success: false, message: "Sponsor payments are not configured." }, 503);
+    }
+    const admin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { data: order, error: orderError } = await admin
+      .from("sponsor_payments")
+      .select("reference, amount_kobo, exam, quantity, recipient, status, processing_started_at, fulfillment")
+      .eq("reference", reference)
+      .maybeSingle();
+    if (orderError) {
+      console.error("Could not read sponsor payment order:", orderError);
+      return jsonResponse({ success: false, message: "Could not verify sponsor payment." }, 503);
+    }
+    if (!order) {
+      return jsonResponse({ success: false, message: "Sponsor payment order was not found." }, 404);
+    }
+    if (order.status === "completed" && isRecord(order.fulfillment)) {
+      return jsonResponse(order.fulfillment);
     }
 
     let txData: JsonMap = {};
@@ -965,16 +1047,73 @@ Deno.serve(async (request) => {
     }
 
     const meta = isRecord(txData.metadata) ? (txData.metadata as JsonMap) : {};
-    const exam = payload.exam ?? meta.exam ?? "waec";
-    const examId = mapExamToId(exam);
-    const qty = Number(payload.quantity ?? meta.quantity ?? 1);
-    const phone = cleanPhone(payload.phone ?? meta.recipient ?? "08012345678");
+    if (
+      String(txData.reference ?? "") !== reference ||
+      Number(txData.amount) !== Number(order.amount_kobo) ||
+      String(txData.currency ?? "").toUpperCase() !== "NGN" ||
+      meta.purpose !== "pay_for_me" ||
+      String(meta.exam ?? "").toLowerCase() !== order.exam ||
+      Number(meta.quantity) !== Number(order.quantity) ||
+      String(meta.recipient ?? "") !== order.recipient
+    ) {
+      return jsonResponse({ success: false, message: "Payment details do not match this sponsor order." }, 400);
+    }
+
+    const claimTimestamp = new Date().toISOString();
+    const staleBefore = new Date(Date.now() - 120_000).toISOString();
+    let { data: claimed, error: claimError } = await admin
+      .from("sponsor_payments")
+      .update({ status: "processing", processing_started_at: claimTimestamp })
+      .eq("reference", reference)
+      .eq("status", "initialized")
+      .select("reference")
+      .maybeSingle();
+    if (claimError) {
+      console.error("Could not reserve sponsor fulfillment:", claimError);
+      return jsonResponse({ success: false, message: "Could not start PIN fulfillment." }, 503);
+    }
+    if (!claimed) {
+      const staleClaim = await admin
+        .from("sponsor_payments")
+        .update({ status: "processing", processing_started_at: claimTimestamp })
+        .eq("reference", reference)
+        .eq("status", "processing")
+        .lt("processing_started_at", staleBefore)
+        .select("reference")
+        .maybeSingle();
+      if (staleClaim.error) {
+        console.error("Could not recover sponsor fulfillment:", staleClaim.error);
+        return jsonResponse({ success: false, message: "Could not start PIN fulfillment." }, 503);
+      }
+      claimed = staleClaim.data;
+    }
+    if (!claimed) {
+      const current = await admin
+        .from("sponsor_payments")
+        .select("status, fulfillment")
+        .eq("reference", reference)
+        .maybeSingle();
+      if (current.error) {
+        console.error("Could not check sponsor fulfillment:", current.error);
+        return jsonResponse({ success: false, message: "Could not check PIN fulfillment." }, 503);
+      }
+      if (current.data?.status === "completed" && isRecord(current.data.fulfillment)) {
+        return jsonResponse(current.data.fulfillment);
+      }
+      return jsonResponse({
+        success: false,
+        status: "pending",
+        payment_verified: true,
+        reference,
+        message: "Payment is verified; exam PIN fulfillment is still processing.",
+      }, 202);
+    }
 
     // Fulfill Exam PIN via BilalSadaSub
     const bilalPayload: JsonMap = {
-      exam_id: examId,
-      quantity: qty,
-      phone: phone || "08012345678",
+      exam_id: mapExamToId(order.exam),
+      quantity: Number(order.quantity),
+      phone: cleanPhone(order.recipient) || "08012345678",
       "request-id": reference,
     };
     const bilalRes = await dispatchBilalRequest(
@@ -990,22 +1129,48 @@ Deno.serve(async (request) => {
     const extracted = extractPinsFromResponse(fulfillResponse);
     const firstPin = extracted.length > 0 ? extracted[0].pin : "";
     const firstSerial = extracted.length > 0 ? (extracted[0].serial ?? "") : "";
-
-    return jsonResponse({
-      success: fulfillStatus !== "failed",
+    const fulfillment: JsonMap = {
+      success: fulfillStatus === "completed",
       status: fulfillStatus,
+      payment_verified: true,
       reference,
-      exam,
-      quantity: qty,
-      recipient: phone,
+      exam: order.exam,
+      quantity: Number(order.quantity),
+      recipient: order.recipient,
       pin: firstPin,
       serial: firstSerial,
       pins: extracted,
-      provider_response: fulfillResponse,
       message: fulfillStatus === "completed"
         ? "Exam PIN generated successfully!"
-        : "PIN purchase submitted to provider.",
-    });
+        : fulfillStatus === "pending"
+        ? "Payment is verified; exam PIN fulfillment is still processing."
+        : "Payment was verified, but the PIN could not be fulfilled. Please contact support.",
+    };
+    const update = fulfillStatus === "completed"
+      ? await admin
+        .from("sponsor_payments")
+        .update({
+          status: "completed",
+          processing_started_at: null,
+          fulfillment,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("reference", reference)
+        .eq("status", "processing")
+      : await admin
+        .from("sponsor_payments")
+        .update({
+          status: fulfillStatus === "pending" ? "processing" : "initialized",
+          processing_started_at: fulfillStatus === "pending" ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("reference", reference)
+        .eq("status", "processing");
+    if (update.error) {
+      console.error("Could not save sponsor fulfillment state:", update.error);
+      return jsonResponse({ success: false, status: "pending", reference, message: "Payment was verified; fulfillment status is updating. Please check again shortly." }, 202);
+    }
+    return jsonResponse(fulfillment, fulfillStatus === "pending" ? 202 : 200);
   }
 
   // --- TRANSACTION PIN & PURCHASE AUTHORIZATION ---
@@ -1163,7 +1328,10 @@ Deno.serve(async (request) => {
       const variationCode = String(payload.variation_code ?? payload.code ?? "").toUpperCase();
       const isBigisubSelected = variationCode.startsWith("BIGI-") || String(payload.provider ?? "").toLowerCase() === "bigisub";
 
-      if (isBigisubSelected && bigisubToken) {
+      if (isBigisubSelected && (!bigisubToken || !bigisubPin)) {
+        finalStatus = "failed";
+        providerResponse = { message: "Selected data provider is not fully configured." };
+      } else if (isBigisubSelected && bigisubToken && bigisubPin) {
         // Direct dispatch to Bigisub API (one direct API per selected plan)
         try {
           const bigiPayload: JsonMap = {
@@ -1243,7 +1411,7 @@ Deno.serve(async (request) => {
       finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
       providerResponse = bilalRes.providerBody;
 
-      if (finalStatus === "failed" && bigisubToken) {
+      if (finalStatus === "failed" && bigisubToken && bigisubPin) {
         try {
           const bigiPayload: JsonMap = {
             network: netId,
@@ -1331,7 +1499,7 @@ Deno.serve(async (request) => {
       finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
       providerResponse = bilalRes.providerBody;
 
-      if (finalStatus === "failed" && bigisubToken) {
+      if (finalStatus === "failed" && bigisubToken && bigisubPin) {
         try {
           const cableName = mapCableToName(payload.cable_type ?? payload.cable_name ?? payload.cable).toLowerCase();
           const bigiPayload: JsonMap = {
@@ -1389,7 +1557,7 @@ Deno.serve(async (request) => {
       finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
       providerResponse = bilalRes.providerBody;
 
-      if (finalStatus === "failed" && bigisubToken) {
+      if (finalStatus === "failed" && bigisubToken && bigisubPin) {
         try {
           const bigiPayload: JsonMap = {
             company: String(payload.disco_name ?? payload.company ?? "ikeja-electric"),
@@ -1425,7 +1593,7 @@ Deno.serve(async (request) => {
 
     // 6. BULK SMS SEND: Dispatched via Bigisub communications engine
     else if (action === "sms.send") {
-      if (bigisubToken) {
+      if (bigisubToken && bigisubPin) {
         const bigiRes = await dispatchBigisubRequest(
           `${bigisubBaseUrl}/api/v2/communications/sms/send/`,
           "POST",
@@ -1453,7 +1621,7 @@ Deno.serve(async (request) => {
       const netId = mapNetworkToId(payload.network);
       let pins: Array<{ pin: string; serial?: string }> = [];
 
-      if (bigisubToken) {
+      if (bigisubToken && bigisubPin) {
         try {
           const bigiRes = await dispatchBigisubRequest(
             `${bigisubBaseUrl}/api/v2/vtu/airtime-pin/purchase/`,

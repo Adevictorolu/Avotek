@@ -393,23 +393,17 @@ class VtuApiService {
   Future<Map<String, dynamic>> initializeSponsorPayment({
     required String email,
     required double amount,
-    required String reference,
-    required String service,
     required String recipient,
     required String exam,
     required int quantity,
-    String? origin,
   }) => _invoke(
     'sponsor.initialize',
     payload: {
       'email': email.trim(),
       'amount': amount,
-      'reference': reference,
-      'service': service,
       'recipient': recipient,
       'exam': exam,
       'quantity': quantity,
-      if (origin != null && origin.isNotEmpty) 'origin': origin,
     },
   );
 

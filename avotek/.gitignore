@@ -1,6 +1,7 @@
 # Files and directories created by pub
 .dart_tool/
 .packages
+avotek_flutter/android/.kotlin/
 
 # Supabase CLI link and local project metadata
 supabase/.temp/

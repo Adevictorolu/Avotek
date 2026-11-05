@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -276,12 +277,13 @@ class _LandingScreenState extends State<LandingScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 1024;
+    final hasRoomForNavigation = screenWidth >= 1120;
 
     return Scaffold(
       backgroundColor: isDark
           ? const Color(0xFF07090E)
           : const Color(0xFFF8FAFC),
-      endDrawer: !isDesktop ? _buildMobileDrawer(isDark) : null,
+      endDrawer: !hasRoomForNavigation ? _buildMobileDrawer(isDark) : null,
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -353,14 +355,31 @@ class _LandingScreenState extends State<LandingScreen>
   // 1. NAVBAR
   // ==========================================
   Widget _buildSliverNavbar(bool isDesktop) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasRoomForNavigation = MediaQuery.sizeOf(context).width >= 1120;
-    const brandBlue = Color(0xFF0B2B57);
-    const accentGold = Color(0xFFFFAA12);
     return SliverAppBar(
       pinned: true,
       elevation: 0,
-      toolbarHeight: 76,
-      backgroundColor: brandBlue.withValues(alpha: 0.98),
+      toolbarHeight: 84,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      flexibleSpace: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            decoration: BoxDecoration(
+              color: (isDark ? const Color(0xFF07090E) : Colors.white)
+                  .withValues(alpha: 0.68),
+              border: Border(
+                bottom: BorderSide(
+                  color: (isDark ? Colors.white : const Color(0xFF0F172A))
+                      .withValues(alpha: 0.10),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
       titleSpacing: isDesktop ? 24 : 20,
       title: Row(
         children: [
@@ -415,43 +434,15 @@ class _LandingScreenState extends State<LandingScreen>
         ],
       ),
       actions: [
-        if (isDesktop) ...[
-          OutlinedButton(
-            onPressed: () => context.go('/login'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: accentGold,
-              side: const BorderSide(color: accentGold, width: 1.2),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(9),
-              ),
-            ),
-            child: Text(
-              'Login',
-              style: GoogleFonts.figtree(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
+        if (hasRoomForNavigation) ...[
+          _buildGradientNavButton(
+            label: 'Sign Up',
+            onPressed: () => context.go('/register'),
           ),
           const SizedBox(width: 12),
-          FilledButton(
+          _buildGradientNavButton(
+            label: 'Get APK',
             onPressed: _showDownloadApkModal,
-            style: FilledButton.styleFrom(
-              backgroundColor: accentGold,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(9),
-              ),
-            ),
-            child: Text(
-              'Download Now',
-              style: GoogleFonts.figtree(
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
-            ),
           ),
           const SizedBox(width: 24),
         ] else ...[
@@ -459,7 +450,8 @@ class _LandingScreenState extends State<LandingScreen>
             builder: (ctx) => IconButton(
               icon: Icon(
                 Icons.menu_rounded,
-                color: Colors.white,
+                color: isDark ? Colors.white : const Color(0xFF172033),
+                size: 28,
               ),
               onPressed: () => Scaffold.of(ctx).openEndDrawer(),
             ),
@@ -470,19 +462,62 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
+  Widget _buildGradientNavButton({
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0047FF).withValues(alpha: 0.20),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.figtree(
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildNavLink(String label, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-        child: Text(
-          label,
-          style: GoogleFonts.figtree(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w700,
-            color: Colors.white.withValues(alpha: 0.92),
-          ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Builder(
+          builder: (context) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return Text(
+              label,
+              style: GoogleFonts.figtree(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : const Color(0xFF172033),
+              ),
+            );
+          },
         ),
       ),
     );

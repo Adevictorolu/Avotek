@@ -47,8 +47,13 @@ class AppRouter {
     _authRefreshNotifier?.dispose();
     final authRefreshNotifier = _AuthStateRefreshNotifier();
     _authRefreshNotifier = authRefreshNotifier;
+    final mobileUser = SupabaseService.instance.currentAuthUser;
+    final initialMobileLocation =
+        AppDatabaseService.instance.hasSeenOnboarding() || mobileUser != null
+        ? '/login'
+        : '/onboarding';
     return GoRouter(
-      initialLocation: kIsWeb ? '/' : '/onboarding',
+      initialLocation: kIsWeb ? '/' : initialMobileLocation,
       refreshListenable: authRefreshNotifier,
       redirect: (context, state) {
         final path = state.matchedLocation;
@@ -208,6 +213,13 @@ class AppRouter {
           redirect: (context, state) {
             if (kIsWeb) {
               return '/';
+            }
+            final currentUser = SupabaseService.instance.currentAuthUser;
+            if (AppDatabaseService.instance.hasSeenOnboarding() ||
+                currentUser != null) {
+              return currentUser == null
+                  ? '/login'
+                  : authenticatedHomeForEmail(currentUser.email);
             }
             return null;
           },

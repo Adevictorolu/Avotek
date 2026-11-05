@@ -32,7 +32,7 @@ class ResponsiveShell extends StatefulWidget {
 class _ResponsiveShellState extends State<ResponsiveShell>
     with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  bool _lockOnResume = false;
+  DateTime? _pausedAt;
 
   @override
   void initState() {
@@ -50,9 +50,18 @@ class _ResponsiveShellState extends State<ResponsiveShell>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!DeviceSecurityService.isMobilePlatform) return;
     if (state == AppLifecycleState.paused) {
-      _lockOnResume = context.read<AuthProvider>().isAuthenticated;
-    } else if (state == AppLifecycleState.resumed && _lockOnResume) {
-      _lockOnResume = false;
+      _pausedAt = context.read<AuthProvider>().isAuthenticated
+          ? DateTime.now()
+          : null;
+    } else if (state == AppLifecycleState.resumed) {
+      final pausedAt = _pausedAt;
+      _pausedAt = null;
+      if (pausedAt == null ||
+          !DeviceSecurityService.shouldLockAfterBackground(
+            DateTime.now().difference(pausedAt),
+          )) {
+        return;
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || !context.read<AuthProvider>().isAuthenticated) return;
         context.push(

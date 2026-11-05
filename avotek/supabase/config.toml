@@ -1,3 +1,9 @@
+[auth]
+additional_redirect_urls = [
+  "io.supabase.avotek://login-callback",
+  "io.supabase.avotek://reset-password",
+]
+
 [functions.identifier-login]
 verify_jwt = false
 

@@ -1518,17 +1518,7 @@ Deno.serve(async (request) => {
   const bearerToken = (request.headers.get("Authorization") ?? "")
     .replace(/^Bearer\s+/i, "")
     .trim();
-  let isServiceRole = bearerToken === config.serviceRoleKey;
-  if (!isServiceRole && bearerToken.split(".").length === 3) {
-    try {
-      const jwtPayload = JSON.parse(atob(bearerToken.split(".")[1]));
-      if (isRecord(jwtPayload) && jwtPayload.role === "service_role") {
-        isServiceRole = true;
-      }
-    } catch {
-      isServiceRole = false;
-    }
-  }
+  const isServiceRole = bearerToken === config.serviceRoleKey;
   if (body.action === "provision_all_default_accounts" && isServiceRole) {
     const { data: profiles } = await admin
       .from("profiles")

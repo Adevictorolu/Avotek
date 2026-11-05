@@ -179,8 +179,8 @@ confirmation link was generated with a localhost redirect.
    sign-in, password reset, and email/password sign-in on the production URL.
    Authenticated visits to the site root go to the dashboard; signing out goes
    to the sign-in screen. On mobile, allow the exact callback URLs
-   `io.supabase.avotek:///login-callback` and
-   `io.supabase.avotek:///reset-password`.
+   `io.supabase.avotek://login-callback` and
+   `io.supabase.avotek://reset-password`.
 5. If the browser still opens localhost, inspect the email's actual link and
    Supabase **Site URL / Redirect URLs**. Do not work around it by turning off
    authentication or accepting an unverified signup.

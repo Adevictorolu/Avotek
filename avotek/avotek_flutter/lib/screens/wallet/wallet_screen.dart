@@ -42,7 +42,9 @@ class _WalletScreenState extends State<WalletScreen> {
     final auth = context.read<AuthProvider>();
     final wallet = context.read<WalletProvider>();
     if (auth.user?.id != null) {
-      try { await PaystackPaymentService.instance.verifyLatest(); } catch (_) {}
+      try {
+        await PaystackPaymentService.instance.verifyLatest();
+      } catch (_) {}
       await auth.refreshWallet();
       await wallet.fetchWallet(auth.user!.id);
       await wallet.fetchTransactions(auth.user!.id);
@@ -95,13 +97,40 @@ class _WalletScreenState extends State<WalletScreen> {
                     child: Text(
                       'Wallet Summary',
                       style: GoogleFonts.figtree(
-                        fontSize: isDesktop ? 26 : 22,
+                        fontSize: isDesktop ? 26 : 19,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -0.5,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: () => context.push('/wallet/fund'),
+                    icon: const Icon(Icons.add_rounded, size: 15),
+                    label: Text(
+                      'Fund',
+                      style: GoogleFonts.figtree(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.electricCyan,
+                      foregroundColor: const Color(0xFF0A0D14),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 9,
+                      ),
+                      minimumSize: const Size(0, 40),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   IconButton(
                     tooltip: 'Refresh wallet',
                     onPressed: _refresh,
@@ -180,31 +209,6 @@ class _WalletScreenState extends State<WalletScreen> {
                           onTap: () => setState(() => _selectedTab = 1),
                         ),
                       ],
-                    ),
-                  ),
-                  const Spacer(),
-                  // Fund Wallet CTA
-                  ElevatedButton.icon(
-                    onPressed: () => context.push('/wallet/fund'),
-                    icon: const Icon(Icons.add_rounded, size: 16),
-                    label: Text(
-                      'Fund Wallet',
-                      style: GoogleFonts.figtree(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.electricCyan,
-                      foregroundColor: const Color(0xFF0A0D14),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
                     ),
                   ),
                 ],
@@ -431,7 +435,9 @@ class _WalletScreenState extends State<WalletScreen> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        DateFormat('dd MMM yyyy • hh:mm a').format(tx.createdAt),
+                                        DateFormat(
+                                          'dd MMM yyyy • hh:mm a',
+                                        ).format(tx.createdAt),
                                         style: GoogleFonts.figtree(
                                           fontSize: 11.5,
                                           color: isDark

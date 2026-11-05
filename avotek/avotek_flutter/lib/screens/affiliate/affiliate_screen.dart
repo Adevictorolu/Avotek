@@ -1939,28 +1939,32 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 size: 24,
               ),
               const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Top Earners',
-                    style: GoogleFonts.figtree(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Top Earners',
+                      style: GoogleFonts.figtree(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    "Real-time platform leaderboard for active Avotek affiliates",
-                    style: GoogleFonts.figtree(
-                      fontSize: 12,
-                      color: isDark
-                          ? AppColors.metallicLight
-                          : AppColors.slateGrey,
+                    const SizedBox(height: 4),
+                    Text(
+                      'Real-time platform leaderboard for active Avotek affiliates.',
+                      softWrap: true,
+                      style: GoogleFonts.figtree(
+                        fontSize: 12,
+                        height: 1.4,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
