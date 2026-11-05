@@ -39,7 +39,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Technology that helps people move forward.',
+                    'Leveraging Technology',
                     style: GoogleFonts.figtree(fontSize: 14, color: muted),
                   ),
                   const SizedBox(height: 22),
@@ -63,18 +63,9 @@ class AboutScreen extends StatelessWidget {
                           hasFrame: true,
                           borderRadius: 14,
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                         Text(
-                          'Our mission',
-                          style: GoogleFonts.figtree(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white.withValues(alpha: 0.82),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Avotek is on a mission to leverage technology across Africa—helping Nigerian students and business owners build, scale, and process information at their core.',
+                          'We help students and businesses across Africa access useful digital services and grow.',
                           style: GoogleFonts.figtree(
                             fontSize: 19,
                             height: 1.45,
@@ -102,7 +93,7 @@ class AboutScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'What you can do with Avotek',
+                          'What you can do',
                           style: GoogleFonts.figtree(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
@@ -112,40 +103,29 @@ class AboutScreen extends StatelessWidget {
                         const SizedBox(height: 14),
                         _AboutFeature(
                           icon: Icons.phone_android_rounded,
-                          title: 'Stay connected',
-                          description:
-                              'Buy airtime and data for yourself or someone else.',
+                          title: 'Buy airtime and data',
+                          description: 'Top up for yourself or someone else.',
                           color: const Color(0xFF0284C7),
                         ),
                         _AboutFeature(
                           icon: Icons.school_rounded,
-                          title: 'Support your education',
+                          title: 'Get exam PINs',
                           description:
-                              'Purchase exam e-PINs or share a sponsor link when you need help paying.',
+                              'Buy a PIN or share a link to ask for sponsorship.',
                           color: const Color(0xFF7C3AED),
                         ),
                         _AboutFeature(
                           icon: Icons.receipt_long_rounded,
-                          title: 'Manage everyday services',
+                          title: 'Pay bills',
                           description:
-                              'Pay supported utility bills and keep your transactions together in one place.',
+                              'Pay supported utility bills and track transactions.',
                           color: const Color(0xFF059669),
                         ),
                         _AboutFeature(
                           icon: Icons.people_alt_rounded,
-                          title: 'Grow through referrals',
-                          description:
-                              'Invite others to Avotek and follow your referral activity.',
+                          title: 'Invite friends',
+                          description: 'Share Avotek and track your referrals.',
                           color: const Color(0xFFEA580C),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'We aim to make useful digital services clear, accessible, and dependable for the people and businesses that rely on them.',
-                          style: GoogleFonts.figtree(
-                            fontSize: 13,
-                            height: 1.55,
-                            color: muted,
-                          ),
                         ),
                       ],
                     ),

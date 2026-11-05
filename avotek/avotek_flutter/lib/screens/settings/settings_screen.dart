@@ -165,11 +165,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showServiceGuide() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     const faqs = <(String, String)>[
-      ('Which services can I use?', 'Buy airtime and data, pay supported electricity and cable bills, purchase exam e-PINs, and explore other services in Services.'),
-      ('How can I fund my wallet?', 'Open Fund Wallet and follow the payment or bank-transfer instructions. Your balance updates after payment is confirmed.'),
-      ('Where can I find a receipt or exam PIN?', 'Open Transactions and select a completed purchase to view its receipt and any available PIN or token.'),
-      ('Can someone sponsor my exam PIN?', 'Open Exam PINs and use the sponsor-link option to share a payment link with the person helping you.'),
-      ('What if my transaction is pending?', 'Check Transactions for updates. If it remains pending, contact support with the transaction reference before retrying.'),
+      (
+        'Which services can I use?',
+        'Buy airtime and data, pay supported electricity and cable bills, purchase exam e-PINs, and explore other services in Services.',
+      ),
+      (
+        'How can I fund my wallet?',
+        'Open Fund Wallet and follow the payment or bank-transfer instructions. Your balance updates after payment is confirmed.',
+      ),
+      (
+        'Where can I find a receipt or exam PIN?',
+        'Open Transactions and select a completed purchase to view its receipt and any available PIN or token.',
+      ),
+      (
+        'Can someone sponsor my exam PIN?',
+        'Open Exam PINs and use the sponsor-link option to share a payment link with the person helping you.',
+      ),
+      (
+        'What if my transaction is pending?',
+        'Check Transactions for updates. If it remains pending, contact support with the transaction reference before retrying.',
+      ),
     ];
 
     showModalBottomSheet<void>(
@@ -197,12 +212,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Icon(Icons.support_agent_rounded, color: AppColors.primaryBlue),
+                    const Icon(
+                      Icons.support_agent_rounded,
+                      color: AppColors.primaryBlue,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'FAQs & Service Guide',
-                        style: GoogleFonts.figtree(fontSize: 19, fontWeight: FontWeight.w800),
+                        style: GoogleFonts.figtree(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -218,7 +239,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     'Helpful answers for using Avotek.',
                     style: GoogleFonts.figtree(
                       fontSize: 13,
-                      color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                      color: isDark
+                          ? AppColors.metallicLight
+                          : AppColors.slateGrey,
                     ),
                   ),
                 ),
@@ -230,7 +253,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ExpansionTile(
                           tilePadding: EdgeInsets.zero,
                           childrenPadding: const EdgeInsets.only(bottom: 12),
-                          title: Text(faq.$1, style: GoogleFonts.figtree(fontSize: 14, fontWeight: FontWeight.w700)),
+                          title: Text(
+                            faq.$1,
+                            style: GoogleFonts.figtree(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                           children: [
                             Align(
                               alignment: Alignment.centerLeft,
@@ -239,7 +268,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 style: GoogleFonts.figtree(
                                   fontSize: 13,
                                   height: 1.5,
-                                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                                  color: isDark
+                                      ? AppColors.metallicLight
+                                      : AppColors.slateGrey,
                                 ),
                               ),
                             ),
@@ -254,12 +285,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       final uri = Uri.https('wa.me', '/$_whatsAppSupportNumber', {
-                        'text': 'Hello Avotek Support, I need help with my account.',
+                        'text':
+                            'Hello Avotek Support, I need help with my account.',
                       });
-                      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      final opened = await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
                       if (!opened && sheetContext.mounted) {
                         ScaffoldMessenger.of(sheetContext).showSnackBar(
-                          const SnackBar(content: Text('Could not open WhatsApp. Please try again later.')),
+                          const SnackBar(
+                            content: Text(
+                              'Could not open WhatsApp. Please try again later.',
+                            ),
+                          ),
                         );
                       }
                     },
@@ -2054,11 +2093,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       _buildDivider(isDark),
                       _buildSettingTile(
-                        icon: Icons.auto_awesome_rounded,
-                        iconColor: AppColors.primaryBlue,
-                        iconBg: AppColors.primaryBlue.withValues(alpha: 0.12),
-                        title: 'About Avotek',
-                        subtitle: 'Our mission and services',
+                        icon: Icons.info_outline_rounded,
+                        iconColor: isDark ? Colors.white70 : Colors.black87,
+                        iconBg: Colors.transparent,
+                        title: 'About',
+                        subtitle: null,
                         trailing: const Icon(
                           Icons.chevron_right_rounded,
                           color: Colors.grey,
