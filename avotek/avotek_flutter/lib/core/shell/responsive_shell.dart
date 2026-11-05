@@ -78,7 +78,11 @@ class _ResponsiveShellState extends State<ResponsiveShell>
     final route = widget.currentRoute;
     if (route.startsWith('/services')) return 1;
     if (route.startsWith('/wallet')) return 2;
-    if (route.startsWith('/profile') || route.startsWith('/settings')) return 3;
+    if (route.startsWith('/profile') ||
+        route.startsWith('/settings') ||
+        route.startsWith('/about')) {
+      return 3;
+    }
     return 0; // default Home
   }
 

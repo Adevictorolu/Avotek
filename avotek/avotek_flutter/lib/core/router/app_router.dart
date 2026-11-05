@@ -8,6 +8,7 @@ import '../supabase/supabase_service.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
+import '../../screens/about/about_screen.dart';
 import '../../screens/affiliate/affiliate_screen.dart';
 import '../../screens/auth/auth_callback_screen.dart';
 import '../../screens/auth/app_lock_screen.dart';
@@ -70,6 +71,7 @@ class AppRouter {
           '/history',
           '/profile',
           '/settings',
+          '/about',
           '/coupons',
           '/gifts',
           '/affiliate',
@@ -345,6 +347,14 @@ class AppRouter {
             context,
             state,
             SettingsScreen(onToggleTheme: themeToggle),
+          ),
+        ),
+        GoRoute(
+          path: '/about',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            const AboutScreen(),
           ),
         ),
         // Core VTU Services

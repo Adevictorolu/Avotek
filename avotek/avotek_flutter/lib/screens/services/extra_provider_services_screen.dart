@@ -37,18 +37,6 @@ class _ExtraProviderServicesScreenState
     extends State<ExtraProviderServicesScreen> {
   static final List<Map<String, dynamic>> _defaultExamPrices = [
     {
-      'code': 'JAMB',
-      'name': 'JAMB UTME / Direct Entry',
-      'exam_type': 'JAMB',
-      'amount': 8200.0,
-      'badge': 'UTME & DE',
-      'subtitle': 'Candidate Profile & UTME / Direct Entry Registration',
-      'purpose': 'UTME & Direct Entry Registration e-PIN',
-      'color': const Color(0xFF0038B8),
-      'logo': 'assets/images/brands/jamb.png',
-      'icon': Icons.school_rounded,
-    },
-    {
       'code': 'WAEC',
       'name': 'WAEC Result Checker',
       'exam_type': 'WAEC',
@@ -83,6 +71,18 @@ class _ExtraProviderServicesScreenState
       'color': const Color(0xFF0052FF),
       'logo': 'assets/images/brands/nabteb.png',
       'icon': Icons.engineering_rounded,
+    },
+    {
+      'code': 'JAMB',
+      'name': 'JAMB UTME / Direct Entry',
+      'exam_type': 'JAMB',
+      'amount': 8200.0,
+      'badge': 'UTME & DE',
+      'subtitle': 'Candidate Profile & UTME / Direct Entry Registration',
+      'purpose': 'UTME & Direct Entry Registration e-PIN',
+      'color': const Color(0xFF0038B8),
+      'logo': 'assets/images/brands/jamb.png',
+      'icon': Icons.school_rounded,
     },
   ];
 
@@ -272,8 +272,20 @@ class _ExtraProviderServicesScreenState
                 amt is num &&
                 amt > 0;
           }).toList();
-          // Rank from lowest pricing to higher pricing
-          valid.sort((a, b) => ((a['amount'] ?? 0) as num).compareTo((b['amount'] ?? 0) as num));
+          const examOrder = ['WAEC', 'NECO', 'NABTEB', 'JAMB'];
+          valid.sort((a, b) {
+            final codeA = (a['code'] ?? a['exam_type'] ?? '')
+                .toString()
+                .toUpperCase();
+            final codeB = (b['code'] ?? b['exam_type'] ?? '')
+                .toString()
+                .toUpperCase();
+            final indexA = examOrder.indexOf(codeA);
+            final indexB = examOrder.indexOf(codeB);
+            return (indexA < 0 ? examOrder.length : indexA).compareTo(
+              indexB < 0 ? examOrder.length : indexB,
+            );
+          });
           if (valid.isNotEmpty) {
             _examPrices = valid.map((p) {
               final code = (p['code'] ?? p['exam_type'] ?? '').toString();

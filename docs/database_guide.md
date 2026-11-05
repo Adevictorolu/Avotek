@@ -14,7 +14,7 @@ All user information and transactions are stored in your custom PostgreSQL datab
 - **Tables**:
   - `users`: Phone numbers, emails, full names, KYC verification levels, referral codes, timestamps.
   - `wallets`: User balances (NGN), dedicated virtual bank account numbers (Wema/Moniepoint), bank account names.
-  - `transactions`: Immutable audit log of every top-up, debit, refund, and cashback with before/after balances.
+  - `transactions`: Immutable audit log of every top-up, debit, refund, and wallet adjustment with before/after balances.
   - `orders`: Every data top-up, airtime recharge, WAEC/JAMB exam PIN, electricity token, and cable subscription.
   - `service_catalog`: Wholesale cost prices, default markups, retail sell prices, and active status.
   - `audit_logs`: Administrative actions, manual refunds, and security audits.

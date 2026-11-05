@@ -1,10 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/shell/responsive_shell.dart';
+import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/wallet_provider.dart';
@@ -21,17 +26,213 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  final PageController _promoPageController = PageController();
   bool _obscureBalance = false;
   bool _isLoadingInitial = true;
   String? _loadError;
+  int _activePromoPage = 0;
+  List<Map<String, dynamic>> _customPromoSlides = [];
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkPinOnboarding();
-      _loadData();
+      _initializeDashboard();
     });
+  }
+
+  Future<void> _initializeDashboard() async {
+    await _loadData();
+    await _loadCustomPromoSlides();
+    if (!mounted) return;
+    await _showWelcomeDialogForNewUser();
+    if (mounted) _checkPinOnboarding();
+  }
+
+  Future<void> _loadCustomPromoSlides() async {
+    try {
+      final setting = await SupabaseService.instance.getAppSetting(
+        'dashboard_carousel',
+      );
+      if (setting == null || setting.isEmpty) return;
+      final decoded = jsonDecode(setting);
+      if (decoded is! List) {
+        throw const FormatException(
+          'Dashboard carousel settings must be a list.',
+        );
+      }
+      final slides = decoded
+          .whereType<Map>()
+          .map((slide) => Map<String, dynamic>.from(slide))
+          .where(
+            (slide) =>
+                (slide['title'] ?? '').toString().isNotEmpty &&
+                (slide['subtitle'] ?? '').toString().isNotEmpty &&
+                (slide['image_url'] ?? '').toString().isNotEmpty &&
+                (slide['redirect_url'] ?? '').toString().isNotEmpty,
+          )
+          .toList();
+      if (mounted) {
+        setState(() {
+          _customPromoSlides = slides;
+          _activePromoPage = 0;
+        });
+        if (_promoPageController.hasClients) {
+          _promoPageController.jumpToPage(0);
+        }
+      }
+    } catch (error) {
+      debugPrint('Could not load dashboard carousel slides: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Custom dashboard promotions could not be loaded.'),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _openPromoDestination(String destination) async {
+    final uri = Uri.tryParse(destination);
+    if (uri != null && (uri.scheme == 'https' || uri.scheme == 'http')) {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open this promotion link.')),
+        );
+      }
+      return;
+    }
+    if (destination.startsWith('/')) {
+      if (mounted) context.push(destination);
+      return;
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This promotion has an invalid destination.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _showWelcomeDialogForNewUser() async {
+    final user = context.read<AuthProvider>().user;
+    if (user == null ||
+        user.isAdmin ||
+        DateTime.now().difference(user.createdAt) > const Duration(days: 7)) {
+      return;
+    }
+
+    final preferences = await SharedPreferences.getInstance();
+    final seenKey = 'avotek_welcome_seen_${user.id}';
+    if (preferences.getBool(seenKey) == true || !mounted) return;
+    final trimmedName = user.name.trim();
+    final firstName = trimmedName.isEmpty
+        ? 'there'
+        : trimmedName.split(RegExp(r'\s+')).first;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
+        return Dialog(
+          backgroundColor: isDark ? const Color(0xFF131722) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 76,
+                  height: 76,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryBlue.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: AppColors.primaryBlue.withValues(alpha: 0.25),
+                      width: 2,
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Welcome to Avotek, $firstName!',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.figtree(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'We are on a mission to leverage technology across Africa—helping Nigerian students and business owners build, scale, and process information with confidence.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.figtree(
+                    fontSize: 13,
+                    height: 1.55,
+                    color: isDark
+                        ? AppColors.metallicLight
+                        : AppColors.slateGrey,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Buy airtime, data, and exam e-PINs—or share a sponsor link when you need help paying for an exam PIN. Students are welcome here.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.figtree(
+                    fontSize: 12.5,
+                    height: 1.5,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white70 : const Color(0xFF334155),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await preferences.setBool(seenKey, true);
+                      if (dialogContext.mounted) Navigator.pop(dialogContext);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      'Let’s get started',
+                      style: GoogleFonts.figtree(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _checkPinOnboarding() {
@@ -56,6 +257,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (wallet.errorMessage != null && mounted) {
           setState(() => _loadError = wallet.errorMessage);
         }
+
         if (mounted && !wallet.hasDedicatedAccount) {
           wallet.ensureDedicatedAccount(auth.user!.id);
         }
@@ -74,6 +276,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         });
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _promoPageController.dispose();
+    super.dispose();
   }
 
   void _showNotificationSheet(BuildContext context) {
@@ -103,7 +311,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryBlue.withValues(alpha: 0.12),
+                            color: AppColors.primaryBlue.withValues(
+                              alpha: 0.12,
+                            ),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
@@ -118,7 +328,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: GoogleFonts.figtree(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                       ],
@@ -138,7 +350,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         'No recent transaction alerts yet.',
                         style: GoogleFonts.figtree(
                           fontSize: 13,
-                          color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                          color: isDark
+                              ? AppColors.metallicLight
+                              : AppColors.slateGrey,
                         ),
                       ),
                     ),
@@ -151,11 +365,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       itemCount: txs.take(6).length,
                       separatorBuilder: (context, index) => Divider(
                         height: 1,
-                        color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF23304B)
+                            : const Color(0xFFE2E8F0),
                       ),
                       itemBuilder: (ctx, idx) {
                         final tx = txs[idx];
-                        final isSuccess = tx.status.toLowerCase() == 'completed' ||
+                        final isSuccess =
+                            tx.status.toLowerCase() == 'completed' ||
                             tx.status.toLowerCase() == 'successful';
                         final isFailed = tx.status.toLowerCase() == 'failed';
                         final statusColor = isSuccess
@@ -163,7 +380,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             : (isFailed ? AppColors.error : AppColors.warning);
 
                         return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 4,
+                          ),
                           leading: Container(
                             width: 10,
                             height: 10,
@@ -183,16 +402,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             style: GoogleFonts.figtree(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
                             ),
                           ),
                           subtitle: Text(
-                            tx.narration ?? (isSuccess ? 'Transaction delivered' : 'Transaction failed'),
+                            tx.narration ??
+                                (isSuccess
+                                    ? 'Transaction delivered'
+                                    : 'Transaction failed'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.figtree(
                               fontSize: 11.5,
-                              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+                              color: isDark
+                                  ? AppColors.metallicLight
+                                  : AppColors.slateGrey,
                             ),
                           ),
                           trailing: Column(
@@ -204,11 +430,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 style: GoogleFonts.figtree(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
-                                  color: isSuccess ? AppColors.success : (isFailed ? AppColors.error : AppColors.primaryBlue),
+                                  color: isSuccess
+                                      ? AppColors.success
+                                      : (isFailed
+                                            ? AppColors.error
+                                            : AppColors.primaryBlue),
                                 ),
                               ),
                               Text(
-                                isSuccess ? 'Delivered' : (isFailed ? 'Failed' : 'Processing'),
+                                isSuccess
+                                    ? 'Delivered'
+                                    : (isFailed ? 'Failed' : 'Processing'),
                                 style: GoogleFonts.figtree(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -421,8 +653,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: isDark
-                                  ? const Color(0xFF23304B)
-                                  : const Color(0xFFE2E8F0),
+                                    ? const Color(0xFF23304B)
+                                    : const Color(0xFFE2E8F0),
                                 width: 1,
                               ),
                             ),
@@ -472,7 +704,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   width: 8,
                                   height: 8,
                                   decoration: BoxDecoration(
-                                    color: wallet.recentTransactions.any((t) => t.status.toLowerCase() == 'failed')
+                                    color:
+                                        wallet.recentTransactions.any(
+                                          (t) =>
+                                              t.status.toLowerCase() ==
+                                              'failed',
+                                        )
                                         ? AppColors.error
                                         : AppColors.success,
                                     shape: BoxShape.circle,
@@ -653,7 +890,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 16),
                 _buildQuickActionsGrid(isDark, isDesktop),
-                const SizedBox(height: 36),
+                const SizedBox(height: 22),
+                _buildPromotionalCarousel(isDark),
+                const SizedBox(height: 28),
 
                 // 6. RECENT TRANSACTIONS LEDGER PREVIEW
                 _buildRecentTransactionsSection(wallet, isDark),
@@ -888,7 +1127,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 borderRadius: BorderRadius.circular(14),
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 13,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
@@ -972,7 +1214,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
@@ -1153,9 +1398,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.2,
-                  color: isDark
-                      ? AppColors.metallicLight
-                      : AppColors.slateGrey,
+                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                 ),
               ),
               Text(
@@ -1193,16 +1436,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildQuickActionsGrid(bool isDark, bool isDesktop) {
     final actions = [
       {
-        'title': 'Exam PINs',
-        'icon': Icons.school_rounded,
-        'route': '/services/exam-pins',
-      },
-      {
         'title': 'Airtime',
         'icon': Icons.phone_android_rounded,
         'route': '/services/airtime',
       },
       {'title': 'Data', 'icon': Icons.wifi_rounded, 'route': '/services/data'},
+      {
+        'title': 'Exam PINs',
+        'icon': Icons.school_rounded,
+        'route': '/services/exam-pins',
+      },
       {'title': 'Cable', 'icon': Icons.tv_rounded, 'route': '/services/tv'},
     ];
 
@@ -1273,6 +1516,226 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPromotionalCarousel(bool isDark) {
+    final promotions = <Map<String, dynamic>>[
+      {
+        'title': 'Stay connected. Spend smarter.',
+        'subtitle': 'Top up airtime and data in a few taps.',
+        'label': 'AIRTIME & DATA',
+        'icon': Icons.signal_cellular_alt_rounded,
+        'colors': const [Color(0xFF0753D7), Color(0xFF08A9D6)],
+        'redirect_url': '/services/airtime',
+      },
+      {
+        'title': 'Your exam PIN, ready when you are.',
+        'subtitle': 'Get WAEC, NECO, NABTEB, and JAMB e-PINs.',
+        'label': 'EXAM E-PINS',
+        'icon': Icons.school_rounded,
+        'colors': const [Color(0xFF4F46E5), Color(0xFF9333EA)],
+        'redirect_url': '/services/exam-pins',
+      },
+      {
+        'title': 'Need help paying for an exam PIN?',
+        'subtitle': 'Create a sponsor link and share it with someone.',
+        'label': 'STUDENT SPONSORSHIP',
+        'icon': Icons.volunteer_activism_rounded,
+        'colors': const [Color(0xFF047857), Color(0xFF14B8A6)],
+        'redirect_url': '/services/exam-pins',
+      },
+      {
+        'title': 'Share Avotek. Earn rewards.',
+        'subtitle': 'Invite friends and grow your referral earnings.',
+        'label': 'REFERRALS',
+        'icon': Icons.people_alt_rounded,
+        'colors': const [Color(0xFFB45309), Color(0xFFF97316)],
+        'redirect_url': '/affiliate',
+      },
+      ..._customPromoSlides,
+    ];
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 144,
+          child: PageView.builder(
+            controller: _promoPageController,
+            itemCount: promotions.length,
+            onPageChanged: (page) => setState(() => _activePromoPage = page),
+            itemBuilder: (context, index) {
+              final promo = promotions[index];
+              final imageUrl = (promo['image_url'] ?? '').toString();
+              final colors =
+                  (promo['colors'] as List<Color>?) ??
+                  const [Color(0xFF0753D7), Color(0xFF08A9D6)];
+              final icon =
+                  (promo['icon'] as IconData?) ?? Icons.campaign_rounded;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 1),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => _openPromoDestination(
+                      (promo['redirect_url'] ?? '').toString(),
+                    ),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: imageUrl.isEmpty
+                            ? LinearGradient(
+                                colors: colors,
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
+                        image: imageUrl.isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(imageUrl),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Stack(
+                        children: [
+                          if (imageUrl.isNotEmpty)
+                            Positioned.fill(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.black.withValues(alpha: 0.72),
+                                      Colors.black.withValues(alpha: 0.12),
+                                    ],
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          Positioned(
+                            right: -24,
+                            top: -38,
+                            child: Container(
+                              width: 160,
+                              height: 160,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.08),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            right: 22,
+                            bottom: 18,
+                            child: Icon(
+                              icon,
+                              size: 72,
+                              color: Colors.white.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(18, 14, 18, 13),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 9,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.18),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    (promo['label'] ?? 'AVOTEK')
+                                        .toString()
+                                        .toUpperCase(),
+                                    style: GoogleFonts.figtree(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.7,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 9),
+                                Text(
+                                  (promo['title'] ?? '').toString(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.figtree(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  (promo['subtitle'] ?? '').toString(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.figtree(
+                                    fontSize: 11,
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                ),
+                                const Spacer(),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Explore now',
+                                      style: GoogleFonts.figtree(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Colors.white,
+                                      size: 14,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 9),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            promotions.length,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: _activePromoPage == index ? 18 : 6,
+              height: 6,
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              decoration: BoxDecoration(
+                color: _activePromoPage == index
+                    ? AppColors.primaryBlue
+                    : (isDark ? Colors.white30 : const Color(0xFFCBD5E1)),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

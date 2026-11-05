@@ -46,7 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_wallets_va_num ON wallets(virtual_account_number)
 CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    type VARCHAR(32) NOT NULL, -- 'credit', 'debit', 'refund', 'topup', 'cashback'
+    type VARCHAR(32) NOT NULL, -- 'credit', 'debit', 'refund', 'topup'
     amount NUMERIC(15, 2) NOT NULL CHECK (amount > 0),
     balance_before NUMERIC(15, 2) NOT NULL,
     balance_after NUMERIC(15, 2) NOT NULL,
@@ -243,4 +243,3 @@ VALUES
   (1, 'REGISTER', 'Chukwuemeka Obi', '08031234567', 'demo@avotek.africa', '102.89.41.18', 'Avotek Android/1.0.0', '{"channel": "mobile_app", "kyc": "tier2"}'::jsonb, NOW() - INTERVAL '2 hours'),
   (1, 'LOGIN', 'Chukwuemeka Obi', '08031234567', 'demo@avotek.africa', '102.89.41.18', 'Avotek Android/1.0.0', '{"device": "Tecno Spark 10 Pro", "auth_method": "password_otp"}'::jsonb, NOW() - INTERVAL '45 minutes'),
   (1, 'ORDER_EXECUTED', 'Chukwuemeka Obi', '08031234567', 'demo@avotek.africa', '102.89.41.18', 'Avotek Android/1.0.0', '{"service": "MTN SME 2.0GB", "amount": 540.00, "status": "delivered"}'::jsonb, NOW() - INTERVAL '1 hour');
-

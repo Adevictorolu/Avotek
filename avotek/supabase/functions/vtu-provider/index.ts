@@ -247,22 +247,19 @@ async function finalizePurchase(
   status: "completed" | "pending" | "failed",
   narration: string,
   userId: string,
-  cashbackAmount = 0,
-): Promise<number> {
+): Promise<void> {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!serviceRoleKey) throw new Error("Missing Supabase service-role configuration.");
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  const { data, error } = await admin.rpc("finalize_vtu_purchase_with_cashback", {
+  const { error } = await admin.rpc("finalize_vtu_purchase", {
     p_narration: narration,
     p_reference: reference,
     p_status: status,
     p_user_id: userId,
-    p_cashback_amount: cashbackAmount,
   });
   if (error) throw error;
-  return Number(isRecord(data) ? data.cashback_amount ?? 0 : 0);
 }
 
 async function getPricingOverrides(
@@ -288,6 +285,32 @@ async function getPricingOverrides(
   } catch {
     return {};
   }
+}
+
+function getServicePricingRule(overrides: JsonMap): {
+  multiplier: number;
+  roundingIncrement: number;
+} {
+  const configuredMultiplier = Number(overrides.service_markup_multiplier ?? 1.3);
+  const configuredIncrement = Number(overrides.price_rounding_increment ?? 5);
+  return {
+    multiplier: Number.isFinite(configuredMultiplier)
+      ? Math.min(1.6, Math.max(1.3, configuredMultiplier))
+      : 1.3,
+    roundingIncrement: [2.5, 5, 10].includes(configuredIncrement)
+      ? configuredIncrement
+      : 5,
+  };
+}
+
+function roundedServicePrice(
+  basePrice: number,
+  rule: { multiplier: number; roundingIncrement: number },
+  additionalFee = 0,
+): number {
+  const target = basePrice * rule.multiplier + additionalFee;
+  return Math.ceil((target - 1e-8) / rule.roundingIncrement) *
+    rule.roundingIncrement;
 }
 
 function normalizedProviderStatus(
@@ -578,32 +601,17 @@ Deno.serve(async (request) => {
     // Merge both provider catalogs into unified live plan list
     const mergedPlans = [...bilalPlans, ...bigiPlans];
 
-    // Apply custom margin if configured by admin in app_settings
-    let dataMarginPct = 5;
-    try {
-      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-      if (supabaseUrl && serviceRoleKey) {
-        const admin = createClient(supabaseUrl, serviceRoleKey, {
-          auth: { autoRefreshToken: false, persistSession: false },
-        });
-        const { data: marginRow } = await admin
-          .from("app_settings")
-          .select("value")
-          .eq("key", "data_margin_percentage")
-          .maybeSingle();
-        if (marginRow && !isNaN(Number(marginRow.value))) {
-          dataMarginPct = Number(marginRow.value);
-        }
-      }
-    } catch (_) {}
+    const pricingOverrides = await getPricingOverrides(supabaseUrl);
+    const pricingRule = getServicePricingRule(pricingOverrides);
 
     const baseList = mergedPlans.length > 0 ? mergedPlans : bilalPlans;
     const finalizedPlans = baseList.map((p) => {
       const rawPrice = Number(p.amount ?? p.price ?? p.plan_amount ?? 0);
-      if (dataMarginPct > 0 && rawPrice > 0) {
-        const adjusted = Math.round(rawPrice * (1 + dataMarginPct / 100));
+      if (Number.isFinite(rawPrice) && rawPrice > 0) {
+        const adjusted = roundedServicePrice(rawPrice, pricingRule);
         return {
           ...p,
+          base_price: rawPrice,
           amount: adjusted,
           price: adjusted,
           plan_amount: adjusted,
@@ -651,12 +659,17 @@ Deno.serve(async (request) => {
     const cableFee = Number.isFinite(configuredFee)
       ? Math.max(0, configuredFee)
       : 0;
+    const pricingRule = getServicePricingRule(pricingOverrides);
     plans = plans.map((plan) => {
       const basePrice = Number(
         plan.plan_price ?? plan.package_amount ?? plan.amount ?? plan.price ?? 0,
       );
       if (!Number.isFinite(basePrice) || basePrice <= 0) return plan;
-      const totalPrice = Math.round((basePrice + cableFee) * 100) / 100;
+      const totalPrice = roundedServicePrice(
+        basePrice,
+        pricingRule,
+        cableFee,
+      );
       return {
         ...plan,
         base_price: basePrice,
@@ -998,7 +1011,6 @@ Deno.serve(async (request) => {
   // --- TRANSACTION PIN & PURCHASE AUTHORIZATION ---
   const isPurchase = action.endsWith(".purchase") || action === "sms.send";
   const purchasePricingOverrides = [
-    "airtime.purchase",
     "cable.purchase",
     "electricity.purchase",
   ].includes(action)
@@ -1045,7 +1057,7 @@ Deno.serve(async (request) => {
   const reference = String(requestBody.reference ?? `AVO-${Date.now()}`);
   let purchaseAmount: number | null = null;
 
-  // Determine user charge amount (retaining Bigisub pricing structure as requested)
+  // Determine the customer charge independently from the upstream amount.
   if (action === "airtime.purchase") {
     purchaseAmount = Number(payload.amount);
   } else if (action === "data.purchase") {
@@ -1058,7 +1070,13 @@ Deno.serve(async (request) => {
         : purchasePricingOverrides.electricity_fee ?? 100,
     );
     const fee = Number.isFinite(configuredFee) ? Math.max(0, configuredFee) : 0;
-    purchaseAmount = Math.round((principal + fee) * 100) / 100;
+    purchaseAmount = action === "cable.purchase"
+      ? roundedServicePrice(
+        principal,
+        getServicePricingRule(purchasePricingOverrides),
+        fee,
+      )
+      : Math.round((principal + fee) * 100) / 100;
   } else if (action === "education.purchase") {
     const qty = Number(payload.quantity ?? 1);
     const passedUnit = Number(payload.unit_price ?? payload.price ?? 0);
@@ -1581,34 +1599,11 @@ Deno.serve(async (request) => {
         : "The service provider could not complete this purchase.",
     );
 
-    let cashbackAmount = 0;
-    if (
-      action === "airtime.purchase" &&
-      finalStatus === "completed" &&
-      purchaseAmount !== null &&
-      purchaseAmount >= 50
-    ) {
-      const configuredPercent = Number(
-        purchasePricingOverrides.airtime_cashback ?? 2,
-      );
-      const cashbackPercent = Number.isFinite(configuredPercent)
-        ? Math.min(100, Math.max(0, configuredPercent))
-        : 0;
-      cashbackAmount = Math.round(purchaseAmount * cashbackPercent) / 100;
-    }
-
-    // Finalize settlement and credit any eligible cashback atomically.
+    // Finalize the wallet reservation after upstream delivery is confirmed.
     if (finalStatus === "failed") {
       await finalizePurchase(supabaseUrl, reference, "failed", finalMessage, authData.user.id);
     } else if (finalStatus === "completed") {
-      cashbackAmount = await finalizePurchase(
-        supabaseUrl,
-        reference,
-        "completed",
-        finalMessage,
-        authData.user.id,
-        cashbackAmount,
-      );
+      await finalizePurchase(supabaseUrl, reference, "completed", finalMessage, authData.user.id);
     }
 
     const providerRef = extractProviderReference(providerResponse) ?? reference;
@@ -1620,7 +1615,6 @@ Deno.serve(async (request) => {
       reference,
       local_reference: reference,
       charged_amount: purchaseAmount,
-      ...(cashbackAmount > 0 ? { cashback_amount: cashbackAmount } : {}),
       provider_reference: providerRef,
       message: finalMessage,
     });

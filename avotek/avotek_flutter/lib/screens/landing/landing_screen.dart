@@ -666,7 +666,7 @@ class _LandingScreenState extends State<LandingScreen>
 
         // Subtitle
         Text(
-          'Recharge airtime with instant 2% cashback, buy cheap SME data bundles from ₦49, '
+          'Recharge airtime at the amount delivered, buy SME data bundles from ₦49, '
           'generate WAEC/NECO result checker PINs, and settle electricity tokens in seconds with zero delay.',
           textAlign: isDesktop ? TextAlign.start : TextAlign.center,
           style: GoogleFonts.figtree(
@@ -1182,8 +1182,8 @@ class _LandingScreenState extends State<LandingScreen>
             child: _buildFloatingBadge(
               icon: Icons.card_giftcard_rounded,
               iconColor: const Color(0xFF10B981),
-              title: '2% Cashback Received',
-              subtitle: 'Credited straight to wallet',
+              title: 'Secure Payments',
+              subtitle: 'Clear prices before checkout',
             ),
           ),
         ],
@@ -1482,10 +1482,10 @@ class _LandingScreenState extends State<LandingScreen>
         '/services/data',
       ),
       (
-        'Airtime + 2% Cashback',
-        'Instant recharge for all Nigerian networks with 2% credited back to balance.',
+        'Airtime Recharge',
+        'Instant recharge for all Nigerian networks with transparent pricing.',
         Icons.phone_android_rounded,
-        '2% Cashback',
+        'Instant',
         '/services/airtime',
       ),
       (
@@ -1912,7 +1912,7 @@ class _LandingScreenState extends State<LandingScreen>
       (
         'Chidinma Okafor',
         'VTU Reseller & Campus Agent, Lagos',
-        'I run a small data reselling hustle. The 2% airtime cashback and referral commissions allow me to make consistent profit every single week.',
+        'I run a small data reselling hustle. Clear pricing and referral commissions help me manage my business every week.',
       ),
       (
         'Engr. Babatunde Lawal',
@@ -2347,7 +2347,7 @@ class _LandingScreenState extends State<LandingScreen>
                               const AvotekLogo(size: 30, showText: true),
                               const SizedBox(height: 12),
                               Text(
-                                'Nigeria’s premier automated platform for discounted data, airtime cashback, utility bill settlements, and educational PINs.',
+                                'Nigeria’s automated platform for data, airtime, utility bill payments, and educational PINs.',
                                 style: GoogleFonts.figtree(
                                   fontSize: 13,
                                   height: 1.55,
@@ -2398,7 +2398,7 @@ class _LandingScreenState extends State<LandingScreen>
                                 isDark,
                               ),
                               _footerLink(
-                                'Buy Airtime (2% Cashback)',
+                                'Buy Airtime',
                                 '/services/airtime',
                                 isDark,
                               ),
@@ -2470,7 +2470,7 @@ class _LandingScreenState extends State<LandingScreen>
                         const AvotekLogo(size: 28, showText: true),
                         const SizedBox(height: 10),
                         Text(
-                          'Nigeria’s premier automated platform for discounted data, airtime cashback, and utility bill settlements.',
+                          'Nigeria’s automated platform for data, airtime, and utility bill payments.',
                           style: GoogleFonts.figtree(
                             fontSize: 12.5,
                             height: 1.5,

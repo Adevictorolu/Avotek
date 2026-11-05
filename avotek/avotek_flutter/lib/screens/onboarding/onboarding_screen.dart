@@ -22,7 +22,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _OnboardingSlideData(
       title: 'Smart VTU & Instant Data',
       subtitle:
-          'Top-up MTN, Airtel, Glo, and 9mobile in seconds with guaranteed discounts, high-speed SME/Corporate data bundles, and automatic cashback.',
+          'Top up MTN, Airtel, Glo, and 9mobile with transparent pricing, fast delivery, and high-speed SME/Corporate data bundles.',
       badge: 'SPEED & RELIABILITY',
       illustrationType: 0,
     ),

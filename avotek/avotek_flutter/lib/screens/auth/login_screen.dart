@@ -1415,6 +1415,63 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
+          if (!_isSignUp) ...[
+            const SizedBox(height: 14),
+            Center(
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    'By signing in, you agree to our ',
+                    style: GoogleFonts.figtree(
+                      fontSize: 11.5,
+                      color: const Color(0xFF94A3B8),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => AvotekLegalContent.showLegalDialog(
+                      context,
+                      title: 'Terms of Service',
+                      sections: AvotekLegalContent.termsOfService,
+                    ),
+                    child: Text(
+                      'Terms of Service',
+                      style: GoogleFonts.figtree(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryCyan,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    ' and ',
+                    style: GoogleFonts.figtree(
+                      fontSize: 11.5,
+                      color: const Color(0xFF94A3B8),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => AvotekLegalContent.showLegalDialog(
+                      context,
+                      title: 'Privacy Policy',
+                      sections: AvotekLegalContent.privacyPolicy,
+                    ),
+                    child: Text(
+                      'Privacy Policy',
+                      style: GoogleFonts.figtree(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryCyan,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
 
           // Switch between Sign in and Create one

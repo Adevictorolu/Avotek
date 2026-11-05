@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,6 +27,8 @@ class _InternetScreenState extends State<InternetScreen> {
   String _selectedProvider = 'smile';
   Map<String, dynamic>? _selectedPackage;
   bool _isPurchasing = false;
+  double _serviceMarkupMultiplier = 1.3;
+  double _priceRoundingIncrement = 5;
 
   final _accountController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -226,6 +230,42 @@ class _InternetScreenState extends State<InternetScreen> {
   void initState() {
     super.initState();
     _selectedPackage = _packageData[_selectedProvider]?.first;
+    _loadPricingSettings();
+  }
+
+  Future<void> _loadPricingSettings() async {
+    try {
+      final settings = await SupabaseService.instance.getAppSetting(
+        'pricing_overrides',
+      );
+      if (settings == null || settings.isEmpty) return;
+      final decoded = jsonDecode(settings);
+      if (decoded is! Map) {
+        throw const FormatException('Pricing settings must be an object.');
+      }
+      final multiplier = double.tryParse(
+        decoded['service_markup_multiplier']?.toString() ?? '',
+      );
+      final increment = double.tryParse(
+        decoded['price_rounding_increment']?.toString() ?? '',
+      );
+      if (!mounted) return;
+      setState(() {
+        if (multiplier != null && multiplier >= 1.3 && multiplier <= 1.6) {
+          _serviceMarkupMultiplier = multiplier;
+        }
+        if (increment != null && [2.5, 5, 10].contains(increment)) {
+          _priceRoundingIncrement = increment;
+        }
+      });
+    } catch (error) {
+      if (mounted) {
+        TopNotification.showError(
+          context,
+          'Could not load current service pricing: $error',
+        );
+      }
+    }
   }
 
   @override
@@ -244,7 +284,19 @@ class _InternetScreenState extends State<InternetScreen> {
   }
 
   double? _totalAmount() {
-    return _selectedPackage?['price'] as double?;
+    final package = _selectedPackage;
+    return package == null ? null : _displayPrice(package);
+  }
+
+  double _displayPrice(Map<String, dynamic> package) {
+    final basePrice = (package['price'] as num).toDouble();
+    return ((basePrice * _serviceMarkupMultiplier) / _priceRoundingIncrement)
+            .ceil() *
+        _priceRoundingIncrement;
+  }
+
+  String _formatPrice(double price) {
+    return price.toStringAsFixed(price % 1 == 0 ? 0 : 2);
   }
 
   Future<void> _handlePurchase() async {
@@ -982,7 +1034,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                 final pkg = currentPackages[index];
                                 final isSel =
                                     _selectedPackage?['code'] == pkg['code'];
-                                final price = (pkg['price'] as num).toDouble();
+                                final price = _displayPrice(pkg);
 
                                 return InkWell(
                                   onTap: () =>
@@ -1136,7 +1188,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                   ),
                                 ),
                                 child: Text(
-                                  '₦${((_selectedPackage!['price'] as num).toDouble()).toStringAsFixed(0)}',
+                                  '₦${_formatPrice(_displayPrice(_selectedPackage!))}',
                                   style: GoogleFonts.figtree(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
@@ -1220,7 +1272,7 @@ class _InternetScreenState extends State<InternetScreen> {
                                         _activeMode == 1
                                             ? 'Create Gift Voucher'
                                             : (_selectedPackage != null
-                                                  ? 'Buy Internet Bundle • ₦${((_selectedPackage!['price'] as num).toDouble()).toStringAsFixed(0)}'
+                                                  ? 'Buy Internet Bundle • ₦${_formatPrice(_displayPrice(_selectedPackage!))}'
                                                   : 'Buy Internet Bundle'),
                                         style: GoogleFonts.figtree(
                                           fontSize: 14.5,

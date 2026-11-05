@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../models/user_model.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/services/vtu_api_service.dart';
@@ -52,12 +54,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final _pricingNecoController = TextEditingController(text: '2500');
   final _pricingNabtebController = TextEditingController(text: '1000');
   final _pricingJambController = TextEditingController(text: '8200');
-  final _dataMarginController = TextEditingController(text: '5');
-  final _airtimeCashbackController = TextEditingController(text: '2.0');
+  final _serviceMarkupController = TextEditingController(text: '1.3');
+  double _priceRoundingIncrement = 5;
   final _cableFeeController = TextEditingController(text: '50');
   final _electricityFeeController = TextEditingController(text: '100');
   final _smsCostController = TextEditingController(text: '4.50');
   bool _isSavingPricing = false;
+  List<Map<String, dynamic>> _carouselSlides = [];
+  bool _isSavingCarousel = false;
 
   @override
   void initState() {
@@ -161,12 +165,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             if (decoded['jamb'] != null) {
               _pricingJambController.text = decoded['jamb'].toString();
             }
-            if (decoded['data_margin'] != null) {
-              _dataMarginController.text = decoded['data_margin'].toString();
+            if (decoded['service_markup_multiplier'] != null) {
+              _serviceMarkupController.text =
+                  decoded['service_markup_multiplier'].toString();
+            } else if (decoded['data_margin'] != null) {
+              final legacyMargin =
+                  double.tryParse(decoded['data_margin'].toString()) ?? 30;
+              _serviceMarkupController.text = (1 + legacyMargin / 100)
+                  .clamp(1.3, 1.6)
+                  .toStringAsFixed(2);
             }
-            if (decoded['airtime_cashback'] != null) {
-              _airtimeCashbackController.text = decoded['airtime_cashback']
-                  .toString();
+            if (decoded['price_rounding_increment'] != null) {
+              final increment = double.tryParse(
+                decoded['price_rounding_increment'].toString(),
+              );
+              if (increment != null && [2.5, 5, 10].contains(increment)) {
+                _priceRoundingIncrement = increment;
+              }
             }
             if (decoded['cable_fee'] != null) {
               _cableFeeController.text = decoded['cable_fee'].toString();
@@ -178,6 +193,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             if (decoded['sms_cost'] != null) {
               _smsCostController.text = decoded['sms_cost'].toString();
             }
+          }
+        }
+        final carouselStr = await SupabaseService.instance.getAppSetting(
+          'dashboard_carousel',
+        );
+        if (carouselStr != null && carouselStr.isNotEmpty) {
+          final decodedCarousel = jsonDecode(carouselStr);
+          if (decodedCarousel is List) {
+            final slides = decodedCarousel
+                .whereType<Map>()
+                .map((slide) => Map<String, dynamic>.from(slide))
+                .toList();
+            if (mounted) setState(() => _carouselSlides = slides);
           }
         }
       } catch (_) {}
@@ -483,6 +511,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                   // Co-Administrator Management
                   _buildCoAdminManagementCard(isDark),
+                  const SizedBox(height: 32),
+
+                  _buildCarouselManagementCard(isDark),
                   const SizedBox(height: 32),
 
                   // Service Pricing & Margins Control
@@ -2124,26 +2155,321 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  Future<void> _saveCarouselSlides() async {
+    setState(() => _isSavingCarousel = true);
+    try {
+      await SupabaseService.instance.setAppSetting(
+        'dashboard_carousel',
+        jsonEncode(_carouselSlides),
+      );
+      if (mounted) {
+        TopNotification.showSuccess(context, 'Dashboard carousel saved.');
+      }
+    } catch (error) {
+      if (mounted) {
+        TopNotification.showError(context, 'Failed to save carousel: $error');
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingCarousel = false);
+    }
+  }
+
+  Future<void> _editCarouselSlide({Map<String, dynamic>? existing}) async {
+    final titleController = TextEditingController(
+      text: (existing?['title'] ?? '').toString(),
+    );
+    final subtitleController = TextEditingController(
+      text: (existing?['subtitle'] ?? '').toString(),
+    );
+    final labelController = TextEditingController(
+      text: (existing?['label'] ?? '').toString(),
+    );
+    final redirectController = TextEditingController(
+      text: (existing?['redirect_url'] ?? '').toString(),
+    );
+    var imageUrl = (existing?['image_url'] ?? '').toString();
+    var uploading = false;
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(
+            existing == null ? 'Add carousel slide' : 'Edit carousel slide',
+          ),
+          content: SizedBox(
+            width: 460,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(labelText: 'Headline'),
+                  ),
+                  TextField(
+                    controller: subtitleController,
+                    decoration: const InputDecoration(labelText: 'Description'),
+                  ),
+                  TextField(
+                    controller: labelController,
+                    decoration: const InputDecoration(labelText: 'Small label'),
+                  ),
+                  TextField(
+                    controller: redirectController,
+                    decoration: const InputDecoration(
+                      labelText: 'Redirect destination',
+                      hintText: '/services/airtime or https://example.com',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Artwork: 1200 × 400 px (3:1 ratio), JPEG/PNG/WebP, max 5 MB.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: uploading
+                        ? null
+                        : () async {
+                            final picked = await FilePicker.platform.pickFiles(
+                              type: FileType.custom,
+                              allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
+                              withData: true,
+                            );
+                            if (!dialogContext.mounted) return;
+                            if (picked == null || picked.files.isEmpty) return;
+                            final file = picked.files.single;
+                            final bytes = file.bytes;
+                            if (bytes == null || bytes.length > 5242880) {
+                              TopNotification.showError(
+                                dialogContext,
+                                'Choose an image smaller than 5 MB.',
+                              );
+                              return;
+                            }
+                            final extension = file.extension?.toLowerCase();
+                            final contentType = switch (extension) {
+                              'jpg' || 'jpeg' => 'image/jpeg',
+                              'png' => 'image/png',
+                              'webp' => 'image/webp',
+                              _ => null,
+                            };
+                            if (contentType == null) {
+                              TopNotification.showError(
+                                dialogContext,
+                                'Choose a JPEG, PNG, or WebP image.',
+                              );
+                              return;
+                            }
+                            setDialogState(() => uploading = true);
+                            try {
+                              final objectPath =
+                                  '${DateTime.now().microsecondsSinceEpoch}.$extension';
+                              final storage = SupabaseService
+                                  .instance
+                                  .client
+                                  .storage
+                                  .from('avotek-carousel');
+                              await storage.uploadBinary(
+                                objectPath,
+                                bytes,
+                                fileOptions: FileOptions(
+                                  contentType: contentType,
+                                  upsert: true,
+                                ),
+                              );
+                              if (!dialogContext.mounted) return;
+                              setDialogState(() {
+                                imageUrl = storage.getPublicUrl(objectPath);
+                                uploading = false;
+                              });
+                            } catch (error) {
+                              if (dialogContext.mounted) {
+                                setDialogState(() => uploading = false);
+                                TopNotification.showError(
+                                  dialogContext,
+                                  'Image upload failed: $error',
+                                );
+                              }
+                            }
+                          },
+                    icon: uploading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.image_rounded),
+                    label: Text(
+                      imageUrl.isEmpty ? 'Upload artwork' : 'Replace artwork',
+                    ),
+                  ),
+                  if (imageUrl.isNotEmpty) const Text('Artwork uploaded'),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: uploading
+                  ? null
+                  : () {
+                      final destination = redirectController.text.trim();
+                      final uri = Uri.tryParse(destination);
+                      final validDestination =
+                          destination.startsWith('/') ||
+                          (uri != null &&
+                              (uri.scheme == 'https' || uri.scheme == 'http') &&
+                              uri.host.isNotEmpty);
+                      if (titleController.text.trim().isEmpty ||
+                          subtitleController.text.trim().isEmpty ||
+                          labelController.text.trim().isEmpty ||
+                          imageUrl.isEmpty ||
+                          !validDestination) {
+                        TopNotification.showWarning(
+                          this.context,
+                          'Complete all fields, upload artwork, and enter a valid app path or web link.',
+                        );
+                        return;
+                      }
+                      Navigator.pop(dialogContext, {
+                        'title': titleController.text.trim(),
+                        'subtitle': subtitleController.text.trim(),
+                        'label': labelController.text.trim(),
+                        'image_url': imageUrl,
+                        'redirect_url': destination,
+                      });
+                    },
+              child: const Text('Save slide'),
+            ),
+          ],
+        ),
+      ),
+    );
+    titleController.dispose();
+    subtitleController.dispose();
+    labelController.dispose();
+    redirectController.dispose();
+    if (result == null || !mounted) return;
+    setState(() {
+      if (existing == null) {
+        _carouselSlides.add(result);
+      } else {
+        final index = _carouselSlides.indexOf(existing);
+        if (index >= 0) _carouselSlides[index] = result;
+      }
+    });
+    await _saveCarouselSlides();
+  }
+
+  Widget _buildCarouselManagementCard(bool isDark) {
+    final foreground = isDark ? Colors.white : const Color(0xFF0F172A);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Dashboard promotional carousel',
+            style: GoogleFonts.figtree(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: foreground,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Upload 1200 × 400 px artwork (JPEG/PNG/WebP, up to 5 MB) and choose an app route or web link.',
+            style: GoogleFonts.figtree(
+              fontSize: 12.5,
+              color: AppColors.slateGrey,
+            ),
+          ),
+          const SizedBox(height: 12),
+          for (final slide in _carouselSlides)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  (slide['image_url'] ?? '').toString(),
+                  width: 72,
+                  height: 42,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) =>
+                      const Icon(Icons.image_not_supported),
+                ),
+              ),
+              title: Text((slide['title'] ?? '').toString()),
+              subtitle: Text((slide['redirect_url'] ?? '').toString()),
+              trailing: Wrap(
+                children: [
+                  IconButton(
+                    tooltip: 'Edit slide',
+                    onPressed: _isSavingCarousel
+                        ? null
+                        : () => _editCarouselSlide(existing: slide),
+                    icon: const Icon(Icons.edit_rounded),
+                  ),
+                  IconButton(
+                    tooltip: 'Delete slide',
+                    onPressed: _isSavingCarousel
+                        ? null
+                        : () async {
+                            setState(() => _carouselSlides.remove(slide));
+                            await _saveCarouselSlides();
+                          },
+                    icon: const Icon(Icons.delete_outline_rounded),
+                  ),
+                ],
+              ),
+            ),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: _isSavingCarousel
+                    ? null
+                    : () => _editCarouselSlide(),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Add slide'),
+              ),
+              const SizedBox(width: 8),
+              if (_isSavingCarousel) const CircularProgressIndicator(),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _savePricingOverrides() async {
-    final cashback = double.tryParse(_airtimeCashbackController.text.trim());
-    final dataMargin = double.tryParse(_dataMarginController.text.trim());
+    final multiplier = double.tryParse(_serviceMarkupController.text.trim());
     final cableFee = double.tryParse(_cableFeeController.text.trim());
     final electricityFee = double.tryParse(
       _electricityFeeController.text.trim(),
     );
-    if (cashback == null ||
-        cashback < 0 ||
-        cashback > 100 ||
-        dataMargin == null ||
-        dataMargin < 0 ||
-        dataMargin > 100 ||
+    if (multiplier == null ||
+        multiplier < 1.3 ||
+        multiplier > 1.6 ||
         cableFee == null ||
         cableFee < 0 ||
         electricityFee == null ||
         electricityFee < 0) {
       TopNotification.showError(
         context,
-        'Enter valid percentages from 0 to 100 and non-negative service fees.',
+        'Use a service markup from 1.3× to 1.6× and non-negative service fees.',
       );
       return;
     }
@@ -2156,8 +2482,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         'nabteb':
             double.tryParse(_pricingNabtebController.text.trim()) ?? 1000.0,
         'jamb': double.tryParse(_pricingJambController.text.trim()) ?? 8200.0,
-        'data_margin': dataMargin,
-        'airtime_cashback': cashback,
+        'service_markup_multiplier': multiplier,
+        'price_rounding_increment': _priceRoundingIncrement,
         'cable_fee': cableFee,
         'electricity_fee': electricityFee,
         'sms_cost': double.tryParse(_smsCostController.text.trim()) ?? 4.50,
@@ -2183,15 +2509,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           'pricing_jamb',
           _pricingJambController.text.trim(),
         ),
-        SupabaseService.instance.setAppSetting(
-          'data_margin_percentage',
-          _dataMarginController.text.trim(),
-        ),
       ]);
       if (mounted) {
         TopNotification.showSuccess(
           context,
-          'Service pricing, JAMB ePIN, and data margins saved successfully.',
+          'Service pricing and JAMB ePIN prices saved successfully.',
         );
       }
     } catch (e) {
@@ -2240,7 +2562,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Service Pricing, Cashback & Profit Margins Control',
+                      'Service Pricing & Profit Margins Control',
                       style: GoogleFonts.figtree(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -2249,7 +2571,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Manage customer-facing prices, airtime cashback discounts, data profit margins, and utility service fees in real-time.',
+                      'Set rounded customer prices, service markups, and utility fees.',
                       style: GoogleFonts.figtree(
                         fontSize: 12.5,
                         color: isDark
@@ -2266,7 +2588,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
           // Section 1: Telecom & Data Pricing
           Text(
-            'TELECOM & AIRTIME / DATA MARGINS',
+            'SERVICE MARKUP & PRICE ROUNDING',
             style: GoogleFonts.figtree(
               fontSize: 12,
               fontWeight: FontWeight.w800,
@@ -2279,14 +2601,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Expanded(
                 child: TextField(
-                  controller: _airtimeCashbackController,
+                  controller: _serviceMarkupController,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'Airtime Cashback (%)',
-                    helperText: 'Discount given to user on recharge',
-                    suffixText: '%',
+                    labelText: 'Service price multiplier',
+                    helperText: 'Allowed range: 1.30× to 1.60×',
+                    suffixText: '×',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -2295,19 +2617,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextField(
-                  controller: _dataMarginController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
+                child: DropdownButtonFormField<double>(
+                  value: _priceRoundingIncrement,
                   decoration: InputDecoration(
-                    labelText: 'Data Bundle Margin (%)',
-                    helperText: 'Profit added on provider cost',
-                    suffixText: '%',
+                    labelText: 'Round prices upward by',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
+                  items: const [2.5, 5.0, 10.0]
+                      .map(
+                        (amount) => DropdownMenuItem(
+                          value: amount,
+                          child: Text(
+                            '₦${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 2)}',
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _priceRoundingIncrement = value);
+                    }
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -2326,35 +2658,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Text(
-                'Quick Data Presets: ',
-                style: GoogleFonts.figtree(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white60 : Colors.black54,
-                ),
-              ),
-              Wrap(
-                spacing: 6,
-                children: ['3.0', '5.0', '8.0', '10.0'].map((p) {
-                  return ActionChip(
-                    label: Text(
-                      '+$p%',
-                      style: GoogleFonts.figtree(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    onPressed: () =>
-                        setState(() => _dataMarginController.text = p),
-                  );
-                }).toList(),
               ),
             ],
           ),
