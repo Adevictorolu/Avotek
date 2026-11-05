@@ -1100,7 +1100,7 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: _obscurePassword,
               enableSuggestions: false,
               autocorrect: false,
-              autofillHints: const [],
+              autofillHints: null,
               suffixWidget: IconButton(
                 icon: Icon(
                   _obscurePassword
@@ -1121,7 +1121,7 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: _obscureConfirmPassword,
               enableSuggestions: false,
               autocorrect: false,
-              autofillHints: const [],
+              autofillHints: null,
               textInputAction: TextInputAction.next,
               suffixWidget: IconButton(
                 icon: Icon(
@@ -1163,7 +1163,7 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: _obscurePassword,
               enableSuggestions: false,
               autocorrect: false,
-              autofillHints: const [],
+              autofillHints: null,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) {
                 if (!_isProcessing) _handleSignIn();
@@ -1538,7 +1538,7 @@ class _LoginScreenState extends State<LoginScreen> {
         obscureText: obscureText,
         enableSuggestions: enableSuggestions ?? false,
         autocorrect: autocorrect ?? false,
-        autofillHints: autofillHints ?? const [],
+        autofillHints: autofillHints,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
         onSubmitted: onSubmitted,
