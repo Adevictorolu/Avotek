@@ -165,7 +165,7 @@ async function getBilalRechargeCardPlans(
   if (!expectedNetwork) throw new Error("Choose a valid network.");
 
   const networksResponse = await dispatchBilalRequest(
-    `${bilalBaseUrl}/api/website/app/network?token=${encodeURIComponent(token)}`,
+    `${bilalBaseUrl}/api/v1/plans/networks`,
     "GET",
     token,
   );
@@ -175,13 +175,14 @@ async function getBilalRechargeCardPlans(
   const networks = extractList(networksResponse.providerBody, ["networks", "network", "data"]);
   const matchingNetwork = networks.find((item) => {
     const name = String(
-      item.network_name ?? item.name ?? item.network ?? item.code ?? item.title ?? "",
+      item.network_name ?? item.network ?? item.name ?? item.code ?? item.title ?? "",
     ).toLowerCase();
     return name.includes(expectedNetwork.toLowerCase()) ||
       (expectedNetwork === "9MOBILE" &&
         (name.includes("t2") || name.includes("etisalat")));
   });
-  const providerNetworkId = matchingNetwork?.network_id ??
+  const providerNetworkId = matchingNetwork?.plan_id ??
+    matchingNetwork?.network_id ??
     matchingNetwork?.id ??
     matchingNetwork?.network;
   if (providerNetworkId === undefined || providerNetworkId === null) {
@@ -195,7 +196,9 @@ async function getBilalRechargeCardPlans(
     { network: providerNetworkId },
   );
   if (!plansResponse.upstream.ok) {
-    throw new Error("Could not load recharge-card denominations from the provider.");
+    throw new Error(
+      `Could not load recharge-card denominations from the provider (HTTP ${plansResponse.upstream.status}).`,
+    );
   }
 
   return extractList(plansResponse.providerBody, [
