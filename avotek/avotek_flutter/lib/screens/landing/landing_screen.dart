@@ -1,10 +1,11 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/supabase/supabase_service.dart';
-import '../../providers/theme_provider.dart';
 import '../../widgets/avotek_logo.dart';
 import '../../widgets/service_brand_logo.dart';
 import '../../widgets/top_notification.dart';
@@ -28,9 +29,14 @@ class _LandingScreenState extends State<LandingScreen>
   final GlobalKey _howItWorksKey = GlobalKey();
   final GlobalKey _testimonialsKey = GlobalKey();
   final GlobalKey _faqKey = GlobalKey();
+  final GlobalKey _contactKey = GlobalKey();
+  final PageController _promoPageController = PageController();
 
   late AnimationController _animController;
   late Animation<double> _floatingAnim;
+  Timer? _promoTimer;
+  List<Map<String, dynamic>> _customPromoSlides = [];
+  int _activePromoPage = 0;
 
   static const String _facebookUrl =
       'https://www.facebook.com/profile.php?id=61552094371264';
@@ -47,10 +53,98 @@ class _LandingScreenState extends State<LandingScreen>
     _floatingAnim = Tween<double>(begin: -6.0, end: 6.0).animate(
       CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
     );
+    _loadHomepagePromotions();
+    _promoTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (!mounted || !_promoPageController.hasClients) return;
+      final pageCount = _homepagePromotions.length;
+      if (pageCount > 1) {
+        final nextPage = (_activePromoPage + 1) % pageCount;
+        _promoPageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  Future<void> _loadHomepagePromotions() async {
+    try {
+      final setting = await SupabaseService.instance.getAppSetting(
+        'dashboard_carousel',
+      );
+      if (setting == null || setting.isEmpty) return;
+      final decoded = jsonDecode(setting);
+      if (decoded is! List) {
+        throw const FormatException('Homepage carousel must be a list.');
+      }
+      final slides = decoded
+          .whereType<Map>()
+          .map((slide) => Map<String, dynamic>.from(slide))
+          .where(
+            (slide) =>
+                (slide['title'] ?? '').toString().isNotEmpty &&
+                (slide['subtitle'] ?? '').toString().isNotEmpty &&
+                (slide['image_url'] ?? '').toString().isNotEmpty &&
+                (slide['redirect_url'] ?? '').toString().isNotEmpty,
+          )
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        _customPromoSlides = slides;
+        _activePromoPage = 0;
+      });
+      if (_promoPageController.hasClients) {
+        _promoPageController.jumpToPage(0);
+      }
+    } catch (error) {
+      debugPrint('Could not load homepage promotions: $error');
+    }
+  }
+
+  List<Map<String, dynamic>> get _homepagePromotions {
+    if (_customPromoSlides.isNotEmpty) return _customPromoSlides;
+    return [
+      {
+        'title': 'Airtime and data, in a few taps',
+        'subtitle': 'Stay connected with transparent pricing across Nigeria.',
+        'label': 'AIRTIME & DATA',
+        'icon': Icons.signal_cellular_alt_rounded,
+        'colors': const [Color(0xFF0753D7), Color(0xFF08A9D6)],
+        'redirect_url': '/services/airtime',
+      },
+      {
+        'title': 'Exam PINs, ready for your next step',
+        'subtitle': 'Get WAEC, NECO, NABTEB, and JAMB PINs on Avotek.',
+        'label': 'EXAM E-PINS',
+        'icon': Icons.school_rounded,
+        'colors': const [Color(0xFF4F46E5), Color(0xFF9333EA)],
+        'redirect_url': '/services/exam-pins',
+      },
+      {
+        'title': 'Need help paying for an exam PIN?',
+        'subtitle':
+            'Ask a parent, guardian, or friend to sponsor your PIN with a secure Pay For Me link.',
+        'label': 'STUDENT SPONSORSHIP',
+        'icon': Icons.volunteer_activism_rounded,
+        'colors': const [Color(0xFF047857), Color(0xFF14B8A6)],
+        'redirect_url': '/services/exam-pins',
+      },
+      {
+        'title': 'Share Avotek. Grow together.',
+        'subtitle': 'Invite friends and explore referral opportunities.',
+        'label': 'REFERRALS',
+        'icon': Icons.people_alt_rounded,
+        'colors': const [Color(0xFFB45309), Color(0xFFF97316)],
+        'redirect_url': '/register',
+      },
+    ];
   }
 
   @override
   void dispose() {
+    _promoTimer?.cancel();
+    _promoPageController.dispose();
     _animController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -192,7 +286,7 @@ class _LandingScreenState extends State<LandingScreen>
         controller: _scrollController,
         slivers: [
           // 1. Sticky Glassmorphic Navbar
-          _buildSliverNavbar(isDesktop, isDark),
+          _buildSliverNavbar(isDesktop),
 
           // 2. Main Content
           SliverToBoxAdapter(
@@ -200,6 +294,8 @@ class _LandingScreenState extends State<LandingScreen>
               children: [
                 // Hero Section with Floating Smartphone Mockup
                 _buildHeroSection(isDesktop, isDark),
+
+                _buildHomepagePromotions(isDesktop, isDark),
 
                 // Official Partners Marquee Strip
                 _buildOfficialPartnersStrip(isDesktop, isDark),
@@ -241,7 +337,10 @@ class _LandingScreenState extends State<LandingScreen>
                 ),
 
                 // Clean Footer (Per Exact Specification)
-                _buildFooter(isDesktop, isDark),
+                Container(
+                  key: _contactKey,
+                  child: _buildFooter(isDesktop, isDark),
+                ),
               ],
             ),
           ),
@@ -253,12 +352,15 @@ class _LandingScreenState extends State<LandingScreen>
   // ==========================================
   // 1. NAVBAR
   // ==========================================
-  Widget _buildSliverNavbar(bool isDesktop, bool isDark) {
+  Widget _buildSliverNavbar(bool isDesktop) {
+    final hasRoomForNavigation = MediaQuery.sizeOf(context).width >= 1120;
+    const brandBlue = Color(0xFF0B2B57);
+    const accentGold = Color(0xFFFFAA12);
     return SliverAppBar(
       pinned: true,
       elevation: 0,
-      backgroundColor: (isDark ? const Color(0xFF07090E) : Colors.white)
-          .withValues(alpha: 0.94),
+      toolbarHeight: 76,
+      backgroundColor: brandBlue.withValues(alpha: 0.98),
       titleSpacing: isDesktop ? 24 : 20,
       title: Row(
         children: [
@@ -267,58 +369,43 @@ class _LandingScreenState extends State<LandingScreen>
             borderRadius: BorderRadius.circular(8),
             child: const AvotekLogo(size: 28, showText: true),
           ),
-          if (isDesktop)
+          if (isDesktop && hasRoomForNavigation)
             Expanded(
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF151B29)
-                        : const Color(0xFFF1F5F9),
+                    color: Colors.white.withValues(alpha: 0.07),
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: isDark
-                          ? const Color(0xFF283247)
-                          : const Color(0xFFE2E8F0),
+                      color: Colors.white.withValues(alpha: 0.04),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: isDark ? 0.16 : 0.04,
-                        ),
-                        blurRadius: 16,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildNavLink(
+                        'Home',
+                        () => _scrollToTop(),
+                      ),
+                      _buildNavLink(
+                        'About',
+                        () => _scrollToKey(_featuresKey),
+                      ),
+                      _buildNavLink(
                         'Services',
                         () => _scrollToKey(_servicesKey),
-                        isDark,
                       ),
                       _buildNavLink(
-                        'Features',
-                        () => _scrollToKey(_featuresKey),
-                        isDark,
-                      ),
-                      _buildNavLink(
-                        'How It Works',
-                        () => _scrollToKey(_howItWorksKey),
-                        isDark,
-                      ),
-                      _buildNavLink(
-                        'Testimonials',
-                        () => _scrollToKey(_testimonialsKey),
-                        isDark,
-                      ),
-                      _buildNavLink(
-                        'FAQs',
+                        'Resources',
                         () => _scrollToKey(_faqKey),
-                        isDark,
+                      ),
+                      _buildNavLink(
+                        'Contact',
+                        () => _scrollToKey(_contactKey),
                       ),
                     ],
                   ),
@@ -329,37 +416,18 @@ class _LandingScreenState extends State<LandingScreen>
       ),
       actions: [
         if (isDesktop) ...[
-          IconButton(
-            icon: Icon(
-              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-              color: isDark ? Colors.white70 : const Color(0xFF334155),
-              size: 20,
-            ),
-            onPressed: () {
-              if (widget.onToggleTheme != null) {
-                widget.onToggleTheme!();
-              } else {
-                context.read<ThemeProvider>().toggleTheme();
-              }
-            },
-          ),
-          const SizedBox(width: 8),
           OutlinedButton(
             onPressed: () => context.go('/login'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
-              side: BorderSide(
-                color: isDark
-                    ? const Color(0xFF334155)
-                    : const Color(0xFFCBD5E1),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              foregroundColor: accentGold,
+              side: const BorderSide(color: accentGold, width: 1.2),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(9),
               ),
             ),
             child: Text(
-              'Sign In',
+              'Login',
               style: GoogleFonts.figtree(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
@@ -367,50 +435,31 @@ class _LandingScreenState extends State<LandingScreen>
             ),
           ),
           const SizedBox(width: 12),
-          Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+          FilledButton(
+            onPressed: _showDownloadApkModal,
+            style: FilledButton.styleFrom(
+              backgroundColor: accentGold,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(9),
               ),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF0038B8).withValues(alpha: 0.35),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
             ),
-            child: ElevatedButton(
-              onPressed: () => context.go('/register'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                foregroundColor: Colors.white,
-                shadowColor: Colors.transparent,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(
-                'Get Started Free',
-                style: GoogleFonts.figtree(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                ),
+            child: Text(
+              'Download Now',
+              style: GoogleFonts.figtree(
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
               ),
             ),
           ),
-          const SizedBox(width: 48),
+          const SizedBox(width: 24),
         ] else ...[
           Builder(
             builder: (ctx) => IconButton(
               icon: Icon(
                 Icons.menu_rounded,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: Colors.white,
               ),
               onPressed: () => Scaffold.of(ctx).openEndDrawer(),
             ),
@@ -421,21 +470,29 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
-  Widget _buildNavLink(String label, VoidCallback onTap, bool isDark) {
+  Widget _buildNavLink(String label, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(24),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
         child: Text(
           label,
           style: GoogleFonts.figtree(
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
-            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+            color: Colors.white.withValues(alpha: 0.92),
           ),
         ),
       ),
+    );
+  }
+
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeInOutCubic,
     );
   }
 
@@ -618,6 +675,258 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
+  Widget _buildHomepagePromotions(bool isDesktop, bool isDark) {
+    final promotions = _homepagePromotions;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        isDesktop ? 60 : 20,
+        0,
+        isDesktop ? 60 : 20,
+        32,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1240),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.auto_awesome_rounded,
+                    color: isDark
+                        ? const Color(0xFF60A5FA)
+                        : const Color(0xFF0052FF),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'AVOTEK HIGHLIGHTS',
+                    style: GoogleFonts.figtree(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.1,
+                      color: isDark
+                          ? const Color(0xFFCBD5E1)
+                          : const Color(0xFF475569),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: isDesktop ? 174 : 184,
+                child: PageView.builder(
+                  controller: _promoPageController,
+                  itemCount: promotions.length,
+                  onPageChanged: (page) {
+                    if (mounted) setState(() => _activePromoPage = page);
+                  },
+                  itemBuilder: (context, index) {
+                    final promo = promotions[index];
+                    final imageUrl = (promo['image_url'] ?? '').toString();
+                    final colors =
+                        promo['colors'] as List<Color>? ??
+                        const [Color(0xFF0753D7), Color(0xFF08A9D6)];
+                    final icon =
+                        promo['icon'] as IconData? ?? Icons.campaign_rounded;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 1),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(22),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          onTap: () => _openHomepagePromotion(
+                            (promo['redirect_url'] ?? '').toString(),
+                          ),
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              gradient: imageUrl.isEmpty
+                                  ? LinearGradient(
+                                      colors: colors,
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : null,
+                              image: imageUrl.isNotEmpty
+                                  ? DecorationImage(
+                                      image: NetworkImage(imageUrl),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child: Stack(
+                              children: [
+                                if (imageUrl.isNotEmpty)
+                                  Positioned.fill(
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.black.withValues(
+                                              alpha: 0.78,
+                                            ),
+                                            Colors.black.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                          ],
+                                          begin: Alignment.centerLeft,
+                                          end: Alignment.centerRight,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                Positioned(
+                                  right: isDesktop ? 76 : 22,
+                                  bottom: -34,
+                                  child: Icon(
+                                    icon,
+                                    size: isDesktop ? 164 : 110,
+                                    color: Colors.white.withValues(alpha: 0.13),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isDesktop ? 30 : 20,
+                                    vertical: 18,
+                                  ),
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxWidth: isDesktop ? 690 : 310,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.18,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            (promo['label'] ?? 'AVOTEK')
+                                                .toString()
+                                                .toUpperCase(),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.figtree(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 0.8,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          (promo['title'] ?? '').toString(),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.figtree(
+                                            fontSize: isDesktop ? 22 : 17,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          (promo['subtitle'] ?? '').toString(),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.figtree(
+                                            fontSize: isDesktop ? 13 : 11,
+                                            height: 1.35,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.92,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 18,
+                                  bottom: 14,
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        'Explore',
+                                        style: GoogleFonts.figtree(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: 15,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  promotions.length,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: _activePromoPage == index ? 20 : 6,
+                    height: 6,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    decoration: BoxDecoration(
+                      color: _activePromoPage == index
+                          ? const Color(0xFF0052FF)
+                          : (isDark ? Colors.white30 : const Color(0xFFCBD5E1)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openHomepagePromotion(String destination) async {
+    final uri = Uri.tryParse(destination);
+    if (uri != null && (uri.scheme == 'https' || uri.scheme == 'http')) {
+      await _openExternalUrl(destination);
+    } else if (destination.startsWith('/')) {
+      if (mounted) context.go(destination);
+    } else {
+      throw FormatException(
+        'Invalid homepage promotion destination: $destination',
+      );
+    }
+  }
+
   Widget _buildHeroCopy(bool isDesktop, bool isDark) {
     return Column(
       crossAxisAlignment: isDesktop
@@ -636,7 +945,7 @@ class _LandingScreenState extends State<LandingScreen>
               color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
             children: [
-              const TextSpan(text: 'Seamless VTU, Cheap Data & '),
+              const TextSpan(text: 'Airtime, Data & Exam PINs '),
               WidgetSpan(
                 alignment: PlaceholderAlignment.baseline,
                 baseline: TextBaseline.alphabetic,
@@ -647,7 +956,7 @@ class _LandingScreenState extends State<LandingScreen>
                         : [const Color(0xFF0038B8), const Color(0xFF0052FF)],
                   ).createShader(bounds),
                   child: Text(
-                    'Instant Bills',
+                    'Made Easy',
                     style: GoogleFonts.figtree(
                       fontSize: isDesktop ? 50 : 32,
                       fontWeight: FontWeight.w900,
@@ -658,7 +967,7 @@ class _LandingScreenState extends State<LandingScreen>
                   ),
                 ),
               ),
-              const TextSpan(text: ' in Nigeria.'),
+              const TextSpan(text: ' across Nigeria.'),
             ],
           ),
         ),
@@ -666,8 +975,7 @@ class _LandingScreenState extends State<LandingScreen>
 
         // Subtitle
         Text(
-          'Recharge airtime at the amount delivered, buy SME data bundles from ₦49, '
-          'generate WAEC/NECO result checker PINs, and settle electricity tokens in seconds with zero delay.',
+          'Top up airtime, buy data, and pay bills with ease. Get WAEC, NECO, NABTEB, or JAMB exam PINs—and share a secure sponsor link so family or friends can help cover the fee.',
           textAlign: isDesktop ? TextAlign.start : TextAlign.center,
           style: GoogleFonts.figtree(
             fontSize: isDesktop ? 16 : 14.5,
@@ -720,9 +1028,9 @@ class _LandingScreenState extends State<LandingScreen>
               ),
             ),
             OutlinedButton.icon(
-              onPressed: _showDownloadApkModal,
-              icon: const Icon(Icons.download_rounded, size: 18),
-              label: const Text('Download APK'),
+              onPressed: () => _scrollToKey(_servicesKey),
+              icon: const Icon(Icons.school_rounded, size: 18),
+              label: const Text('Exam PINs & Sponsor Help'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: isDark
                     ? Colors.white
@@ -1503,10 +1811,10 @@ class _LandingScreenState extends State<LandingScreen>
         '/services/electricity',
       ),
       (
-        'Result Checker PINs',
-        'Direct WAEC, NECO & NABTEB result checker PINs delivered on-screen and via SMS.',
+        'Exam PINs & Student Sponsorship',
+        'Get WAEC, NECO, NABTEB & JAMB PINs, or share a secure link so a sponsor can pay the fee.',
         Icons.school_rounded,
-        'Instant PIN',
+        'PINs + Sponsor Link',
         '/services/exam-pins',
       ),
       (
@@ -2234,6 +2542,10 @@ class _LandingScreenState extends State<LandingScreen>
       (
         'How do I fund my wallet?',
         'Open Fund Wallet and follow the payment options shown for your account. Your balance updates after payment is confirmed.',
+      ),
+      (
+        'Can someone sponsor my exam PIN?',
+        'Yes. Choose an exam PIN and use the secure Pay For Me link to ask a parent, guardian, or friend to pay the fee for you.',
       ),
       (
         'How do gift vouchers work?',
