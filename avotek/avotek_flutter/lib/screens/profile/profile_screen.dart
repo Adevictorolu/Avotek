@@ -1602,12 +1602,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  const Icon(
-                    Icons.open_in_new_rounded,
-                    color: Colors.white,
-                    size: 17,
-                  ),
                 ],
               ),
             ),
