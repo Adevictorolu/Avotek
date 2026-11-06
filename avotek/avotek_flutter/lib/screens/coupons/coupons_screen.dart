@@ -92,9 +92,12 @@ class _CouponsScreenState extends State<CouponsScreen> {
         final err = e.toString().replaceFirst('Exception: ', '').trim();
         TopNotification.showError(
           context,
-          err.contains('not found') || err.contains('already been redeemed')
-              ? err
-              : 'This coupon code is invalid, already claimed, or expired.',
+          err.toLowerCase().contains('already been redeemed') ||
+                  err.toLowerCase().contains('already used')
+              ? 'This gift has already been used.'
+              : (err.toLowerCase().contains('not found')
+                    ? 'This coupon code was not found.'
+                    : 'This coupon code is invalid or expired.'),
           title: 'Redemption Failed',
         );
       }
@@ -284,8 +287,9 @@ class _CouponsScreenState extends State<CouponsScreen> {
       currentRoute: '/coupons',
       onToggleTheme: widget.onToggleTheme,
       child: Scaffold(
-        backgroundColor:
-            isDark ? const Color(0xFF0A0D14) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark
+            ? const Color(0xFF0A0D14)
+            : const Color(0xFFF8FAFC),
         body: SingleChildScrollView(
           padding: EdgeInsets.symmetric(
             horizontal: isDesktop ? 36 : 16,
@@ -416,8 +420,8 @@ class _CouponsScreenState extends State<CouponsScreen> {
                           decoration: BoxDecoration(
                             color: _selectedTab == 0
                                 ? (isDark
-                                    ? const Color(0xFF1E2638)
-                                    : Colors.white)
+                                      ? const Color(0xFF1E2638)
+                                      : Colors.white)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: _selectedTab == 0
@@ -441,8 +445,8 @@ class _CouponsScreenState extends State<CouponsScreen> {
                                 color: _selectedTab == 0
                                     ? AppColors.primaryBlue
                                     : (isDark
-                                        ? AppColors.metallicLight
-                                        : AppColors.slateGrey),
+                                          ? AppColors.metallicLight
+                                          : AppColors.slateGrey),
                                 fontSize: 13.5,
                               ),
                             ),
@@ -459,8 +463,8 @@ class _CouponsScreenState extends State<CouponsScreen> {
                           decoration: BoxDecoration(
                             color: _selectedTab == 1
                                 ? (isDark
-                                    ? const Color(0xFF1E2638)
-                                    : Colors.white)
+                                      ? const Color(0xFF1E2638)
+                                      : Colors.white)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: _selectedTab == 1
@@ -484,8 +488,8 @@ class _CouponsScreenState extends State<CouponsScreen> {
                                 color: _selectedTab == 1
                                     ? AppColors.primaryBlue
                                     : (isDark
-                                        ? AppColors.metallicLight
-                                        : AppColors.slateGrey),
+                                          ? AppColors.metallicLight
+                                          : AppColors.slateGrey),
                                 fontSize: 13.5,
                               ),
                             ),
@@ -529,9 +533,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
             color: isDark ? const Color(0xFF131826) : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark
-                  ? const Color(0xFF1E2638)
-                  : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF1E2638) : const Color(0xFFE2E8F0),
             ),
           ),
           child: TextField(
@@ -568,11 +570,13 @@ class _CouponsScreenState extends State<CouponsScreen> {
           width: double.infinity,
           height: 52,
           decoration: BoxDecoration(
-            color: AppColors.success,
+            gradient: const LinearGradient(
+              colors: [Color(0xFF00D2FF), Color(0xFF0052FF)],
+            ),
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: AppColors.success.withValues(alpha: 0.3),
+                color: AppColors.primaryBlue.withValues(alpha: 0.25),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -590,7 +594,7 @@ class _CouponsScreenState extends State<CouponsScreen> {
                     ),
                   )
                 : const Icon(
-                    Icons.auto_awesome_rounded,
+                    Icons.redeem_rounded,
                     size: 18,
                     color: Colors.white,
                   ),

@@ -1098,41 +1098,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-
-              // Card Chip & Avotek ID
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Gold EMV Chip Simulation
-                  Container(
-                    width: 34,
-                    height: 26,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD4AF37),
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(color: const Color(0xFFB8860B)),
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 20,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.black26),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(
-                    Icons.wifi_rounded,
-                    size: 18,
-                    color: Colors.white70,
-                  ),
-                  const Spacer(),
-                ],
-              ),
               const SizedBox(height: 12),
 
               // Large Solid White Fund Wallet Card

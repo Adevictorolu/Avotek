@@ -386,7 +386,7 @@ class _LandingScreenState extends State<LandingScreen>
           InkWell(
             onTap: () => context.go('/'),
             borderRadius: BorderRadius.circular(8),
-            child: const AvotekLogo(size: 28, showText: true),
+            child: const AvotekLogo(size: 38, showText: true),
           ),
           if (isDesktop && hasRoomForNavigation)
             Expanded(
@@ -543,7 +543,7 @@ class _LandingScreenState extends State<LandingScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const AvotekLogo(size: 26, showText: true),
+                  const AvotekLogo(size: 34, showText: true),
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
                     onPressed: () => Navigator.pop(context),
@@ -1026,39 +1026,24 @@ class _LandingScreenState extends State<LandingScreen>
           runSpacing: 12,
           alignment: isDesktop ? WrapAlignment.start : WrapAlignment.center,
           children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+            FilledButton.icon(
+              onPressed: () => context.go('/register'),
+              icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+              label: const Text('Get Started Free'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF0047FF),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
                 ),
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF0038B8).withValues(alpha: 0.40),
-                    blurRadius: 16,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: ElevatedButton.icon(
-                onPressed: () => context.go('/register'),
-                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                label: const Text('Get Started Free'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: Colors.white,
-                  shadowColor: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  textStyle: GoogleFonts.figtree(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14.5,
-                  ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: GoogleFonts.figtree(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14.5,
                 ),
               ),
             ),
@@ -1077,11 +1062,11 @@ class _LandingScreenState extends State<LandingScreen>
                   width: 1.5,
                 ),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 16,
+                  horizontal: 18,
+                  vertical: 14,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 textStyle: GoogleFonts.figtree(
                   fontWeight: FontWeight.w700,
@@ -2461,7 +2446,7 @@ class _LandingScreenState extends State<LandingScreen>
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Download the lightweight APK directly to your phone for instant recharge shortcuts, biometric sign-in, and push notifications.',
+                              'Download the lightweight APK directly to your phone for instant recharge shortcuts, biometric sign-in, and account alerts.',
                               style: GoogleFonts.figtree(
                                 fontSize: 13.5,
                                 color: Colors.white.withValues(alpha: 0.90),
@@ -2471,26 +2456,28 @@ class _LandingScreenState extends State<LandingScreen>
                         ),
                       ),
                       const SizedBox(width: 24),
-                      ElevatedButton.icon(
+                      OutlinedButton.icon(
                         onPressed: _showDownloadApkModal,
                         icon: const Icon(
                           Icons.download_rounded,
-                          color: Color(0xFF0052FF),
+                          color: Colors.white,
                         ),
                         label: const Text('Download APK'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF0052FF),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.75),
+                          ),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 18,
+                            horizontal: 18,
+                            vertical: 12,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           textStyle: GoogleFonts.figtree(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
                           ),
                         ),
                       ),
@@ -2522,7 +2509,7 @@ class _LandingScreenState extends State<LandingScreen>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Download the lightweight APK directly to your phone for instant recharge shortcuts and push receipts.',
+                        'Download the lightweight APK directly to your phone for instant recharge shortcuts and secure in-app notifications.',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.figtree(
                           fontSize: 12.5,
@@ -2532,22 +2519,24 @@ class _LandingScreenState extends State<LandingScreen>
                       const SizedBox(height: 20),
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton.icon(
+                        child: OutlinedButton.icon(
                           onPressed: _showDownloadApkModal,
                           icon: const Icon(
                             Icons.download_rounded,
-                            color: Color(0xFF0052FF),
+                            color: Colors.white,
                           ),
                           label: const Text('Download APK'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF0052FF),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.75),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             textStyle: GoogleFonts.figtree(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               fontSize: 14,
                             ),
                           ),

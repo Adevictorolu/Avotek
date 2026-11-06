@@ -37,16 +37,17 @@ class VtuApiService {
     String action, {
     Map<String, dynamic> payload = const {},
     String? userPin,
+    String? reference,
   }) async {
     final body = <String, dynamic>{
       'action': action,
       'payload': payload,
     };
-    String? reference;
     if (userPin != null) {
       body['user_pin'] = userPin;
-      reference = generatePurchaseReference();
-      body['reference'] = reference;
+    }
+    if (userPin != null || reference != null) {
+      body['reference'] = reference ?? generatePurchaseReference();
     }
     late final FunctionResponse response;
     try {
@@ -371,20 +372,20 @@ class VtuApiService {
 
   Future<Map<String, dynamic>> purchaseDataCardPins({
     required int networkId,
-    required String planName,
+    required String planType,
+    required String cardName,
     required double price,
     required int quantity,
-    String? businessName,
     String? pin,
   }) => _invoke(
     'data_card.purchase',
     userPin: pin,
     payload: {
       'network': networkId,
-      'plan_name': planName,
+      'plan_type': planType,
+      'card_name': cardName,
       'amount': price,
       'quantity': quantity,
-      'business_name': businessName ?? 'Avotek Data',
     },
   );
 
@@ -392,20 +393,47 @@ class VtuApiService {
     required int networkId,
     required double amount,
     required String phone,
-    String? bankName,
-    String? accountNumber,
-    String? accountName,
-    String? pin,
+    required String verificationData,
+    required String sharePin,
+    required String reference,
+    required String userPin,
   }) => _invoke(
     'airtime_cash.convert',
-    userPin: pin,
+    userPin: userPin,
+    reference: reference,
     payload: {
       'network': networkId,
       'amount': amount,
       'phone': phone,
-      'bank_name': bankName,
-      'account_number': accountNumber,
-      'account_name': accountName,
+      'verification_data': verificationData,
+      'share_pin': sharePin,
+    },
+  );
+
+  Future<Map<String, dynamic>> startAirtimeCashConversion({
+    required int networkId,
+    required String phone,
+    required String userPin,
+  }) => _invoke(
+    'airtime_cash.start',
+    userPin: userPin,
+    payload: {'network': networkId, 'phone': phone},
+  );
+
+  Future<Map<String, dynamic>> verifyAirtimeCashOtp({
+    required int networkId,
+    required String phone,
+    required String otp,
+    required String verificationData,
+    required String userPin,
+  }) => _invoke(
+    'airtime_cash.verify',
+    userPin: userPin,
+    payload: {
+      'network': networkId,
+      'phone': phone,
+      'otp': otp,
+      'verification_data': verificationData,
     },
   );
 

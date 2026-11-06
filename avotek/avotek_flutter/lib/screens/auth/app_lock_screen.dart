@@ -207,6 +207,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                           keyboardType: TextInputType.number,
                           obscureText: true,
                           maxLength: 4,
+                          autofillHints: const [],
                           textAlign: TextAlign.center,
                           style: GoogleFonts.figtree(
                             fontSize: 24,

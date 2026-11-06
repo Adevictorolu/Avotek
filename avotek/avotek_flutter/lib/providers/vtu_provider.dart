@@ -340,6 +340,7 @@ class VtuProvider extends ChangeNotifier {
           : localReference;
       if (status == 'pending' &&
           serviceType != 'bulk_sms' &&
+          serviceType != 'airtime_cash' &&
           lookupRef != null &&
           lookupRef.isNotEmpty) {
         try {
@@ -636,10 +637,11 @@ class VtuProvider extends ChangeNotifier {
     required dynamic userId,
     required int networkId,
     required String networkName,
+    required String planType,
     required String planName,
     required double price,
     required int quantity,
-    String? businessName,
+    String? cardName,
     String? userPin,
   }) {
     final amount = price * quantity;
@@ -648,14 +650,14 @@ class VtuProvider extends ChangeNotifier {
       serviceType: 'data_card',
       network: networkName.toUpperCase(),
       recipient: '${quantity}x $planName PINs',
-      plan: businessName ?? 'Avotek Data',
+      plan: cardName ?? planName,
       amount: amount,
       dispatch: () => VtuApiService.instance.purchaseDataCardPins(
         networkId: networkId,
-        planName: planName,
+        planType: planType,
+        cardName: cardName ?? planName,
         price: price,
         quantity: quantity,
-        businessName: businessName,
         pin: userPin,
       ),
     );
@@ -667,10 +669,10 @@ class VtuProvider extends ChangeNotifier {
     required String networkName,
     required double amount,
     required String phone,
-    String? bankName,
-    String? accountNumber,
-    String? accountName,
-    String? userPin,
+    required String verificationData,
+    required String sharePin,
+    required String reference,
+    required String userPin,
   }) {
     return _purchase(
       userId: userId,
@@ -678,15 +680,15 @@ class VtuProvider extends ChangeNotifier {
       network: networkName.toUpperCase(),
       recipient: phone,
       plan: 'Airtime to Cash (₦${amount.toInt()})',
-      amount: amount,
+      amount: 0,
       dispatch: () => VtuApiService.instance.convertAirtimeToCash(
         networkId: networkId,
         amount: amount,
         phone: phone,
-        bankName: bankName,
-        accountNumber: accountNumber,
-        accountName: accountName,
-        pin: userPin,
+        verificationData: verificationData,
+        sharePin: sharePin,
+        reference: reference,
+        userPin: userPin,
       ),
     );
   }

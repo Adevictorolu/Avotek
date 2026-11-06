@@ -45,6 +45,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   );
   final _apkVersionController = TextEditingController(text: 'v2.00');
   bool _isSavingApkSettings = false;
+  final _announcementTitleController = TextEditingController();
+  final _announcementMessageController = TextEditingController();
+  bool _isSendingAnnouncement = false;
+  int? _selectedAnnouncementTemplate;
+
+  static const _announcementTemplates = [
+    (
+      title: 'Holiday Reminder',
+      message:
+          'Tomorrow is a holiday. Enjoy the break, and stay connected with Avotek.',
+    ),
+    (
+      title: 'Weekend Greetings',
+      message:
+          'It is the weekend! Enjoy your time and have a wonderful weekend from Avotek.',
+    ),
+    (
+      title: 'Data Plans on Avotek',
+      message:
+          'Need to stay connected? Explore great-value data plans across all networks on Avotek.',
+    ),
+    (
+      title: 'Stream Showmax',
+      message:
+          'Your next show is waiting. Get a Showmax subscription quickly and securely on Avotek.',
+    ),
+    (
+      title: 'Pay Your Cable TV',
+      message:
+          'Keep your favourite channels on. Renew your cable TV subscription securely with Avotek.',
+    ),
+  ];
 
   List<String> _coAdmins = [];
   final _newCoAdminController = TextEditingController();
@@ -69,6 +101,107 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadAdminData();
     });
+  }
+
+  @override
+  void dispose() {
+    _apkUrlController.dispose();
+    _apkVersionController.dispose();
+    _newCoAdminController.dispose();
+    _pricingWaecController.dispose();
+    _pricingNecoController.dispose();
+    _pricingNabtebController.dispose();
+    _pricingJambController.dispose();
+    _serviceMarkupController.dispose();
+    _cableFeeController.dispose();
+    _electricityFeeController.dispose();
+    _smsCostController.dispose();
+    _announcementTitleController.dispose();
+    _announcementMessageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendAnnouncement() async {
+    final title = _announcementTitleController.text.trim();
+    final message = _announcementMessageController.text.trim();
+    if (title.isEmpty || message.isEmpty) {
+      TopNotification.showWarning(
+        context,
+        'Enter both a notification title and message.',
+      );
+      return;
+    }
+
+    setState(() => _isSendingAnnouncement = true);
+    var sentCount = 0;
+    try {
+      final client = SupabaseService.instance.client;
+      final profiles = <Map<String, dynamic>>[];
+      var offset = 0;
+      while (true) {
+        final page = await client
+            .from('profiles')
+            .select('id, push_notifications')
+            .range(offset, offset + 999);
+        profiles.addAll(page);
+        if (page.length < 1000) break;
+        offset += 1000;
+      }
+      if (!mounted) return;
+      final rows = profiles
+          .where((profile) => profile['push_notifications'] != false)
+          .map(
+            (profile) => {
+              'user_id': profile['id'],
+              'title': title,
+              'message': message,
+              'type': 'promo',
+              'metadata': {'source': 'admin_announcement'},
+            },
+          )
+          .toList();
+
+      if (rows.isEmpty) {
+        TopNotification.showWarning(
+          context,
+          'No users currently have notifications enabled.',
+        );
+        return;
+      }
+
+      for (var start = 0; start < rows.length; start += 200) {
+        final end = start + 200 < rows.length ? start + 200 : rows.length;
+        final batch = rows.sublist(start, end);
+        await SupabaseService.instance.client
+            .from('notifications')
+            .insert(
+              batch,
+            );
+        sentCount += batch.length;
+      }
+
+      if (mounted) {
+        _announcementTitleController.clear();
+        _announcementMessageController.clear();
+        setState(() => _selectedAnnouncementTemplate = null);
+        TopNotification.showSuccess(
+          context,
+          'Notification sent to $sentCount users.',
+        );
+      }
+    } catch (error) {
+      debugPrint('Sending admin announcement failed: $error');
+      if (mounted) {
+        TopNotification.showError(
+          context,
+          sentCount == 0
+              ? 'Could not send this notification: $error'
+              : 'Sent to $sentCount users, but a later batch failed: $error',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSendingAnnouncement = false);
+    }
   }
 
   Future<double> _fetchProviderBalance() async {
@@ -515,6 +648,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   _buildUsersManagementSection(filteredUsers, isDark),
                   const SizedBox(height: 32),
 
+                  _buildAnnouncementCard(isDark),
+                  const SizedBox(height: 32),
+
                   // Co-Administrator Management
                   _buildCoAdminManagementCard(isDark),
                   const SizedBox(height: 32),
@@ -559,22 +695,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildHeader(BuildContext context, String email, bool isDark) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      spacing: 16,
+      runSpacing: 12,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 Text(
                   'Super Admin Oversight',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.figtree(
-                    fontSize: 26,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(width: 10),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -601,6 +742,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 4),
             Text(
               email,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.figtree(
                 fontSize: 13,
                 color: isDark ? Colors.white70 : AppColors.slateGrey,
@@ -608,7 +751,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ],
         ),
-        Row(
+        Wrap(
+          spacing: 4,
           children: [
             IconButton(
               tooltip: 'Refresh system stats',
@@ -766,14 +910,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header with Title & Period Switcher
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 16,
+            runSpacing: 12,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 10,
                     children: [
                       Container(
                         padding: const EdgeInsets.all(7),
@@ -1147,8 +1294,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 16,
+            runSpacing: 12,
             children: [
               Text(
                 title,
@@ -1214,7 +1363,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
                   children: [
                     Text(
                       'BigiSub Provider Float Balance',
@@ -1281,6 +1432,116 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  Widget _buildAnnouncementCard(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'User Announcements',
+            style: GoogleFonts.figtree(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Send an in-app notification to users who have notifications enabled.',
+            style: GoogleFonts.figtree(
+              fontSize: 12.5,
+              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+            ),
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<int>(
+            initialValue: _selectedAnnouncementTemplate,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Start with a ready-made message (optional)',
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              for (
+                var index = 0;
+                index < _announcementTemplates.length;
+                index++
+              )
+                DropdownMenuItem(
+                  value: index,
+                  child: Text(
+                    _announcementTemplates[index].title,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            onChanged: _isSendingAnnouncement
+                ? null
+                : (index) {
+                    setState(() {
+                      _selectedAnnouncementTemplate = index;
+                      if (index != null) {
+                        _announcementTitleController.text =
+                            _announcementTemplates[index].title;
+                        _announcementMessageController.text =
+                            _announcementTemplates[index].message;
+                      }
+                    });
+                  },
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _announcementTitleController,
+            enabled: !_isSendingAnnouncement,
+            maxLength: 80,
+            decoration: const InputDecoration(
+              labelText: 'Notification title',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _announcementMessageController,
+            enabled: !_isSendingAnnouncement,
+            minLines: 3,
+            maxLines: 5,
+            maxLength: 500,
+            decoration: const InputDecoration(
+              labelText: 'Message',
+              alignLabelWithHint: true,
+              border: OutlineInputBorder(),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(
+              onPressed: _isSendingAnnouncement ? null : _sendAnnouncement,
+              icon: _isSendingAnnouncement
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.send_rounded, size: 17),
+              label: Text(
+                _isSendingAnnouncement ? 'Sending...' : 'Send to users',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildUsersManagementSection(
     List<Map<String, dynamic>> users,
     bool isDark,
@@ -1298,8 +1559,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 16,
+            runSpacing: 12,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1324,7 +1587,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ],
               ),
-              Row(
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
                 children: [
                   ElevatedButton.icon(
                     onPressed: _openAddUserDialog,
@@ -1342,7 +1607,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
                   // Sort Order Menu
                   PopupMenuButton<String>(
                     tooltip: 'Sort Users by Balance / Name',
@@ -1434,9 +1698,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
                   SizedBox(
-                    width: 200,
+                    width: 220,
                     child: TextField(
                       onChanged: (val) =>
                           setState(() => _userSearchQuery = val),
@@ -1476,8 +1739,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     : const Color(0xFFE2E8F0),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: 12,
+              runSpacing: 8,
               children: [
                 Row(
                   children: [
@@ -1565,136 +1830,107 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 final walletBal =
                     ((u['wallet_balance'] as num?)?.toDouble() ?? 0.0);
 
-                return Row(
+                final identity = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: AppColors.primaryBlue.withValues(
-                        alpha: 0.15,
-                      ),
-                      child: Text(
-                        name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                        style: GoogleFonts.figtree(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primaryBlue,
-                        ),
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.figtree(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            style: GoogleFonts.figtree(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF0F172A),
-                            ),
-                          ),
-                          Text(
-                            email,
-                            style: GoogleFonts.figtree(
-                              fontSize: 11.5,
-                              color: isDark
-                                  ? AppColors.metallicLight
-                                  : AppColors.slateGrey,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.figtree(
+                        fontSize: 11,
+                        color: isDark
+                            ? AppColors.metallicLight
+                            : AppColors.slateGrey,
                       ),
                     ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        phone,
-                        style: GoogleFonts.figtree(
-                          fontSize: 12,
-                          color: isDark
-                              ? Colors.white70
-                              : const Color(0xFF334155),
-                        ),
+                  ],
+                );
+                final accountSummary = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      phone,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.figtree(
+                        fontSize: 11.5,
+                        color: isDark
+                            ? Colors.white70
+                            : const Color(0xFF334155),
                       ),
                     ),
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Bal: ₦${walletBal.toStringAsFixed(2)}',
-                            style: GoogleFonts.figtree(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.electricCyan,
-                            ),
-                          ),
-                          Text(
-                            'Paid: ₦${((u['total_spent'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}',
-                            style: GoogleFonts.figtree(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white60 : Colors.black54,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      'Bal: ₦${walletBal.toStringAsFixed(2)}  ·  Paid: ₦${((u['total_spent'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.figtree(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.electricCyan,
                       ),
                     ),
-                    InkWell(
-                      onTap: () => _toggleUserKyc(id, kycStatus),
+                  ],
+                );
+                final kycBadge = InkWell(
+                  onTap: () => _toggleUserKyc(id, kycStatus),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          (isVerified ? AppColors.success : AppColors.warning)
+                              .withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              (isVerified
-                                      ? AppColors.success
-                                      : AppColors.warning)
-                                  .withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color:
-                                (isVerified
-                                        ? AppColors.success
-                                        : AppColors.warning)
-                                    .withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              isVerified
-                                  ? Icons.check_circle_rounded
-                                  : Icons.pending_rounded,
-                              size: 13,
-                              color: isVerified
-                                  ? AppColors.success
-                                  : AppColors.warning,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              isVerified ? 'KYC Verified' : 'Unverified',
-                              style: GoogleFonts.figtree(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: isVerified
-                                    ? AppColors.success
-                                    : AppColors.warning,
-                              ),
-                            ),
-                          ],
-                        ),
+                      border: Border.all(
+                        color:
+                            (isVerified ? AppColors.success : AppColors.warning)
+                                .withValues(alpha: 0.3),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isVerified
+                              ? Icons.check_circle_rounded
+                              : Icons.pending_rounded,
+                          size: 13,
+                          color: isVerified
+                              ? AppColors.success
+                              : AppColors.warning,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isVerified ? 'KYC Verified' : 'Unverified',
+                          style: GoogleFonts.figtree(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: isVerified
+                                ? AppColors.success
+                                : AppColors.warning,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+                final actions = Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     IconButton(
                       tooltip: 'Adjust Wallet Balance',
                       icon: const Icon(
@@ -1714,6 +1950,81 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       onPressed: () => _confirmDeleteUser(id, email),
                     ),
                   ],
+                );
+
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth < 680) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: AppColors.primaryBlue
+                                      .withValues(
+                                        alpha: 0.15,
+                                      ),
+                                  child: Text(
+                                    name.isNotEmpty
+                                        ? name[0].toUpperCase()
+                                        : 'U',
+                                    style: GoogleFonts.figtree(
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.primaryBlue,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(child: identity),
+                                actions,
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 48),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: accountSummary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 8,
+                              children: [kycBadge],
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: AppColors.primaryBlue.withValues(
+                            alpha: 0.15,
+                          ),
+                          child: Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                            style: GoogleFonts.figtree(
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primaryBlue,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(flex: 3, child: identity),
+                        Expanded(flex: 2, child: accountSummary),
+                        kycBadge,
+                        const SizedBox(width: 8),
+                        actions,
+                      ],
+                    );
+                  },
                 );
               },
             ),
@@ -2951,7 +3262,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ),
           const SizedBox(height: 18),
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 10,
             children: [
               ElevatedButton.icon(
                 onPressed: _isSavingApkSettings ? null : _saveApkSettings,
@@ -2983,7 +3296,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
               OutlinedButton.icon(
                 onPressed: () {
                   final url = _apkUrlController.text.trim();

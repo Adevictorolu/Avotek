@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../responsive/responsive_layout.dart';
 import '../security/device_security_service.dart';
+import '../supabase/supabase_service.dart';
 import '../theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
@@ -115,185 +116,293 @@ class _ResponsiveShellState extends State<ResponsiveShell>
   void _showNotificationSheet(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final wallet = context.read<WalletProvider>();
+    final userId = context.read<AuthProvider>().user?.id;
     final txs = wallet.recentTransactions;
+    final announcementFuture = userId == null
+        ? Future<List<Map<String, dynamic>>>.value(const [])
+        : SupabaseService.instance.client
+              .from('notifications')
+              .select('id, title, message, created_at, is_read')
+              .eq('user_id', userId)
+              .order('created_at', ascending: false)
+              .limit(5);
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: isDark ? AppColors.darkCard : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF23304B)
-                        : const Color(0xFFCBD5E1),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.notifications_active_rounded,
-                        size: 20,
-                        color: AppColors.electricCyan,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Transaction Alerts',
-                        style: GoogleFonts.figtree(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF0F172A),
-                        ),
-                      ),
-                    ],
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      context.push('/transactions');
-                    },
-                    child: Text(
-                      'View All',
-                      style: GoogleFonts.figtree(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryBlue,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (txs.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Center(
-                    child: Text(
-                      'No recent transaction alerts yet.',
-                      style: GoogleFonts.figtree(
-                        fontSize: 13,
-                        color: AppColors.slateGrey,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: txs.take(6).length,
-                    separatorBuilder: (context, index) => Divider(
-                      height: 1,
+        return FractionallySizedBox(
+          heightFactor: 0.82,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
                       color: isDark
                           ? const Color(0xFF23304B)
-                          : const Color(0xFFE2E8F0),
+                          : const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    itemBuilder: (ctx, idx) {
-                      final tx = txs[idx];
-                      final isSuccess =
-                          tx.status.toLowerCase() == 'completed' ||
-                          tx.status.toLowerCase() == 'successful';
-                      final isFailed = tx.status.toLowerCase() == 'failed';
-                      final statusColor = isSuccess
-                          ? AppColors.success
-                          : (isFailed ? AppColors.error : AppColors.warning);
-
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                        leading: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: statusColor,
-                            boxShadow: [
-                              BoxShadow(
-                                color: statusColor.withValues(alpha: 0.4),
-                                blurRadius: 6,
-                              ),
-                            ],
-                          ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.notifications_active_rounded,
+                          size: 20,
+                          color: AppColors.electricCyan,
                         ),
-                        title: Text(
-                          tx.category.toUpperCase(),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Notifications',
                           style: GoogleFonts.figtree(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
                             color: isDark
                                 ? Colors.white
                                 : const Color(0xFF0F172A),
                           ),
                         ),
-                        subtitle: Text(
-                          tx.narration ??
-                              (isSuccess
-                                  ? 'Transaction delivered'
-                                  : 'Transaction failed'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        context.push('/transactions');
+                      },
+                      child: Text(
+                        'View All',
+                        style: GoogleFonts.figtree(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryBlue,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: announcementFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      debugPrint(
+                        'Loading user announcements failed: ${snapshot.error}',
+                      );
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Text('Announcements could not be loaded.'),
+                      );
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Announcements',
                           style: GoogleFonts.figtree(
-                            fontSize: 11.5,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
                             color: isDark
-                                ? AppColors.metallicLight
-                                : AppColors.slateGrey,
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '₦${tx.amount.toStringAsFixed(2)}',
+                        const SizedBox(height: 6),
+                        for (final notice in snapshot.data!)
+                          ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            onTap: () async {
+                              if (userId == null) return;
+                              try {
+                                await SupabaseService.instance.client
+                                    .from('notifications')
+                                    .update({'is_read': true})
+                                    .eq('id', notice['id'])
+                                    .eq('user_id', userId);
+                                if (ctx.mounted) Navigator.pop(ctx);
+                              } catch (error) {
+                                debugPrint(
+                                  'Marking announcement as read failed: $error',
+                                );
+                                if (ctx.mounted) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'This notification could not be marked as read.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            leading: Icon(
+                              notice['is_read'] == true
+                                  ? Icons.notifications_none_rounded
+                                  : Icons.notifications_active_rounded,
+                              color: AppColors.primaryBlue,
+                              size: 20,
+                            ),
+                            title: Text(
+                              (notice['title'] ?? '').toString(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.figtree(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: isSuccess
-                                    ? AppColors.success
-                                    : (isFailed
-                                          ? AppColors.error
-                                          : AppColors.primaryBlue),
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
                               ),
                             ),
-                            Text(
-                              isSuccess
-                                  ? 'Delivered'
-                                  : (isFailed ? 'Failed' : 'Processing'),
+                            subtitle: Text(
+                              (notice['message'] ?? '').toString(),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.figtree(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: statusColor,
+                                fontSize: 11.5,
+                                color: isDark
+                                    ? AppColors.metallicLight
+                                    : AppColors.slateGrey,
                               ),
                             ),
-                          ],
-                        ),
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          context.push('/transactions');
-                        },
-                      );
-                    },
-                  ),
+                          ),
+                        const Divider(height: 12),
+                      ],
+                    );
+                  },
                 ),
-            ],
+                if (txs.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text(
+                        'No recent transaction alerts yet.',
+                        style: GoogleFonts.figtree(
+                          fontSize: 13,
+                          color: AppColors.slateGrey,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: txs.take(6).length,
+                      separatorBuilder: (context, index) => Divider(
+                        height: 1,
+                        color: isDark
+                            ? const Color(0xFF23304B)
+                            : const Color(0xFFE2E8F0),
+                      ),
+                      itemBuilder: (ctx, idx) {
+                        final tx = txs[idx];
+                        final isSuccess =
+                            tx.status.toLowerCase() == 'completed' ||
+                            tx.status.toLowerCase() == 'successful';
+                        final isFailed = tx.status.toLowerCase() == 'failed';
+                        final statusColor = isSuccess
+                            ? AppColors.success
+                            : (isFailed ? AppColors.error : AppColors.warning);
+
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 4,
+                          ),
+                          leading: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: statusColor,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: statusColor.withValues(alpha: 0.4),
+                                  blurRadius: 6,
+                                ),
+                              ],
+                            ),
+                          ),
+                          title: Text(
+                            tx.category.toUpperCase(),
+                            style: GoogleFonts.figtree(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          subtitle: Text(
+                            tx.narration ??
+                                (isSuccess
+                                    ? 'Transaction delivered'
+                                    : 'Transaction failed'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.figtree(
+                              fontSize: 11.5,
+                              color: isDark
+                                  ? AppColors.metallicLight
+                                  : AppColors.slateGrey,
+                            ),
+                          ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '₦${tx.amount.toStringAsFixed(2)}',
+                                style: GoogleFonts.figtree(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: isSuccess
+                                      ? AppColors.success
+                                      : (isFailed
+                                            ? AppColors.error
+                                            : AppColors.primaryBlue),
+                                ),
+                              ),
+                              Text(
+                                isSuccess
+                                    ? 'Delivered'
+                                    : (isFailed ? 'Failed' : 'Processing'),
+                                style: GoogleFonts.figtree(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: statusColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            context.push('/transactions');
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
           ),
         );
       },

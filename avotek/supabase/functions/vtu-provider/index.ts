@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { calculateSmsRetailPrice } from "./sms_pricing.ts";
+import { calculateAirtimeCashPayout } from "./airtime_cash.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -303,6 +304,45 @@ function getRechargeNetworkName(network: unknown): string {
   }
 }
 
+async function getBilalNetworkPlanId(
+  token: string,
+  network: unknown,
+): Promise<string | number> {
+  const expectedNetwork = getRechargeNetworkName(network);
+  if (!expectedNetwork) throw new Error("Choose a valid network.");
+  const response = await dispatchBilalRequest(
+    `${bilalBaseUrl}/api/v1/plans/networks`,
+    "GET",
+    token,
+  );
+  if (!response.upstream.ok) {
+    throw new Error("Could not load network details from the provider.");
+  }
+  const networks = extractList(response.providerBody, [
+    "networks",
+    "network",
+    "data",
+  ]);
+  const matchingNetwork = networks.find((item) => {
+    const name = String(
+      item.network_name ?? item.network ?? item.name ?? item.code ??
+        item.title ?? "",
+    ).toLowerCase();
+    return name.includes(expectedNetwork.toLowerCase()) ||
+      (expectedNetwork === "9MOBILE" &&
+        (name.includes("t2") || name.includes("etisalat")));
+  });
+  const id = matchingNetwork?.plan_id ?? matchingNetwork?.network_id ??
+    matchingNetwork?.id ?? matchingNetwork?.network;
+  if (
+    (typeof id !== "string" && typeof id !== "number") ||
+    String(id).trim().length === 0
+  ) {
+    throw new Error("The selected network is unavailable from the provider.");
+  }
+  return id;
+}
+
 async function getBilalRechargeCardPlans(
   token: string,
   network: unknown,
@@ -310,30 +350,7 @@ async function getBilalRechargeCardPlans(
   const expectedNetwork = getRechargeNetworkName(network);
   if (!expectedNetwork) throw new Error("Choose a valid network.");
 
-  const networksResponse = await dispatchBilalRequest(
-    `${bilalBaseUrl}/api/v1/plans/networks`,
-    "GET",
-    token,
-  );
-  if (!networksResponse.upstream.ok) {
-    throw new Error("Could not load recharge-card networks from the provider.");
-  }
-  const networks = extractList(networksResponse.providerBody, ["networks", "network", "data"]);
-  const matchingNetwork = networks.find((item) => {
-    const name = String(
-      item.network_name ?? item.network ?? item.name ?? item.code ?? item.title ?? "",
-    ).toLowerCase();
-    return name.includes(expectedNetwork.toLowerCase()) ||
-      (expectedNetwork === "9MOBILE" &&
-        (name.includes("t2") || name.includes("etisalat")));
-  });
-  const providerNetworkId = matchingNetwork?.plan_id ??
-    matchingNetwork?.network_id ??
-    matchingNetwork?.id ??
-    matchingNetwork?.network;
-  if (providerNetworkId === undefined || providerNetworkId === null) {
-    throw new Error("Recharge-card plans are unavailable for the selected network.");
-  }
+  const providerNetworkId = await getBilalNetworkPlanId(token, network);
 
   const plansResponse = await dispatchBilalRequest(
     `${bilalBaseUrl}/api/get/recharge_card_plans/${encodeURIComponent(token)}/adex`,
@@ -505,6 +522,61 @@ function validatePayload(action: string, payload: JsonMap): void {
     }
     if (cardName.length === 0 || cardName.length > 100) {
       throw new Error("Enter a valid recharge-card name.");
+    }
+  }
+  if (action === "data_card.purchase") {
+    const network = Number(payload.network);
+    const planType = String(payload.plan_type ?? "").trim();
+    const quantity = Number(payload.quantity);
+    const unitPrice = Number(payload.amount ?? payload.price);
+    if (!Number.isInteger(network) || network < 1 || network > 4) {
+      throw new Error("Choose a valid data-card network.");
+    }
+    if (!planType || planType.length > 100) {
+      throw new Error("Choose a valid data-card denomination.");
+    }
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
+      throw new Error("Choose between 1 and 100 data cards.");
+    }
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+      throw new Error("Invalid data-card price.");
+    }
+  }
+  if (
+    action === "airtime_cash.start" ||
+    action === "airtime_cash.verify" ||
+    action === "airtime_cash.convert"
+  ) {
+    const network = mapNetworkToId(payload.network);
+    const phone = String(payload.phone ?? "").trim();
+    if (network !== 1 && network !== 2) {
+      throw new Error("Airtime to Cash supports MTN and Airtel only.");
+    }
+    if (!/^234\d{10}$/.test(phone)) {
+      throw new Error("Enter a valid MTN or Airtel phone number.");
+    }
+    const verificationData = String(
+      payload.verification_data ?? "",
+    ).trim();
+    if (action !== "airtime_cash.start" && !verificationData) {
+      throw new Error("Airtime conversion verification has expired. Start again.");
+    }
+    if (
+      action === "airtime_cash.verify" &&
+      !/^\d{4,8}$/.test(String(payload.otp ?? "").trim())
+    ) {
+      throw new Error("Enter the OTP sent by your mobile network.");
+    }
+    if (
+      action === "airtime_cash.convert" &&
+      (
+        !/^\d{4}$/.test(String(payload.share_pin ?? "").trim()) ||
+        !Number.isInteger(Number(payload.amount)) ||
+        Number(payload.amount) < 1000 ||
+        Number(payload.amount) > 50000
+      )
+    ) {
+      throw new Error("Enter a valid transfer PIN and conversion amount.");
     }
   }
   if (action === "education.purchase") {
@@ -917,6 +989,268 @@ Deno.serve(async (request) => {
           : "Recharge-card denominations are temporarily unavailable.",
       }, 503);
     }
+  }
+
+  if (
+    action === "airtime_cash.start" ||
+    action === "airtime_cash.verify" ||
+    action === "airtime_cash.convert"
+  ) {
+    const networkId = mapNetworkToId(payload.network);
+    const networkName = networkId === 1 ? "MTN" : "AIRTEL";
+    const phone = String(payload.phone).trim();
+    let providerNetworkId: string | number;
+    try {
+      providerNetworkId = await getBilalNetworkPlanId(bilalToken, networkId);
+    } catch (error) {
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: error instanceof Error
+          ? error.message
+          : "Could not load the selected mobile network.",
+      }, 503);
+    }
+
+    const step = action === "airtime_cash.start"
+      ? 1
+      : action === "airtime_cash.verify"
+      ? 2
+      : 3;
+    let conversionReference = "";
+    let payoutAmount = 0;
+    if (step === 3) {
+      conversionReference = String(requestBody.reference).trim();
+      if (
+        conversionReference.length < 12 ||
+        conversionReference.length > 120
+      ) {
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: "Invalid airtime conversion reference.",
+        }, 400);
+      }
+      const airtimeAmount = Number(payload.amount);
+      try {
+        payoutAmount = calculateAirtimeCashPayout(networkId, airtimeAmount);
+      } catch (error) {
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: error instanceof Error ? error.message : "Invalid airtime conversion amount.",
+        }, 400);
+      }
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (!serviceRoleKey) {
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: "Airtime-to-cash payouts are not configured.",
+        }, 503);
+      }
+      const admin = createClient(supabaseUrl, serviceRoleKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: beginResult, error: beginError } = await admin.rpc(
+        "begin_airtime_cash_conversion",
+        {
+          p_user_id: authData!.user.id,
+          p_reference: conversionReference,
+          p_network: networkName,
+          p_phone: phone,
+          p_airtime_amount: airtimeAmount,
+          p_payout_amount: payoutAmount,
+        },
+      );
+      if (beginError) {
+        console.error("Could not reserve airtime conversion:", beginError.message);
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: beginError.message.includes("previous airtime conversion")
+            ? "A previous conversion is still being confirmed. Contact support before starting another."
+            : "Could not start the wallet payout. Please try again.",
+        }, 409);
+      }
+      const begin = isRecord(beginResult) ? beginResult : {};
+      if (begin.started !== true) {
+        return jsonResponse({
+          success: begin.status === "completed",
+          status: begin.status === "completed" ? "completed" : "pending",
+          reference: conversionReference,
+          local_reference: conversionReference,
+          charged_amount: payoutAmount,
+          order_recorded: begin.status === "completed",
+          message: begin.status === "completed"
+            ? "This airtime conversion has already been credited."
+            : "This conversion is already being confirmed. Do not retry it.",
+        }, begin.status === "completed" ? 200 : 202);
+      }
+    }
+
+    const cashPayload: JsonMap = {
+      step,
+      network: providerNetworkId,
+      phone,
+      ...(step >= 2
+        ? { data: String(payload.verification_data).trim() }
+        : {}),
+      ...(step === 2 ? { otp: String(payload.otp).trim() } : {}),
+      ...(step === 3
+        ? {
+          share_pin: String(payload.share_pin).trim(),
+          amount: Number(payload.amount),
+        }
+        : {}),
+    };
+
+    let cashRes: { upstream: Response; providerBody: JsonMap };
+    try {
+      cashRes = await dispatchBilalRequest(
+        `${bilalBaseUrl}/api/cash`,
+        "POST",
+        bilalToken,
+        cashPayload,
+      );
+    } catch (error) {
+      console.error("Airtime conversion provider request failed:", error);
+      return jsonResponse({
+        success: false,
+        status: step === 3 ? "pending" : "failed",
+        ...(step === 3
+          ? {
+            reference: conversionReference,
+            local_reference: conversionReference,
+            charged_amount: payoutAmount,
+          }
+          : {}),
+        message: step === 3
+          ? "The conversion result is uncertain. Do not retry; contact support with your reference."
+          : "Could not contact the mobile network. Please try again.",
+      }, step === 3 ? 202 : 502);
+    }
+
+    const providerStatus = normalizedProviderStatus(
+      cashRes.providerBody,
+      cashRes.upstream.ok,
+    );
+    if (step < 3) {
+      if (!cashRes.upstream.ok || providerStatus !== "completed") {
+        return jsonResponse({
+          success: false,
+          status: providerStatus,
+          message: extractProviderMessage(
+            cashRes.providerBody,
+            step === 1
+              ? "Could not send an OTP to this number."
+              : "The network OTP could not be verified.",
+          ),
+        }, cashRes.upstream.ok ? 400 : 502);
+      }
+      const rawData = cashRes.providerBody.data;
+      const tokenValue = typeof rawData === "string"
+        ? rawData
+        : isRecord(rawData)
+        ? rawData.data ?? rawData.token
+        : null;
+      if (typeof tokenValue !== "string" || tokenValue.trim().length === 0) {
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: "The provider did not return a valid OTP session.",
+        }, 502);
+      }
+      return jsonResponse({
+        success: true,
+        status: "success",
+        data: tokenValue,
+        message: extractProviderMessage(
+          cashRes.providerBody,
+          step === 1 ? "OTP sent." : "Phone number verified.",
+        ),
+      });
+    }
+
+    const rawProviderStatus = String(
+      cashRes.providerBody.status ??
+        (isRecord(cashRes.providerBody.data)
+          ? cashRes.providerBody.data.status
+          : ""),
+    ).toLowerCase();
+    const providerExplicitlySucceeded =
+      cashRes.providerBody.success === true ||
+      ["success", "successful", "completed"].includes(rawProviderStatus);
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const admin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    if (!cashRes.upstream.ok || !providerExplicitlySucceeded) {
+      const explicitlyFailed = cashRes.providerBody.success === false ||
+        ["failed", "fail", "failure", "rejected", "invalid"].includes(
+          rawProviderStatus,
+        );
+      if (explicitlyFailed) {
+        const { error } = await admin.rpc("fail_airtime_cash_conversion", {
+          p_user_id: authData!.user.id,
+          p_reference: conversionReference,
+        });
+        if (error) console.error("Could not close failed airtime conversion:", error.message);
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          reference: conversionReference,
+          local_reference: conversionReference,
+          message: extractProviderMessage(
+            cashRes.providerBody,
+            "The airtime conversion failed. No wallet payout was made.",
+          ),
+        }, 400);
+      }
+      return jsonResponse({
+        success: false,
+        status: "pending",
+        reference: conversionReference,
+        local_reference: conversionReference,
+        charged_amount: payoutAmount,
+        message: "The conversion result is uncertain. Do not retry; contact support with your reference.",
+      }, 202);
+    }
+
+    const providerReference = extractProviderReference(cashRes.providerBody);
+    const { data: creditResult, error: creditError } = await admin.rpc(
+      "complete_airtime_cash_conversion",
+      {
+        p_user_id: authData!.user.id,
+        p_reference: conversionReference,
+        p_provider_reference: providerReference,
+      },
+    );
+    if (creditError) {
+      console.error(
+        "Provider conversion succeeded but wallet credit needs reconciliation:",
+        conversionReference,
+      );
+      return jsonResponse({
+        success: false,
+        status: "pending",
+        reference: conversionReference,
+        local_reference: conversionReference,
+        charged_amount: payoutAmount,
+        message: "The conversion was accepted and its wallet payout is being confirmed. Do not retry.",
+      }, 202);
+    }
+
+    const credit = isRecord(creditResult) ? creditResult : {};
+    return jsonResponse({
+      success: true,
+      status: "completed",
+      reference: conversionReference,
+      local_reference: conversionReference,
+      charged_amount: Number(credit.payout_amount ?? payoutAmount),
+      order_recorded: true,
+      message: `₦${Number(credit.payout_amount ?? payoutAmount).toFixed(0)} has been credited to your Avotek wallet.`,
+    });
   }
 
   // --- WALLET BALANCE ---
@@ -1638,7 +1972,9 @@ Deno.serve(async (request) => {
     ? await getPricingOverrides(supabaseUrl)
     : {};
 
-  if (isPurchase) {
+  const requiresTransactionPin = isPurchase ||
+    action.startsWith("airtime_cash.");
+  if (requiresTransactionPin) {
     const userPin = String(requestBody.user_pin ?? "").trim();
     if (!/^\d{4}$/.test(userPin)) {
       return jsonResponse({ message: "Enter your 4-digit transaction PIN." }, 400);
@@ -2030,31 +2366,14 @@ Deno.serve(async (request) => {
       }
     }
 
-    // 2. AIRTIME PURCHASE: BilalSadaSub primary (cheaper), Bigisub fallback
+    // 2. AIRTIME PURCHASE: Bigisub primary, BilalSadaSub fallback.
     else if (action === "airtime.purchase") {
       const netId = mapNetworkToId(payload.network);
       const phone = cleanPhone(payload.phone_number ?? payload.phone);
       const rawType = String(payload.airtime_type ?? "VTU").toUpperCase();
       const planType = rawType.includes("SNS") || rawType.includes("SHARE") ? "SNS" : "VTU";
 
-      const bilalPayload: JsonMap = {
-        network: netId,
-        phone,
-        amount: Number(payload.amount),
-        plan_type: planType,
-        bypass: true,
-        "request-id": reference,
-      };
-      const bilalRes = await dispatchBilalRequest(
-        `${bilalBaseUrl}/api/topup`,
-        "POST",
-        bilalToken,
-        bilalPayload,
-      );
-      finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
-      providerResponse = bilalRes.providerBody;
-
-      if (finalStatus === "failed" && bigisubToken && bigisubPin) {
+      if (bigisubToken && bigisubPin) {
         try {
           const bigiPayload: JsonMap = {
             network: mapNetworkToBigisubId(netId),
@@ -2070,21 +2389,60 @@ Deno.serve(async (request) => {
             bigisubToken,
             bigiPayload,
           );
-          const bigiStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
-          if (bigiStatus === "completed" || bigiStatus === "pending") {
-            finalStatus = bigiStatus;
-            providerResponse = bigiRes.providerBody;
-          }
-        } catch (_) {}
+          finalStatus = normalizedProviderStatus(
+            bigiRes.providerBody,
+            bigiRes.upstream.ok,
+          );
+          providerResponse = bigiRes.providerBody;
+        } catch (error) {
+          finalStatus = "failed";
+          providerResponse = {
+            message: error instanceof Error
+              ? error.message
+              : "Bigisub airtime request failed.",
+          };
+        }
       }
 
-      if (finalStatus !== "failed") {
-        const extracted = extractPinsFromResponse(providerResponse);
-        if (extracted.length > 0) {
-          providerResponse.pins = extracted;
-          providerResponse.pin = extracted[0].pin;
-          if (extracted[0].serial) providerResponse.serial = extracted[0].serial;
+      if (
+        finalStatus === "failed" &&
+        bilalToken
+      ) {
+        try {
+          const bilalPayload: JsonMap = {
+            network: netId,
+            phone,
+            amount: Number(payload.amount),
+            plan_type: planType,
+            bypass: true,
+            "request-id": reference,
+          };
+          const bilalRes = await dispatchBilalRequest(
+            `${bilalBaseUrl}/api/topup`,
+            "POST",
+            bilalToken,
+            bilalPayload,
+          );
+          finalStatus = normalizedProviderStatus(
+            bilalRes.providerBody,
+            bilalRes.upstream.ok,
+          );
+          providerResponse = bilalRes.providerBody;
+        } catch (error) {
+          finalStatus = "failed";
+          providerResponse = {
+            message: error instanceof Error
+              ? error.message
+              : "Airtime service is temporarily unavailable.",
+          };
         }
+      }
+
+      const extracted = extractPinsFromResponse(providerResponse);
+      if (extracted.length > 0) {
+        providerResponse.pins = extracted;
+        providerResponse.pin = extracted[0].pin;
+        if (extracted[0].serial) providerResponse.serial = extracted[0].serial;
       }
     }
 
@@ -2325,15 +2683,20 @@ Deno.serve(async (request) => {
 
       if (bilalToken) {
         try {
+          const providerNetworkId = await getBilalNetworkPlanId(
+            bilalToken,
+            netId,
+          );
           const bilalRes = await dispatchBilalRequest(
-            `${bilalBaseUrl}/api/datacard`,
+            `${bilalBaseUrl}/api/data_card`,
             "POST",
             bilalToken,
             {
-              network: netId,
-              plan: payload.plan_id ?? 1,
+              network: providerNetworkId,
+              plan_type: String(payload.plan_type).trim(),
+              card_name: String(payload.card_name ?? "Avotek Data"),
               quantity: qty,
-              business_name: String(payload.business_name ?? "Avotek Data"),
+              "request-id": reference,
             },
           );
           finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
@@ -2358,35 +2721,6 @@ Deno.serve(async (request) => {
         providerResponse.pin = pins.map((p) => p.pin).join("\n");
         if (pins[0]?.serial) providerResponse.serial = pins[0].serial;
       }
-    }
-
-    // 9. AIRTIME TO CASH: Convert excess airtime to cash or wallet funds
-    else if (action === "airtime_cash.convert") {
-      const netId = mapNetworkToId(payload.network);
-      const airtimeAmount = Number(payload.amount ?? 1000);
-      const rateMap: Record<number, number> = { 1: 0.85, 2: 0.82, 3: 0.78, 4: 0.75 };
-      const rate = rateMap[netId] || 0.80;
-      const payoutAmount = Math.round(airtimeAmount * rate);
-
-      const merchantPhoneMap: Record<number, string> = {
-        1: Deno.env.get("AIRTIME_CASH_MTN_RECEIVER")?.trim() || "08030001122", // MTN Share & Sell
-        2: Deno.env.get("AIRTIME_CASH_AIRTEL_RECEIVER")?.trim() || "08020001122", // Airtel Me2U
-        3: Deno.env.get("AIRTIME_CASH_GLO_RECEIVER")?.trim() || "08050001122", // Glo EasyShare
-        4: Deno.env.get("AIRTIME_CASH_9MOBILE_RECEIVER")?.trim() || "08090001122", // 9mobile Transfer
-      };
-      const merchantPhone = merchantPhoneMap[netId] || "08030001122";
-
-      finalStatus = "completed";
-      providerResponse = {
-        success: true,
-        status: "successful",
-        message: `Airtime-to-cash conversion request registered. Transfer ₦${airtimeAmount} airtime to official receiver line ${merchantPhone}. Payout of ₦${payoutAmount} will be credited to your account.`,
-        payout_amount: payoutAmount,
-        airtime_amount: airtimeAmount,
-        rate_percentage: Math.round(rate * 100),
-        merchant_phone: merchantPhone,
-        reference: reference,
-      };
     }
 
     // Determine final message

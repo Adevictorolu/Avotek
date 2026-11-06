@@ -8,7 +8,7 @@ class DeviceSecurityService {
 
   static const _biometricEnabledKey = 'avotek_biometric_unlock_enabled';
   static const _biometricPaymentPinKey = 'avotek_biometric_payment_pin';
-  static const appUnlockGracePeriod = Duration(minutes: 5);
+  static const appUnlockGracePeriod = Duration(seconds: 30);
   static final LocalAuthentication _localAuth = LocalAuthentication();
   static const FlutterSecureStorage _paymentPinStorage = FlutterSecureStorage(
     aOptions: AndroidOptions.biometric(

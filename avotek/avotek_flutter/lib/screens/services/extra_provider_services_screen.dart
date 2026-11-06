@@ -135,7 +135,6 @@ class _ExtraProviderServicesScreenState
   final _airtimeToCashSenderPhoneCtrl = TextEditingController();
   final _bankNameCtrl = TextEditingController();
   final _accountNumberCtrl = TextEditingController();
-  final _accountNameCtrl = TextEditingController();
   final String _payoutDestination = 'wallet'; // 'wallet' or 'bank'
 
   final _quantityController = TextEditingController(text: '1');
@@ -205,15 +204,11 @@ class _ExtraProviderServicesScreenState
   String get _airtimeToCashReceiverPhone {
     switch (_selectedNetworkId) {
       case 1:
-        return '08030001122';
+        return 'MTN';
       case 2:
-        return '08020001122';
-      case 3:
-        return '08050001122';
-      case 4:
-        return '08090001122';
+        return 'Airtel';
       default:
-        return '08030001122';
+        return '';
     }
   }
 
@@ -253,6 +248,10 @@ class _ExtraProviderServicesScreenState
 
   @override
   void dispose() {
+    _airtimeToCashAmountCtrl.dispose();
+    _airtimeToCashSenderPhoneCtrl.dispose();
+    _bankNameCtrl.dispose();
+    _accountNumberCtrl.dispose();
     _quantityController.dispose();
     _recipientController.dispose();
     _messageController.dispose();
@@ -380,6 +379,108 @@ class _ExtraProviderServicesScreenState
               'Recharge Card')
           .toString();
 
+  Future<String?> _promptAirtimeCashCode({
+    required String title,
+    required String label,
+    required String helper,
+    required bool obscureText,
+  }) async {
+    final controller = TextEditingController();
+    try {
+      return await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(title),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            obscureText: obscureText,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(labelText: label, helperText: helper),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value = controller.text.trim();
+                if (value.isNotEmpty) Navigator.pop(dialogContext, value);
+              },
+              child: const Text('Continue'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      controller.dispose();
+    }
+  }
+
+  Future<String> _startAndVerifyAirtimeCash({
+    required int networkId,
+    required String phone,
+    required String userPin,
+  }) async {
+    final started = await VtuApiService.instance.startAirtimeCashConversion(
+      networkId: networkId,
+      phone: phone,
+      userPin: userPin,
+    );
+    if (started['success'] != true) {
+      throw StateError(
+        started['message']?.toString() ??
+            'Could not start the airtime conversion.',
+      );
+    }
+    final initialData = started['data']?.toString() ?? '';
+    if (initialData.isEmpty) {
+      throw StateError(
+        'The provider did not return an OTP verification token.',
+      );
+    }
+
+    final otp = await _promptAirtimeCashCode(
+      title: 'Verify your phone number',
+      label: 'One-time password',
+      helper: 'Enter the OTP sent by your mobile network.',
+      obscureText: false,
+    );
+    if (otp == null) throw StateError('Airtime conversion cancelled.');
+    if (!RegExp(r'^\d{4,8}$').hasMatch(otp)) {
+      throw StateError('Enter the valid OTP sent by your network.');
+    }
+
+    final verified = await VtuApiService.instance.verifyAirtimeCashOtp(
+      networkId: networkId,
+      phone: phone,
+      otp: otp,
+      verificationData: initialData,
+      userPin: userPin,
+    );
+    if (verified['success'] != true) {
+      throw StateError(
+        verified['message']?.toString() ?? 'The network OTP was not accepted.',
+      );
+    }
+    final verifiedData = verified['data']?.toString() ?? initialData;
+    if (verifiedData.isEmpty) {
+      throw StateError('The provider did not confirm the OTP session.');
+    }
+    return verifiedData;
+  }
+
+  String _normalizedAirtimeCashPhone(String phone) {
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    if (digits.length == 11 && digits.startsWith('0')) {
+      return '234${digits.substring(1)}';
+    }
+    return digits;
+  }
+
   List<String> _recipients() {
     final values = _recipientController.text
         .split(RegExp(r'[\s,;]+'))
@@ -434,6 +535,11 @@ class _ExtraProviderServicesScreenState
       TopNotification.showError(context, 'Sign in before purchasing.');
       return;
     }
+    final airtimeCashPhone = _normalizedAirtimeCashPhone(
+      _airtimeToCashSenderPhoneCtrl.text.trim().isNotEmpty
+          ? _airtimeToCashSenderPhoneCtrl.text
+          : user.phone,
+    );
     if (amount == null || !amount.isFinite || amount <= 0) {
       TopNotification.showWarning(
         context,
@@ -453,6 +559,43 @@ class _ExtraProviderServicesScreenState
         TopNotification.showWarning(
           context,
           'Choose between 1 and 50 recharge PINs.',
+        );
+        return;
+      }
+    } else if (_isDataCard) {
+      final quantity = int.tryParse(_quantityController.text.trim());
+      if (quantity == null || quantity < 1 || quantity > 100) {
+        TopNotification.showWarning(
+          context,
+          'Choose between 1 and 100 data cards.',
+        );
+        return;
+      }
+    } else if (_isAirtimeToCash) {
+      final airtimeAmount = double.tryParse(
+        _airtimeToCashAmountCtrl.text.trim(),
+      );
+      if (_selectedNetworkId != 1 && _selectedNetworkId != 2) {
+        TopNotification.showWarning(
+          context,
+          'Airtime to Cash currently supports MTN and Airtel only.',
+        );
+        return;
+      }
+      if (airtimeAmount == null ||
+          airtimeAmount < 1000 ||
+          airtimeAmount > 50000 ||
+          airtimeAmount != airtimeAmount.truncateToDouble()) {
+        TopNotification.showWarning(
+          context,
+          'Enter a whole-naira amount between ₦1,000 and ₦50,000.',
+        );
+        return;
+      }
+      if (!RegExp(r'^234\d{10}$').hasMatch(airtimeCashPhone)) {
+        TopNotification.showWarning(
+          context,
+          'Enter a valid Nigerian mobile number for the network OTP.',
         );
         return;
       }
@@ -580,7 +723,7 @@ class _ExtraProviderServicesScreenState
       orElse: () => _airtimePinNetworks.first,
     );
     final airtimeAmt = double.tryParse(_airtimeToCashAmountCtrl.text.trim()) ?? 1000.0;
-    final rate = _selectedNetworkId == 1 ? 0.85 : (_selectedNetworkId == 2 ? 0.82 : (_selectedNetworkId == 3 ? 0.78 : 0.75));
+    final rate = _selectedNetworkId == 1 ? 0.85 : 0.82;
     final payoutVal = airtimeAmt * rate;
 
     final confirmed = await PinModal.show(
@@ -594,7 +737,7 @@ class _ExtraProviderServicesScreenState
                 : (_isDataCard
                       ? '${networkObj['code']} $_selectedDataCardName × ${_quantityController.text}'
                       : (_isAirtimeToCash
-                            ? 'Convert ₦${airtimeAmt.toInt()} airtime to ₦${payoutVal.toInt()} cash'
+                            ? 'Convert ₦${airtimeAmt.toInt()} airtime to ₦${payoutVal.round()} cash'
                             : '${_recipients().length} recipients • ${_senderController.text.trim()}'))),
       onPinSubmit: (pin) async {
         transactionPin = pin;
@@ -606,9 +749,33 @@ class _ExtraProviderServicesScreenState
       setState(() => _isPurchasing = false);
       return;
     }
+    final confirmedPin = transactionPin!;
     try {
-      final result = _isExam
-          ? await vtu.buyExamPins(
+      final result = _isAirtimeToCash
+          ? await vtu.convertAirtimeToCash(
+              userId: user.id,
+              networkId: _selectedNetworkId,
+              networkName: networkObj['code'] as String,
+              amount: airtimeAmt,
+              phone: airtimeCashPhone,
+              verificationData: await _startAndVerifyAirtimeCash(
+                networkId: _selectedNetworkId,
+                phone: airtimeCashPhone,
+                userPin: confirmedPin,
+              ),
+              sharePin:
+                  (await _promptAirtimeCashCode(
+                    title: 'Enter network transfer PIN',
+                    label: 'MTN Share-and-Sell PIN / Airtel Me2U PIN',
+                    helper: 'This is sent securely to complete the conversion.',
+                    obscureText: true,
+                  )) ??
+                  (throw StateError('Airtime conversion cancelled.')),
+              reference: VtuApiService.generatePurchaseReference(),
+              userPin: confirmedPin,
+            )
+          : (_isExam
+              ? await vtu.buyExamPins(
               userId: user.id,
               examCode:
                   (_selectedExam?['code'] ??
@@ -623,7 +790,7 @@ class _ExtraProviderServicesScreenState
               quantity: int.parse(_quantityController.text.trim()),
               unitPrice: (_selectedExam?['amount'] as num).toDouble(),
               phone: user.phone.isNotEmpty ? user.phone : '08000000000',
-              userPin: transactionPin,
+              userPin: confirmedPin,
             )
           : (_isAirtimePins
                 ? await vtu.buyAirtimePins(
@@ -636,41 +803,30 @@ class _ExtraProviderServicesScreenState
                           : 'Avotek',
                       unitPrice: _selectedRechargeCardPrice,
                       quantity: int.parse(_quantityController.text.trim()),
-                      userPin: transactionPin,
+                      userPin: confirmedPin,
                     )
                 : (_isDataCard
                       ? await vtu.buyDataCardPins(
                           userId: user.id,
                           networkId: _selectedNetworkId,
                           networkName: networkObj['code'] as String,
+                          planType:
+                              _dataCardPlans[_selectedDataCardIndex]['code']
+                                  as String,
                           planName: _selectedDataCardName,
                           price: _selectedDataCardPrice,
                           quantity: int.parse(_quantityController.text.trim()),
-                          businessName: _businessNameController.text.trim().isNotEmpty
+                          cardName: _businessNameController.text.trim().isNotEmpty
                               ? _businessNameController.text.trim()
                               : 'Avotek Data',
-                          userPin: transactionPin,
+                          userPin: confirmedPin,
                         )
-                      : (_isAirtimeToCash
-                            ? await vtu.convertAirtimeToCash(
-                                userId: user.id,
-                                networkId: _selectedNetworkId,
-                                networkName: networkObj['code'] as String,
-                                amount: double.parse(_airtimeToCashAmountCtrl.text.trim()),
-                                phone: _airtimeToCashSenderPhoneCtrl.text.trim().isNotEmpty
-                                    ? _airtimeToCashSenderPhoneCtrl.text.trim()
-                                    : (user.phone.isNotEmpty ? user.phone : ''),
-                                bankName: _payoutDestination == 'bank' ? _bankNameCtrl.text.trim() : null,
-                                accountNumber: _payoutDestination == 'bank' ? _accountNumberCtrl.text.trim() : null,
-                                accountName: _payoutDestination == 'bank' ? _accountNameCtrl.text.trim() : null,
-                                userPin: transactionPin,
-                              )
-                            : await vtu.sendBulkSms(
+                      : await vtu.sendBulkSms(
                                 userId: user.id,
                                 recipients: _recipients(),
                                 message: _messageController.text.trim(),
                                 senderName: _senderController.text.trim(),
-                                userPin: transactionPin!,
+                                userPin: confirmedPin,
                               ))));
 
       await auth.refreshWallet();
@@ -714,7 +870,7 @@ class _ExtraProviderServicesScreenState
                           : (_isAirtimeToCash
                                 ? (_payoutDestination == 'bank' ? '${_bankNameCtrl.text} (${_accountNumberCtrl.text})' : 'Avotek Wallet Credit')
                                 : _recipients().join(', ')))),
-          amount: amount,
+          amount: _isAirtimeToCash ? result.order.amount : amount,
           reference: result.order.id,
           token: result.token,
           issuedPins: result.issuedPins,
@@ -725,10 +881,13 @@ class _ExtraProviderServicesScreenState
                     : (_isDataCard
                           ? 'Your data recharge PINs are generated and ready to print or load.'
                           : (_isAirtimeToCash
-                                ? 'Your airtime conversion has been registered. Transfer the airtime to complete credit.'
+                                ? 'Your airtime conversion was completed and credited to your Avotek wallet.'
                                 : 'Bulk SMS submitted successfully.'))),
         );
-        if (!_isExam && !_isAirtimePins) {
+        if (!_isExam &&
+            !_isAirtimePins &&
+            !_isDataCard &&
+            !_isAirtimeToCash) {
           _messageController.clear();
           _recipientController.clear();
         }
@@ -863,6 +1022,7 @@ class _ExtraProviderServicesScreenState
                   ),
                   const SizedBox(height: 20),
 
+                  if (!_isAirtimeToCash) ...[
                   // Mode Switcher Bar: [ Buy Now / Send Now ] | [ Gift Voucher ] in Avotek Blue/Cyan
                   Container(
                     padding: const EdgeInsets.all(5),
@@ -1006,6 +1166,7 @@ class _ExtraProviderServicesScreenState
                       ],
                     ),
                   ),
+                  ],
 
                   if (_activeMode == 1) ...[
                     const SizedBox(height: 10),
@@ -1051,7 +1212,14 @@ class _ExtraProviderServicesScreenState
                           ),
                           const SizedBox(height: 16),
                           Row(
-                            children: _airtimePinNetworks.map((net) {
+                            children: (_isAirtimeToCash
+                                    ? _airtimePinNetworks.where(
+                                        (network) =>
+                                            network['id'] == 1 ||
+                                            network['id'] == 2,
+                                      )
+                                    : _airtimePinNetworks)
+                                .map((net) {
                               final isSelected =
                                   _selectedNetworkId == net['id'];
                               return Expanded(
@@ -1716,7 +1884,7 @@ class _ExtraProviderServicesScreenState
                                   children: [
                                     Text('Conversion Payout Rate:', style: GoogleFonts.figtree(fontWeight: FontWeight.w600)),
                                     Text(
-                                      _selectedNetworkId == 1 ? '85% (MTN)' : (_selectedNetworkId == 2 ? '82% (Airtel)' : (_selectedNetworkId == 3 ? '78% (Glo)' : '75% (9mobile)')),
+                                      _selectedNetworkId == 1 ? '85% (MTN)' : '82% (Airtel)',
                                       style: GoogleFonts.figtree(fontWeight: FontWeight.w800, color: const Color(0xFF0038B8)),
                                     ),
                                   ],
@@ -1727,7 +1895,7 @@ class _ExtraProviderServicesScreenState
                                   children: [
                                     Text('You Will Receive (Cash/Wallet):', style: GoogleFonts.figtree(fontWeight: FontWeight.w700)),
                                     Text(
-                                      '₦${((double.tryParse(_airtimeToCashAmountCtrl.text.trim()) ?? 1000.0) * (_selectedNetworkId == 1 ? 0.85 : (_selectedNetworkId == 2 ? 0.82 : (_selectedNetworkId == 3 ? 0.78 : 0.75)))).toStringAsFixed(2)}',
+                                      '₦${((double.tryParse(_airtimeToCashAmountCtrl.text.trim()) ?? 1000.0) * (_selectedNetworkId == 1 ? 0.85 : 0.82)).round()}',
                                       style: GoogleFonts.figtree(fontSize: 17, fontWeight: FontWeight.w900, color: AppColors.success),
                                     ),
                                   ],
@@ -1740,7 +1908,7 @@ class _ExtraProviderServicesScreenState
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        'Official Avotek Airtime Receiver: $_airtimeToCashReceiverPhone. Transfer airtime via your network USSD transfer code after confirmation.',
+                                        'We will send an OTP to your $_airtimeToCashReceiverPhone line, then ask you to verify it and enter your network transfer PIN.',
                                         style: GoogleFonts.figtree(fontSize: 11.5, color: isDark ? Colors.white70 : const Color(0xFF334155)),
                                       ),
                                     ),
@@ -2644,7 +2812,11 @@ class _ExtraProviderServicesScreenState
                                   ? 'Pay for Exam PIN (${_quantityController.text})'
                                   : (_isAirtimePins
                                         ? 'Generate Recharge Cards (${_quantityController.text})'
-                                        : 'Send Bulk SMS'),
+                                        : (_isDataCard
+                                              ? 'Generate Data Cards (${_quantityController.text})'
+                                              : (_isAirtimeToCash
+                                                    ? 'Convert Airtime'
+                                                    : 'Send Bulk SMS'))),
                               style: GoogleFonts.figtree(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
