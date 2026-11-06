@@ -20,9 +20,10 @@ not prove that a provider credential is valid or that a real transaction works.
   screens, server-side pricing and wallet reservation, and a status-recheck
   path; their hub cards remain disabled until authenticated settlement is
   verified and the provider function is deployed.
-- ISP subscriptions, betting wallet funding, recharge PIN generation, and
-  Marketing Hub services remain disabled until their provider contracts and
-  server-authoritative pricing/settlement flows are implemented.
+- Airtime recharge-card printing is now wired to Bigisub's plan and purchase
+  routes, but is not launch-certified until authenticated provider tests verify
+  plan pricing, voucher responses, and settlement. ISP subscriptions, betting
+  wallet funding, and Marketing Hub remain unimplemented.
 
 ## Not yet verified or implemented
 
@@ -41,9 +42,10 @@ not prove that a provider credential is valid or that a real transaction works.
   **not certified ready for live transactions**.
 - The documented result-checker and SMS contracts are now wired into the app.
   They have not been exercised with an authenticated provider account; SMS
-  charges remain pending until provider status and cost are confirmed. ISP,
-  betting, recharge PIN, and Marketing Hub endpoints remain disabled pending
-  complete pricing and settlement verification.
+  charges remain pending until provider status and cost are confirmed. The
+  airtime recharge-PIN adapter now uses Bigisub, but has not passed authenticated
+  pricing and voucher-fulfillment tests. ISP, betting, and Marketing Hub remain
+  unavailable.
 - The Avotek admin page links to provider/project consoles; it is not yet a
   server-authorized console for global activity, user creation/deletion, or
   service-price changes. Do not expose those operations using the client-side
@@ -392,17 +394,21 @@ alone.
 The app has Edge Function adapters for Paystack wallet funding (checkout,
 server verification and signed webhook) and for airtime, data plans and
 purchases, cable plans/verification/purchases, electricity providers,
-verification/purchases, and transaction requery. The core database migrations
-are applied; `vtu-provider` and `paystack-payments` are deployed. The VTU endpoint responds
-to CORS preflight and rejects unauthenticated requests, but no authenticated
-provider operation has been run. Paystack's callback is configured, and its
-unauthenticated initialization request reaches the authentication check. This
-does not validate the Paystack key or prove that wallet funding works. Neither
-integration has passed authenticated end-to-end transaction testing. The VTU
-adapter now provides result-checker PINs and bulk SMS in code, but neither has
-passed authenticated provider settlement testing. It does not provide recharge
-PINs, ISP subscriptions, betting, Marketing Hub services, transactional email,
-or gift voucher issuance/redemption. Betting has been removed from the service menu;
+verification/purchases, airtime recharge-PIN plans and purchases, and
+transaction requery. Previously checked database migrations are applied;
+`vtu-provider` and `paystack-payments` are deployed. The new
+`20261107010000_fix_referral_rewards_and_leaderboard.sql` migration still must
+be applied. The VTU endpoint responds to CORS preflight and rejects
+unauthenticated requests, but no authenticated provider operation has been
+run. Paystack's callback is configured, and its unauthenticated initialization
+request reaches the authentication check. This does not validate the Paystack
+key or prove that wallet funding works. Neither integration has passed
+authenticated end-to-end transaction testing. The VTU adapter now provides
+result-checker PINs, bulk SMS, and Bigisub airtime recharge-card printing in
+code, but none has passed authenticated provider settlement testing. It does
+not provide ISP subscriptions, betting, Marketing Hub services, transactional
+email, or gift voucher issuance/redemption. Betting has been removed from the
+service menu;
 unintegrated services are shown as coming soon instead of reporting fake
 success.
 
@@ -433,10 +439,11 @@ Before enabling customers to transact:
    redeploy it and perform authenticated non-purchase checks. Set the rotated
    Paystack key under `PAYSTACK_SECRET_KEY` and redeploy `paystack-payments`.
    Confirm functions authorize signed-in users where required.
-3. Confirm Bigisub's exact endpoint, field names, price rules, PIN-generation
-   quantity contract, and status/refund meanings from the authenticated
-   provider documentation. The customer phone number must not be sent for
-   airtime PIN generation unless Bigisub's contract requires it.
+3. Confirm the airtime recharge-PIN plan fields, price rules, quantity
+   contract, and status/refund meanings against the current authenticated
+   provider documentation and approved test account. The customer phone number
+   must not be sent for airtime PIN generation unless Bigisub's contract
+   requires it.
 4. Test provider balance, each supported service, pending/requery behavior,
    wallet reservation and refund idempotency, and reconciliation using a
    funded test account. Keep ambiguous results pending; do not retry them as a
@@ -447,9 +454,11 @@ Before enabling customers to transact:
    purchase events before enabling email receipts. The current Email/Push
    preference switches are intentionally disabled because no delivery backend
    is configured. SMS transaction notifications have been removed.
-7. Implement and test server-backed gifts, coupon redemption, referral
-   commissions/AVO Token rewards, account KYC, and push notifications before
-   presenting them as completed features. The short Avotek ID format also
+7. Apply the latest referral-rewards migration and test signup attribution,
+   mutual wallet bonuses, point redemption, and leaderboard ranking against
+   real referral accounts. Also implement and test server-backed gifts,
+   coupon redemption, account KYC, and push notifications before presenting
+   them as completed features. The short Avotek ID format also
    needs a collision-safe database migration and identifier-login update;
    existing IDs must not be changed by a client-only formatter.
 8. Provide and verify the official support WhatsApp number before enabling a

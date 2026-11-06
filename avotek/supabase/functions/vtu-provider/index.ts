@@ -343,56 +343,74 @@ async function getBilalNetworkPlanId(
   return id;
 }
 
-async function getBilalRechargeCardPlans(
+async function getBigisubRechargeCardPlans(
   token: string,
   network: unknown,
 ): Promise<JsonMap[]> {
   const expectedNetwork = getRechargeNetworkName(network);
   if (!expectedNetwork) throw new Error("Choose a valid network.");
 
-  const providerNetworkId = await getBilalNetworkPlanId(token, network);
-
-  const plansResponse = await dispatchBilalRequest(
-    `${bilalBaseUrl}/api/get/recharge_card_plans/${encodeURIComponent(token)}/adex`,
-    "POST",
+  const plansResponse = await dispatchBigisubRequest(
+    `${bigisubBaseUrl}/api/v2/vtu/recharge-pin/plans/`,
+    "GET",
     token,
-    { network: providerNetworkId },
   );
   if (!plansResponse.upstream.ok) {
     throw new Error(
-      `Could not load recharge-card denominations from the provider (HTTP ${plansResponse.upstream.status}).`,
+      `Could not load recharge-card denominations from Bigisub (HTTP ${plansResponse.upstream.status}).`,
     );
   }
 
-  return extractList(plansResponse.providerBody, [
-    "plans",
-    "plan",
-    "recharge_card_plans",
-    "card_plans",
-    "data",
-    "results",
-  ]).flatMap((plan) => {
-    const id = plan.plan_type ?? plan.plan_id ?? plan.id ?? plan.code;
-    const amount = Number(
-      plan.amount ?? plan.price ?? plan.plan_amount ?? plan.plan_price ??
-        plan.card_value ?? plan.value,
-    );
-    if (id === undefined || id === null || !Number.isFinite(amount) || amount <= 0) {
-      return [];
-    }
-    const name = String(
-      plan.card_name ?? plan.plan_name ?? plan.name ?? plan.title ?? `₦${amount}`,
-    ).trim();
-    return [{
-      ...plan,
-      plan_type: String(id),
-      amount,
-      base_price: amount,
-      name,
-      card_name: String(plan.card_name ?? name),
-      provider_network: providerNetworkId,
-    }];
-  });
+  const expectedNetworkId = mapNetworkToId(network);
+  return extractList(plansResponse.providerBody, ["plans", "data", "results"])
+    .flatMap((plan) => {
+      const rawNetwork = plan.network_id ?? plan.network ?? plan.network_code ??
+        plan.network_name;
+      let planNetworkId: number | null = null;
+      if (rawNetwork !== undefined && rawNetwork !== null) {
+        const value = String(rawNetwork).trim();
+        if (/^\d+$/.test(value)) {
+          const providerNetworkId = Number(value);
+          planNetworkId = providerNetworkId === 2
+            ? 3
+            : providerNetworkId === 3
+            ? 2
+            : providerNetworkId;
+        } else {
+          const networkName = getRechargeNetworkName(rawNetwork);
+          planNetworkId = networkName ? mapNetworkToId(networkName) : null;
+        }
+      }
+      if (planNetworkId === null || planNetworkId !== expectedNetworkId) {
+        return [];
+      }
+
+      const id = plan.plan_id ?? plan.id ?? plan.plan ?? plan.code;
+      const amount = Number(
+        plan.amount ?? plan.price ?? plan.plan_amount ?? plan.plan_price ??
+          plan.card_value ?? plan.value,
+      );
+      if (
+        id === undefined || id === null ||
+        !Number.isFinite(amount) || amount <= 0
+      ) {
+        return [];
+      }
+
+      const name = String(
+        plan.card_name ?? plan.plan_name ?? plan.name ?? plan.title ??
+          `₦${amount}`,
+      ).trim();
+      return [{
+        ...plan,
+        plan_type: String(id),
+        provider_plan_id: id,
+        amount,
+        base_price: amount,
+        name,
+        card_name: String(plan.card_name ?? name),
+      }];
+    });
 }
 
 function mapCableToId(cable: unknown): number {
@@ -948,7 +966,8 @@ Deno.serve(async (request) => {
   ].includes(action)
     ? Boolean(bilalToken || bigisubToken)
     : action === "airtime_pin.plans" || action === "airtime_pin.purchase"
-    ? Boolean(bilalToken)
+    ? Boolean(bigisubToken) &&
+      (action !== "airtime_pin.purchase" || Boolean(bigisubPin))
     : Boolean(bilalToken) ||
       [
       "education.prices",
@@ -962,7 +981,10 @@ Deno.serve(async (request) => {
 
   if (action === "airtime_pin.plans") {
     try {
-      const plans = await getBilalRechargeCardPlans(bilalToken, payload.network);
+      const plans = await getBigisubRechargeCardPlans(
+        bigisubToken ?? "",
+        payload.network,
+      );
       if (plans.length === 0) {
         return jsonResponse({
           success: false,
@@ -980,13 +1002,13 @@ Deno.serve(async (request) => {
 
       return jsonResponse({ success: true, status: "success", data: pricedPlans });
     } catch (error) {
-      console.error("BilalSadaSub recharge-card catalog failed:", error);
+      console.error("Bigisub recharge-card catalog failed:", error);
       return jsonResponse({
         success: false,
         status: "failed",
         message: error instanceof Error
           ? error.message
-          : "Recharge-card denominations are temporarily unavailable.",
+          : "Bigisub recharge-card denominations are temporarily unavailable.",
       }, 503);
     }
   }
@@ -2217,13 +2239,16 @@ Deno.serve(async (request) => {
     const qty = Number(payload.quantity ?? 1);
     let plans: JsonMap[];
     try {
-      plans = await getBilalRechargeCardPlans(bilalToken, payload.network);
+      plans = await getBigisubRechargeCardPlans(
+        bigisubToken ?? "",
+        payload.network,
+      );
     } catch (error) {
-      console.error("BilalSadaSub recharge-card price verification failed:", error);
+      console.error("Bigisub recharge-card price verification failed:", error);
       return jsonResponse({
         success: false,
         status: "failed",
-        message: "Could not verify the current recharge-card price. Refresh denominations and try again.",
+        message: "Could not verify the current Bigisub recharge-card price. Refresh denominations and try again.",
       }, 503);
     }
     const selectedPlan = plans.find((plan) =>
@@ -2623,18 +2648,21 @@ Deno.serve(async (request) => {
       }
     }
 
-    // 7. RECHARGE CARD: Generate vouchers through BilalSadaSub.
+    // 7. RECHARGE CARD: Generate vouchers through Bigisub.
     else if (action === "airtime_pin.purchase") {
       const quantity = Number(payload.quantity ?? 1);
       let plans: JsonMap[];
       try {
-        plans = await getBilalRechargeCardPlans(bilalToken, payload.network);
+        plans = await getBigisubRechargeCardPlans(
+          bigisubToken ?? "",
+          payload.network,
+        );
       } catch (error) {
         finalStatus = "failed";
         providerResponse = {
           message: error instanceof Error
             ? error.message
-            : "Recharge-card service is temporarily unavailable.",
+            : "Bigisub recharge-card service is temporarily unavailable.",
         };
         plans = [];
       }
@@ -2646,25 +2674,28 @@ Deno.serve(async (request) => {
         providerResponse = { message: "The selected recharge-card denomination is no longer available." };
       }
       if (finalStatus !== "failed" && selectedPlan) {
-        const bilalRes = await dispatchBilalRequest(
-          `${bilalBaseUrl}/api/recharge_card`,
+        const bigiRes = await dispatchBigisubRequest(
+          `${bigisubBaseUrl}/api/v2/vtu/recharge-pin/purchase/`,
           "POST",
-          bilalToken,
+          bigisubToken ?? "",
           {
-            network: selectedPlan.provider_network,
-            plan_type: selectedPlan.plan_type,
-            card_name: String(payload.card_name ?? payload.business_name ?? "Avotek"),
+            plan: selectedPlan.provider_plan_id,
+            pin: bigisubPin,
             quantity,
-            "request-id": reference,
           },
         );
-        finalStatus = normalizedProviderStatus(bilalRes.providerBody, bilalRes.upstream.ok);
-        providerResponse = bilalRes.providerBody;
+        finalStatus = normalizedProviderStatus(
+          bigiRes.providerBody,
+          bigiRes.upstream.ok,
+        );
+        providerResponse = bigiRes.providerBody;
         const pins = extractPinsFromResponse(providerResponse);
         if (finalStatus === "completed" && pins.length !== quantity) {
-          finalStatus = "failed";
+          finalStatus = "pending";
           providerResponse = {
-            message: "The provider did not return all requested recharge cards. No cards were marked as issued.",
+            ...providerResponse,
+            status: "pending",
+            message: "Bigisub returned fewer recharge cards than requested. The order is held for support review.",
           };
         } else if (finalStatus !== "failed") {
           providerResponse.pins = pins;

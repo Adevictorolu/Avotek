@@ -635,44 +635,33 @@ class SupabaseService {
 
   /// Get referral summary for current user
   Future<Map<String, dynamic>> getReferralSummary() async {
-    try {
-      final res = await client.rpc('get_user_referral_summary');
-      if (res is Map) {
-        return Map<String, dynamic>.from(res);
-      }
-    } catch (e) {
-      debugPrint('Error getting referral summary: $e');
+    final res = await client.rpc('get_user_referral_summary');
+    if (res is! Map) {
+      throw StateError('The referral summary response is invalid.');
     }
-    return {
-      'referral_code': '',
-      'referral_count': 0,
-      'avo_points': 0,
-      'total_earned': 0.0,
-      'redeemed_points': 0,
-    };
+    return Map<String, dynamic>.from(res);
   }
 
   /// Get referral leaderboard
   Future<List<Map<String, dynamic>>> getReferralLeaderboard() async {
-    try {
-      final res = await client.rpc('get_referral_leaderboard');
-      if (res is List) {
-        return res
-            .map((item) => Map<String, dynamic>.from(item as Map))
-            .toList();
-      }
-    } catch (e) {
-      debugPrint('Error getting referral leaderboard: $e');
+    final res = await client.rpc('get_referral_leaderboard');
+    if (res is! List) {
+      throw StateError('The referral leaderboard response is invalid.');
     }
-    return [];
+    return res.map((item) => Map<String, dynamic>.from(item as Map)).toList();
   }
 
   /// Redeem AVO Points to wallet balance
   Future<Map<String, dynamic>> redeemAvoPoints(int pointsToRedeem) async {
+    final userId = currentAuthUser?.id;
+    if (userId == null) {
+      throw StateError('Sign in before redeeming AVO points.');
+    }
     final res = await client.rpc(
       'redeem_avo_points',
       params: {
-        'points_to_redeem': pointsToRedeem,
+        'p_user_id': userId,
+        'p_points': pointsToRedeem,
       },
     );
     return Map<String, dynamic>.from(res as Map);

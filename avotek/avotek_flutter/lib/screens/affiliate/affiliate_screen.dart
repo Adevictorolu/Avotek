@@ -26,9 +26,11 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
   bool _copied = false;
   int _referralCount = 0;
   int _userAvoPoints = 0;
+  int _lifetimeAvoPoints = 0;
   double _totalEarned = 0.0;
   List<Map<String, dynamic>> _leaderboard = [];
   bool _isLoadingReferralData = false;
+  String? _referralDataError;
 
   @override
   void initState() {
@@ -38,7 +40,10 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
 
   Future<void> _loadReferralData() async {
     if (_isLoadingReferralData) return;
-    setState(() => _isLoadingReferralData = true);
+    setState(() {
+      _isLoadingReferralData = true;
+      _referralDataError = null;
+    });
     try {
       final summary = await SupabaseService.instance.getReferralSummary();
       final leaderboard = await SupabaseService.instance
@@ -47,13 +52,21 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
         setState(() {
           _referralCount = (summary['referral_count'] as num?)?.toInt() ?? 0;
           _userAvoPoints = (summary['avo_points'] as num?)?.toInt() ?? 0;
+          _lifetimeAvoPoints =
+              (summary['lifetime_avo_points'] as num?)?.toInt() ?? 0;
           _totalEarned = (summary['total_earned'] as num?)?.toDouble() ?? 0.0;
           _leaderboard = leaderboard;
           _isLoadingReferralData = false;
         });
       }
-    } catch (e) {
-      if (mounted) setState(() => _isLoadingReferralData = false);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoadingReferralData = false;
+          _referralDataError =
+              'Referral rewards could not be loaded. Please try again.';
+        });
+      }
     }
   }
 
@@ -259,7 +272,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                         ),
                       ),
                       Text(
-                        '$_userAvoPoints pts (= ₦$_userAvoPoints)',
+                        '$_userAvoPoints pts (= ₦${(_userAvoPoints / 2).toStringAsFixed(0)})',
                         style: GoogleFonts.figtree(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -303,7 +316,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                             if (!mounted) return;
                             TopNotification.showSuccess(
                               context,
-                              'Redeemed ${res['points_redeemed']} AVO points! ₦${(res['credited_naira'] as num).toStringAsFixed(0)} credited to your wallet.',
+                              'Redeemed ${res['points_redeemed']} AVO points! ₦${(res['amount_credited'] as num).toStringAsFixed(0)} credited to your wallet.',
                               title: 'Points Redeemed',
                             );
                           } else {
@@ -390,6 +403,41 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   // --- TOP TABS: Referral Hub | AVO Token | Leaderboard ---
                   _buildTopTabs(isDark),
                   const SizedBox(height: 24),
+
+                  if (_referralDataError != null) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF3B1D24)
+                            : const Color(0xFFFFF1F2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _referralDataError!,
+                              style: GoogleFonts.figtree(
+                                color: isDark
+                                    ? const Color(0xFFFDA4AF)
+                                    : const Color(0xFF9F1239),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _isLoadingReferralData
+                                ? null
+                                : _loadReferralData,
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   if (_activeTab == 0) ...[
                     // --- SUBTITLE HEADER: REFERRAL HUB ---
@@ -1288,7 +1336,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '0',
+                  '$_referralCount',
                   style: GoogleFonts.figtree(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
@@ -1329,8 +1377,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                             : const Color(0xFF92400E),
                         height: 1.4,
                       ),
-                      text:
-                          'Referral invitations can be shared now. Verified referral counts, KYC qualification, and rewards will appear here after tracking is connected.',
+                      text: _referralCount == 0
+                          ? 'Invite friends with your referral link. When they register with your code, both accounts receive the referral rewards.'
+                          : '$_referralCount successful referral${_referralCount == 1 ? '' : 's'} tracked. Your wallet rewards and AVO points update from completed referral transactions.',
                     ),
                   ),
                 ),
@@ -1348,7 +1397,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'No referrals yet',
+                  _referralCount == 0
+                      ? 'No referrals yet'
+                      : '$_referralCount successful referral${_referralCount == 1 ? '' : 's'}',
                   style: GoogleFonts.figtree(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -1357,7 +1408,9 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Share your referral link to start building your network!',
+                  _referralCount == 0
+                      ? 'Share your referral link to start building your network!'
+                      : 'Keep sharing your link to grow your referral rewards.',
                   style: GoogleFonts.figtree(
                     fontSize: 12,
                     color: isDark
@@ -1419,7 +1472,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'AVO Token rewards are not active yet. Points will not be earned or redeemed until the referral rewards are connected to a verified backend.',
+                  'Earn 100 AVO points for every successful referral. Redeem from 200 points at ₦50 per 100 points.',
                   style: GoogleFonts.figtree(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
@@ -1438,6 +1491,12 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
   }
 
   Widget _buildRifTokenStatsCard(bool isDark, WalletProvider wallet) {
+    final level = _lifetimeAvoPoints >= 1000
+        ? 'Chairman'
+        : (_lifetimeAvoPoints >= 200 ? 'Berekete' : 'Jolly');
+    final progress = (_lifetimeAvoPoints / 200).clamp(0.0, 1.0);
+    final progressPercent = (progress * 100).round();
+    final pointsToBerekete = (200 - _lifetimeAvoPoints).clamp(0, 200);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -1490,7 +1549,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Jolly',
+                            level,
                             style: GoogleFonts.figtree(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
@@ -1520,7 +1579,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '$_userAvoPoints pts',
+                      '$_lifetimeAvoPoints pts',
                       style: GoogleFonts.figtree(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -1547,7 +1606,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '$_userAvoPoints pts',
+                      '$_lifetimeAvoPoints pts',
                       style: GoogleFonts.figtree(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -1574,7 +1633,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 ),
               ),
               Text(
-                '0%',
+                '$progressPercent%',
                 style: GoogleFonts.figtree(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -1587,7 +1646,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
-              value: (_userAvoPoints / 201).clamp(0.0, 1.0),
+              value: progress,
               minHeight: 6,
               backgroundColor: isDark
                   ? AppColors.darkCardVariant
@@ -1602,14 +1661,14 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '0 pts',
+                '$_lifetimeAvoPoints pts',
                 style: GoogleFonts.figtree(
                   fontSize: 11,
                   color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
                 ),
               ),
               Text(
-                '201 pts to Berekete',
+                '$pointsToBerekete pts to Berekete',
                 style: GoogleFonts.figtree(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -1890,7 +1949,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
           'isTopThree': i < 3,
         });
       }
-    } else if (currentUser != null && _userAvoPoints > 0) {
+    } else if (currentUser != null && _lifetimeAvoPoints > 0) {
       realEarners.add({
         'rank': 1,
         'name': currentUser.name.isNotEmpty
@@ -1899,16 +1958,16 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
         'initial': (currentUser.name.isNotEmpty ? currentUser.name[0] : 'A')
             .toUpperCase(),
         'referrals': '$_referralCount referrals (${currentUser.avoId})',
-        'badge': _userAvoPoints >= 1000
+        'badge': _lifetimeAvoPoints >= 1000
             ? 'Chairman'
-            : (_userAvoPoints >= 200 ? 'Berekete' : 'Jolly'),
-        'badgeColor': _userAvoPoints >= 1000
+            : (_lifetimeAvoPoints >= 200 ? 'Berekete' : 'Jolly'),
+        'badgeColor': _lifetimeAvoPoints >= 1000
             ? const Color(0xFF78350F)
             : Colors.white,
-        'badgeBg': _userAvoPoints >= 1000
+        'badgeBg': _lifetimeAvoPoints >= 1000
             ? const Color(0xFFFDE68A)
             : const Color(0xFF10B981),
-        'points': '$_userAvoPoints PTS',
+        'points': '$_lifetimeAvoPoints PTS',
         'isTopThree': true,
       });
     }
@@ -2013,7 +2072,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 480),
                     child: Text(
-                      'No members have accumulated leaderboard points yet. Share your Avotek ID or referral link to earn points on every data recharge and take the #1 spot!',
+                      'No referrals have earned leaderboard points yet. Share your referral link to earn 100 points for each successful signup and climb the rankings.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.figtree(
                         fontSize: 12.5,
