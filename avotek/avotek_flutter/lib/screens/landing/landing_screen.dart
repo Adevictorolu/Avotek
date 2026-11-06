@@ -386,7 +386,11 @@ class _LandingScreenState extends State<LandingScreen>
           InkWell(
             onTap: () => context.go('/'),
             borderRadius: BorderRadius.circular(8),
-            child: const AvotekLogo(size: 38, showText: true),
+            child: const AvotekLogo(
+              size: 48,
+              showText: true,
+              useAssetImage: false,
+            ),
           ),
           if (isDesktop && hasRoomForNavigation)
             Expanded(
@@ -435,14 +439,16 @@ class _LandingScreenState extends State<LandingScreen>
       ),
       actions: [
         if (hasRoomForNavigation) ...[
-          _buildGradientNavButton(
+          _buildMinimalNavButton(
             label: 'Sign Up',
             onPressed: () => context.go('/register'),
+            isPrimary: true,
           ),
           const SizedBox(width: 12),
-          _buildGradientNavButton(
+          _buildMinimalNavButton(
             label: 'Get APK',
             onPressed: _showDownloadApkModal,
+            isPrimary: false,
           ),
           const SizedBox(width: 24),
         ] else ...[
@@ -462,41 +468,48 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
-  Widget _buildGradientNavButton({
+  Widget _buildMinimalNavButton({
     required String label,
     required VoidCallback onPressed,
+    required bool isPrimary,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0047FF).withValues(alpha: 0.20),
-            blurRadius: 16,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: TextButton(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textStyle = GoogleFonts.figtree(
+      fontWeight: FontWeight.w700,
+      fontSize: 13,
+    );
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+    );
+    if (isPrimary) {
+      return FilledButton(
         onPressed: onPressed,
-        style: TextButton.styleFrom(
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xFF0052FF),
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+          minimumSize: const Size(0, 40),
+          shape: shape,
+          textStyle: textStyle,
         ),
-        child: Text(
-          label,
-          style: GoogleFonts.figtree(
-            fontWeight: FontWeight.w800,
-            fontSize: 14,
-          ),
+        child: Text(label),
+      );
+    }
+
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: isDark ? Colors.white : const Color(0xFF172033),
+        side: BorderSide(
+          color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        minimumSize: const Size(0, 40),
+        shape: shape,
+        textStyle: textStyle,
       ),
+      child: Text(label),
     );
   }
 
