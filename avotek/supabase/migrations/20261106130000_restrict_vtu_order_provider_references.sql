@@ -1,3 +1,4 @@
+-- Keep provider references server-side while preserving customer order history.
 REVOKE SELECT ON TABLE public.vtu_orders FROM PUBLIC, anon, authenticated;
 REVOKE INSERT ON TABLE public.vtu_orders FROM PUBLIC, anon, authenticated;
 

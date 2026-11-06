@@ -845,11 +845,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: isDesktop ? 24 : 16),
 
                 // 4. METRICS / STATS BAR (4 Cards Row)
                 _buildMetricsStatsBar(wallet, isDark, isDesktop),
-                const SizedBox(height: 32),
+                SizedBox(height: isDesktop ? 32 : 20),
 
                 // 5. QUICK ACTIONS SECTION (Matches Screenshot 2)
                 Row(
@@ -1313,15 +1313,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     ];
 
+    if (!isDesktop) {
+      return Row(
+        children: [
+          for (var index = 0; index < metrics.length; index++) ...[
+            if (index > 0) const SizedBox(width: 8),
+            Expanded(
+              child: _buildMetricTile(
+                title: metrics[index].title,
+                value: metrics[index].value,
+                icon: metrics[index].icon,
+                iconColor: metrics[index].color,
+                isDark: isDark,
+                isDesktop: false,
+              ),
+            ),
+          ],
+        ],
+      );
+    }
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: metrics.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isDesktop ? 4 : 2,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
-        mainAxisExtent: isDesktop ? 84 : 102,
+        mainAxisExtent: 84,
       ),
       itemBuilder: (context, index) {
         final metric = metrics[index];
@@ -1331,7 +1351,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           icon: metric.icon,
           iconColor: metric.color,
           isDark: isDark,
-          isDesktop: isDesktop,
+          isDesktop: true,
         );
       },
     );
@@ -1395,25 +1415,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   color: iconColor.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: iconColor, size: 17),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.figtree(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
-                  color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
-                ),
+                child: Icon(icon, color: iconColor, size: 15),
               ),
               Text(
                 value,
@@ -1421,7 +1428,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.figtree(
-                  fontSize: 15,
+                  fontSize: 12,
                   fontWeight: FontWeight.w900,
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
                 ),
@@ -1431,12 +1438,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 12 : 8,
-        vertical: isDesktop ? 10 : 8,
+        horizontal: isDesktop ? 12 : 3,
+        vertical: isDesktop ? 10 : 6,
       ),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF131722) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isDesktop ? 16 : 12),
         border: Border.all(
           color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
           width: 1,
