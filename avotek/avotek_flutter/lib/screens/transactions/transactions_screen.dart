@@ -1011,21 +1011,29 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: GoogleFonts.figtree(
-              fontSize: 12,
-              color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+          SizedBox(
+            width: 88,
+            child: Text(
+              label,
+              style: GoogleFonts.figtree(
+                fontSize: 12,
+                color: isDark ? AppColors.metallicLight : AppColors.slateGrey,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: GoogleFonts.figtree(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : Colors.black87,
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              softWrap: true,
+              style: GoogleFonts.figtree(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
             ),
           ),
         ],
