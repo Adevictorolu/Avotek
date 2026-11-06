@@ -350,7 +350,6 @@ class _DataScreenState extends State<DataScreen> {
           recipient: phone,
           amount: planPrice,
           reference: result.order.id,
-          providerReference: result.order.providerReference,
           message:
               '₦${NumberFormat('#,##0.00').format(planPrice)} data bundle sent to $phone successfully.',
         );

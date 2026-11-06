@@ -354,7 +354,6 @@ class _CableScreenState extends State<CableScreen> {
           recipient: 'Smartcard: $card ($_verifiedCustomerName)',
           amount: _packageAmount,
           reference: result.order.id,
-          providerReference: result.order.providerReference,
           message:
               'Your $_selectedProvider subscription has been renewed successfully.',
         );

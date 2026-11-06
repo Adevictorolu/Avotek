@@ -363,7 +363,6 @@ class _ElectricityScreenState extends State<ElectricityScreen> {
           recipient: 'Meter: $meter ($_verifiedCustomerName)',
           amount: totalCharge,
           reference: result.order.id,
-          providerReference: result.order.providerReference,
           token: result.token,
           message: result.token != null && result.token!.isNotEmpty
               ? 'Token: ${result.token}\nEnter this 20-digit token on your keypad meter to recharge.'

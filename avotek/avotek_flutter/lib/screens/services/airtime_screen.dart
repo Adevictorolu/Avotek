@@ -246,7 +246,6 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
           recipient: phone,
           amount: _amount,
           reference: result.order.id,
-          providerReference: result.order.providerReference,
           message:
               '₦${NumberFormat('#,##0.00').format(_amount)} $_selectedNetwork airtime sent to $phone.',
         );

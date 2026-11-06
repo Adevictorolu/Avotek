@@ -692,45 +692,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ],
                             ),
                           ),
-                        const SizedBox(width: 8),
-
-                        // Notification Icon
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            IconButton(
-                              tooltip: 'Transaction Alerts',
-                              icon: Icon(
-                                Icons.notifications_none_rounded,
-                                size: 21,
-                                color: isDark
-                                    ? AppColors.metallicLight
-                                    : AppColors.slateGrey,
+                        if (isDesktop) ...[
+                          const SizedBox(width: 8),
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              IconButton(
+                                tooltip: 'Transaction Alerts',
+                                icon: Icon(
+                                  Icons.notifications_none_rounded,
+                                  size: 21,
+                                  color: isDark
+                                      ? AppColors.metallicLight
+                                      : AppColors.slateGrey,
+                                ),
+                                onPressed: () =>
+                                    _showNotificationSheet(context),
                               ),
-                              onPressed: () => _showNotificationSheet(context),
-                            ),
-                            if (wallet.recentTransactions.isNotEmpty)
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color:
-                                        wallet.recentTransactions.any(
-                                          (t) =>
-                                              t.status.toLowerCase() ==
-                                              'failed',
-                                        )
-                                        ? AppColors.error
-                                        : AppColors.success,
-                                    shape: BoxShape.circle,
+                              if (wallet.recentTransactions.isNotEmpty)
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          wallet.recentTransactions.any(
+                                            (t) =>
+                                                t.status.toLowerCase() ==
+                                                'failed',
+                                          )
+                                          ? AppColors.error
+                                          : AppColors.success,
+                                      shape: BoxShape.circle,
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
-                        ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ],

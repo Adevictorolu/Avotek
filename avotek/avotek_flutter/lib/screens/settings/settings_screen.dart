@@ -1941,13 +1941,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildDivider(isDark),
                       _buildToggleTile(
                         icon: Icons.fingerprint_rounded,
-                        title: 'Biometric App Unlock',
+                        title: 'Biometric Unlock & Payments',
                         badge: 'MOBILE ONLY',
                         value: _biometricEnabled,
                         onChanged: _setBiometricEnabled,
                         enabled: _biometricAvailable,
                         warningNote: _biometricAvailable
-                            ? 'Use fingerprint or Face ID to unlock the mobile app.'
+                            ? 'Use fingerprint or Face ID to unlock the app and approve purchases.'
                             : 'Biometrics are unavailable on this device.',
                         isDark: isDark,
                       ),

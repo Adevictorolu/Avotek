@@ -154,7 +154,7 @@ class _ExtraProviderServicesScreenState
 
   late List<Map<String, dynamic>> _examPrices = List.from(_defaultExamPrices);
   late Map<String, dynamic>? _selectedExam = _examPrices.first;
-  double? _smsCostPerPage = 4.50;
+  double? _smsCostPerPage = 7;
   final bool _isLoading = false;
   bool _isPurchasing = false;
   bool _consentConfirmed = false;
@@ -716,7 +716,6 @@ class _ExtraProviderServicesScreenState
                                 : _recipients().join(', ')))),
           amount: amount,
           reference: result.order.id,
-          providerReference: result.order.providerReference,
           token: result.token,
           issuedPins: result.issuedPins,
           message: _isExam

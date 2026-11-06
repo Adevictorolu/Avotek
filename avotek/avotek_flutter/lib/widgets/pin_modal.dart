@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/theme/app_theme.dart';
+import '../core/security/device_security_service.dart';
 
 class PinModal extends StatefulWidget {
   final String title;
@@ -43,7 +44,31 @@ class PinModal extends StatefulWidget {
 class _PinModalState extends State<PinModal> {
   String _pin = '';
   bool _isLoading = false;
+  bool _biometricEnabled = false;
+  bool _biometricAvailable = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBiometricAvailability();
+  }
+
+  Future<void> _loadBiometricAvailability() async {
+    try {
+      final available = await DeviceSecurityService.isBiometricAvailable();
+      final enabled = available &&
+          await DeviceSecurityService.isBiometricEnabled();
+      if (mounted) {
+        setState(() {
+          _biometricAvailable = available;
+          _biometricEnabled = enabled;
+        });
+      }
+    } catch (error) {
+      debugPrint('Loading payment biometrics failed: $error');
+    }
+  }
 
   void _appendDigit(String digit) {
     if (!_isLoading && _pin.length < 4) {
@@ -69,10 +94,38 @@ class _PinModalState extends State<PinModal> {
   Future<void> _submitPin() async {
     if (_isLoading || _pin.length != 4) return;
     setState(() => _isLoading = true);
-    final isValid = await widget.onPinSubmit(_pin);
+    final pin = _pin;
+    late final bool isValid;
+    try {
+      isValid = await widget.onPinSubmit(pin);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Could not verify your PIN. Please try again.';
+      });
+      debugPrint('Transaction PIN verification failed: $error');
+      return;
+    }
     if (!mounted) return;
 
     if (isValid) {
+      if (_biometricEnabled && _biometricAvailable) {
+        try {
+          await DeviceSecurityService.storePaymentPin(pin);
+        } catch (error) {
+          debugPrint('Saving biometric payment authorization failed: $error');
+          if (!mounted) return;
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            const SnackBar(
+              content: Text(
+                'PIN verified. Biometric payment setup failed; continue with your PIN.',
+              ),
+            ),
+          );
+        }
+      }
+      if (!mounted) return;
       Navigator.of(context).pop(true);
     } else {
       setState(() {
@@ -80,6 +133,43 @@ class _PinModalState extends State<PinModal> {
         _pin = '';
         _errorMessage = 'Incorrect transaction PIN. Please try again.';
       });
+    }
+  }
+
+  Future<void> _submitWithBiometrics() async {
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final pin = await DeviceSecurityService.authenticatePaymentPin();
+      if (!mounted) return;
+      if (pin == null || pin.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage =
+              'Enter your transaction PIN once to enable biometric payments.';
+        });
+        return;
+      }
+      final isValid = await widget.onPinSubmit(pin);
+      if (!mounted) return;
+      if (isValid) {
+        Navigator.of(context).pop(true);
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'PIN verification failed. Please use your PIN.';
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Biometric payment failed. Please use your PIN.';
+      });
+      debugPrint('Biometric payment authorization failed: $error');
     }
   }
 
@@ -207,6 +297,14 @@ class _PinModalState extends State<PinModal> {
             const SizedBox(height: 24),
             // Custom Keypad
             _buildKeypad(isDark),
+            if (_biometricEnabled && _biometricAvailable) ...[
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: _submitWithBiometrics,
+                icon: const Icon(Icons.fingerprint_rounded),
+                label: const Text('Approve with biometrics'),
+              ),
+            ],
           ],
         ],
       ),

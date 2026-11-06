@@ -255,6 +255,7 @@ class VtuProvider extends ChangeNotifier {
     String? token;
     String? units;
     String? localReference;
+    var orderRecordedByServer = false;
     var issuedPins = const <String>[];
     try {
       final response = await dispatch();
@@ -310,6 +311,7 @@ class VtuProvider extends ChangeNotifier {
       localReference =
           response['local_reference']?.toString() ??
           response['reference']?.toString();
+      orderRecordedByServer = response['order_recorded'] == true;
       token =
           data['token']?.toString() ??
           data['meter_token']?.toString() ??
@@ -414,6 +416,7 @@ class VtuProvider extends ChangeNotifier {
       id: localReference,
       providerReference: providerReference,
       token: token,
+      persistToDatabase: !orderRecordedByServer,
     );
     _isLoading = false;
     notifyListeners();

@@ -6,7 +6,9 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
+import '../providers/wallet_provider.dart';
 import '../widgets/top_notification.dart';
 import '../core/utils/user_facing_error.dart';
 
@@ -15,8 +17,8 @@ class TransactionSuccessDialog extends StatelessWidget {
   final String serviceType;
   final String recipient;
   final double amount;
+  final double balanceAfter;
   final String? reference;
-  final String? providerReference;
   final String? token;
   final String? units;
   final List<String> issuedPins;
@@ -29,8 +31,8 @@ class TransactionSuccessDialog extends StatelessWidget {
     required this.serviceType,
     required this.recipient,
     required this.amount,
+    required this.balanceAfter,
     this.reference,
-    this.providerReference,
     this.token,
     this.units,
     this.issuedPins = const [],
@@ -45,7 +47,6 @@ class TransactionSuccessDialog extends StatelessWidget {
     required String recipient,
     required double amount,
     String? reference,
-    String? providerReference,
     String? token,
     String? units,
     List<String> issuedPins = const [],
@@ -60,8 +61,8 @@ class TransactionSuccessDialog extends StatelessWidget {
         serviceType: serviceType,
         recipient: recipient,
         amount: amount,
+        balanceAfter: context.read<WalletProvider>().balance,
         reference: reference,
-        providerReference: providerReference,
         token: token,
         units: units,
         issuedPins: issuedPins,
@@ -349,12 +350,10 @@ class TransactionSuccessDialog extends StatelessWidget {
                             'Transaction ID / Avotek Ref',
                             reference!,
                           ),
-                        if (providerReference != null &&
-                            providerReference!.isNotEmpty)
-                          _buildPdfTableRow(
-                            'Aggregator Reference',
-                            providerReference!,
-                          ),
+                        _buildPdfTableRow(
+                          'Balance After',
+                          '₦${balanceAfter.toStringAsFixed(2)}',
+                        ),
                         _buildPdfTableRow(
                           'Delivery Status',
                           'COMPLETED / DELIVERED',
@@ -658,16 +657,12 @@ class TransactionSuccessDialog extends StatelessWidget {
                           context: context,
                         ),
                       ],
-                      if (providerReference != null && providerReference!.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        _buildReceiptRow(
-                          'Aggregator Ref',
-                          providerReference!,
-                          isDark,
-                          isCopyable: true,
-                          context: context,
-                        ),
-                      ],
+                      const SizedBox(height: 8),
+                      _buildReceiptRow(
+                        'Balance After',
+                        '₦${balanceAfter.toStringAsFixed(2)}',
+                        isDark,
+                      ),
                       const SizedBox(height: 8),
                       _buildReceiptRow(
                         'Status',

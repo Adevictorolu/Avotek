@@ -681,6 +681,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               isDark,
             ),
             _receiptRow('Amount', '₦${tx.amount.toStringAsFixed(2)}', isDark),
+            _receiptRow(
+              'Balance After',
+              '₦${tx.balanceAfter.toStringAsFixed(2)}',
+              isDark,
+            ),
             _receiptRow('Status', tx.status.toString().toUpperCase(), isDark),
             _receiptRow(
               'Date',
@@ -912,6 +917,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 slate,
               ),
               _pdfReceiptRow('Service', tx.category.toUpperCase(), blue, slate),
+              _pdfReceiptRow(
+                'Balance After',
+                'NGN ${tx.balanceAfter.toStringAsFixed(2)}',
+                blue,
+                slate,
+              ),
               _pdfReceiptRow(
                 'Date',
                 DateFormat('dd MMM yyyy, hh:mm a').format(tx.createdAt),

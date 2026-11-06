@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { calculateSmsRetailPrice } from "./sms_pricing.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -110,6 +111,83 @@ function extractProviderReference(body: JsonMap): string | null {
   return text.length > 0 ? text : null;
 }
 
+function sanitizeProviderResponseForCustomer(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sanitizeProviderResponseForCustomer);
+  }
+  if (!isRecord(value)) return value;
+
+  const privateKeys = new Set([
+    "id",
+    "ref",
+    "reference",
+    "providerref",
+    "providerreference",
+    "transactionid",
+    "transactionref",
+    "transactionreference",
+    "transactionnumber",
+    "transid",
+    "tranid",
+    "tranxid",
+    "jobid",
+    "orderid",
+  ]);
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => !privateKeys.has(key.toLowerCase().replace(/[^a-z0-9]/g, "")))
+      .map(([key, nestedValue]) => [
+        key,
+        sanitizeProviderResponseForCustomer(nestedValue),
+      ]),
+  );
+}
+
+async function saveVtuOrder(
+  supabaseUrl: string,
+  userId: string,
+  action: string,
+  payload: JsonMap,
+  reference: string,
+  amount: number | null,
+  status: string,
+  providerReference: string | null,
+  providerResponse: JsonMap,
+): Promise<boolean> {
+  const serviceTypeByAction: Record<string, string> = {
+    "airtime.purchase": "airtime",
+    "airtime_pin.purchase": "airtime_pin",
+    "cable.purchase": "cable",
+    "data.purchase": "data",
+    "data_card.purchase": "data_card",
+    "education.purchase": "education",
+    "electricity.purchase": "electricity",
+  };
+  const serviceType = serviceTypeByAction[action];
+  if (!serviceType || amount === null) return false;
+
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!serviceRoleKey) throw new Error("Missing Supabase service-role configuration.");
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const responseData = isRecord(providerResponse.data) ? providerResponse.data : {};
+  const { error } = await admin.from("vtu_orders").upsert({
+    id: reference,
+    user_id: userId,
+    service_type: serviceType,
+    network: String(payload.network ?? payload.cable_type ?? payload.exam ?? serviceType),
+    phone: String(payload.phone_number ?? payload.phone ?? payload.card_no ?? payload.iuc ?? payload.meter_no ?? ""),
+    plan: String(payload.plan ?? payload.data_plan ?? payload.variation_code ?? payload.plan_type ?? payload.exam_id ?? payload.card_name ?? ""),
+    amount,
+    status: status === "completed" ? "successful" : status,
+    provider_reference: providerReference,
+    token: String(responseData.token ?? responseData.meter_token ?? responseData.pin ?? providerResponse.token ?? providerResponse.pin ?? "") || null,
+  }, { onConflict: "id" });
+  if (error) throw error;
+  return true;
+}
+
 function extractList(body: unknown, nestedKeys: string[] = []): JsonMap[] {
   if (Array.isArray(body)) return body.filter(isRecord);
   if (!isRecord(body)) return [];
@@ -132,6 +210,74 @@ function mapNetworkToId(network: unknown): number {
   if (s.includes("9mobile") || s.includes("etisalat") || s.includes("t2") || s === "4") return 4;
   if (s.includes("vitel") || s === "5") return 5;
   return Number(network) || 1;
+}
+
+function mapNetworkToBigisubId(network: unknown): number {
+  const networkId = mapNetworkToId(network);
+  if (networkId === 2) return 3;
+  if (networkId === 3) return 2;
+  return networkId;
+}
+
+function isProviderPlanActive(plan: JsonMap): boolean {
+  for (const key of ["plan_disabled", "disabled", "is_disabled"]) {
+    const value = plan[key];
+    if (
+      value === true ||
+      value === 1 ||
+      (typeof value === "string" && ["true", "1", "yes"].includes(value.toLowerCase()))
+    ) return false;
+  }
+  for (const key of ["active", "is_active", "available", "enabled"]) {
+    const value = plan[key];
+    if (
+      value === false ||
+      value === 0 ||
+      (typeof value === "string" && ["false", "0", "no"].includes(value.toLowerCase()))
+    ) return false;
+  }
+  const status = String(plan.status ?? plan.plan_status ?? "").toLowerCase();
+  return !/(inactive|disabled|unavailable|out[\s_-]?of[\s_-]?stock)/.test(status);
+}
+
+function planMatchesNetwork(
+  plan: JsonMap,
+  network: unknown,
+  provider: "bilalsadasub" | "bigisub",
+): boolean {
+  const expectedId = mapNetworkToId(network);
+  const name = String(plan.network_name ?? plan.network_code ?? "").trim().toLowerCase();
+  const networkValue = plan.network;
+  const networkName = typeof networkValue === "string" &&
+      !/^\d+$/.test(networkValue.trim())
+    ? networkValue.trim().toLowerCase()
+    : name;
+
+  if (networkName) {
+    const networkIdByName =
+      networkName.includes("mtn")
+        ? 1
+        : networkName.includes("airtel") || networkName === "air"
+        ? 2
+        : networkName.includes("glo")
+        ? 3
+        : networkName.includes("9mobile") || networkName.includes("etisalat") ||
+            networkName.includes("t2")
+        ? 4
+        : null;
+    if (networkIdByName !== null) return networkIdByName === expectedId;
+  }
+
+  const numericNetwork = Number(networkValue);
+  if (Number.isInteger(numericNetwork) && numericNetwork > 0) {
+    const canonicalId = provider === "bigisub" && numericNetwork === 2
+      ? 3
+      : provider === "bigisub" && numericNetwork === 3
+      ? 2
+      : numericNetwork;
+    return canonicalId === expectedId;
+  }
+  return true;
 }
 
 function mapNetworkToName(network: unknown): string {
@@ -246,7 +392,36 @@ function mapCableToName(cable: unknown): string {
   if (s.includes("dstv") || s === "1") return "DSTV";
   if (s.includes("gotv") || s === "2") return "GOTV";
   if (s.includes("star") || s === "3") return "STARTIME";
+  if (s.includes("showmax")) return "SHOWMAX";
   return "DSTV";
+}
+
+function getSmsProviderCostPerPage(body: JsonMap): number | null {
+  const data = isRecord(body.data) ? body.data : {};
+  const nestedData = isRecord(data.data) ? data.data : {};
+  const value = nestedData.cost_per_page ?? data.cost_per_page ??
+    body.cost_per_page;
+  const cost = Number(value);
+  return Number.isFinite(cost) && cost > 0 ? cost : null;
+}
+
+function getCablePlanBasePrice(plan: JsonMap): number {
+  return Number(
+    plan.plan_price ??
+      plan.package_amount ??
+      plan.variation_amount ??
+      plan.plan_amount ??
+      plan.amount ??
+      plan.price ??
+      0,
+  );
+}
+
+function getCablePlanName(plan: JsonMap, id: unknown): string {
+  const name = plan.plan_name ?? plan.package_name ?? plan.product_name ??
+    plan.name ?? plan.bundle_name;
+  const normalizedName = String(name ?? "").trim();
+  return normalizedName || String(id ?? "").trim();
 }
 
 function mapDiscoToId(disco: unknown): number {
@@ -408,12 +583,22 @@ function getServicePricingRule(overrides: JsonMap): {
   const configuredIncrement = Number(overrides.price_rounding_increment ?? 1);
   return {
     multiplier: Number.isFinite(configuredMultiplier)
-      ? Math.min(1.15, Math.max(1, configuredMultiplier))
-      : 1,
+      ? Math.min(1.15, Math.max(1.05, configuredMultiplier))
+      : 1.05,
     roundingIncrement: [1, 2.5, 5, 10].includes(configuredIncrement)
       ? configuredIncrement
       : 1,
   };
+}
+
+function getCablePricingRule(
+  overrides: JsonMap,
+  cableName: string,
+): { multiplier: number; roundingIncrement: number } {
+  const rule = getServicePricingRule(overrides);
+  return cableName === "SHOWMAX"
+    ? { ...rule, multiplier: Math.max(1.05, rule.multiplier) }
+    : rule;
 }
 
 function roundedServicePrice(
@@ -749,7 +934,6 @@ Deno.serve(async (request) => {
   // --- DATA PLANS (combine BilalSadaSub and Bigisub catalogs) ---
   if (action === "data.plans") {
     const networkName = mapNetworkToName(payload.network);
-    const netId = mapNetworkToId(payload.network);
     const planType = String(payload.plantype ?? payload.plan_type ?? "").trim().toUpperCase();
     const plans: JsonMap[] = [];
 
@@ -765,7 +949,10 @@ Deno.serve(async (request) => {
           bilalToken,
         );
         if (upstream.ok) {
-          plans.push(...extractList(providerBody, ["data", "plans"]).map((p) => {
+          plans.push(...extractList(providerBody, ["data", "plans"])
+            .filter((p) => isProviderPlanActive(p) &&
+              planMatchesNetwork(p, networkName, "bilalsadasub"))
+            .map((p) => {
             const id = p.plan_id ?? p.id ?? p.dataplan_id;
             return { ...p, id, provider: "bilalsadasub", code: `BILAL-${id}` };
           }));
@@ -778,12 +965,14 @@ Deno.serve(async (request) => {
     if (bigisubToken) {
       try {
         const { upstream, providerBody } = await dispatchBigisubRequest(
-          `${bigisubBaseUrl}/api/v2/vtu/data/plans/?network=${netId}`,
+          `${bigisubBaseUrl}/api/v2/vtu/data/plans/?network=${mapNetworkToBigisubId(networkName)}`,
           "GET",
           bigisubToken,
         );
         if (upstream.ok) {
           plans.push(...extractList(providerBody, ["plans", "data", "variations"])
+            .filter((p) => isProviderPlanActive(p) &&
+              planMatchesNetwork(p, networkName, "bigisub"))
             .map((p) => {
               const id = p.plan_id ?? p.id ?? p.variation_code;
               return { ...p, id, provider: "bigisub", code: `BIGI-${id}` };
@@ -834,11 +1023,12 @@ Deno.serve(async (request) => {
     });
   }
 
-  // --- CABLE PLANS (combine available provider catalogs) ---
+  // --- CABLE PLANS: Showmax uses Bigisub; other cable plans use BilalSadaSub ---
   if (action === "cable.plans") {
     const cableName = mapCableToName(payload.cable_name ?? payload.cable_type ?? payload.cable);
+    const isShowmax = cableName === "SHOWMAX";
     let plans: JsonMap[] = [];
-    if (bilalToken) {
+    if (!isShowmax && bilalToken) {
       try {
         const { upstream, providerBody } = await dispatchBilalRequest(
           `${bilalBaseUrl}/api/v1/plans/cable?cable=${encodeURIComponent(cableName)}`,
@@ -856,7 +1046,7 @@ Deno.serve(async (request) => {
         console.error("BilalSadaSub cable catalog failed:", error);
       }
     }
-    if (bigisubToken) {
+    if (isShowmax && bigisubToken) {
       try {
         const cleanName = cableName.toLowerCase().replace("startime", "startimes");
         const bigiRes = await dispatchBigisubRequest(
@@ -866,8 +1056,14 @@ Deno.serve(async (request) => {
         );
         if (bigiRes.upstream.ok) {
           plans.push(...extractList(bigiRes.providerBody, ["plans", "data", "variations"])
+            .filter((plan) => isProviderPlanActive(plan) &&
+              String(plan.variation_code ?? plan.id ?? plan.plan_id ?? "").trim() !== "")
             .map((plan) => ({
               ...plan,
+              plan_name: getCablePlanName(
+                plan,
+                plan.variation_code ?? plan.id ?? plan.plan_id,
+              ),
               provider: "bigisub",
               code: `BIGI-${plan.variation_code ?? plan.id ?? plan.plan_id}`,
             })));
@@ -880,7 +1076,9 @@ Deno.serve(async (request) => {
       return jsonResponse({
         success: false,
         status: "failed",
-        message: "Cable plans are temporarily unavailable from both providers.",
+        message: isShowmax
+          ? "Showmax plans are temporarily unavailable from Bigisub."
+          : "Cable plans are temporarily unavailable from both providers.",
       }, 503);
     }
 
@@ -889,11 +1087,9 @@ Deno.serve(async (request) => {
     const cableFee = Number.isFinite(configuredFee)
       ? Math.max(0, configuredFee)
       : 0;
-    const pricingRule = getServicePricingRule(pricingOverrides);
+    const pricingRule = getCablePricingRule(pricingOverrides, cableName);
     plans = plans.map((plan) => {
-      const basePrice = Number(
-        plan.plan_price ?? plan.package_amount ?? plan.amount ?? plan.price ?? 0,
-      );
+      const basePrice = getCablePlanBasePrice(plan);
       if (!Number.isFinite(basePrice) || basePrice <= 0) return plan;
       const totalPrice = roundedServicePrice(
         basePrice,
@@ -926,27 +1122,43 @@ Deno.serve(async (request) => {
 
   // --- CABLE VERIFY ---
   if (action === "cable.verify") {
-    const cableId = mapCableToId(payload.cable_type ?? payload.cable_name ?? payload.cable);
+    const cableName = mapCableToName(payload.cable_type ?? payload.cable_name ?? payload.cable);
     const iuc = String(payload.card_no ?? payload.iuc ?? "").trim();
-    const url = `${bilalBaseUrl}/api/cable/cable-validation?cable=${cableId}&iuc=${encodeURIComponent(iuc)}`;
-    let { upstream, providerBody } = await dispatchBilalRequest(url, "GET", bilalToken);
-    let isValid = upstream.ok && providerBody.status === "success";
-
-    // Fallback to Bigisub cable verification if needed
-    if (!isValid && bigisubToken) {
+    let providerBody: JsonMap = {};
+    let isValid = false;
+    if (cableName === "SHOWMAX") {
+      if (!bigisubToken) {
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: "Showmax verification is temporarily unavailable.",
+        }, 503);
+      }
       try {
-        const cableName = mapCableToName(payload.cable_type ?? payload.cable_name ?? payload.cable).toLowerCase();
         const bigiRes = await dispatchBigisubRequest(
           `${bigisubBaseUrl}/api/v2/vtu/cable/verify/`,
           "POST",
           bigisubToken,
-          { cable_name: cableName, card_no: iuc },
+          { cable_name: cableName.toLowerCase(), card_no: iuc },
         );
-        if (bigiRes.upstream.ok && bigiRes.providerBody.success !== false) {
-          providerBody = bigiRes.providerBody;
-          isValid = true;
-        }
-      } catch (_) {}
+        providerBody = bigiRes.providerBody;
+        isValid = bigiRes.upstream.ok && providerBody.success !== false &&
+          providerBody.status !== "failed" && providerBody.status !== "fail";
+      } catch (error) {
+        console.error("Bigisub Showmax verification failed:", error);
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: "Showmax verification is temporarily unavailable.",
+        }, 502);
+      }
+    } else {
+      const cableId = mapCableToId(cableName);
+      const url = `${bilalBaseUrl}/api/cable/cable-validation?cable=${cableId}&iuc=${encodeURIComponent(iuc)}`;
+      const bilalRes = await dispatchBilalRequest(url, "GET", bilalToken);
+      providerBody = bilalRes.providerBody;
+      isValid = bilalRes.upstream.ok && providerBody.status === "success";
+
     }
 
     return jsonResponse({
@@ -1067,18 +1279,32 @@ Deno.serve(async (request) => {
 
   // --- BULK SMS PRICING ---
   if (action === "sms.pricing") {
+    let providerCostPerPage = 6.5;
     if (bigisubToken) {
       const bigiRes = await dispatchBigisubRequest(
         `${bigisubBaseUrl}/api/v2/communications/sms/pricing/`,
         "GET",
         bigisubToken,
       );
-      return jsonResponse(bigiRes.providerBody);
+      providerCostPerPage = getSmsProviderCostPerPage(bigiRes.providerBody) ?? 0;
+      if (!bigiRes.upstream.ok || providerCostPerPage <= 0) {
+        console.error("Bigisub returned invalid bulk SMS page pricing.");
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: "Bulk SMS pricing is temporarily unavailable.",
+        }, 503);
+      }
     }
+    const pricingOverrides = await getPricingOverrides(supabaseUrl);
+    const costPerPage = calculateSmsRetailPrice(
+      providerCostPerPage,
+      getServicePricingRule(pricingOverrides).multiplier,
+    );
     return jsonResponse({
       status: "success",
       success: true,
-      data: { cost_per_page: 3.5 },
+      data: { cost_per_page: costPerPage },
     });
   }
 
@@ -1407,6 +1633,7 @@ Deno.serve(async (request) => {
     "cable.purchase",
     "electricity.purchase",
     "airtime_pin.purchase",
+    "sms.send",
   ].includes(action)
     ? await getPricingOverrides(supabaseUrl)
     : {};
@@ -1452,6 +1679,7 @@ Deno.serve(async (request) => {
 
   const reference = String(requestBody.reference ?? `AVO-${Date.now()}`);
   let purchaseAmount: number | null = null;
+  let providerBaseAmount: number | null = null;
 
   // Determine the customer charge independently from the upstream amount.
   if (action === "airtime.purchase") {
@@ -1469,18 +1697,26 @@ Deno.serve(async (request) => {
     let plans: JsonMap[] = [];
     if (selectedProvider === "bigisub" && bigisubToken) {
       const { upstream, providerBody } = await dispatchBigisubRequest(
-        `${bigisubBaseUrl}/api/v2/vtu/data/plans/?network=${netId}`,
+        `${bigisubBaseUrl}/api/v2/vtu/data/plans/?network=${mapNetworkToBigisubId(networkName)}`,
         "GET",
         bigisubToken,
       );
-      if (upstream.ok) plans = extractList(providerBody, ["plans", "data", "variations"]);
+      if (upstream.ok) {
+        plans = extractList(providerBody, ["plans", "data", "variations"])
+          .filter((plan) => isProviderPlanActive(plan) &&
+            planMatchesNetwork(plan, networkName, "bigisub"));
+      }
     } else if (selectedProvider === "bilalsadasub" && bilalToken) {
       const { upstream, providerBody } = await dispatchBilalRequest(
         `${bilalBaseUrl}/api/v1/plans/data?network=${encodeURIComponent(networkName)}`,
         "GET",
         bilalToken,
       );
-      if (upstream.ok) plans = extractList(providerBody, ["data", "plans"]);
+      if (upstream.ok) {
+        plans = extractList(providerBody, ["data", "plans"])
+          .filter((plan) => isProviderPlanActive(plan) &&
+            planMatchesNetwork(plan, networkName, "bilalsadasub"));
+      }
     }
     const selectedPlan = plans.find((plan) =>
       String(plan.plan_id ?? plan.id ?? plan.dataplan_id ?? plan.variation_code ?? "") ===
@@ -1527,11 +1763,9 @@ Deno.serve(async (request) => {
     if (action === "cable.purchase") {
       const cableName = mapCableToName(payload.cable_type ?? payload.cable_name ?? payload.cable);
       const variationCode = String(payload.variation_code ?? "").trim();
-      const selectedProvider =
-        String(payload.provider ?? "").toLowerCase() === "bigisub" ||
-          variationCode.toUpperCase().startsWith("BIGI-")
-          ? "bigisub"
-          : "bilalsadasub";
+      const selectedProvider = cableName === "SHOWMAX"
+        ? "bigisub"
+        : "bilalsadasub";
       const planId = variationCode.replace(/^(BIGI|BILAL)-/i, "");
       let plans: JsonMap[] = [];
       if (selectedProvider === "bigisub" && bigisubToken) {
@@ -1541,7 +1775,10 @@ Deno.serve(async (request) => {
           "GET",
           bigisubToken,
         );
-        if (upstream.ok) plans = extractList(providerBody, ["plans", "data", "variations"]);
+        if (upstream.ok) {
+          plans = extractList(providerBody, ["plans", "data", "variations"])
+            .filter(isProviderPlanActive);
+        }
       } else if (selectedProvider === "bilalsadasub" && bilalToken) {
         const { upstream, providerBody } = await dispatchBilalRequest(
           `${bilalBaseUrl}/api/v1/plans/cable?cable=${encodeURIComponent(cableName)}`,
@@ -1553,13 +1790,9 @@ Deno.serve(async (request) => {
       const selectedPlan = plans.find((plan) =>
         String(plan.plan_id ?? plan.variation_code ?? plan.id ?? "") === planId
       );
-      const basePrice = Number(
-        selectedPlan?.plan_price ??
-          selectedPlan?.package_amount ??
-          selectedPlan?.amount ??
-          selectedPlan?.price ??
-          0,
-      );
+      const basePrice = selectedPlan
+        ? getCablePlanBasePrice(selectedPlan)
+        : 0;
       if (!Number.isFinite(basePrice) || basePrice <= 0) {
         return jsonResponse({
           success: false,
@@ -1567,9 +1800,10 @@ Deno.serve(async (request) => {
           message: "Could not verify this cable plan's current provider price. Refresh plans and try again.",
         }, 503);
       }
+      providerBaseAmount = basePrice;
       purchaseAmount = roundedServicePrice(
         basePrice,
-        getServicePricingRule(purchasePricingOverrides),
+        getCablePricingRule(purchasePricingOverrides, cableName),
         fee,
       );
       const requestedCharge = Number(payload.charge_amount ?? 0);
@@ -1608,7 +1842,41 @@ Deno.serve(async (request) => {
     const recipients = Array.isArray(payload.recipients) ? payload.recipients : [];
     const message = String(payload.message ?? "");
     const pages = Math.ceil(message.length / 160) || 1;
-    purchaseAmount = 3.5 * pages * recipients.length;
+    if (!bigisubToken || recipients.length === 0 || !message.trim()) {
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: "Bulk SMS service is unavailable or the request is incomplete.",
+      }, 503);
+    }
+    try {
+      const pricingRes = await dispatchBigisubRequest(
+        `${bigisubBaseUrl}/api/v2/communications/sms/pricing/`,
+        "GET",
+        bigisubToken,
+      );
+      const providerCostPerPage = getSmsProviderCostPerPage(pricingRes.providerBody);
+      if (!pricingRes.upstream.ok || providerCostPerPage === null) {
+        console.error("Could not verify the current Bigisub bulk SMS page price.");
+        return jsonResponse({
+          success: false,
+          status: "failed",
+          message: "Could not verify current bulk SMS pricing. Please try again.",
+        }, 503);
+      }
+      const costPerPage = calculateSmsRetailPrice(
+        providerCostPerPage,
+        getServicePricingRule(purchasePricingOverrides).multiplier,
+      );
+      purchaseAmount = costPerPage * pages * recipients.length;
+    } catch (error) {
+      console.error("Bulk SMS price verification failed:", error);
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: "Could not verify current bulk SMS pricing. Please try again.",
+      }, 503);
+    }
   } else if (action === "airtime_pin.purchase") {
     const qty = Number(payload.quantity ?? 1);
     let plans: JsonMap[];
@@ -1719,7 +1987,7 @@ Deno.serve(async (request) => {
             "POST",
             bigisubToken,
             {
-              network: netId,
+              network: mapNetworkToBigisubId(netId),
               plan: dataPlan,
               phone_number: phone,
               ported_number: true,
@@ -1789,7 +2057,7 @@ Deno.serve(async (request) => {
       if (finalStatus === "failed" && bigisubToken && bigisubPin) {
         try {
           const bigiPayload: JsonMap = {
-            network: netId,
+            network: mapNetworkToBigisubId(netId),
             amount: Number(payload.amount),
             phone_number: phone,
             ported_number: true,
@@ -1851,28 +2119,25 @@ Deno.serve(async (request) => {
       }
     }
 
-    // 4. CABLE PURCHASE: BilalSadaSub primary, Bigisub fallback
+    // 4. CABLE PURCHASE: Showmax uses Bigisub; other cable providers use BilalSadaSub.
     else if (action === "cable.purchase") {
-      const cableId = mapCableToId(payload.cable_type ?? payload.cable_name ?? payload.cable);
+      const cableName = mapCableToName(payload.cable_type ?? payload.cable_name ?? payload.cable);
+      const isShowmax = cableName === "SHOWMAX";
+      const cableId = mapCableToId(cableName);
       const card = String(payload.card_no ?? payload.iuc ?? "").trim();
       const variationCode = String(payload.variation_code ?? payload.plan_id ?? "").trim();
-      const selectedProvider =
-        String(payload.provider ?? "").toLowerCase() === "bigisub" ||
-          variationCode.toUpperCase().startsWith("BIGI-")
-          ? "bigisub"
-          : "bilalsadasub";
+      const selectedProvider = isShowmax ? "bigisub" : "bilalsadasub";
       const providerPlanCode = variationCode.replace(/^(BIGI|BILAL)-/i, "");
       const planId = Number(providerPlanCode);
       const phone = cleanPhone(payload.phone ?? payload.phone_number ?? "08012345678");
 
       if (selectedProvider === "bigisub" && bigisubToken && bigisubPin) {
         try {
-          const cableName = mapCableToName(payload.cable_type ?? payload.cable_name ?? payload.cable).toLowerCase();
           const bigiPayload: JsonMap = {
-            cable_name: cableName,
+            cable_name: cableName.toLowerCase(),
             card_no: card,
             variation_code: providerPlanCode,
-            amount: Number(payload.amount),
+            amount: providerBaseAmount ?? Number(payload.provider_amount ?? payload.amount),
             pin: bigisubPin,
           };
           const bigiRes = await dispatchBigisubRequest(
@@ -1995,8 +2260,8 @@ Deno.serve(async (request) => {
         finalStatus = normalizedProviderStatus(bigiRes.providerBody, bigiRes.upstream.ok);
         providerResponse = bigiRes.providerBody;
       } else {
-        finalStatus = "completed";
-        providerResponse = { message: "SMS dispatched successfully." };
+        finalStatus = "failed";
+        providerResponse = { message: "The bulk SMS provider is not configured." };
       }
     }
 
@@ -2141,16 +2406,37 @@ Deno.serve(async (request) => {
       await finalizePurchase(supabaseUrl, reference, "completed", finalMessage, authenticatedUserId);
     }
 
-    const providerRef = extractProviderReference(providerResponse) ?? reference;
+    const providerRef = extractProviderReference(providerResponse);
+    if (providerRef && providerRef !== reference) {
+      finalMessage = finalMessage.replaceAll(providerRef, "").replace(/\s{2,}/g, " ").trim();
+    }
+
+    let orderRecorded = false;
+    try {
+      orderRecorded = await saveVtuOrder(
+        supabaseUrl,
+        authenticatedUserId,
+        action,
+        payload,
+        reference,
+        purchaseAmount,
+        finalStatus,
+        providerRef,
+        providerResponse,
+      );
+      orderRecorded = true;
+    } catch (error) {
+      console.error("Could not save VTU order for admin history:", error);
+    }
 
     return jsonResponse({
-      ...providerResponse,
+      ...sanitizeProviderResponseForCustomer(providerResponse) as JsonMap,
       success: finalStatus !== "failed",
       status: finalStatus,
       reference,
       local_reference: reference,
       charged_amount: purchaseAmount,
-      provider_reference: providerRef,
+      order_recorded: orderRecorded,
       message: finalMessage,
     });
   } catch (error) {

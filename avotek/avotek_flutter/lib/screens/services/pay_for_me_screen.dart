@@ -321,8 +321,7 @@ class _PayForMeScreenState extends State<PayForMeScreen> {
               result.token ??
               (result.issuedPins.isNotEmpty
                   ? result.issuedPins.first
-                  : (result.order.providerReference ??
-                        result.order.id.toString()));
+                  : result.order.id.toString());
           _completionMessage =
               'Exam PIN purchase successful! Deducted from wallet.';
         });

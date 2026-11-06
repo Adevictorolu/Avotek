@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/user_model.dart';
 import '../../models/wallet_model.dart';
@@ -25,6 +26,14 @@ String buildMobileAuthRedirectUrl(String route) =>
     'io.supabase.avotek://${route.replaceFirst(RegExp(r'^/'), '')}';
 
 class SupabaseService {
+  static const _googleServerClientId =
+      '499643353122-su0u941trtlk3e4c5f7o8abiih7q52r8.apps.googleusercontent.com';
+  static final Future<void> _googleSignInInitialization =
+      GoogleSignIn.instance.initialize(
+        serverClientId: _googleServerClientId,
+      );
+  static bool _nativeGoogleSignInInitialized = false;
+
   static const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
     defaultValue: 'https://gcixbqrridzgobkqnlfz.supabase.co',
@@ -227,10 +236,29 @@ class SupabaseService {
   /// Google OAuth Sign In
   Future<bool> signInWithGoogle() async {
     try {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        await _googleSignInInitialization;
+        _nativeGoogleSignInInitialized = true;
+        final account = await GoogleSignIn.instance.authenticate();
+        final idToken = account.authentication.idToken;
+        if (idToken == null || idToken.isEmpty) {
+          throw StateError('Google sign-in did not return an ID token.');
+        }
+        final response = await client.auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: idToken,
+        );
+        return response.session != null;
+      }
+
       return await client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: _authRedirectUrl('/login-callback'),
       );
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) return false;
+      debugPrint('Google Sign-in error: $e');
+      rethrow;
     } catch (e) {
       debugPrint('Google Sign-in error: $e');
       rethrow;
@@ -243,6 +271,15 @@ class SupabaseService {
       await client.auth.signOut();
     } catch (e) {
       debugPrint('Sign out error: $e');
+    }
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        _nativeGoogleSignInInitialized) {
+      try {
+        await GoogleSignIn.instance.signOut();
+      } catch (e) {
+        debugPrint('Google sign out error: $e');
+      }
     }
   }
 
@@ -554,6 +591,7 @@ class SupabaseService {
     String? id,
     String? providerReference,
     String? token,
+    bool persistToDatabase = true,
   }) async {
     final order = VtuOrder(
       id: id ?? 'ORD-${DateTime.now().millisecondsSinceEpoch}',
@@ -571,6 +609,8 @@ class SupabaseService {
 
     _fallbackOrders.putIfAbsent(userId, () => []).insert(0, order);
 
+    if (!persistToDatabase) return order;
+
     try {
       await client.from('vtu_orders').insert({
         'id': order.id,
@@ -581,7 +621,6 @@ class SupabaseService {
         'plan': plan,
         'amount': amount,
         'status': status,
-        'provider_reference': providerReference,
         'token': token,
         'created_at': order.createdAt.toIso8601String(),
       });
