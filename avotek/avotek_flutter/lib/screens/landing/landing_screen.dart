@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -281,15 +282,25 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   Future<void> _showDownloadApkModal() async {
-    String apkUrl =
-        'https://github.com/adevictorolu/Avotek/releases/latest/download/avotek.apk';
+    String apkUrl = kIsWeb
+        ? Uri.base.resolve('avotek.apk').toString()
+        : 'https://avotek.com.ng/avotek.apk';
 
     try {
       final fetchedUrl = await SupabaseService.instance.getAppSetting(
         'apk_download_url',
       );
-      if (fetchedUrl != null && fetchedUrl.trim().isNotEmpty) {
+      if (fetchedUrl != null &&
+          fetchedUrl.trim().isNotEmpty &&
+          !fetchedUrl.contains('releases/latest/download')) {
         apkUrl = fetchedUrl.trim();
+        if (kIsWeb &&
+            !apkUrl.startsWith('http://') &&
+            !apkUrl.startsWith('https://')) {
+          apkUrl = Uri.base
+              .resolve(apkUrl.startsWith('/') ? apkUrl.substring(1) : apkUrl)
+              .toString();
+        }
       }
     } catch (_) {}
 
