@@ -555,10 +555,10 @@ class _ExtraProviderServicesScreenState
       }
     } else if (_isAirtimePins) {
       final quantity = int.tryParse(_quantityController.text.trim());
-      if (quantity == null || quantity < 1 || quantity > 50) {
+      if (quantity == null || quantity < 1 || quantity > 10) {
         TopNotification.showWarning(
           context,
-          'Choose between 1 and 50 recharge PINs.',
+          'Choose between 1 and 10 recharge PINs.',
         );
         return;
       }

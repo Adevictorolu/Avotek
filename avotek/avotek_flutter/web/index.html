@@ -169,6 +169,66 @@
     // Fallback: hide loader after 3 seconds in case event already passed or took too long
     setTimeout(removeLoader, 3000);
   </script>
+  <script>
+    (function() {
+      var passwordFieldIndex = 0;
+
+      function setAttributeIfNeeded(element, name, value) {
+        if (element.getAttribute(name) !== value) {
+          element.setAttribute(name, value);
+        }
+      }
+
+      function disableAutofill(element) {
+        if (!element || element.nodeType !== 1) return;
+
+        var fields = [];
+        if (element.matches && element.matches('input[type="password"]')) {
+          fields.push(element);
+        }
+        if (element.querySelectorAll) {
+          fields = fields.concat(Array.prototype.slice.call(
+            element.querySelectorAll('input[type="password"]')
+          ));
+        }
+
+        fields.forEach(function(field) {
+          setAttributeIfNeeded(field, 'autocomplete', 'new-password');
+          if (!field.hasAttribute('data-avotek-password-field')) {
+            passwordFieldIndex += 1;
+            field.setAttribute('data-avotek-password-field', 'true');
+            setAttributeIfNeeded(
+              field,
+              'name',
+              'avotek-password-' + passwordFieldIndex
+            );
+          }
+          setAttributeIfNeeded(field, 'data-lpignore', 'true');
+          setAttributeIfNeeded(field, 'data-1p-ignore', 'true');
+          setAttributeIfNeeded(field, 'data-bwignore', 'true');
+        });
+      }
+
+      disableAutofill(document.documentElement);
+      new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'childList') {
+            mutation.addedNodes.forEach(disableAutofill);
+          } else if (mutation.type === 'attributes') {
+            disableAutofill(mutation.target);
+          }
+        });
+      }).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['autocomplete', 'name', 'type'],
+        childList: true,
+        subtree: true
+      });
+      document.addEventListener('focusin', function(event) {
+        disableAutofill(event.target);
+      }, true);
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

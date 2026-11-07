@@ -23,6 +23,8 @@ class LandingScreen extends StatefulWidget {
 class _LandingScreenState extends State<LandingScreen>
     with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _partnerMarqueeController = ScrollController();
+  final GlobalKey _partnerSetKey = GlobalKey();
 
   // GlobalKeys for smooth section navigation
   final GlobalKey _servicesKey = GlobalKey();
@@ -36,6 +38,8 @@ class _LandingScreenState extends State<LandingScreen>
   late AnimationController _animController;
   late Animation<double> _floatingAnim;
   Timer? _promoTimer;
+  Timer? _partnerMarqueeTimer;
+  bool _partnerMarqueePaused = false;
   List<Map<String, dynamic>> _customPromoSlides = [];
   int _activePromoPage = 0;
 
@@ -67,6 +71,25 @@ class _LandingScreenState extends State<LandingScreen>
         );
       }
     });
+    _partnerMarqueeTimer = Timer.periodic(
+      const Duration(milliseconds: 30),
+      (_) => _advancePartnerMarquee(),
+    );
+  }
+
+  void _advancePartnerMarquee() {
+    if (_partnerMarqueePaused || !_partnerMarqueeController.hasClients) return;
+    final setWidth = _partnerSetKey.currentContext?.size?.width;
+    if (setWidth == null || setWidth <= 0) return;
+
+    final position = _partnerMarqueeController.position;
+    final cycleWidth = setWidth + 24;
+    final nextOffset = position.pixels + 0.72;
+    if (nextOffset >= cycleWidth) {
+      _partnerMarqueeController.jumpTo(nextOffset - cycleWidth);
+    } else if (nextOffset <= position.maxScrollExtent) {
+      _partnerMarqueeController.jumpTo(nextOffset);
+    }
   }
 
   Future<void> _loadHomepagePromotions() async {
@@ -145,9 +168,11 @@ class _LandingScreenState extends State<LandingScreen>
   @override
   void dispose() {
     _promoTimer?.cancel();
+    _partnerMarqueeTimer?.cancel();
     _promoPageController.dispose();
     _animController.dispose();
     _scrollController.dispose();
+    _partnerMarqueeController.dispose();
     super.dispose();
   }
 
@@ -1640,7 +1665,74 @@ class _LandingScreenState extends State<LandingScreen>
       ('STARTIMES', 'assets/images/brands/startimes.png'),
       ('WAEC', 'assets/images/brands/waec.png'),
       ('NECO', 'assets/images/brands/neco.png'),
+      ('PAYSTACK', 'assets/images/brands/paystack.png'),
     ];
+
+    Widget buildPartnerCards({Key? key}) => Row(
+      key: key,
+      mainAxisSize: MainAxisSize.min,
+      children: partners.map((partner) {
+        final isPaystack = partner.$1 == 'PAYSTACK';
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF131724) : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF222B3D)
+                    : const Color(0xFFE2E8F0),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+            child: isPaystack
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: Image.asset(
+                      partner.$2,
+                      width: 70,
+                      height: 28,
+                      fit: BoxFit.contain,
+                    ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          partner.$2,
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              ServiceBrandLogo(provider: partner.$1, size: 28),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        partner.$1,
+                        style: GoogleFonts.figtree(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        );
+      }).toList(),
+    );
 
     return Container(
       width: double.infinity,
@@ -1649,7 +1741,7 @@ class _LandingScreenState extends State<LandingScreen>
       child: Column(
         children: [
           Text(
-            'POWERING ALL MAJOR NIGERIAN TELECOM NETWORKS & UTILITY PROVIDERS',
+            'TRUSTED TELECOM, BILL PAYMENT & PAYMENT PARTNERS',
             style: GoogleFonts.figtree(
               fontSize: 11,
               fontWeight: FontWeight.w800,
@@ -1658,67 +1750,24 @@ class _LandingScreenState extends State<LandingScreen>
             ),
           ),
           const SizedBox(height: 20),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(width: 24),
-                ...partners.map(
-                  (p) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF131724) : Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF222B3D)
-                              : const Color(0xFFE2E8F0),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 8,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.asset(
-                              p.$2,
-                              width: 28,
-                              height: 28,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  ServiceBrandLogo(provider: p.$1, size: 28),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            p.$1,
-                            style: GoogleFonts.figtree(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF0F172A),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 24),
-              ],
+          MouseRegion(
+            onEnter: (_) => _partnerMarqueePaused = true,
+            onExit: (_) => _partnerMarqueePaused = false,
+            child: SingleChildScrollView(
+              controller: _partnerMarqueeController,
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  const SizedBox(width: 24),
+                  for (var copy = 0; copy < 3; copy++) ...[
+                    copy == 0
+                        ? buildPartnerCards(key: _partnerSetKey)
+                        : ExcludeSemantics(child: buildPartnerCards()),
+                    const SizedBox(width: 24),
+                  ],
+                ],
+              ),
             ),
           ),
         ],

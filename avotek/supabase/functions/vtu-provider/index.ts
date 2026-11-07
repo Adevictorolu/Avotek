@@ -361,11 +361,17 @@ async function getBigisubRechargeCardPlans(
     );
   }
 
+  const providerPlans = extractList(plansResponse.providerBody, ["plans", "data", "results"]);
   const expectedNetworkId = mapNetworkToId(network);
-  return extractList(plansResponse.providerBody, ["plans", "data", "results"])
+  return providerPlans
     .flatMap((plan) => {
-      const rawNetwork = plan.network_id ?? plan.network ?? plan.network_code ??
-        plan.network_name;
+      const networkValue = plan.network_id ?? plan.networkId ?? plan.networkID ??
+        plan.networkid ?? plan.provider_network_id ?? plan.network ??
+        plan.network_code ?? plan.network_name ?? plan.network_type;
+      const rawNetwork = isRecord(networkValue)
+        ? networkValue.network_id ?? networkValue.id ?? networkValue.code ??
+          networkValue.name
+        : networkValue;
       let planNetworkId: number | null = null;
       if (rawNetwork !== undefined && rawNetwork !== null) {
         const value = String(rawNetwork).trim();
@@ -380,16 +386,28 @@ async function getBigisubRechargeCardPlans(
           const networkName = getRechargeNetworkName(rawNetwork);
           planNetworkId = networkName ? mapNetworkToId(networkName) : null;
         }
+      } else {
+        const label = String(
+          plan.card_name ?? plan.plan_name ?? plan.name ?? plan.title ?? "",
+        ).toLowerCase();
+        if (/\bmtn\b/.test(label)) planNetworkId = 1;
+        else if (/\bairtel\b/.test(label)) planNetworkId = 2;
+        else if (/\bglo\b/.test(label)) planNetworkId = 3;
+        else if (/\b(9mobile|etisalat|t2)\b/.test(label)) planNetworkId = 4;
       }
       if (planNetworkId === null || planNetworkId !== expectedNetworkId) {
         return [];
       }
 
-      const id = plan.plan_id ?? plan.id ?? plan.plan ?? plan.code;
-      const amount = Number(
-        plan.amount ?? plan.price ?? plan.plan_amount ?? plan.plan_price ??
-          plan.card_value ?? plan.value,
-      );
+      const id = plan.provider_plan_id ?? plan.plan_id ?? plan.id ??
+        plan.plan ?? plan.plan_type ?? plan.variation_code ?? plan.code;
+      const rawAmount = plan.amount ?? plan.price ?? plan.plan_amount ??
+        plan.plan_price ?? plan.regular_price ?? plan.corporate_price ??
+        plan.card_value ?? plan.value ?? plan.price_ngn ?? plan.amount_ngn ??
+        plan.selling_price;
+      const amount = typeof rawAmount === "string"
+        ? Number(rawAmount.replace(/[^\d.]/g, ""))
+        : Number(rawAmount);
       if (
         id === undefined || id === null ||
         !Number.isFinite(amount) || amount <= 0
@@ -397,9 +415,15 @@ async function getBigisubRechargeCardPlans(
         return [];
       }
 
+      const rawFaceValue = plan.size ?? plan.card_value ?? plan.value;
+      const faceValue = typeof rawFaceValue === "string"
+        ? Number(rawFaceValue.replace(/[^\d.]/g, ""))
+        : Number(rawFaceValue);
       const name = String(
         plan.card_name ?? plan.plan_name ?? plan.name ?? plan.title ??
-          `₦${amount}`,
+          (Number.isFinite(faceValue) && faceValue > 0
+            ? `₦${faceValue}`
+            : `₦${amount}`),
       ).trim();
       return [{
         ...plan,
@@ -532,8 +556,8 @@ function validatePayload(action: string, payload: JsonMap): void {
     if (!planType || planType.length > 100) {
       throw new Error("Choose a valid recharge-card denomination.");
     }
-    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 50) {
-      throw new Error("Choose between 1 and 50 recharge cards.");
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
+      throw new Error("Choose between 1 and 10 recharge cards.");
     }
     if (!Number.isFinite(chargeAmount) || chargeAmount <= 0) {
       throw new Error("Invalid recharge-card amount.");
@@ -846,12 +870,14 @@ async function dispatchBigisubRequest(
 function extractPinsFromResponse(body: JsonMap): Array<{ pin: string; serial?: string }> {
   const result: Array<{ pin: string; serial?: string }> = [];
   const data = isRecord(body.data) ? body.data : {};
-  const rawPinList = data.pin ?? body.pin;
-  const rawSerialList = data.serial ?? body.serial;
-  if (typeof rawPinList === "string") {
-    const pins = rawPinList.split(",").map((pin) => pin.trim()).filter(Boolean);
-    const serials = typeof rawSerialList === "string"
-      ? rawSerialList.split(",").map((serial) => serial.trim())
+  const rawPinList = data.pin ?? data.pin_code ?? data.card_pin ?? data.token ??
+    body.pin ?? body.pin_code ?? body.card_pin ?? body.token;
+  const rawSerialList = data.serial ?? data.serial_number ?? data.serial_no ??
+    body.serial ?? body.serial_number ?? body.serial_no;
+  if (typeof rawPinList === "string" || typeof rawPinList === "number") {
+    const pins = String(rawPinList).split(",").map((pin) => pin.trim()).filter(Boolean);
+    const serials = typeof rawSerialList === "string" || typeof rawSerialList === "number"
+      ? String(rawSerialList).split(",").map((serial) => serial.trim())
       : [];
     if (pins.length > 0) {
       return pins.map((pin, index) => ({
@@ -861,22 +887,39 @@ function extractPinsFromResponse(body: JsonMap): Array<{ pin: string; serial?: s
     }
   }
 
-  const candidates = [body.data, body.pins, body.cards, body.tokens, body];
+  const candidates = [
+    rawPinList,
+    data.pins,
+    data.cards,
+    data.tokens,
+    data.results,
+    Array.isArray(body.data) ? body.data : undefined,
+    body.pins,
+    body.cards,
+    body.tokens,
+    body.results,
+    body,
+  ];
   for (const c of candidates) {
     if (Array.isArray(c)) {
       for (const item of c) {
         if (isRecord(item)) {
-          const pin = String(item.pin ?? item.pin_code ?? item.token ?? item.card_pin ?? "").trim();
-          const serial = String(item.serial ?? item.serial_number ?? item.serial_no ?? "").trim();
+          const rawPin = item.pin ?? item.pin_code ?? item.token ?? item.card_pin;
+          const rawSerial = item.serial ?? item.serial_number ?? item.serial_no;
+          const pin = typeof rawPin === "string" || typeof rawPin === "number"
+            ? String(rawPin).trim()
+            : "";
+          const serial = typeof rawSerial === "string" || typeof rawSerial === "number"
+            ? String(rawSerial).trim()
+            : "";
           if (pin) result.push({ pin, serial: serial || undefined });
-        } else if (typeof item === "string" && item.trim()) {
-          result.push({ pin: item.trim() });
+        } else if (
+          (typeof item === "string" || typeof item === "number") &&
+          String(item).trim()
+        ) {
+          result.push({ pin: String(item).trim() });
         }
       }
-    } else if (isRecord(c)) {
-      const pin = String(c.pin ?? c.pin_code ?? c.token ?? c.card_pin ?? "").trim();
-      const serial = String(c.serial ?? c.serial_number ?? c.serial_no ?? "").trim();
-      if (pin) result.push({ pin, serial: serial || undefined });
     }
   }
   return result;
@@ -2682,6 +2725,7 @@ Deno.serve(async (request) => {
             plan: selectedPlan.provider_plan_id,
             pin: bigisubPin,
             quantity,
+            name_on_card: String(payload.card_name ?? "Avotek"),
           },
         );
         finalStatus = normalizedProviderStatus(

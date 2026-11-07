@@ -20,10 +20,13 @@ not prove that a provider credential is valid or that a real transaction works.
   screens, server-side pricing and wallet reservation, and a status-recheck
   path; their hub cards remain disabled until authenticated settlement is
   verified and the provider function is deployed.
-- Airtime recharge-card printing is now wired to Bigisub's plan and purchase
-  routes, but is not launch-certified until authenticated provider tests verify
-  plan pricing, voucher responses, and settlement. ISP subscriptions, betting
-  wallet funding, and Marketing Hub remain unimplemented.
+- Airtime recharge-card printing is integrated with Bigisub's plan and purchase
+  routes. The deployed catalog has returned network-specific denominations and
+  prices. The latest local purchase handler enforces Bigisub's documented
+  1-10 quantity limit and forwards the optional cardholder name, but it has not
+  been redeployed. A live voucher purchase and settlement remain unverified;
+  Bigisub does not offer a sandbox. ISP subscriptions, betting wallet funding,
+  and Marketing Hub remain unimplemented.
 
 ## Not yet verified or implemented
 
@@ -43,9 +46,9 @@ not prove that a provider credential is valid or that a real transaction works.
 - The documented result-checker and SMS contracts are now wired into the app.
   They have not been exercised with an authenticated provider account; SMS
   charges remain pending until provider status and cost are confirmed. The
-  airtime recharge-PIN adapter now uses Bigisub, but has not passed authenticated
-  pricing and voucher-fulfillment tests. ISP, betting, and Marketing Hub remain
-  unavailable.
+  airtime recharge-PIN catalog is live and returns plans for all four supported
+  networks, but voucher fulfillment has not been tested with a purchase. ISP,
+  betting, and Marketing Hub remain unavailable.
 - The Avotek admin page links to provider/project consoles; it is not yet a
   server-authorized console for global activity, user creation/deletion, or
   service-price changes. Do not expose those operations using the client-side
@@ -399,13 +402,19 @@ transaction requery. Previously checked database migrations are applied;
 `vtu-provider` and `paystack-payments` are deployed. The new
 `20261107010000_fix_referral_rewards_and_leaderboard.sql` migration still must
 be applied. The VTU endpoint responds to CORS preflight and rejects
-unauthenticated requests, but no authenticated provider operation has been
-run. Paystack's callback is configured, and its unauthenticated initialization
+unauthenticated purchase requests. Its public Bigisub catalog returned 12
+plans (four MTN, three Airtel, three Glo, and two 9mobile), including current
+denomination and corporate/regular price fields. This verifies plan retrieval
+and parsing, not voucher purchase or settlement. The documented purchase
+example returns `ident` and `tran_id` but does not show the generated PIN
+payload, so card delivery still needs a provider-confirmed response contract
+and a controlled live test. Paystack's callback is configured, and its unauthenticated initialization
 request reaches the authentication check. This does not validate the Paystack
 key or prove that wallet funding works. Neither integration has passed
 authenticated end-to-end transaction testing. The VTU adapter now provides
 result-checker PINs, bulk SMS, and Bigisub airtime recharge-card printing in
-code, but none has passed authenticated provider settlement testing. It does
+code, but these services have not passed authenticated provider settlement
+testing. It does
 not provide ISP subscriptions, betting, Marketing Hub services, transactional
 email, or gift voucher issuance/redemption. Betting has been removed from the
 service menu;
@@ -417,8 +426,10 @@ success.
 `vtu-provider` endpoint returned HTTP 200 for its CORS preflight and HTTP 401
 for an unauthenticated read request, confirming endpoint routing and the
 authentication boundary without performing a purchase. `BIGISUB_API_TOKEN`
-and `BIGISUB_TRANSACTION_PIN` secret names exist, but their values and upstream
-operations have not been authenticated or validated. A direct request to
+and `BIGISUB_TRANSACTION_PIN` secret names exist. The public Bigisub plan
+catalog returned 12 plans across MTN, Airtel, Glo, and 9mobile. This does not
+verify a paid purchase, voucher response, or settlement; no live purchase was
+initiated. A direct request to
 `paystack-payments` with a valid JSON body and no user token returned HTTP 401,
 “Authentication is required,” reaching the authentication check rather than
 the missing-configuration response. `PAYSTACK_CALLBACK_URL` is configured.
@@ -439,11 +450,11 @@ Before enabling customers to transact:
    redeploy it and perform authenticated non-purchase checks. Set the rotated
    Paystack key under `PAYSTACK_SECRET_KEY` and redeploy `paystack-payments`.
    Confirm functions authorize signed-in users where required.
-3. Confirm the airtime recharge-PIN plan fields, price rules, quantity
-   contract, and status/refund meanings against the current authenticated
-   provider documentation and approved test account. The customer phone number
-   must not be sent for airtime PIN generation unless Bigisub's contract
-   requires it.
+3. Confirm which Bigisub price tier the production account is charged,
+   along with the quantity contract and status/refund meanings, against the
+   current authenticated provider documentation and approved test account. The
+   customer phone number must not be sent for airtime PIN generation unless
+   Bigisub's contract requires it.
 4. Test provider balance, each supported service, pending/requery behavior,
    wallet reservation and refund idempotency, and reconciliation using a
    funded test account. Keep ambiguous results pending; do not retry them as a
