@@ -370,6 +370,52 @@ class VtuApiService {
     return const [];
   }
 
+  Future<List<Map<String, dynamic>>> getEsimPlans({
+    String? location,
+    String? search,
+  }) async {
+    final response = await _invoke(
+      'esim.plans',
+      payload: {
+        if (location != null && location.isNotEmpty) 'location': location,
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
+    final data = response['data'];
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    return const [];
+  }
+
+  Future<List<Map<String, dynamic>>> getMyEsims() async {
+    final response = await _invoke('esim.my');
+    final data = response['data'];
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    return const [];
+  }
+
+  Future<Map<String, dynamic>> purchaseEsim({
+    required int planId,
+    required double sellPrice,
+    required String pin,
+  }) => _invoke(
+    'esim.purchase',
+    userPin: pin,
+    payload: {
+      'plan_id': planId,
+      'sell_price': sellPrice,
+    },
+  );
+
   Future<Map<String, dynamic>> purchaseDataCardPins({
     required int networkId,
     required String planType,

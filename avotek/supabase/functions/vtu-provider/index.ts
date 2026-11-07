@@ -96,6 +96,8 @@ function extractProviderReference(body: JsonMap): string | null {
     data.transaction_id ??
     data.tran_id ??
     data.tranx_id ??
+    data.transid ??
+    data.trans_id ??
     data.job_id ??
     data.reference ??
     data.ident ??
@@ -103,6 +105,8 @@ function extractProviderReference(body: JsonMap): string | null {
     body.transaction_id ??
     body.tran_id ??
     body.tranx_id ??
+    body.transid ??
+    body.trans_id ??
     body.job_id ??
     body.reference ??
     body.ident ??
@@ -163,6 +167,7 @@ async function saveVtuOrder(
     "data_card.purchase": "data_card",
     "education.purchase": "education",
     "electricity.purchase": "electricity",
+    "esim.purchase": "esim",
   };
   const serviceType = serviceTypeByAction[action];
   if (!serviceType || amount === null) return false;
@@ -177,13 +182,23 @@ async function saveVtuOrder(
     id: reference,
     user_id: userId,
     service_type: serviceType,
-    network: String(payload.network ?? payload.cable_type ?? payload.exam ?? serviceType),
+    network: String(
+      payload.network ?? payload.cable_type ?? payload.exam ??
+        payload.location_code ?? serviceType,
+    ),
     phone: String(payload.phone_number ?? payload.phone ?? payload.card_no ?? payload.iuc ?? payload.meter_no ?? ""),
-    plan: String(payload.plan ?? payload.data_plan ?? payload.variation_code ?? payload.plan_type ?? payload.exam_id ?? payload.card_name ?? ""),
+    plan: String(
+      payload.plan ?? payload.data_plan ?? payload.variation_code ??
+        payload.plan_type ?? payload.exam_id ?? payload.plan_id ??
+        payload.card_name ?? "",
+    ),
     amount,
     status: status === "completed" ? "successful" : status,
     provider_reference: providerReference,
-    token: String(responseData.token ?? responseData.meter_token ?? responseData.pin ?? providerResponse.token ?? providerResponse.pin ?? "") || null,
+    token: String(
+      responseData.token ?? responseData.meter_token ?? responseData.pin ??
+        responseData.ac ?? providerResponse.token ?? providerResponse.pin ?? "",
+    ) || null,
   }, { onConflict: "id" });
   if (error) throw error;
   return true;
@@ -437,6 +452,44 @@ async function getBigisubRechargeCardPlans(
     });
 }
 
+async function getBilalEsimPlans(
+  token: string,
+  location?: string,
+  search?: string,
+): Promise<JsonMap[]> {
+  const query = new URLSearchParams();
+  if (location) query.set("location", location);
+  if (search) query.set("search", search);
+  const queryString = query.toString();
+  const url = `${bilalBaseUrl}/api/esim/plans${queryString ? `?${queryString}` : ""}`;
+  const { upstream, providerBody } = await dispatchBilalRequest(url, "GET", token);
+  if (!upstream.ok) {
+    throw new Error(`Could not load eSIM plans (HTTP ${upstream.status}).`);
+  }
+
+  return extractList(providerBody, ["data"]).flatMap((locationGroup) => {
+    const rawPlans = Array.isArray(locationGroup.plans)
+      ? locationGroup.plans
+      : [];
+    return rawPlans.filter(isRecord).flatMap((plan) => {
+      const id = Number(plan.id ?? plan.plan_id);
+      const price = Number(plan.price_ngn);
+      if (!Number.isInteger(id) || id <= 0 || !Number.isFinite(price) || price <= 0) {
+        return [];
+      }
+      return [{
+        ...plan,
+        id,
+        plan_id: id,
+        location_code: String(locationGroup.location_code ?? ""),
+        location_name: String(locationGroup.location_name ?? "International"),
+        location_logo: String(locationGroup.location_logo ?? ""),
+        base_price: price,
+      }];
+    });
+  });
+}
+
 function mapCableToId(cable: unknown): number {
   if (typeof cable === "number" && cable >= 1 && cable <= 3) return cable;
   const s = String(cable ?? "").toLowerCase();
@@ -582,6 +635,23 @@ function validatePayload(action: string, payload: JsonMap): void {
     }
     if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
       throw new Error("Invalid data-card price.");
+    }
+  }
+  if (action === "esim.plans") {
+    const location = String(payload.location ?? "").trim();
+    const search = String(payload.search ?? "").trim();
+    if (location.length > 32 || search.length > 100) {
+      throw new Error("The eSIM search is too long.");
+    }
+  }
+  if (action === "esim.purchase") {
+    const planId = Number(payload.plan_id);
+    const sellPrice = Number(payload.sell_price);
+    if (!Number.isInteger(planId) || planId <= 0) {
+      throw new Error("Choose a valid eSIM plan.");
+    }
+    if (!Number.isFinite(sellPrice) || sellPrice <= 0) {
+      throw new Error("The selected eSIM price is invalid. Refresh plans and try again.");
     }
   }
   if (
@@ -1011,6 +1081,8 @@ Deno.serve(async (request) => {
     : action === "airtime_pin.plans" || action === "airtime_pin.purchase"
     ? Boolean(bigisubToken) &&
       (action !== "airtime_pin.purchase" || Boolean(bigisubPin))
+    : ["esim.plans", "esim.my", "esim.purchase"].includes(action)
+    ? Boolean(bilalToken)
     : Boolean(bilalToken) ||
       [
       "education.prices",
@@ -1328,6 +1400,149 @@ Deno.serve(async (request) => {
         provider: "Avotek Core Telecom Engine",
       },
     });
+  }
+
+  if (action === "esim.plans") {
+    try {
+      const plans = await getBilalEsimPlans(
+        bilalToken,
+        String(payload.location ?? "").trim() || undefined,
+        String(payload.search ?? "").trim() || undefined,
+      );
+      if (plans.length === 0) {
+        return jsonResponse({
+          success: true,
+          status: "success",
+          data: [],
+        });
+      }
+      const pricingRule = getServicePricingRule(
+        await getPricingOverrides(supabaseUrl),
+      );
+      const pricedPlans = plans.map((plan) => {
+        const amount = roundedServicePrice(Number(plan.base_price), pricingRule);
+        return { ...plan, amount, price: amount };
+      }).sort((a, b) => Number(a.amount) - Number(b.amount));
+      return jsonResponse({
+        success: true,
+        status: "success",
+        data: pricedPlans,
+      });
+    } catch (error) {
+      console.error("BilalSadaSub eSIM catalog failed:", error);
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: error instanceof Error
+          ? error.message
+          : "eSIM plans are temporarily unavailable.",
+      }, 503);
+    }
+  }
+
+  if (action === "esim.my") {
+    const userId = authData?.user.id;
+    if (!userId) {
+      return jsonResponse({ message: "Authentication is required." }, 401);
+    }
+    try {
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (!serviceRoleKey) {
+        throw new Error("Missing Supabase service-role configuration.");
+      }
+      const admin = createClient(supabaseUrl, serviceRoleKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: orders, error: ordersError } = await admin
+        .from("vtu_orders")
+        .select("id, provider_reference, plan, amount, status")
+        .eq("user_id", userId)
+        .eq("service_type", "esim")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (ordersError) throw ordersError;
+      if (!orders?.length) {
+        return jsonResponse({
+          success: true,
+          status: "success",
+          data: [],
+        });
+      }
+
+      const { upstream, providerBody } = await dispatchBilalRequest(
+        `${bilalBaseUrl}/api/esim/my-esims?refresh=true`,
+        "GET",
+        bilalToken,
+      );
+      if (!upstream.ok) {
+        throw new Error(`Could not refresh eSIM details (HTTP ${upstream.status}).`);
+      }
+      const providerEsims = extractList(providerBody, ["data"]);
+      const ownedEsims: JsonMap[] = [];
+
+      for (const order of orders ?? []) {
+        const savedReference = String(order.provider_reference ?? "").trim();
+        if (!savedReference) continue;
+        const esim = providerEsims.find((item) =>
+          String(
+            item.transid ?? item.reference ?? item.request_id ??
+              item["request-id"] ?? "",
+          ).trim() === savedReference
+        );
+        if (!esim) continue;
+
+        const rawStatus = String(esim.status ?? "").trim().toLowerCase();
+        const latestStatus = rawStatus === "success"
+          ? "completed"
+          : rawStatus === "failed"
+          ? "failed"
+          : "pending";
+        if (order.status === "pending" && latestStatus !== "pending") {
+          const message = latestStatus === "completed"
+            ? "eSIM provisioned successfully."
+            : "eSIM provisioning failed; the provider has marked it for refund.";
+          await finalizePurchase(
+            supabaseUrl,
+            String(order.id),
+            latestStatus,
+            message,
+            userId,
+          );
+          const { error: updateError } = await admin
+            .from("vtu_orders")
+            .update({
+              status: latestStatus === "completed" ? "successful" : "failed",
+              token: String(esim.ac ?? "").trim() || null,
+            })
+            .eq("id", order.id)
+            .eq("user_id", userId);
+          if (updateError) throw updateError;
+        }
+
+        ownedEsims.push({
+          ...sanitizeProviderResponseForCustomer(esim) as JsonMap,
+          local_reference: order.id,
+          charged_amount: order.amount,
+          plan_id: order.plan,
+          status: latestStatus,
+        });
+      }
+
+      return jsonResponse({
+        success: true,
+        status: "success",
+        data: ownedEsims,
+      });
+    } catch (error) {
+      console.error("Could not load the user's eSIMs:", error);
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: error instanceof Error
+          ? error.message
+          : "Your eSIMs are temporarily unavailable.",
+      }, 503);
+    }
   }
 
   // --- DATA PLANS (combine BilalSadaSub and Bigisub catalogs) ---
@@ -2032,6 +2247,7 @@ Deno.serve(async (request) => {
     "cable.purchase",
     "electricity.purchase",
     "airtime_pin.purchase",
+    "esim.purchase",
     "sms.send",
   ].includes(action)
     ? await getPricingOverrides(supabaseUrl)
@@ -2085,6 +2301,42 @@ Deno.serve(async (request) => {
   // Determine the customer charge independently from the upstream amount.
   if (action === "airtime.purchase") {
     purchaseAmount = Number(payload.amount);
+  } else if (action === "esim.purchase") {
+    let plans: JsonMap[];
+    try {
+      plans = await getBilalEsimPlans(bilalToken);
+    } catch (error) {
+      console.error("Could not verify the selected eSIM plan:", error);
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: "Could not verify this eSIM plan's current price. Refresh plans and try again.",
+      }, 503);
+    }
+    const planId = Number(payload.plan_id);
+    const selectedPlan = plans.find((plan) => Number(plan.id) === planId);
+    const basePrice = Number(selectedPlan?.base_price);
+    if (!Number.isFinite(basePrice) || basePrice <= 0) {
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: "This eSIM plan is no longer available. Refresh plans and try again.",
+      }, 409);
+    }
+    providerBaseAmount = basePrice;
+    purchaseAmount = roundedServicePrice(
+      basePrice,
+      getServicePricingRule(purchasePricingOverrides),
+    );
+    const requestedPrice = Number(payload.sell_price);
+    if (!Number.isFinite(requestedPrice) || Math.abs(requestedPrice - purchaseAmount) > 0.01) {
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: "The eSIM plan price changed. Refresh plans before purchasing.",
+        current_price: purchaseAmount,
+      }, 409);
+    }
   } else if (action === "data.purchase") {
     const networkName = mapNetworkToName(payload.network);
     const netId = mapNetworkToId(payload.network);
@@ -2796,6 +3048,44 @@ Deno.serve(async (request) => {
         providerResponse.pin = pins.map((p) => p.pin).join("\n");
         if (pins[0]?.serial) providerResponse.serial = pins[0].serial;
       }
+    }
+
+    else if (action === "esim.purchase") {
+      const esimRes = await dispatchBilalRequest(
+        `${bilalBaseUrl}/api/esim/buy`,
+        "POST",
+        bilalToken,
+        {
+          plan_id: Number(payload.plan_id),
+          "request-id": reference,
+        },
+      );
+      providerResponse = esimRes.providerBody;
+      const esimData = isRecord(providerResponse.data)
+        ? providerResponse.data
+        : {};
+      const planStatus = Number(esimData.plan_status);
+      const hasInstallDetails = Boolean(
+        String(esimData.ac ?? "").trim() ||
+          String(esimData.qr_code ?? "").trim(),
+      );
+      const fallbackStatus = normalizedProviderStatus(
+        providerResponse,
+        esimRes.upstream.ok,
+      );
+      finalStatus = !esimRes.upstream.ok
+        ? fallbackStatus === "failed" ? "failed" : "pending"
+        : planStatus === 0
+        ? "pending"
+        : planStatus === 1
+        ? "completed"
+        : planStatus === 2
+        ? "failed"
+        : hasInstallDetails
+        ? "completed"
+        : fallbackStatus === "failed"
+        ? "failed"
+        : "pending";
     }
 
     // Determine final message

@@ -160,7 +160,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
               // 1. MOBILE SERVICES
               _buildCategorySection(
                 title: 'MOBILE SERVICES',
-                count: 6,
+                count: 7,
                 isDark: isDark,
                 cards: [
                   _ServiceCardData(
@@ -174,6 +174,12 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                     icon: Icons.wifi_rounded,
                     isPopular: true,
                     onTap: () => context.push('/services/data'),
+                  ),
+                  _ServiceCardData(
+                    title: 'Travel eSIM',
+                    icon: Icons.sim_card_rounded,
+                    isPopular: true,
+                    onTap: () => context.push('/services/esim'),
                   ),
                   _ServiceCardData(
                     title: 'Bulk SMS',

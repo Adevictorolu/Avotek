@@ -20,6 +20,10 @@ not prove that a provider credential is valid or that a real transaction works.
   screens, server-side pricing and wallet reservation, and a status-recheck
   path; their hub cards remain disabled until authenticated settlement is
   verified and the provider function is deployed.
+- Travel eSIM plans, wallet-reserved purchases, and a user-scoped “My eSIMs”
+  screen are wired to BilalSadaSub's documented catalog, buy, and refresh
+  endpoints. The provider provisions asynchronously; authenticated plan loading
+  and a real purchase have not yet been verified.
 - Airtime recharge-card printing is integrated with Bigisub's plan and purchase
   routes. The deployed catalog has returned network-specific denominations and
   prices. The latest local purchase handler enforces Bigisub's documented

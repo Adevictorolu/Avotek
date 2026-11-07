@@ -24,6 +24,7 @@ import '../../screens/rates/pricing_screen.dart';
 import '../../screens/services/airtime_screen.dart';
 import '../../screens/services/cable_screen.dart';
 import '../../screens/services/data_screen.dart';
+import '../../screens/services/esim_screen.dart';
 import '../../screens/services/electricity_screen.dart';
 import '../../screens/services/extra_provider_services_screen.dart';
 import '../../screens/services/internet_screen.dart';
@@ -384,6 +385,14 @@ class AppRouter {
             context,
             state,
             const DataScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/services/esim',
+          pageBuilder: (context, state) => buildAvotekTransitionPage(
+            context,
+            state,
+            EsimScreen(onToggleTheme: themeToggle),
           ),
         ),
         GoRoute(

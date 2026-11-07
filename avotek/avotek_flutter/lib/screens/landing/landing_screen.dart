@@ -412,9 +412,9 @@ class _LandingScreenState extends State<LandingScreen>
             onTap: () => context.go('/'),
             borderRadius: BorderRadius.circular(8),
             child: const AvotekLogo(
-              size: 48,
+              size: 56,
               showText: true,
-              useAssetImage: false,
+              isLarge: true,
             ),
           ),
           if (isDesktop && hasRoomForNavigation)
