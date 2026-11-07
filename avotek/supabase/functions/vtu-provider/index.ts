@@ -384,6 +384,7 @@ async function getBigisubRechargeCardPlans(
 
   const providerPlans = extractList(plansResponse.providerBody, ["plans", "data", "results"]);
   const expectedNetworkId = mapNetworkToId(network);
+  const allInfoString = providerPlans.map((p) => String(p.info ?? "")).join("\n");
   return providerPlans
     .flatMap((plan) => {
       const networkValue = plan.network_id ?? plan.networkId ?? plan.networkID ??
@@ -446,6 +447,16 @@ async function getBigisubRechargeCardPlans(
             ? `₦${faceValue}`
             : `₦${amount}`),
       ).trim();
+      let availableStock: number | null = null;
+      if (allInfoString) {
+        const netRegexName = expectedNetwork === "9MOBILE" ? "(?:9MOBILE|T2|ETISALAT)" : expectedNetwork;
+        const faceValOrSize = faceValue || amount;
+        const stockMatch = allInfoString.match(new RegExp(`AVAILABLE\\s+${netRegexName}\\s+N${faceValOrSize}\\s+PIN\\s*-\\s*(\\d+)`, "i"));
+        if (stockMatch) {
+          availableStock = Number(stockMatch[1]);
+        }
+      }
+      const isAvailable = availableStock === null || availableStock > 0;
       return [{
         ...plan,
         plan_type: String(id),
@@ -454,6 +465,8 @@ async function getBigisubRechargeCardPlans(
         base_price: amount,
         name,
         card_name: String(plan.card_name ?? name),
+        available_stock: availableStock,
+        is_available: isAvailable,
       }];
     });
 }
@@ -670,7 +683,7 @@ function validatePayload(action: string, payload: JsonMap): void {
     if (network !== 1 && network !== 2) {
       throw new Error("Airtime to Cash supports MTN and Airtel only.");
     }
-    if (!/^234\d{10}$/.test(phone)) {
+    if (!/^0\d{10}$/.test(phone)) {
       throw new Error("Enter a valid MTN or Airtel phone number.");
     }
     const verificationData = String(
@@ -2559,6 +2572,13 @@ Deno.serve(async (request) => {
     const selectedPlan = plans.find((plan) =>
       String(plan.plan_type) === String(payload.plan_type)
     );
+    if (selectedPlan && (selectedPlan.is_available === false || (typeof selectedPlan.available_stock === "number" && selectedPlan.available_stock < qty))) {
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        message: `This denomination is currently out of stock from the provider (Available: ${selectedPlan.available_stock ?? 0}). Please select another denomination.`,
+      }, 400);
+    }
     const basePrice = Number(selectedPlan?.base_price);
     if (!Number.isFinite(basePrice) || basePrice <= 0) {
       return jsonResponse({
@@ -2979,17 +2999,30 @@ Deno.serve(async (request) => {
         providerResponse = { message: "The selected recharge-card denomination is no longer available." };
       }
       if (finalStatus !== "failed" && selectedPlan) {
-        const bigiRes = await dispatchBigisubRequest(
-          `${bigisubBaseUrl}/api/v2/vtu/recharge-pin/purchase/`,
-          "POST",
-          bigisubToken ?? "",
-          {
-            plan: selectedPlan.provider_plan_id,
-            pin: bigisubPin,
-            quantity,
-            name_on_card: String(payload.card_name ?? "Avotek"),
-          },
-        );
+        if (selectedPlan.is_available === false || (typeof selectedPlan.available_stock === "number" && selectedPlan.available_stock < quantity)) {
+          finalStatus = "failed";
+          providerResponse = {
+            message: `This denomination is currently out of stock from the provider (Available: ${selectedPlan.available_stock ?? 0}). Please select another denomination.`,
+          };
+        } else {
+          const providerNetId = (selectedPlan.network !== undefined && selectedPlan.network !== null && Number(selectedPlan.network) > 0)
+            ? Number(selectedPlan.network)
+            : mapNetworkToBigisubId(payload.network);
+          const bigiRes = await dispatchBigisubRequest(
+            `${bigisubBaseUrl}/api/v2/vtu/recharge-pin/purchase/`,
+            "POST",
+            bigisubToken ?? "",
+            {
+              network: providerNetId,
+              plan: selectedPlan.provider_plan_id,
+              plan_id: selectedPlan.provider_plan_id,
+              pin: bigisubPin,
+              quantity,
+              name_on_card: String(payload.card_name ?? "Avotek"),
+              card_name: String(payload.card_name ?? "Avotek"),
+              business_name: String(payload.card_name ?? "Avotek"),
+            },
+          );
         finalStatus = normalizedProviderStatus(
           bigiRes.providerBody,
           bigiRes.upstream.ok,
@@ -3008,6 +3041,7 @@ Deno.serve(async (request) => {
           providerResponse.cards = pins;
           providerResponse.pin = pins.map((item) => item.pin).join("\n");
           providerResponse.serial = pins.map((item) => item.serial ?? "").join("\n");
+        }
         }
       }
     }

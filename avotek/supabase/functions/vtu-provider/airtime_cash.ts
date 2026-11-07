@@ -1,7 +1,7 @@
 export function normalizeAirtimeCashPhone(phone: unknown): string {
-  const digits = String(phone ?? "").trim().replace(/\D+/g, "");
-  if (digits.startsWith("0") && digits.length === 11) {
-    return `234${digits.slice(1)}`;
+  let digits = String(phone ?? "").trim().replace(/\D+/g, "");
+  if (digits.startsWith("234") && digits.length === 13) {
+    digits = `0${digits.slice(3)}`;
   }
   return digits;
 }

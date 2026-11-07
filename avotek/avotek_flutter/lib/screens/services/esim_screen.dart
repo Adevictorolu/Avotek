@@ -470,8 +470,23 @@ class _EsimScreenState extends State<EsimScreen> {
                   ),
                   if (locations.isNotEmpty) ...[
                     const SizedBox(height: 12),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _countryFilterChip('ALL', 'All Destinations', Icons.public_rounded, isDark),
+                          ...locations.map((loc) => _countryFilterChip(
+                            loc['code']!,
+                            loc['name']!,
+                            null,
+                            isDark,
+                          )),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      initialValue: _selectedLocation,
+                      value: _selectedLocation,
                       decoration: InputDecoration(
                         labelText: 'Destination',
                         filled: true,
@@ -625,6 +640,120 @@ class _EsimScreenState extends State<EsimScreen> {
     );
   }
 
+  Color _getCountryAccentColor(String code) {
+    if (code == 'ALL') return const Color(0xFF0052FF);
+    final hash = code.codeUnits.fold(0, (acc, c) => acc + c);
+    const colors = [
+      Color(0xFF0052FF),
+      Color(0xFF059669),
+      Color(0xFFD97706),
+      Color(0xFF7C3AED),
+      Color(0xFFDB2777),
+      Color(0xFF0284C7),
+      Color(0xFFEA580C),
+      Color(0xFF0D9488),
+    ];
+    return colors[hash % colors.length];
+  }
+
+  Widget _countryFilterChip(
+    String code,
+    String name,
+    IconData? icon,
+    bool isDark,
+  ) {
+    final isSelected = _selectedLocation == code;
+    final accent = _getCountryAccentColor(code);
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        onTap: () => setState(() => _selectedLocation = code),
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? accent
+                : (isDark
+                    ? accent.withValues(alpha: 0.14)
+                    : accent.withValues(alpha: 0.08)),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected
+                  ? accent
+                  : accent.withValues(alpha: isDark ? 0.4 : 0.25),
+              width: isSelected ? 1.8 : 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 15,
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark ? Colors.white70 : accent),
+                ),
+                const SizedBox(width: 5),
+              ],
+              Text(
+                name,
+                style: GoogleFonts.figtree(
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _specBadge(IconData icon, String label, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E2433) : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2E384D) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: const Color(0xFF0052FF)),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: GoogleFonts.figtree(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white70 : const Color(0xFF334155),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPlanCard(Map<String, dynamic> plan, bool isDark) {
     final amount = _numberValue(plan['amount'] ?? plan['price']);
     final name = (plan['name'] ?? 'Travel eSIM').toString();
@@ -632,20 +761,24 @@ class _EsimScreenState extends State<EsimScreen> {
     final duration = (plan['duration'] ?? '').toString();
     final unit = (plan['duration_unit'] ?? 'DAY').toString();
     final location = (plan['location_name'] ?? 'International').toString();
+    final locationCode = (plan['location_code'] ?? '').toString();
     final description = (plan['description'] ?? '').toString();
     final logo = (plan['location_logo'] ?? '').toString();
+    final countryAccent = _getCountryAccentColor(locationCode);
 
     return Card(
       color: isDark ? const Color(0xFF131722) : Colors.white,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
+      elevation: isDark ? 0 : 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         side: BorderSide(
           color: isDark ? const Color(0xFF23304B) : const Color(0xFFE2E8F0),
+          width: 1,
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -659,12 +792,24 @@ class _EsimScreenState extends State<EsimScreen> {
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
                         logo,
-                        width: 32,
-                        height: 24,
+                        width: 36,
+                        height: 26,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.public_rounded, size: 28),
+                            Icon(Icons.public_rounded, size: 28, color: countryAccent),
                       ),
+                    ),
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: countryAccent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.public_rounded, size: 22, color: countryAccent),
                     ),
                   ),
                 Expanded(
@@ -681,86 +826,118 @@ class _EsimScreenState extends State<EsimScreen> {
                               : const Color(0xFF0F172A),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        location,
-                        style: GoogleFonts.figtree(
-                          color: isDark ? Colors.white70 : Colors.black54,
+                      const SizedBox(height: 5),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: countryAccent.withValues(alpha: isDark ? 0.2 : 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: countryAccent.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Text(
+                          location,
+                          style: GoogleFonts.figtree(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : countryAccent,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                Text(
-                  '₦${amount.toStringAsFixed(2)}',
-                  style: GoogleFonts.figtree(
-                    color: const Color(0xFF0C73E9),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0047FF).withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    '₦${amount.toStringAsFixed(2)}',
+                    style: GoogleFonts.figtree(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15.5,
+                      letterSpacing: -0.3,
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              [
-                if (data.isNotEmpty) '$data GB',
-                if (duration.isNotEmpty) '$duration $unit',
-                if (plan['speed'] != null) plan['speed'].toString(),
-              ].join(' • '),
-              style: GoogleFonts.figtree(
-                fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF334155),
-              ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                if (data.isNotEmpty)
+                  _specBadge(Icons.data_usage_rounded, '$data GB', isDark),
+                if (duration.isNotEmpty)
+                  _specBadge(Icons.timer_outlined, '$duration $unit', isDark),
+                if (plan['speed'] != null)
+                  _specBadge(Icons.speed_rounded, plan['speed'].toString(), isDark),
+              ],
             ),
             if (description.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 10),
               Text(
                 description,
                 style: GoogleFonts.figtree(
+                  fontSize: 12.5,
                   color: isDark ? Colors.white60 : Colors.black54,
                 ),
               ),
             ],
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              child: InkWell(
-                onTap: _isPurchasing ? null : () => _purchasePlan(plan),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  decoration: BoxDecoration(
-                    gradient: _isPurchasing
-                        ? null
-                        : const LinearGradient(
-                            colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                    color: _isPurchasing ? Colors.grey : null,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isPurchasing ? null : () => _purchasePlan(plan),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0047FF),
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  shadowColor: const Color(0xFF0047FF).withValues(alpha: 0.35),
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Center(
-                    child: _isPurchasing
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
+                ),
+                child: _isPurchasing
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.bolt_rounded, size: 18),
+                          const SizedBox(width: 6),
+                          Text(
                             'Buy eSIM',
                             style: GoogleFonts.figtree(
-                              fontSize: 14,
+                              fontSize: 15,
                               fontWeight: FontWeight.w800,
-                              color: Colors.white,
                             ),
                           ),
-                  ),
-                ),
+                        ],
+                      ),
               ),
             ),
           ],

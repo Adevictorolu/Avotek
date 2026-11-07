@@ -350,8 +350,14 @@ class _ExtraProviderServicesScreenState
       if (!mounted || requestId != _rechargeCardRequestId) return;
       setState(() {
         _rechargeCardPlans = validPlans;
-        _selectedRechargeCardPlan =
-            validPlans.isEmpty ? null : validPlans.first;
+        final initialPlan = validPlans.firstWhere(
+          (p) =>
+              p['is_available'] != false &&
+              (p['available_stock'] == null ||
+                  (p['available_stock'] as num) > 0),
+          orElse: () => validPlans.first,
+        );
+        _selectedRechargeCardPlan = validPlans.isEmpty ? null : initialPlan;
         if (validPlans.isEmpty) {
           _rechargeCardPlansError =
               'No airtime PIN denominations are available for this network.';
@@ -478,8 +484,8 @@ class _ExtraProviderServicesScreenState
 
   String _normalizedAirtimeCashPhone(String phone) {
     final digits = phone.replaceAll(RegExp(r'\D'), '');
-    if (digits.length == 11 && digits.startsWith('0')) {
-      return '234${digits.substring(1)}';
+    if (digits.startsWith('234') && digits.length == 13) {
+      return '0${digits.substring(3)}';
     }
     return digits;
   }
@@ -565,6 +571,15 @@ class _ExtraProviderServicesScreenState
         );
         return;
       }
+      final stock = _selectedRechargeCardPlan?['available_stock'];
+      if (_selectedRechargeCardPlan?['is_available'] == false ||
+          (stock != null && (stock as num) < quantity)) {
+        TopNotification.showWarning(
+          context,
+          'This denomination is currently out of stock from the provider. Please choose another denomination.',
+        );
+        return;
+      }
     } else if (_isDataCard) {
       final quantity = int.tryParse(_quantityController.text.trim());
       if (quantity == null || quantity < 1 || quantity > 100) {
@@ -595,7 +610,7 @@ class _ExtraProviderServicesScreenState
         );
         return;
       }
-      if (!RegExp(r'^234\d{10}$').hasMatch(airtimeCashPhone)) {
+      if (!RegExp(r'^0\d{10}$').hasMatch(airtimeCashPhone)) {
         TopNotification.showWarning(
           context,
           'Enter a valid Nigerian mobile number for the network OTP.',
@@ -1471,6 +1486,23 @@ class _ExtraProviderServicesScreenState
                                                       : const Color(0xFF0F172A)),
                                           ),
                                         ),
+                                          if (plan['available_stock'] != null) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              (plan['available_stock'] as num) <= 0
+                                                  ? 'Out of stock'
+                                                  : '${plan['available_stock']} left',
+                                              style: GoogleFonts.figtree(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                color: (plan['available_stock'] as num) <= 0
+                                                    ? Colors.redAccent
+                                                    : (isSelected
+                                                        ? Colors.white70
+                                                        : const Color(0xFF16A34A)),
+                                              ),
+                                            ),
+                                          ],
                                       ],
                                     ),
                                   ),
