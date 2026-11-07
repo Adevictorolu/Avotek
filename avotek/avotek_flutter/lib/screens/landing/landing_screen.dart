@@ -1872,6 +1872,13 @@ class _LandingScreenState extends State<LandingScreen>
         '/services/data',
       ),
       (
+        'Travel eSIM',
+        'Global mobile data plans, ready to install with a QR code.',
+        Icons.sim_card_rounded,
+        'Global Plans',
+        '/services/esim',
+      ),
+      (
         'Airtime Recharge',
         'Instant recharge for all Nigerian networks with transparent pricing.',
         Icons.phone_android_rounded,
