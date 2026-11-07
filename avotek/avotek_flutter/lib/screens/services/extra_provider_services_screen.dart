@@ -215,7 +215,7 @@ class _ExtraProviderServicesScreenState
   String get _title => _isExam
       ? 'Buy Result Checker'
       : (_isAirtimePins
-            ? 'Recharge Card'
+            ? 'Airtime Printing'
             : (_isDataCard
                   ? 'Data Card Printing'
                   : (_isAirtimeToCash ? 'Airtime to Cash' : 'Bulk SMS')));
@@ -223,7 +223,7 @@ class _ExtraProviderServicesScreenState
   String get _subtitle => _isExam
       ? 'Purchase official JAMB, WAEC, NECO, or NABTEB registration & result checker PINs'
       : (_isAirtimePins
-            ? 'Generate instant printable recharge cards with serial numbers'
+            ? 'Generate instant airtime PINs with serial numbers, ready to print'
             : (_isDataCard
                   ? 'Generate printable high-speed data vouchers with serial numbers'
                   : (_isAirtimeToCash
@@ -354,7 +354,7 @@ class _ExtraProviderServicesScreenState
             validPlans.isEmpty ? null : validPlans.first;
         if (validPlans.isEmpty) {
           _rechargeCardPlansError =
-              'No recharge-card denominations are available for this network.';
+              'No airtime PIN denominations are available for this network.';
         }
       });
     } catch (error) {
@@ -379,7 +379,7 @@ class _ExtraProviderServicesScreenState
   String get _selectedRechargeCardName =>
       (_selectedRechargeCardPlan?['name'] ??
               _selectedRechargeCardPlan?['card_name'] ??
-              'Recharge Card')
+              'Airtime PIN')
           .toString();
 
   Future<String?> _promptAirtimeCashCode({
@@ -849,7 +849,7 @@ class _ExtraProviderServicesScreenState
           title: _isExam
               ? 'Exam PIN(s) Ready!'
               : (_isAirtimePins
-                    ? 'Recharge Card(s) Ready!'
+                    ? 'Airtime PINs Ready!'
                     : (_isDataCard
                           ? 'Data Card PIN(s) Ready!'
                           : (_isAirtimeToCash
@@ -1407,7 +1407,7 @@ class _ExtraProviderServicesScreenState
                                 final amount = (plan['amount'] as num).toDouble();
                                 final name = (plan['name'] ??
                                         plan['card_name'] ??
-                                        'Recharge Card')
+                                        'Airtime PIN')
                                     .toString();
                                 return InkWell(
                                   onTap: () => setState(
@@ -2814,7 +2814,7 @@ class _ExtraProviderServicesScreenState
                               _isExam
                                   ? 'Pay for Exam PIN (${_quantityController.text})'
                                   : (_isAirtimePins
-                                        ? 'Generate Recharge Cards (${_quantityController.text})'
+                                        ? 'Generate Airtime PINs (${_quantityController.text})'
                                         : (_isDataCard
                                               ? 'Generate Data Cards (${_quantityController.text})'
                                               : (_isAirtimeToCash

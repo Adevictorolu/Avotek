@@ -82,8 +82,8 @@ class QuickServiceGrid extends StatelessWidget {
     ),
     ServiceItem(
       id: 'print_card',
-      title: 'Recharge PIN',
-      subtitle: 'Print VTU Cards',
+      title: 'Airtime Printing',
+      subtitle: 'Print airtime PINs',
       icon: Icons.print_rounded,
       color: Color(0xFF0052FF),
     ),

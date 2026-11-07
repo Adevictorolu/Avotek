@@ -24,7 +24,7 @@ not prove that a provider credential is valid or that a real transaction works.
   screen are wired to BilalSadaSub's documented catalog, buy, and refresh
   endpoints. The provider provisions asynchronously; authenticated plan loading
   and a real purchase have not yet been verified.
-- Airtime recharge-card printing is integrated with Bigisub's plan and purchase
+- Airtime printing is integrated with Bigisub's plan and purchase
   routes. The deployed catalog has returned network-specific denominations and
   prices. The latest local purchase handler enforces Bigisub's documented
   1-10 quantity limit and forwards the optional cardholder name, but it has not

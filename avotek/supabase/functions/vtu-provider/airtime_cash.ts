@@ -1,3 +1,11 @@
+export function normalizeAirtimeCashPhone(phone: unknown): string {
+  const digits = String(phone ?? "").trim().replace(/\D+/g, "");
+  if (digits.startsWith("0") && digits.length === 11) {
+    return `234${digits.slice(1)}`;
+  }
+  return digits;
+}
+
 export function calculateAirtimeCashPayout(
   networkId: number,
   airtimeAmount: number,

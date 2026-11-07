@@ -1,6 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { calculateSmsRetailPrice } from "./sms_pricing.ts";
-import { calculateAirtimeCashPayout } from "./airtime_cash.ts";
+import {
+  calculateAirtimeCashPayout,
+  normalizeAirtimeCashPhone,
+} from "./airtime_cash.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -322,11 +325,14 @@ function getRechargeNetworkName(network: unknown): string {
 async function getBilalNetworkPlanId(
   token: string,
   network: unknown,
+  service?: "cash",
 ): Promise<string | number> {
   const expectedNetwork = getRechargeNetworkName(network);
   if (!expectedNetwork) throw new Error("Choose a valid network.");
   const response = await dispatchBilalRequest(
-    `${bilalBaseUrl}/api/v1/plans/networks`,
+    `${bilalBaseUrl}/api/v1/plans/networks${
+      service ? `?service=${service}` : ""
+    }`,
     "GET",
     token,
   );
@@ -660,7 +666,7 @@ function validatePayload(action: string, payload: JsonMap): void {
     action === "airtime_cash.convert"
   ) {
     const network = mapNetworkToId(payload.network);
-    const phone = String(payload.phone ?? "").trim();
+    const phone = normalizeAirtimeCashPhone(payload.phone);
     if (network !== 1 && network !== 2) {
       throw new Error("Airtime to Cash supports MTN and Airtel only.");
     }
@@ -1135,10 +1141,14 @@ Deno.serve(async (request) => {
   ) {
     const networkId = mapNetworkToId(payload.network);
     const networkName = networkId === 1 ? "MTN" : "AIRTEL";
-    const phone = String(payload.phone).trim();
+    const phone = normalizeAirtimeCashPhone(payload.phone);
     let providerNetworkId: string | number;
     try {
-      providerNetworkId = await getBilalNetworkPlanId(bilalToken, networkId);
+      providerNetworkId = await getBilalNetworkPlanId(
+        bilalToken,
+        networkId,
+        "cash",
+      );
     } catch (error) {
       return jsonResponse({
         success: false,
