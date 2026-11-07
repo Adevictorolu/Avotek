@@ -1872,13 +1872,6 @@ class _LandingScreenState extends State<LandingScreen>
         '/services/data',
       ),
       (
-        'Travel eSIM',
-        'Global mobile data plans, ready to install with a QR code.',
-        Icons.sim_card_rounded,
-        'Global Plans',
-        '/services/esim',
-      ),
-      (
         'Airtime Recharge',
         'Instant recharge for all Nigerian networks with transparent pricing.',
         Icons.phone_android_rounded,
@@ -2051,6 +2044,107 @@ class _LandingScreenState extends State<LandingScreen>
                       ),
                     )
                     .toList(),
+              ),
+              const SizedBox(height: 52),
+              _buildSectionHeader(
+                eyebrow: 'INTERNATIONAL SERVICES',
+                title: 'Stay connected wherever you travel.',
+                subtitle:
+                    'Explore global eSIM data plans and install your plan with a QR code.',
+                isDark: isDark,
+              ),
+              const SizedBox(height: 24),
+              Align(
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: isDesktop ? 590 : double.infinity,
+                  child: InkWell(
+                    onTap: () => context.push('/services/esim'),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF0047FF), Color(0xFF00A6D6)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF0047FF,
+                            ).withValues(alpha: 0.18),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(13),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Icon(
+                                Icons.sim_card_rounded,
+                                color: Colors.white,
+                                size: 26,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'TRAVEL eSIM',
+                                    style: GoogleFonts.figtree(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.8,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.82,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    'Global data, one simple install',
+                                    style: GoogleFonts.figtree(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Choose a destination and browse available plans.',
+                                    style: GoogleFonts.figtree(
+                                      fontSize: 12.5,
+                                      height: 1.4,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.9,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.arrow_forward_rounded,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

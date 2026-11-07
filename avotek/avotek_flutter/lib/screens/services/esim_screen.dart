@@ -374,6 +374,16 @@ class _EsimScreenState extends State<EsimScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
+                              'INTERNATIONAL SERVICES',
+                              style: GoogleFonts.figtree(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.9,
+                                color: Colors.white.withValues(alpha: 0.82),
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
                               'Travel eSIM',
                               style: GoogleFonts.figtree(
                                 fontSize: isDesktop ? 26 : 23,

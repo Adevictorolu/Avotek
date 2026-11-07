@@ -357,11 +357,14 @@ class _ExtraProviderServicesScreenState
               'No recharge-card denominations are available for this network.';
         }
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted || requestId != _rechargeCardRequestId) return;
       setState(() {
-        _rechargeCardPlansError =
-            'Recharge-card denominations could not be loaded. Please try again.';
+        _rechargeCardPlansError = userFacingError(
+          error,
+          fallback:
+              'Recharge-card denominations could not be loaded. Please try again.',
+        );
       });
     } finally {
       if (mounted && requestId == _rechargeCardRequestId) {
