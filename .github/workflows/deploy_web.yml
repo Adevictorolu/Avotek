@@ -83,16 +83,36 @@ jobs:
                 'GET /repos/{owner}/{repo}/pages/deployments/{deployment_id}',
                 request
               )
-              if (!['deployed', 'errored', 'deployment_cancelled'].includes(data.status)) {
-                core.info(`Canceling stale Pages deployment ${deploymentId} (${data.status}).`)
+              const status = String(data.status).toLowerCase()
+              const finishedStatuses = [
+                'completed',
+                'deployed',
+                'errored',
+                'failed',
+                'failure',
+                'success',
+                'succeed',
+                'succeeded',
+                'deployment_cancelled',
+                'cancelled',
+                'canceled'
+              ]
+              if (!finishedStatuses.includes(status)) {
+                core.info(`Canceling stale Pages deployment ${deploymentId} (${status}).`)
                 await github.request(
                   'POST /repos/{owner}/{repo}/pages/deployments/{deployment_id}/cancel',
                   request
                 )
+              } else {
+                core.info(`Previous Pages deployment ${deploymentId} already finished (${status}).`)
               }
             } catch (error) {
               if (error.status === 404) {
                 core.info(`No previous Pages deployment exists for ${deploymentId}.`)
+                return
+              }
+              if (error.status === 400 && /finished|completed/i.test(error.message)) {
+                core.info(`Previous Pages deployment ${deploymentId} finished before it could be canceled.`)
                 return
               }
               throw error
