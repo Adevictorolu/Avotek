@@ -2076,7 +2076,7 @@ class _LandingScreenState extends State<LandingScreen>
       ),
       (
         'Mutual Referral & Affiliate Earnings',
-        'Earn ₦50 wallet balance + 100 AVO points for every friend you invite, while your friend receives a ₦25 welcome bonus. Enjoy lifetime commissions on all their top-ups.',
+        'Earn ₦50 wallet balance + 10 AVO points for every friend you invite, while your friend receives a ₦25 welcome bonus. Enjoy lifetime commissions on all their top-ups.',
         Icons.group_add_outlined,
       ),
       (

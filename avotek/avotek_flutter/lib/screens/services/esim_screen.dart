@@ -300,22 +300,103 @@ class _EsimScreenState extends State<EsimScreen> {
               ),
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                Text(
-                  'Travel eSIM',
-                  style: GoogleFonts.figtree(
-                    fontSize: isDesktop ? 30 : 26,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                InkWell(
+                  onTap: () => Navigator.of(context).maybePop(),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF1E2230)
+                          : const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.chevron_left_rounded,
+                          size: 18,
+                          color: isDark ? Colors.white70 : Colors.black87,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Back',
+                          style: GoogleFonts.figtree(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Global mobile data plans, ready to install with a QR code.',
-                  style: GoogleFonts.figtree(
-                    color: isDark ? Colors.white70 : Colors.black54,
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0047FF), Color(0xFF00A6D6)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0047FF).withValues(alpha: 0.22),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.sim_card_rounded,
+                          color: Colors.white,
+                          size: 27,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Travel eSIM',
+                              style: GoogleFonts.figtree(
+                                fontSize: isDesktop ? 26 : 23,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'International data plans, ready to install with a QR code.',
+                              style: GoogleFonts.figtree(
+                                fontSize: 13,
+                                height: 1.4,
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
                 Row(
                   children: [
                     _tabButton('Available plans', 0, isDark),
@@ -333,8 +414,18 @@ class _EsimScreenState extends State<EsimScreen> {
                           onChanged: (value) => setState(
                             () => _searchQuery = value.trim(),
                           ),
+                          style: GoogleFonts.figtree(
+                            fontSize: 14,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
                           decoration: InputDecoration(
                             hintText: 'Search country or plan',
+                            hintStyle: GoogleFonts.figtree(
+                              fontSize: 13.5,
+                              color: isDark
+                                  ? Colors.white54
+                                  : const Color(0xFF64748B),
+                            ),
                             prefixIcon: const Icon(Icons.search_rounded),
                             filled: true,
                             fillColor: isDark
@@ -469,26 +560,57 @@ class _EsimScreenState extends State<EsimScreen> {
   Widget _tabButton(String title, int tab, bool isDark) {
     final selected = _selectedTab == tab;
     return Expanded(
-      child: OutlinedButton(
-        onPressed: () {
+      child: InkWell(
+        onTap: () {
           setState(() => _selectedTab = tab);
           if (tab == 1) _loadOwnedEsims();
         },
-        style: OutlinedButton.styleFrom(
-          backgroundColor: selected
-              ? const Color(0xFF0C73E9)
-              : Colors.transparent,
-          foregroundColor: selected
-              ? Colors.white
-              : (isDark ? Colors.white70 : const Color(0xFF334155)),
-          side: BorderSide(
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            gradient: selected
+                ? const LinearGradient(
+                    colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
             color: selected
-                ? const Color(0xFF0C73E9)
-                : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                ? null
+                : (isDark ? const Color(0xFF161922) : const Color(0xFFE2E8F0)),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected
+                  ? const Color(0xFF0047FF)
+                  : (isDark
+                        ? const Color(0xFF334155)
+                        : const Color(0xFFCBD5E1)),
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF0038B8).withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
-          padding: const EdgeInsets.symmetric(vertical: 13),
+          child: Center(
+            child: Text(
+              title,
+              style: GoogleFonts.figtree(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: selected
+                    ? Colors.white
+                    : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+              ),
+            ),
+          ),
         ),
-        child: Text(title),
       ),
     );
   }
@@ -593,15 +715,42 @@ class _EsimScreenState extends State<EsimScreen> {
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
-                onPressed: _isPurchasing ? null : () => _purchasePlan(plan),
-                child: _isPurchasing
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Buy eSIM'),
+              child: InkWell(
+                onTap: _isPurchasing ? null : () => _purchasePlan(plan),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  decoration: BoxDecoration(
+                    gradient: _isPurchasing
+                        ? null
+                        : const LinearGradient(
+                            colors: [Color(0xFF0047FF), Color(0xFF0038B8)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                    color: _isPurchasing ? Colors.grey : null,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: _isPurchasing
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            'Buy eSIM',
+                            style: GoogleFonts.figtree(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -635,13 +784,19 @@ class _EsimScreenState extends State<EsimScreen> {
           color: status == 'failed' ? Colors.red : const Color(0xFF0C73E9),
           size: 30,
         ),
-        title: Text(name, style: const TextStyle(fontWeight: FontWeight.w700)),
+        title: Text(
+          name,
+          style: GoogleFonts.figtree(fontWeight: FontWeight.w700),
+        ),
         subtitle: Text(
           status == 'completed'
               ? '${esim['esim_status'] ?? 'Ready to install'}'
               : status == 'failed'
               ? 'Provisioning failed — refund processing'
               : 'Provisioning',
+          style: GoogleFonts.figtree(
+            color: isDark ? Colors.white60 : const Color(0xFF64748B),
+          ),
         ),
         trailing:
             status == 'completed' &&

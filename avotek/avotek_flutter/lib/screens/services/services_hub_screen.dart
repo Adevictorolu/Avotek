@@ -160,7 +160,7 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
               // 1. MOBILE SERVICES
               _buildCategorySection(
                 title: 'MOBILE SERVICES',
-                count: 7,
+                count: 6,
                 isDark: isDark,
                 cards: [
                   _ServiceCardData(
@@ -174,12 +174,6 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                     icon: Icons.wifi_rounded,
                     isPopular: true,
                     onTap: () => context.push('/services/data'),
-                  ),
-                  _ServiceCardData(
-                    title: 'Travel eSIM',
-                    icon: Icons.sim_card_rounded,
-                    isPopular: true,
-                    onTap: () => context.push('/services/esim'),
                   ),
                   _ServiceCardData(
                     title: 'Bulk SMS',
@@ -201,6 +195,20 @@ class _ServicesHubScreenState extends State<ServicesHubScreen> {
                     title: 'Airtime to Cash',
                     icon: Icons.currency_exchange_rounded,
                     onTap: () => context.push('/services/airtime-to-cash'),
+                  ),
+                ],
+              ),
+
+              _buildCategorySection(
+                title: 'INTERNATIONAL SERVICES',
+                count: 1,
+                isDark: isDark,
+                cards: [
+                  _ServiceCardData(
+                    title: 'Travel eSIM',
+                    icon: Icons.sim_card_rounded,
+                    isPopular: true,
+                    onTap: () => context.push('/services/esim'),
                   ),
                 ],
               ),

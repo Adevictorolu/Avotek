@@ -235,7 +235,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Redeem your verified referral reward points directly into your Avotek main wallet (1 AVO Point = ₦1).',
+                  'Redeem your verified referral reward points directly into your Avotek main wallet. 200 AVO points = ₦200.',
                   style: GoogleFonts.figtree(
                     fontSize: 13,
                     color: isDark
@@ -272,7 +272,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                         ),
                       ),
                       Text(
-                        '$_userAvoPoints pts (= ₦${(_userAvoPoints / 2).toStringAsFixed(0)})',
+                        '$_userAvoPoints pts (= ₦$_userAvoPoints)',
                         style: GoogleFonts.figtree(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -1472,7 +1472,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Earn 100 AVO points for every successful referral. Redeem from 200 points at ₦50 per 100 points.',
+                  'Earn 10 AVO points for every successful referral. Redeem from 200 points at ₦1 per point.',
                   style: GoogleFonts.figtree(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
@@ -2072,7 +2072,7 @@ class _AffiliateScreenState extends State<AffiliateScreen> {
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 480),
                     child: Text(
-                      'No referrals have earned leaderboard points yet. Share your referral link to earn 100 points for each successful signup and climb the rankings.',
+                      'No referrals have earned leaderboard points yet. Share your referral link to earn 10 points for each successful signup and climb the rankings.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.figtree(
                         fontSize: 12.5,
